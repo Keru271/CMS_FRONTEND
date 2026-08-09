@@ -1,26 +1,127 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f6fb;
+  --foreground: #1e293b;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --card-border: #e2e8f0;
+  --card-shadow: rgba(15, 23, 42, 0.08);
+  --primary: #528574;
+  --primary-foreground: #ffffff;
+  --primary-hover: #436f61;
+  --secondary: #64748b;
+  --secondary-foreground: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #eaf2ee;
+  --accent-foreground: #528574;
+  --danger: #ef4444;
+  --danger-foreground: #ffffff;
+  --success: #10b981;
+  --border: #e2e8f0;
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --input-focus: #528574;
+  --dot-color: #cbd5e1;
+  --canvas-bg: #ffffff;
+  --canvas-border: #e2e8f0;
+
+  /* Sage Green Custom Palette Variables */
+  --sage-primary: #528574;
+  --sage-hover: #436f61;
+  --sage-accent: #eaf2ee;
+  --sage-danger: #e54848;
+  --sage-text: #2b3531;
+  --sage-muted: #788781;
+  --sage-border: #e1e7e4;
+  --sage-input-bg: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #090d16;
+    --foreground: #f8fafc;
+    --card: #111827;
+    --card-foreground: #f8fafc;
+    --card-border: #1f2937;
+    --card-shadow: rgba(0, 0, 0, 0.5);
+    --primary: #528574;
+    --primary-foreground: #ffffff;
+    --primary-hover: #436f61;
+    --secondary: #94a3b8;
+    --secondary-foreground: #ffffff;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --accent: #192b25;
+    --accent-foreground: #6ab09b;
+    --danger: #f87171;
+    --danger-foreground: #ffffff;
+    --success: #34d399;
+    --border: #1f2937;
+    --input-bg: #0f172a;
+    --input-border: #334155;
+    --input-focus: #528574;
+    --dot-color: #334155;
+    --canvas-bg: #0b1120;
+    --canvas-border: #1e293b;
+
+    --sage-primary: #528574;
+    --sage-hover: #436f61;
+    --sage-accent: #192b25;
+    --sage-danger: #f87171;
+    --sage-text: #f8fafc;
+    --sage-muted: #94a3b8;
+    --sage-border: #334155;
+    --sage-input-bg: #0f172a;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-card-border: var(--card-border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+  --color-input-focus: var(--input-focus);
+  --color-canvas-bg: var(--canvas-bg);
+  --color-canvas-border: var(--canvas-border);
+
+  /* Sage Green Custom Inline Tokens */
+  --color-sage-primary: var(--sage-primary);
+  --color-sage-hover: var(--sage-hover);
+  --color-sage-accent: var(--sage-accent);
+  --color-sage-danger: var(--sage-danger);
+  --color-sage-text: var(--sage-text);
+  --color-sage-muted: var(--sage-muted);
+  --color-sage-border: var(--sage-border);
+  --color-sage-input-bg: var(--sage-input-bg);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* Canvas Dot Pattern Grid */
+.bg-dot-pattern {
+  background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
 }
