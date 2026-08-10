@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
@@ -28,11 +29,25 @@ import {
 } from 'lucide-react';
 import { MerchantOnboardingData } from '@/src/types';
 
-export type CMSView = 'dashboard' | 'products' | 'categories' | 'orders' | 'customers' | 'settings' | 'store-setup' | 'themes' | 'pages' | 'navigation' | 'discounts' | 'shipping' | 'tax' | 'marketing';
+export type CMSView =
+  | 'dashboard'
+  | 'products'
+  | 'categories'
+  | 'orders'
+  | 'customers'
+  | 'settings'
+  | 'store-setup'
+  | 'themes'
+  | 'pages'
+  | 'navigation'
+  | 'discounts'
+  | 'shipping'
+  | 'tax'
+  | 'marketing';
 
 interface SidebarProps {
-  currentView: CMSView;
-  onViewChange: (view: CMSView) => void;
+  currentView?: CMSView;
+  onViewChange?: (view: CMSView) => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
   productsCount?: number;
@@ -53,41 +68,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen = false,
   onCloseMobile,
 }) => {
+  const pathname = usePathname();
+  const router = useRouter();
+
   const primaryNavItems = [
-    { id: 'dashboard' as CMSView, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'store-setup' as CMSView, label: 'Store Setup', icon: Store },
-    { id: 'themes' as CMSView, label: 'Theme Studio', icon: Palette },
-    { id: 'pages' as CMSView, label: 'Pages', icon: FileText },
-    { id: 'navigation' as CMSView, label: 'Navigation', icon: Compass },
-    { id: 'products' as CMSView, label: 'Products Studio', icon: Package, badge: productsCount },
-    { id: 'orders' as CMSView, label: 'Requests', icon: ShoppingBag, badge: 6 },
-    { id: 'customers' as CMSView, label: 'Users', icon: Users },
-    { id: 'discounts' as CMSView, label: 'Discounts', icon: Tag },
-    { label: 'Staff', icon: UserCheck },
-    { id: 'tax' as CMSView, label: 'Taxation', icon: Receipt },
-    { id: 'store-setup' as CMSView, label: 'Stores', icon: FolderTree },
-    { id: 'shipping' as CMSView, label: 'Logistics', icon: Truck },
-    { id: 'categories' as CMSView, label: 'CMS', icon: Database },
-    { id: 'products' as CMSView, label: 'In stock', icon: Package, badge: productsCount },
-    { id: 'marketing' as CMSView, label: 'Analytics & Growth', icon: Megaphone },
+    { id: 'dashboard' as CMSView, path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'store-setup' as CMSView, path: '/store-setup', label: 'Store Setup', icon: Store },
+    { id: 'themes' as CMSView, path: '/themes', label: 'Theme Studio', icon: Palette },
+    { id: 'pages' as CMSView, path: '/pages', label: 'Pages', icon: FileText },
+    { id: 'navigation' as CMSView, path: '/navigation', label: 'Navigation', icon: Compass },
+    { id: 'products' as CMSView, path: '/products', label: 'Products Studio', icon: Package, badge: productsCount },
+    { id: 'orders' as CMSView, path: '/orders', label: 'Requests', icon: ShoppingBag, badge: 6 },
+    { id: 'customers' as CMSView, path: '/customers', label: 'Users', icon: Users },
+    { id: 'discounts' as CMSView, path: '/discounts', label: 'Discounts', icon: Tag },
+    { id: 'tax' as CMSView, path: '/tax', label: 'Taxation', icon: Receipt },
+    { id: 'shipping' as CMSView, path: '/shipping', label: 'Logistics', icon: Truck },
+    { id: 'categories' as CMSView, path: '/categories', label: 'CMS', icon: Database },
+    { id: 'marketing' as CMSView, path: '/marketing', label: 'Analytics & Growth', icon: Megaphone },
   ];
 
   const secondaryNavItems = [
-    { label: 'Chats', icon: MessageSquare },
-    { label: 'Tasks', icon: CheckSquare },
-    { id: 'pages' as CMSView, label: 'Pages', icon: FileText },
-    { id: 'themes' as CMSView, label: 'Themes', icon: Palette },
-    { id: 'store-setup' as CMSView, label: 'Store Setup', icon: Store },
-    { id: 'settings' as CMSView, label: 'Settings', icon: Settings },
+    { id: 'pages' as CMSView, path: '/pages', label: 'Pages', icon: FileText },
+    { id: 'themes' as CMSView, path: '/themes', label: 'Themes', icon: Palette },
+    { id: 'store-setup' as CMSView, path: '/store-setup', label: 'Store Setup', icon: Store },
+    { id: 'settings' as CMSView, path: '/settings', label: 'Settings', icon: Settings },
   ];
 
-  const storeName = 'LEASO';
+  const storeName = merchantData?.store?.storeName || 'LEASO';
 
-  const handleNavClick = (view: CMSView) => {
-    onViewChange(view);
+  const handleNavClick = (viewId?: CMSView, path?: string) => {
+    if (path) {
+      router.push(path);
+    } else if (viewId && onViewChange) {
+      onViewChange(viewId);
+    }
     if (onCloseMobile) {
       onCloseMobile();
     }
+  };
+
+  const isItemActive = (itemPath?: string, itemId?: CMSView) => {
+    if (itemPath) {
+      if (itemPath === '/dashboard') {
+        return pathname === '/dashboard' || pathname === '/';
+      }
+      return pathname.startsWith(itemPath);
+    }
+    if (currentView && itemId) {
+      return currentView === itemId;
+    }
+    return false;
   };
 
   return (
@@ -143,12 +173,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <nav className="space-y-1">
             {primaryNavItems.map((item, idx) => {
               const Icon = item.icon;
-              const isActive = item.id && currentView === item.id;
+              const isActive = isItemActive(item.path, item.id);
 
               return (
                 <button
                   key={idx}
-                  onClick={() => item.id && handleNavClick(item.id)}
+                  onClick={() => handleNavClick(item.id, item.path)}
                   title={collapsed && !mobileOpen ? item.label : undefined}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs transition-all min-h-[42px] ${
                     isActive
@@ -180,12 +210,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="space-y-1 pt-4 border-t border-slate-200/80 dark:border-border">
           {secondaryNavItems.map((item, idx) => {
             const Icon = item.icon;
-            const isActive = item.id && currentView === item.id;
+            const isActive = isItemActive(item.path, item.id);
 
             return (
               <button
                 key={idx}
-                onClick={() => item.id && handleNavClick(item.id)}
+                onClick={() => handleNavClick(item.id, item.path)}
                 title={collapsed && !mobileOpen ? item.label : undefined}
                 className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs transition-all ${
                   isActive
