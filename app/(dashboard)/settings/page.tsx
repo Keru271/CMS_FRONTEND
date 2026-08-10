@@ -3,7 +3,6 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useCMSContext } from '@/src/context/CMSContext';
-import { Button } from '@heroui/react';
 import { Store, RotateCcw } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -11,40 +10,40 @@ export default function SettingsPage() {
   const { merchantData } = useCMSContext();
 
   return (
-    <div className="space-y-6">
-      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-sage-border shadow-md space-y-6">
+    <div className="space-y-6 font-sans">
+      <div className="p-6 sm:p-8 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="font-black text-lg text-sage-text flex items-center gap-2">
-              <Store className="w-5 h-5 text-sage-primary" />
+            <h3 className="font-serif font-normal text-xl text-[#191a1b] flex items-center gap-2">
+              <Store className="w-5 h-5 text-[#191a1b]" />
               <span>Active Store Identity & Theme Settings</span>
             </h3>
-            <p className="text-xs text-sage-muted">
+            <p className="text-xs font-sans text-[#5e5a5a]">
               Configured brand identity, chosen storefront design specifications, and merchant contact parameters.
             </p>
           </div>
 
-          <Button
+          <button
             onClick={() => router.push('/merchant-details')}
-            className="px-5 py-2.5 bg-sage-primary hover:bg-sage-hover text-white text-xs font-extrabold rounded-2xl shadow-sm flex items-center gap-2 min-h-[44px] shrink-0 transition-all"
+            className="px-4 py-2 bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] text-xs font-sans font-medium rounded-lg shadow-xs flex items-center gap-2 shrink-0 transition-colors"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-4 h-4 text-[#d4ff4c]" />
             <span>Re-run Onboarding Setup Studio</span>
-          </Button>
+          </button>
         </div>
 
         {merchantData && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-sage-border">
-            <div className="p-4 rounded-2xl bg-sage-accent/30 border border-sage-border space-y-1">
-              <span className="text-[10px] text-sage-muted uppercase font-bold block">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#cbd5e0]/60">
+            <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
+              <span className="text-[10px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider block">
                 Store Brand
               </span>
-              <p className="text-sm font-black text-sage-text">{merchantData.store.storeName}</p>
-              <p className="text-xs text-sage-muted italic">"{merchantData.store.tagline}"</p>
+              <p className="text-sm font-serif font-normal text-[#191a1b]">{merchantData.store.storeName}</p>
+              <p className="text-xs font-sans text-[#5e5a5a] italic">"{merchantData.store.tagline}"</p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-sage-accent/30 border border-sage-border space-y-1">
-              <span className="text-[10px] text-sage-muted uppercase font-bold block">
+            <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
+              <span className="text-[10px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider block">
                 Selected Storefront Theme
               </span>
               <div className="flex items-center gap-2">
@@ -52,21 +51,21 @@ export default function SettingsPage() {
                   className="w-3 h-3 rounded-full shadow-xs"
                   style={{ backgroundColor: merchantData.selectedTemplate.accentColor }}
                 />
-                <p className="text-sm font-black text-sage-text">
+                <p className="text-sm font-serif font-normal text-[#191a1b]">
                   {merchantData.selectedTemplate.name}
                 </p>
               </div>
-              <p className="text-xs text-sage-muted">{merchantData.selectedTemplate.tagline}</p>
+              <p className="text-xs font-sans text-[#5e5a5a]">{merchantData.selectedTemplate.tagline}</p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-sage-accent/30 border border-sage-border space-y-1">
-              <span className="text-[10px] text-sage-muted uppercase font-bold block">
+            <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
+              <span className="text-[10px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider block">
                 Merchant Profile
               </span>
-              <p className="text-sm font-black text-sage-text">
+              <p className="text-sm font-serif font-normal text-[#191a1b]">
                 {merchantData.merchant.firstName} {merchantData.merchant.lastName}
               </p>
-              <p className="text-xs text-sage-muted">
+              <p className="text-xs font-sans text-[#5e5a5a]">
                 {merchantData.merchant.email} • {merchantData.merchant.mobileNumber}
               </p>
             </div>

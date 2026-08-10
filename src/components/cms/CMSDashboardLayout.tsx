@@ -29,7 +29,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
   const categoryNames = categories.map((c) => c.name);
 
   return (
-    <div className="min-h-screen flex bg-[#eef0f3] dark:bg-background text-slate-800 dark:text-foreground selection:bg-slate-900 selection:text-white">
+    <div className="min-h-screen flex bg-[#fdf1ef] text-[#191a1b] font-sans selection:bg-[#191a1b] selection:text-[#d4ff4c]">
       {/* Sidebar Navigation */}
       <Sidebar
         collapsed={sidebarCollapsed}
@@ -52,13 +52,13 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
         />
 
         {/* Dynamic Section Page Content */}
-        <main className="flex-1 p-3 sm:p-5 md:p-6 w-full space-y-4">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto space-y-6">
           {isLoading ? (
-            <div className="flex items-center justify-center py-28">
+            <div className="flex items-center justify-center py-32">
               <div className="flex flex-col items-center gap-3">
-                <div className="w-10 h-10 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs font-extrabold text-slate-500 animate-pulse">
-                  Loading CMS View...
+                <div className="w-10 h-10 border-4 border-[#191a1b] border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs font-semibold text-[#5e5a5a] tracking-wide animate-pulse">
+                  Loading Statamic CMS Studio...
                 </span>
               </div>
             </div>

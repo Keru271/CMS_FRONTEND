@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShoppingBag, Search, CheckCircle2, Clock, Truck, XCircle } from 'lucide-react';
+import { ShoppingBag, Search } from 'lucide-react';
 import { CMSOrder, OrderStatus } from '@/src/types';
-import { Input } from '@/src/components/ui/Input';
 
 interface OrderTableProps {
   orders: CMSOrder[];
@@ -24,17 +23,17 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 font-sans">
       {/* Search & Filter Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 rounded-3xl bg-white dark:bg-card border border-sage-border shadow-md">
-        <div className="w-full md:w-80">
-          <Input
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic">
+        <div className="relative w-full md:w-80">
+          <Search className="w-4 h-4 text-[#5e5a5a] absolute left-3 top-3" />
+          <input
+            type="text"
             placeholder="Search orders, customer names, emails..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            startContent={<Search className="w-4 h-4 text-sage-muted" />}
-            isClearable
-            onClear={() => setSearch('')}
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans text-[#191a1b] placeholder:text-[#beb9b3] outline-none focus:border-[#cbc2ea]"
           />
         </div>
 
@@ -42,7 +41,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-sage-input-bg border border-sage-border text-xs rounded-2xl px-3.5 py-2.5 focus:outline-none focus:border-sage-primary text-sage-text font-bold cursor-pointer"
+            className="bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
           >
             <option value="all">All Order Statuses</option>
             <option value="processing">Processing</option>
@@ -54,47 +53,47 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
       </div>
 
       {/* Orders Data Table */}
-      <div className="rounded-3xl bg-white dark:bg-card border border-sage-border overflow-hidden shadow-md">
+      <div className="rounded-2xl bg-[#ffffff] border border-[#cbd5e0] overflow-hidden shadow-statamic">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-sage-border bg-sage-accent/50 text-sage-muted uppercase font-extrabold text-[10px] tracking-wider">
+          <table className="w-full text-left text-xs font-sans">
+            <thead className="border-b border-[#cbd5e0] bg-[#fdf1ef] text-[#5e5a5a] uppercase font-medium text-[10px] tracking-wider">
               <tr>
-                <th className="py-4 px-4 sm:px-5">Order Code</th>
-                <th className="py-4 px-4">Customer Details</th>
-                <th className="py-4 px-4">Date</th>
-                <th className="py-4 px-4">Total Amount</th>
-                <th className="py-4 px-4">Payment</th>
-                <th className="py-4 px-4">Fulfillment Status</th>
-                <th className="py-4 px-4 sm:px-5 text-right">Update Status</th>
+                <th className="py-3.5 px-4 sm:px-5">Order Code</th>
+                <th className="py-3.5 px-4">Customer Details</th>
+                <th className="py-3.5 px-4">Date</th>
+                <th className="py-3.5 px-4">Total Amount</th>
+                <th className="py-3.5 px-4">Payment</th>
+                <th className="py-3.5 px-4">Fulfillment Status</th>
+                <th className="py-3.5 px-4 sm:px-5 text-right">Update Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-sage-border/60">
+            <tbody className="divide-y divide-[#cbd5e0]/60">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center text-sage-muted">
+                  <td colSpan={7} className="py-16 text-center text-[#5e5a5a]">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <ShoppingBag className="w-10 h-10 text-sage-primary/40" />
-                      <span className="font-extrabold text-sm text-sage-text">No Customer Orders Found</span>
+                      <ShoppingBag className="w-10 h-10 text-[#beb9b3]" />
+                      <span className="font-serif text-lg text-[#191a1b]">No Customer Orders Found</span>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredOrders.map((o) => (
-                  <tr key={o.id} className="hover:bg-sage-accent/30 transition-colors">
-                    <td className="py-3.5 px-4 sm:px-5 font-black text-sage-primary">{o.orderNumber}</td>
+                  <tr key={o.id} className="hover:bg-[#fdf1ef]/60 transition-colors">
+                    <td className="py-3.5 px-4 sm:px-5 font-mono font-bold text-[#191a1b]">{o.orderNumber}</td>
                     <td className="py-3.5 px-4">
-                      <div className="font-bold text-sage-text">{o.customerName}</div>
-                      <div className="text-[10px] text-sage-muted">{o.customerEmail}</div>
+                      <div className="font-sans font-medium text-[#191a1b]">{o.customerName}</div>
+                      <div className="text-[10px] font-sans text-[#5e5a5a]">{o.customerEmail}</div>
                     </td>
-                    <td className="py-3.5 px-4 text-sage-muted font-medium">{o.createdAt}</td>
-                    <td className="py-3.5 px-4 font-black text-sage-text">${o.totalAmount.toFixed(2)}</td>
+                    <td className="py-3.5 px-4 text-[#5e5a5a] font-mono text-[10px]">{o.createdAt}</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-[#191a1b]">${o.totalAmount.toFixed(2)}</td>
                     <td className="py-3.5 px-4">
                       <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-sans font-medium ${
                           o.paymentStatus === 'paid'
-                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200'
+                            ? 'bg-[#d4ff4c]/40 text-[#191a1b] border border-[#191a1b]'
                             : o.paymentStatus === 'pending'
-                            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200'
+                            ? 'bg-[#d7e5fe] text-[#191a1b] border border-[#cbd5e0]'
                             : 'bg-rose-50 text-rose-700 border border-rose-200'
                         }`}
                       >
@@ -102,7 +101,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-sage-accent text-sage-primary border border-sage-border uppercase">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-sans font-medium bg-[#f5ddee] text-[#191a1b] border border-[#cbc2ea] uppercase">
                         {o.orderStatus}
                       </span>
                     </td>
@@ -110,7 +109,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
                       <select
                         value={o.orderStatus}
                         onChange={(e) => onStatusChange(o.id, e.target.value as OrderStatus)}
-                        className="bg-sage-input-bg border border-sage-border text-[11px] font-extrabold text-sage-text rounded-xl px-3 py-1.5 focus:outline-none focus:border-sage-primary cursor-pointer"
+                        className="bg-[#fdf1ef] border border-[#cbd5e0] text-[11px] font-sans font-medium text-[#191a1b] rounded-lg px-2.5 py-1 focus:outline-none focus:border-[#cbc2ea] cursor-pointer"
                       >
                         <option value="processing">Processing</option>
                         <option value="shipped">Shipped</option>

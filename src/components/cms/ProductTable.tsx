@@ -2,9 +2,8 @@
 
 import React, { useState } from 'react';
 import { Button } from '@heroui/react';
-import { Search, Plus, Edit2, Trash2, Filter, Package, AlertCircle } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Package, AlertCircle } from 'lucide-react';
 import { CMSProduct } from '@/src/types';
-import { Input } from '@/src/components/ui/Input';
 
 interface ProductTableProps {
   products: CMSProduct[];
@@ -39,16 +38,16 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   return (
     <div className="space-y-4">
       {/* Table Header & Controls Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 rounded-3xl bg-white dark:bg-card border border-sage-border shadow-md">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic">
         {/* Search Input */}
-        <div className="w-full md:w-80">
-          <Input
+        <div className="relative w-full md:w-80">
+          <Search className="w-4 h-4 text-[#5e5a5a] absolute left-3 top-3" />
+          <input
+            type="text"
             placeholder="Search products by title, SKU..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            startContent={<Search className="w-4 h-4 text-sage-muted" />}
-            isClearable
-            onClear={() => setSearch('')}
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans text-[#191a1b] placeholder:text-[#beb9b3] outline-none focus:border-[#cbc2ea] focus:ring-2 focus:ring-[#cbc2ea]/40 transition-all"
           />
         </div>
 
@@ -58,7 +57,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-sage-input-bg border border-sage-border text-xs rounded-2xl px-3.5 py-2.5 focus:outline-none focus:border-sage-primary text-sage-text font-bold cursor-pointer"
+            className="bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
           >
             <option value="all">All Categories</option>
             {categories.map((cat) => (
@@ -72,7 +71,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="bg-sage-input-bg border border-sage-border text-xs rounded-2xl px-3.5 py-2.5 focus:outline-none focus:border-sage-primary text-sage-text font-bold cursor-pointer"
+            className="bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
           >
             <option value="all">All Statuses</option>
             <option value="active">Active (Live)</option>
@@ -81,77 +80,77 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           </select>
 
           {/* Add Product CTA */}
-          <Button
+          <button
             onClick={onAddProduct}
-            className="bg-sage-primary hover:bg-sage-hover text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-sm flex items-center gap-1.5 min-h-[42px] transition-all"
+            className="bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] font-sans font-medium text-xs px-4 py-2 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 text-[#d4ff4c]" />
             <span>Add Product</span>
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Products Data Table */}
-      <div className="rounded-3xl bg-white dark:bg-card border border-sage-border overflow-hidden shadow-md">
+      <div className="rounded-2xl bg-[#ffffff] border border-[#cbd5e0] overflow-hidden shadow-statamic">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-sage-border bg-sage-accent/50 text-sage-muted uppercase font-extrabold text-[10px] tracking-wider">
+          <table className="w-full text-left text-xs font-sans">
+            <thead className="border-b border-[#cbd5e0] bg-[#fdf1ef] text-[#5e5a5a] uppercase font-medium text-[10px] tracking-wider">
               <tr>
-                <th className="py-4 px-4 sm:px-5">Product Details</th>
-                <th className="py-4 px-4">SKU Code</th>
-                <th className="py-4 px-4">Category</th>
-                <th className="py-4 px-4">Price</th>
-                <th className="py-4 px-4">Stock Units</th>
-                <th className="py-4 px-4">Status</th>
-                <th className="py-4 px-4 sm:px-5 text-right">Actions</th>
+                <th className="py-3.5 px-4 sm:px-5">Product Details</th>
+                <th className="py-3.5 px-4">SKU Code</th>
+                <th className="py-3.5 px-4">Category</th>
+                <th className="py-3.5 px-4">Price</th>
+                <th className="py-3.5 px-4">Stock Units</th>
+                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4 sm:px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-sage-border/60">
+            <tbody className="divide-y divide-[#cbd5e0]/60">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center text-sage-muted">
+                  <td colSpan={7} className="py-16 text-center text-[#5e5a5a]">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <Package className="w-10 h-10 text-sage-primary/40" />
-                      <span className="font-extrabold text-sm text-sage-text">No Products Found</span>
-                      <span className="text-xs text-sage-muted">Try clearing search filters or add a new product.</span>
+                      <Package className="w-10 h-10 text-[#beb9b3]" />
+                      <span className="font-serif text-lg text-[#191a1b]">No Products Found</span>
+                      <span className="text-xs font-sans text-[#5e5a5a]">Try clearing search filters or add a new product.</span>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-sage-accent/30 transition-colors group">
+                  <tr key={p.id} className="hover:bg-[#fdf1ef]/60 transition-colors group">
                     {/* Product info */}
                     <td className="py-3.5 px-4 sm:px-5">
                       <div className="flex items-center gap-3">
                         <img
                           src={p.image}
                           alt={p.name}
-                          className="w-11 h-11 object-cover rounded-2xl border border-sage-border bg-sage-input-bg shrink-0"
+                          className="w-10 h-10 object-cover rounded-lg border border-[#cbd5e0] bg-[#fdf1ef] shrink-0"
                         />
                         <div className="min-w-0">
-                          <h4 className="font-extrabold text-sage-text text-xs line-clamp-1 group-hover:text-sage-primary transition-colors">
+                          <h4 className="font-sans font-medium text-[#191a1b] text-xs line-clamp-1 group-hover:text-[#4c305a] transition-colors">
                             {p.name}
                           </h4>
-                          <span className="text-[10px] text-sage-muted font-medium">ID: {p.id}</span>
+                          <span className="text-[10px] font-mono text-[#5e5a5a]">ID: {p.id}</span>
                         </div>
                       </div>
                     </td>
 
                     {/* SKU */}
-                    <td className="py-3.5 px-4 font-mono font-bold text-sage-text">{p.sku}</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-[#191a1b]">{p.sku}</td>
 
                     {/* Category */}
                     <td className="py-3.5 px-4">
-                      <span className="px-2.5 py-1 rounded-full bg-sage-accent text-sage-primary border border-sage-border text-[10px] font-extrabold">
+                      <span className="px-2.5 py-1 rounded-full bg-[#f5ddee] text-[#191a1b] border border-[#cbc2ea] text-[10px] font-medium">
                         {p.category}
                       </span>
                     </td>
 
                     {/* Price */}
                     <td className="py-3.5 px-4">
-                      <div className="font-black text-sage-text text-xs">${p.price.toFixed(2)}</div>
+                      <div className="font-mono font-bold text-[#191a1b] text-xs">${p.price.toFixed(2)}</div>
                       {p.originalPrice && (
-                        <div className="text-[10px] text-sage-muted line-through font-semibold">
+                        <div className="text-[10px] font-mono text-[#5e5a5a] line-through">
                           ${p.originalPrice.toFixed(2)}
                         </div>
                       )}
@@ -161,12 +160,12 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`font-black text-xs ${
+                          className={`font-sans font-medium text-xs ${
                             p.stockQuantity === 0
-                              ? 'text-sage-danger'
+                              ? 'text-[#ef4444]'
                               : p.stockQuantity < 10
-                              ? 'text-amber-600 dark:text-amber-400'
-                              : 'text-sage-text'
+                              ? 'text-amber-700'
+                              : 'text-[#191a1b]'
                           }`}
                         >
                           {p.stockQuantity} units
@@ -180,12 +179,12 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                     {/* Status */}
                     <td className="py-3.5 px-4">
                       <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-sans font-medium uppercase tracking-wider ${
                           p.status === 'active'
-                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200'
+                            ? 'bg-[#d4ff4c]/40 text-[#191a1b] border border-[#191a1b]'
                             : p.status === 'draft'
-                            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200'
-                            : 'bg-sage-input-bg text-sage-muted border border-sage-border'
+                            ? 'bg-[#d7e5fe] text-[#191a1b] border border-[#cbd5e0]'
+                            : 'bg-[#fdf1ef] text-[#5e5a5a] border border-[#cbd5e0]'
                         }`}
                       >
                         {p.status}
@@ -197,14 +196,14 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => onEditProduct(p)}
-                          className="p-2 rounded-xl text-sage-muted hover:text-sage-primary hover:bg-sage-accent transition-colors"
+                          className="p-1.5 rounded-lg text-[#5e5a5a] hover:text-[#191a1b] hover:bg-[#fdf1ef] transition-colors"
                           aria-label="Edit product"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => onDeleteProduct(p.id)}
-                          className="p-2 rounded-xl text-sage-muted hover:text-sage-danger hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                          className="p-1.5 rounded-lg text-[#5e5a5a] hover:text-[#ef4444] hover:bg-rose-50 transition-colors"
                           aria-label="Delete product"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -219,10 +218,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
         </div>
 
         {/* Footer Summary */}
-        <div className="p-4 border-t border-sage-border text-xs text-sage-muted flex items-center justify-between">
+        <div className="p-4 border-t border-[#cbd5e0] text-xs font-sans text-[#5e5a5a] flex items-center justify-between">
           <span>
-            Showing <strong className="text-sage-text font-black">{filteredProducts.length}</strong> of{' '}
-            <strong className="text-sage-text font-black">{products.length}</strong> total catalog products
+            Showing <strong className="text-[#191a1b] font-medium">{filteredProducts.length}</strong> of{' '}
+            <strong className="text-[#191a1b] font-medium">{products.length}</strong> total catalog products
           </span>
         </div>
       </div>

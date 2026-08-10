@@ -4,7 +4,7 @@ import React from 'react';
 import { Button } from '@heroui/react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { X, Save, Package, Image as ImageIcon, Tag, DollarSign, Layers } from 'lucide-react';
+import { X, Save, Package, Image as ImageIcon, Tag } from 'lucide-react';
 import { CMSProduct, ProductFormData } from '@/src/types';
 import { Input } from '@/src/components/ui/Input';
 
@@ -16,7 +16,6 @@ interface ProductFormModalProps {
   categories: string[];
 }
 
-// Yup Validation Schema for Product Creation & Edit
 const productValidationSchema = Yup.object({
   name: Yup.string().min(3, 'Product name must be at least 3 characters').required('Product name is required'),
   sku: Yup.string().required('SKU code is required'),
@@ -67,32 +66,32 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-card border border-sage-border rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-[#191a1b]/40 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-[#ffffff] border border-[#cbd5e0] rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-statamic relative max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-sage-border pb-4 mb-5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-sage-accent text-sage-primary flex items-center justify-center font-bold border border-sage-border">
+        <div className="flex items-center justify-between border-b border-[#cbd5e0]/60 pb-4 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-[#fdf1ef] text-[#191a1b] flex items-center justify-center font-bold border border-[#cbd5e0]">
               <Package className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-black text-lg text-sage-text leading-tight">
-                {isEditing ? 'Edit Product Specification' : 'Create New Product'}
+              <h3 className="font-serif font-normal text-xl text-[#191a1b] leading-tight">
+                {isEditing ? 'Edit Item Specification' : 'Create New Catalog Item'}
               </h3>
-              <p className="text-xs text-sage-muted">Manage product parameters, pricing, and stock count</p>
+              <p className="text-xs font-sans text-[#5e5a5a]">Manage product details, pricing, and stock limits</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-sage-muted hover:text-sage-text p-1.5 rounded-full hover:bg-sage-accent transition-colors"
+            className="text-[#5e5a5a] hover:text-[#191a1b] p-1.5 rounded-lg hover:bg-[#fdf1ef] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Formik Form */}
-        <form onSubmit={formik.handleSubmit} className="space-y-4">
-          {/* Row 1: Product Name & SKU */}
+        <form onSubmit={formik.handleSubmit} className="space-y-4 font-sans">
+          {/* Row 1: Title & SKU */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="md:col-span-2">
               <Input
@@ -121,13 +120,13 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {/* Row 2: Category & Status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5 w-full">
-              <label className="text-xs font-bold text-sage-text">Category *</label>
+              <label className="text-xs font-sans font-medium text-[#191a1b]">Category *</label>
               <select
                 name="category"
                 value={formik.values.category}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className="bg-sage-input-bg border border-sage-border text-xs rounded-2xl p-3 text-sage-text focus:outline-none focus:border-sage-primary font-bold cursor-pointer"
+                className="bg-[#ffffff] border border-[#cbd5e0] text-xs rounded-lg p-2.5 text-[#191a1b] focus:outline-none focus:border-[#cbc2ea] font-medium cursor-pointer"
               >
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>
@@ -138,13 +137,13 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </div>
 
             <div className="flex flex-col gap-1.5 w-full">
-              <label className="text-xs font-bold text-sage-text">CMS Status *</label>
+              <label className="text-xs font-sans font-medium text-[#191a1b]">CMS Status *</label>
               <select
                 name="status"
                 value={formik.values.status}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className="bg-sage-input-bg border border-sage-border text-xs rounded-2xl p-3 text-sage-text focus:outline-none focus:border-sage-primary font-bold cursor-pointer"
+                className="bg-[#ffffff] border border-[#cbd5e0] text-xs rounded-lg p-2.5 text-[#191a1b] focus:outline-none focus:border-[#cbc2ea] font-medium cursor-pointer"
               >
                 <option value="active">Active (Visible in Store)</option>
                 <option value="draft">Draft (Hidden)</option>
@@ -200,7 +199,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               name="image"
               label="Image URL *"
               placeholder="https://images.unsplash.com/..."
-              startContent={<ImageIcon className="w-4 h-4 text-sage-muted" />}
+              startContent={<ImageIcon className="w-4 h-4 text-[#5e5a5a]" />}
               value={formik.values.image}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
@@ -212,7 +211,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               name="tags"
               label="Tags (Comma-separated)"
               placeholder="Audio, Wireless, Premium"
-              startContent={<Tag className="w-4 h-4 text-sage-muted" />}
+              startContent={<Tag className="w-4 h-4 text-[#5e5a5a]" />}
               value={formik.values.tags}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
@@ -221,7 +220,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
           {/* Row 5: Description Textarea */}
           <div className="flex flex-col gap-1.5 w-full">
-            <label className="text-xs font-bold text-sage-text">Product Description *</label>
+            <label className="text-xs font-sans font-medium text-[#191a1b]">Product Description *</label>
             <textarea
               name="description"
               rows={3}
@@ -229,35 +228,34 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               value={formik.values.description}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              className={`w-full bg-sage-input-bg border rounded-2xl p-3 text-xs font-semibold outline-none text-sage-text placeholder:text-sage-muted transition-all ${
+              className={`w-full bg-[#ffffff] border rounded-lg p-2.5 text-xs font-sans outline-none text-[#191a1b] placeholder:text-[#beb9b3] transition-all ${
                 formik.touched.description && formik.errors.description
-                  ? 'border-sage-danger focus:border-sage-danger'
-                  : 'border-sage-border focus:border-sage-primary'
+                  ? 'border-[#ef4444] focus:border-[#ef4444]'
+                  : 'border-[#cbd5e0] focus:border-[#cbc2ea]'
               }`}
             />
             {formik.touched.description && formik.errors.description && (
-              <span className="text-[10px] text-sage-danger font-medium">{formik.errors.description}</span>
+              <span className="text-[10px] text-[#ef4444] font-medium">{formik.errors.description}</span>
             )}
           </div>
 
           {/* Footer CTA Buttons */}
-          <div className="flex justify-end gap-3 border-t border-sage-border pt-4 mt-4">
-            <Button
+          <div className="flex justify-end gap-3 border-t border-[#cbd5e0]/60 pt-4 mt-4">
+            <button
               type="button"
-              variant="ghost"
               onClick={onClose}
-              className="text-sage-muted hover:text-sage-text text-xs font-bold py-2.5 rounded-xl"
+              className="px-4 py-2 rounded-lg text-xs font-sans font-medium text-[#191a1b] border border-[#cbc2ea] hover:bg-[#fdf1ef] transition-colors"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
-              isDisabled={formik.isSubmitting}
-              className="bg-sage-primary hover:bg-sage-hover text-white font-extrabold text-xs px-6 py-2.5 rounded-2xl shadow-sm flex items-center gap-2 min-h-[42px] transition-all"
+              disabled={formik.isSubmitting}
+              className="px-5 py-2 rounded-lg bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] font-sans font-medium text-xs shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50"
             >
-              <Save className="w-4 h-4" />
-              <span>{formik.isSubmitting ? 'Saving...' : isEditing ? 'Update Product' : 'Create Product'}</span>
-            </Button>
+              <Save className="w-4 h-4 text-[#d4ff4c]" />
+              <span>{formik.isSubmitting ? 'Saving...' : isEditing ? 'Update Item' : 'Create Item'}</span>
+            </button>
           </div>
         </form>
       </div>

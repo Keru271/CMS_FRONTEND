@@ -1,31 +1,41 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Lexend, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/src/components/providers/HeroUIProvider";
 import { ProtectedRoute } from "@/src/components/auth/ProtectedRoute";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const lexend = Lexend({
+  variable: "--font-lexend",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
+  weight: ["300", "400", "600", "700"],
+  style: ["normal", "italic"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-code-saver",
+  subsets: ["latin"],
+  weight: ["300", "400", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "NovaShop - Modern E-Commerce Shopping Platform",
-  description: "Next-generation shopping alternative platform built with Next.js, Tailwind CSS, HeroUI, Formik, and Axios.",
+  title: "Statamic CMS — Warm Editorial Platform",
+  description: "Statamic-styled E-Commerce CMS Platform built with Next.js, Tailwind CSS, HeroUI, Formik, and Axios.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+    <html lang="en" className={`${lexend.variable} ${fraunces.variable} ${jetbrainsMono.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-[#fdf1ef] text-[#191a1b] font-sans selection:bg-[#191a1b] selection:text-[#d4ff4c]">
         <Providers>
           <ProtectedRoute>
-            {children}</ProtectedRoute>
+            {children}
+          </ProtectedRoute>
         </Providers>
       </body>
     </html>

@@ -1,83 +1,75 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f6fb;
-  --foreground: #1e293b;
+  /* Statamic Brand Colors */
+  --color-ink: #191a1b;
+  --color-paper-white: #ffffff;
+  --color-warm-shell: #fdf1ef;
+  --color-driftwood: #beb9b3;
+  --color-smoke: #5e5a5a;
+  --color-graphite: #4e5154;
+  --color-iron: #3f3f46;
+  --color-mist: #cbd5e0;
+  --color-electric-lime: #d4ff4c;
+  --color-lavender-whisper: #cbc2ea;
+  --color-lilac-mist: #d7e5fe;
+  --color-blossom: #f5ddee;
+  --color-plum-shadow: #4c305a;
+  --color-dusk-gradient: #334155;
+
+  /* Surfaces & Functional Fallbacks */
+  --background: #fdf1ef;
+  --foreground: #191a1b;
   --card: #ffffff;
-  --card-foreground: #0f172a;
-  --card-border: #e2e8f0;
-  --card-shadow: rgba(15, 23, 42, 0.08);
-  --primary: #528574;
-  --primary-foreground: #ffffff;
-  --primary-hover: #436f61;
-  --secondary: #64748b;
+  --card-foreground: #191a1b;
+  --card-border: #cbd5e0;
+  --card-shadow: rgba(94, 90, 90, 0.1);
+  --primary: #191a1b;
+  --primary-foreground: #d4ff4c;
+  --primary-hover: #000000;
+  --secondary: #5e5a5a;
   --secondary-foreground: #ffffff;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #eaf2ee;
-  --accent-foreground: #528574;
+  --muted: #fdf1ef;
+  --muted-foreground: #5e5a5a;
+  --accent: #f5ddee;
+  --accent-foreground: #191a1b;
   --danger: #ef4444;
   --danger-foreground: #ffffff;
   --success: #10b981;
-  --border: #e2e8f0;
+  --border: #cbd5e0;
   --input-bg: #ffffff;
-  --input-border: #cbd5e1;
-  --input-focus: #528574;
-  --dot-color: #cbd5e1;
-  --canvas-bg: #ffffff;
-  --canvas-border: #e2e8f0;
+  --input-border: #cbd5e0;
+  --input-focus: #cbc2ea;
+  --dot-color: #beb9b3;
+  --canvas-bg: #fdf1ef;
+  --canvas-border: #cbd5e0;
 
-  /* Sage Green Custom Palette Variables */
-  --sage-primary: #528574;
-  --sage-hover: #436f61;
-  --sage-accent: #eaf2ee;
-  --sage-danger: #e54848;
-  --sage-text: #2b3531;
-  --sage-muted: #788781;
-  --sage-border: #e1e7e4;
+  /* Sage Green Custom Palette Compatibility Overrides */
+  --sage-primary: #191a1b;
+  --sage-hover: #000000;
+  --sage-accent: #fdf1ef;
+  --sage-danger: #ef4444;
+  --sage-text: #191a1b;
+  --sage-muted: #5e5a5a;
+  --sage-border: #cbd5e0;
   --sage-input-bg: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #090d16;
-    --foreground: #f8fafc;
-    --card: #111827;
-    --card-foreground: #f8fafc;
-    --card-border: #1f2937;
-    --card-shadow: rgba(0, 0, 0, 0.5);
-    --primary: #528574;
-    --primary-foreground: #ffffff;
-    --primary-hover: #436f61;
-    --secondary: #94a3b8;
-    --secondary-foreground: #ffffff;
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
-    --accent: #192b25;
-    --accent-foreground: #6ab09b;
-    --danger: #f87171;
-    --danger-foreground: #ffffff;
-    --success: #34d399;
-    --border: #1f2937;
-    --input-bg: #0f172a;
-    --input-border: #334155;
-    --input-focus: #528574;
-    --dot-color: #334155;
-    --canvas-bg: #0b1120;
-    --canvas-border: #1e293b;
-
-    --sage-primary: #528574;
-    --sage-hover: #436f61;
-    --sage-accent: #192b25;
-    --sage-danger: #f87171;
-    --sage-text: #f8fafc;
-    --sage-muted: #94a3b8;
-    --sage-border: #334155;
-    --sage-input-bg: #0f172a;
-  }
-}
-
 @theme inline {
+  --color-ink: #191a1b;
+  --color-paper-white: #ffffff;
+  --color-warm-shell: #fdf1ef;
+  --color-driftwood: #beb9b3;
+  --color-smoke: #5e5a5a;
+  --color-graphite: #4e5154;
+  --color-iron: #3f3f46;
+  --color-mist: #cbd5e0;
+  --color-electric-lime: #d4ff4c;
+  --color-lavender-whisper: #cbc2ea;
+  --color-lilac-mist: #d7e5fe;
+  --color-blossom: #f5ddee;
+  --color-plum-shadow: #4c305a;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -100,7 +92,6 @@
   --color-canvas-bg: var(--canvas-bg);
   --color-canvas-border: var(--canvas-border);
 
-  /* Sage Green Custom Inline Tokens */
   --color-sage-primary: var(--sage-primary);
   --color-sage-hover: var(--sage-hover);
   --color-sage-accent: var(--sage-accent);
@@ -110,18 +101,28 @@
   --color-sage-border: var(--sage-border);
   --color-sage-input-bg: var(--sage-input-bg);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-lexend), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, Cambria, serif;
+  --font-mono: var(--font-code-saver), ui-monospace, SFMono-Regular, monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  background: var(--color-warm-shell);
+  color: var(--color-ink);
+  font-family: var(--font-lexend), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
-/* Canvas Dot Pattern Grid */
+/* Statamic Card Elevation Utilities */
+.shadow-statamic {
+  box-shadow: rgba(94, 90, 90, 0.1) 0px 0px 0px 1px, rgba(0, 0, 0, 0.08) 0px 16px 40px -8px;
+}
+
+.shadow-statamic-subtle {
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 2px 6px -16px, rgba(0, 0, 0, 0.15) 0px 4px 12px -4px;
+}
+
+/* Sunset Warm Ambient Dot Pattern */
 .bg-dot-pattern {
-  background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
-  background-size: 20px 20px;
+  background-image: radial-gradient(var(--color-driftwood) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
 }

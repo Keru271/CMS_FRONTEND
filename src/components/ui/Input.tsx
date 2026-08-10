@@ -38,25 +38,25 @@ export const Input = React.forwardRef<HTMLInputElement, CustomInputProps>(
     ref
   ) => {
     return (
-      <div className="flex flex-col gap-1.5 w-full">
+      <div className="flex flex-col gap-1.5 w-full font-sans">
         {label && (
-          <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
+          <label className="text-[11px] font-sans font-medium text-[#191a1b] uppercase tracking-wider flex items-center justify-between">
             {label}
           </label>
         )}
         <div
-          className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-sm transition-all border ${
+          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-all border ${
             isInvalid
-              ? 'border-danger bg-danger/10 text-danger focus-within:ring-2 focus-within:ring-danger/20'
-              : 'border-input-border bg-input-bg text-foreground focus-within:border-input-focus focus-within:ring-2 focus-within:ring-input-focus/20'
+              ? 'border-[#ef4444] bg-[#ef4444]/10 text-[#ef4444] focus-within:ring-2 focus-within:ring-[#ef4444]/20'
+              : 'border-[#cbd5e0] bg-[#ffffff] text-[#191a1b] focus-within:border-[#cbc2ea] focus-within:ring-2 focus-within:ring-[#cbc2ea]/40'
           } ${classNames?.inputWrapper || ''}`}
         >
-          {startContent && <span className="text-muted-foreground flex items-center shrink-0">{startContent}</span>}
+          {startContent && <span className="text-[#5e5a5a] flex items-center shrink-0">{startContent}</span>}
           <input
             ref={ref}
             value={value}
             onChange={onChange}
-            className={`w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm font-medium ${
+            className={`w-full bg-transparent outline-none text-[#191a1b] placeholder:text-[#beb9b3] text-xs font-sans font-normal ${
               classNames?.input || ''
             } ${className}`}
             {...props}
@@ -65,15 +65,15 @@ export const Input = React.forwardRef<HTMLInputElement, CustomInputProps>(
             <button
               type="button"
               onClick={onClear}
-              className="text-xs text-muted-foreground hover:text-foreground px-1"
+              className="text-xs text-[#5e5a5a] hover:text-[#191a1b] px-1"
             >
               ✕
             </button>
           )}
-          {endContent && <span className="text-muted-foreground flex items-center shrink-0">{endContent}</span>}
+          {endContent && <span className="text-[#5e5a5a] flex items-center shrink-0">{endContent}</span>}
         </div>
         {isInvalid && errorMessage && (
-          <span className="text-[11px] text-danger font-semibold mt-0.5">{errorMessage}</span>
+          <span className="text-[11px] font-sans text-[#ef4444] font-medium mt-0.5">{errorMessage}</span>
         )}
       </div>
     );

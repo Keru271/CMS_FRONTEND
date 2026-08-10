@@ -5,7 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
-  FolderTree,
   ShoppingBag,
   Users,
   Settings,
@@ -15,10 +14,8 @@ import {
   X,
   MessageSquare,
   CheckSquare,
-  Building,
   Truck,
   Database,
-  BarChart2,
   UserCheck,
   Palette,
   Compass,
@@ -26,6 +23,7 @@ import {
   Tag,
   Receipt,
   Megaphone,
+  Sparkles,
 } from 'lucide-react';
 import { MerchantOnboardingData } from '@/src/types';
 
@@ -79,11 +77,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'navigation' as CMSView, path: '/navigation', label: 'Navigation', icon: Compass },
     { id: 'products' as CMSView, path: '/products', label: 'Products Studio', icon: Package, badge: productsCount },
     { id: 'orders' as CMSView, path: '/orders', label: 'Requests', icon: ShoppingBag, badge: 6 },
-    { id: 'customers' as CMSView, path: '/customers', label: 'Users', icon: Users },
+    { id: 'customers' as CMSView, path: '/customers', label: 'Users & CRM', icon: Users },
     { id: 'discounts' as CMSView, path: '/discounts', label: 'Discounts', icon: Tag },
     { id: 'tax' as CMSView, path: '/tax', label: 'Taxation', icon: Receipt },
     { id: 'shipping' as CMSView, path: '/shipping', label: 'Logistics', icon: Truck },
-    { id: 'categories' as CMSView, path: '/categories', label: 'CMS', icon: Database },
+    { id: 'categories' as CMSView, path: '/categories', label: 'CMS Taxonomy', icon: Database },
     { id: 'marketing' as CMSView, path: '/marketing', label: 'Analytics & Growth', icon: Megaphone },
   ];
 
@@ -94,7 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'settings' as CMSView, path: '/settings', label: 'Settings', icon: Settings },
   ];
 
-  const storeName = merchantData?.store?.storeName || 'LEASO';
+  const storeName = merchantData?.store?.storeName || 'STATAMIC';
 
   const handleNavClick = (viewId?: CMSView, path?: string) => {
     if (path) {
@@ -126,32 +124,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {mobileOpen && (
         <div
           onClick={onCloseMobile}
-          className="fixed inset-0 bg-black/50 backdrop-blur-xs z-30 md:hidden animate-in fade-in"
+          className="fixed inset-0 bg-[#191a1b]/40 backdrop-blur-xs z-30 md:hidden animate-in fade-in"
         />
       )}
 
       <aside
-        className={`bg-[#f4f6f8] dark:bg-card border-r border-slate-200/80 dark:border-border h-screen flex flex-col justify-between transition-all duration-300 z-40 p-3 sm:p-4 ${
-          mobileOpen ? 'fixed inset-y-0 left-0 w-64 shadow-2xl' : 'hidden md:flex sticky top-0'
+        className={`bg-[#fdf1ef] border-r border-[#cbd5e0]/70 h-screen flex flex-col justify-between transition-all duration-300 z-40 p-3 sm:p-4 ${
+          mobileOpen ? 'fixed inset-y-0 left-0 w-64 shadow-2xl bg-[#ffffff]' : 'hidden md:flex sticky top-0'
         } ${collapsed ? 'md:w-20' : 'md:w-60'}`}
       >
         <div className="space-y-6">
-          {/* Sidebar Brand Header */}
+          {/* Statamic Brand Header */}
           <div className="flex items-center justify-between px-2 pt-1 h-10">
             <div className="flex items-center gap-2.5 overflow-hidden">
-              {/* Green Dot Indicator Logo */}
-              <div className="w-3 h-3 rounded-full bg-emerald-500 shrink-0 shadow-xs" />
+              {/* Statamic S-Mark Logo Pill */}
+              <div className="w-7 h-7 rounded-lg bg-[#191a1b] text-[#d4ff4c] flex items-center justify-center font-serif font-black text-sm shrink-0 shadow-xs">
+                S
+              </div>
               {(!collapsed || mobileOpen) && (
-                <span className="font-black text-lg tracking-wider uppercase text-slate-900 dark:text-foreground truncate">
-                  {storeName}
-                </span>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-serif font-bold text-base tracking-tight text-[#191a1b] truncate leading-tight">
+                    {storeName}
+                  </span>
+                  <span className="text-[10px] font-sans text-[#5e5a5a] font-medium tracking-wide">
+                    Editorial CMS
+                  </span>
+                </div>
               )}
             </div>
 
             {/* Desktop Collapse Toggle */}
             <button
               onClick={onToggleCollapse}
-              className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-200/60 transition-colors hidden md:block"
+              className="text-[#5e5a5a] hover:text-[#191a1b] p-1.5 rounded-lg hover:bg-[#cbc2ea]/30 transition-colors hidden md:block"
               aria-label="Toggle Sidebar"
             >
               {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -161,7 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {mobileOpen && (
               <button
                 onClick={onCloseMobile}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-xl hover:bg-slate-200/60 transition-colors md:hidden"
+                className="text-[#5e5a5a] hover:text-[#191a1b] p-1 rounded-lg hover:bg-[#cbc2ea]/30 transition-colors md:hidden"
                 aria-label="Close Sidebar Drawer"
               >
                 <X className="w-5 h-5" />
@@ -180,23 +185,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={idx}
                   onClick={() => handleNavClick(item.id, item.path)}
                   title={collapsed && !mobileOpen ? item.label : undefined}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs transition-all min-h-[42px] ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-sans transition-all min-h-[40px] ${
                     isActive
-                      ? 'bg-white dark:bg-accent text-slate-900 dark:text-foreground font-extrabold shadow-sm border border-slate-200/80'
-                      : 'text-slate-500 dark:text-muted-foreground hover:bg-white/60 dark:hover:bg-accent/40 hover:text-slate-900 font-semibold'
+                      ? 'bg-[#191a1b] text-[#ffffff] font-medium shadow-xs'
+                      : 'text-[#5e5a5a] hover:bg-[#ffffff] hover:text-[#191a1b] font-normal'
                   } ${collapsed && !mobileOpen ? 'justify-center' : 'justify-between'}`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <Icon
                       className={`w-4 h-4 shrink-0 ${
-                        isActive ? 'text-slate-900 dark:text-foreground' : 'text-slate-400'
+                        isActive ? 'text-[#d4ff4c]' : 'text-[#5e5a5a]'
                       }`}
                     />
                     {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
                   </div>
 
                   {(!collapsed || mobileOpen) && item.badge !== undefined && item.badge > 0 && (
-                    <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-foreground text-white dark:text-background font-bold text-[10px] flex items-center justify-center shrink-0">
+                    <span
+                      className={`w-5 h-5 rounded-full font-bold text-[10px] flex items-center justify-center shrink-0 ${
+                        isActive ? 'bg-[#d4ff4c] text-[#191a1b]' : 'bg-[#191a1b] text-[#d4ff4c]'
+                      }`}
+                    >
                       {item.badge}
                     </span>
                   )}
@@ -207,7 +216,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Footer Navigation Section */}
-        <div className="space-y-1 pt-4 border-t border-slate-200/80 dark:border-border">
+        <div className="space-y-1 pt-4 border-t border-[#cbd5e0]/70">
           {secondaryNavItems.map((item, idx) => {
             const Icon = item.icon;
             const isActive = isItemActive(item.path, item.id);
@@ -217,13 +226,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 key={idx}
                 onClick={() => handleNavClick(item.id, item.path)}
                 title={collapsed && !mobileOpen ? item.label : undefined}
-                className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs transition-all ${
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-sans transition-all ${
                   isActive
-                    ? 'bg-white text-slate-900 font-bold border border-slate-200'
-                    : 'text-slate-500 hover:text-slate-900 font-medium hover:bg-white/60'
+                    ? 'bg-[#191a1b] text-[#ffffff] font-medium'
+                    : 'text-[#5e5a5a] hover:text-[#191a1b] font-normal hover:bg-[#ffffff]'
                 } ${collapsed && !mobileOpen ? 'justify-center' : ''}`}
               >
-                <Icon className="w-4 h-4 text-slate-400 shrink-0" />
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#d4ff4c]' : 'text-[#5e5a5a]'}`} />
                 {(!collapsed || mobileOpen) && <span>{item.label}</span>}
               </button>
             );
