@@ -18,11 +18,16 @@ interface CMSContextType {
   merchantData: MerchantOnboardingData | null;
   setMerchantData: React.Dispatch<React.SetStateAction<MerchantOnboardingData | null>>;
   products: CMSProduct[];
+  setProducts: React.Dispatch<React.SetStateAction<CMSProduct[]>>;
   categories: CMSCategory[];
+  setCategories: React.Dispatch<React.SetStateAction<CMSCategory[]>>;
   orders: CMSOrder[];
+  setOrders: React.Dispatch<React.SetStateAction<CMSOrder[]>>;
   stats: DashboardStats | null;
+  setStats: React.Dispatch<React.SetStateAction<DashboardStats | null>>;
   isLoading: boolean;
-  fetchCMSData: () => Promise<void>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  fetchDashboardDetails: () => Promise<void>;
   
   // Product Modal State
   isProductModalOpen: boolean;
@@ -33,10 +38,6 @@ interface CMSContextType {
   openEditProductModal: (product: CMSProduct) => void;
   
   // Actions
-  handleCreateOrUpdateProduct: (formData: ProductFormData) => Promise<void>;
-  handleDeleteProduct: (id: string) => Promise<void>;
-  handleCreateCategory: (categoryData: CategoryFormData) => Promise<void>;
-  handleUpdateOrderStatus: (id: string, status: OrderStatus) => Promise<void>;
   handleLogout: () => void;
   
   // Sidebar State
@@ -69,13 +70,14 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const session = cmsService.getMerchantSession();
       if (session && session.merchant && session.store) {
         setMerchantData(session);
-        await fetchCMSData();
+        setIsLoading(false);
         return;
       }
 
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
       if (!token) {
         router.push('/login');
+        setIsLoading(false);
         return;
       }
 
@@ -108,35 +110,31 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           };
           cmsService.saveMerchantSession(newSession);
           setMerchantData(newSession);
-          await fetchCMSData();
         } else {
           router.push('/merchant-details');
         }
       } catch (err) {
         cmsService.clearMerchantSession();
         router.push('/login');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     initCMS();
   }, [router]);
 
-  const fetchCMSData = async () => {
+  // Fetch Dashboard Details via single endpoint /api/analytics/dashboard-details
+  const fetchDashboardDetails = async () => {
     setIsLoading(true);
     try {
-      const [productsData, categoriesData, ordersData, statsData] = await Promise.all([
-        cmsService.getProducts(),
-        cmsService.getCategories(),
-        cmsService.getOrders(),
-        cmsService.getDashboardStats(),
-      ]);
-
-      setProducts(productsData);
-      setCategories(categoriesData);
-      setOrders(ordersData);
-      setStats(statsData);
+      const details = await cmsService.getDashboardDetails();
+      setStats(details.stats);
+      setProducts(details.products);
+      setCategories(details.categories);
+      setOrders(details.orders);
     } catch (err) {
-      console.error('Failed to load CMS data:', err);
+      console.error('Failed to load dashboard details:', err);
     } finally {
       setIsLoading(false);
     }
@@ -158,53 +156,28 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsProductModalOpen(true);
   };
 
-  const handleCreateOrUpdateProduct = async (formData: ProductFormData) => {
-    if (editingProduct) {
-      await cmsService.updateProduct(editingProduct.id, formData);
-    } else {
-      await cmsService.createProduct(formData);
-    }
-    await fetchCMSData();
-  };
-
-  const handleDeleteProduct = async (id: string) => {
-    if (confirm('Are you sure you want to delete this product from the CMS catalog?')) {
-      await cmsService.deleteProduct(id);
-      await fetchCMSData();
-    }
-  };
-
-  const handleCreateCategory = async (categoryData: CategoryFormData) => {
-    await cmsService.createCategory(categoryData);
-    await fetchCMSData();
-  };
-
-  const handleUpdateOrderStatus = async (id: string, status: OrderStatus) => {
-    await cmsService.updateOrderStatus(id, status);
-    await fetchCMSData();
-  };
-
   return (
     <CMSContext.Provider
       value={{
         merchantData,
         setMerchantData,
         products,
+        setProducts,
         categories,
+        setCategories,
         orders,
+        setOrders,
         stats,
+        setStats,
         isLoading,
-        fetchCMSData,
+        setIsLoading,
+        fetchDashboardDetails,
         isProductModalOpen,
         setIsProductModalOpen,
         editingProduct,
         setEditingProduct,
         openAddProductModal,
         openEditProductModal,
-        handleCreateOrUpdateProduct,
-        handleDeleteProduct,
-        handleCreateCategory,
-        handleUpdateOrderStatus,
         handleLogout,
         sidebarCollapsed,
         setSidebarCollapsed,

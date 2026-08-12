@@ -30,12 +30,12 @@ export const MerchantOnboardingWizard: React.FC<MerchantOnboardingWizardProps> =
   const [isFinishing, setIsFinishing] = useState(false);
 
   const [storeDetails, setStoreDetails] = useState<StoreDetails>({
-    storeName: `${merchant.firstName}'s Official Store`,
-    tagline: 'Premium handcrafted items & modern catalog',
-    category: 'Tech & Electronics',
+    storeName: '',
+    tagline: '',
+    category: '',
     currency: 'USD',
-    supportEmail: merchant.email,
-    supportPhone: merchant.mobileNumber,
+    supportEmail: merchant.email || '',
+    supportPhone: merchant.mobileNumber || '',
   });
 
   const [selectedTemplate, setSelectedTemplate] = useState<StoreTemplate>(STORE_TEMPLATES[0]);

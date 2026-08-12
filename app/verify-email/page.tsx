@@ -28,22 +28,13 @@ function VerifyEmailContent() {
 
   const handleVerificationSuccess = (merchant: MerchantUser) => {
     const activeEmail = unverifiedEmail || merchant.email;
-    // Save merchant session state and navigate to store details onboarding
+    // Save user session state without auto-creating store or merchant setup
     cmsService.saveMerchantSession({
       merchant: { ...merchant, email: activeEmail },
-      store: {
-        storeName: `${merchant.firstName}'s Official Store`,
-        tagline: 'Premium handcrafted items & modern catalog',
-        category: 'Tech & Electronics',
-        currency: 'USD',
-        supportEmail: activeEmail,
-        supportPhone: merchant.mobileNumber,
-      },
-      selectedTemplate: STORE_TEMPLATES[0],
     });
 
     sessionStorage.removeItem('cms_pending_verification_email');
-    router.push('/merchant-details');
+    router.push('/login');
   };
 
   if (!unverifiedEmail) {

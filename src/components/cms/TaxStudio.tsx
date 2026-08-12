@@ -31,10 +31,13 @@ export const TaxStudio: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  // Region Modal
+  // Dynamic Merchant Store Currency
+  const [currencySymbol, setCurrencySymbol] = useState<string>('₹');
+  const [currencyCode, setCurrencyCode] = useState<string>('INR');
+
+  // Region Modal State
   const [isRegionModalOpen, setIsRegionModalOpen] = useState(false);
   const [editingRegion, setEditingRegion] = useState<CMSTaxRegion | null>(null);
-
   const [regionForm, setRegionForm] = useState({
     name: 'India (GST / IGST / CGST / SGST)',
     country: 'India',
@@ -45,7 +48,7 @@ export const TaxStudio: React.FC = () => {
     isTaxInclusive: false,
   });
 
-  // HSN/SAC Modal
+  // HSN/SAC Modal State
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [activeRegionId, setActiveRegionId] = useState<string | null>(null);
   const [codeForm, setCodeForm] = useState<{
@@ -60,7 +63,7 @@ export const TaxStudio: React.FC = () => {
     type: 'HSN',
   });
 
-  // Tax Invoice Modal
+  // Tax Invoice Modal State
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [b2bBuyerGstin, setB2bBuyerGstin] = useState('29BBBCU8812R1Z2');
   const [isInterStateGst, setIsInterStateGst] = useState(true);
@@ -69,12 +72,40 @@ export const TaxStudio: React.FC = () => {
   const [simRegionId, setSimRegionId] = useState<string>('tr-1');
   const [simItemPrice, setSimItemPrice] = useState<number>(100.0);
   const [simIsInclusive, setSimIsInclusive] = useState<boolean>(false);
-
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadData();
+    loadCurrency();
   }, []);
+
+  const loadCurrency = async () => {
+    try {
+      const details = await cmsService.getStoreSetup();
+      const code = (details.currency || 'INR').toUpperCase();
+      setCurrencyCode(code);
+      if (code === 'INR' || code === '₹') setCurrencySymbol('₹');
+      else if (code === 'EUR' || code === '€') setCurrencySymbol('€');
+      else if (code === 'GBP' || code === '£') setCurrencySymbol('£');
+      else if (code === 'JPY' || code === '¥') setCurrencySymbol('¥');
+      else setCurrencySymbol('$');
+    } catch {
+      const setupStr = typeof window !== 'undefined' ? localStorage.getItem('merchant_cms_store_setup') : null;
+      if (setupStr) {
+        try {
+          const parsed = JSON.parse(setupStr);
+          if (parsed.currency) {
+            const code = String(parsed.currency).toUpperCase();
+            setCurrencyCode(code);
+            if (code === 'INR' || code === '₹') setCurrencySymbol('₹');
+            else if (code === 'EUR' || code === '€') setCurrencySymbol('€');
+            else if (code === 'GBP' || code === '£') setCurrencySymbol('£');
+            else setCurrencySymbol('$');
+          }
+        } catch {}
+      }
+    }
+  };
 
   const loadData = async () => {
     setIsLoading(true);
@@ -341,215 +372,243 @@ export const TaxStudio: React.FC = () => {
         </div>
       </div>
 
-      {/* MAIN GRID: TAX REGIONS + REAL-TIME TAX CALCULATOR SIMULATOR */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* LEFT COLUMN: TAX REGION CARDS */}
-        <div className="lg:col-span-8 space-y-6">
-          {taxRegions.map((region) => (
-            <div
-              key={region.id}
-              className="p-6 rounded-3xl border border-slate-200/80 dark:border-border bg-white dark:bg-card shadow-sm space-y-5"
+      {/* MAIN CONTENT: FALLBACK UI OR TAX REGIONS GRID + SIMULATOR */}
+      {taxRegions.length === 0 ? (
+        <div className="p-10 sm:p-16 rounded-3xl bg-white dark:bg-card border border-dashed border-slate-300 dark:border-border text-center space-y-6 shadow-sm max-w-4xl mx-auto my-8">
+          <div className="w-20 h-20 rounded-3xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto shadow-inner">
+            <Receipt className="w-10 h-10" />
+          </div>
+          <div className="space-y-2 max-w-lg mx-auto">
+            <h3 className="font-black text-2xl text-slate-900 dark:text-foreground">
+              No Tax Regions Configured
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+              Set up regional tax rates, GSTIN registration numbers, and HSN/SAC classification codes to automate store tax calculations and generate compliant B2B tax invoices.
+            </p>
+          </div>
+          <div className="pt-2 flex justify-center">
+            <button
+              type="button"
+              onClick={handleOpenCreateRegion}
+              className="px-7 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-xl shadow-indigo-600/30 flex items-center gap-2.5 transition-all hover:scale-105 active:scale-95"
             >
-              {/* Region Header */}
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-border pb-4">
-                <div className="space-y-1">
+              <Plus className="w-4 h-4" />
+              <span>Configure First Tax Region</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* LEFT COLUMN: TAX REGION CARDS */}
+          <div className="lg:col-span-8 space-y-6">
+            {taxRegions.map((region) => (
+              <div
+                key={region.id}
+                className="p-6 rounded-3xl border border-slate-200/80 dark:border-border bg-white dark:bg-card shadow-sm space-y-5"
+              >
+                {/* Region Header */}
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-border pb-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-5 h-5 text-indigo-600" />
+                      <h2 className="font-black text-lg text-slate-900 dark:text-foreground">{region.name}</h2>
+                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-accent text-slate-800 dark:text-slate-200 text-[10px] font-black uppercase">
+                        {region.taxName}
+                      </span>
+                    </div>
+
+                    {region.taxNumber && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-slate-400">Registration ID:</span>
+                        <span className="font-mono font-black text-indigo-600 dark:text-indigo-400">{region.taxNumber}</span>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex items-center gap-2">
-                    <Globe className="w-5 h-5 text-indigo-600" />
-                    <h2 className="font-black text-lg text-slate-900 dark:text-foreground">{region.name}</h2>
-                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-accent text-slate-800 dark:text-slate-200 text-[10px] font-black uppercase">
-                      {region.taxName}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAddCode(region.id)}
+                      className="px-3.5 py-2 rounded-xl bg-indigo-50 dark:bg-accent hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 text-xs font-extrabold flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add HSN/SAC</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditRegion(region)}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-accent hover:bg-slate-200 text-slate-700 dark:text-slate-300"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteRegion(region.id)}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-accent text-rose-500 hover:bg-rose-50"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Rates Breakdown Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-100 dark:border-border">
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Standard Tax Rate</span>
+                    <span className="text-lg font-black text-slate-900 dark:text-foreground">{region.standardRate}%</span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-100 dark:border-border">
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Reduced Rate</span>
+                    <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">{region.reducedRate || 5.0}%</span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-100 dark:border-border">
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Pricing Calculation</span>
+                    <span className={`text-xs font-black uppercase ${region.isTaxInclusive ? 'text-emerald-600' : 'text-amber-600'}`}>
+                      {region.isTaxInclusive ? 'Tax-Inclusive' : 'Tax-Exclusive'}
                     </span>
                   </div>
-
-                  {region.taxNumber && (
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-slate-400">Registration ID:</span>
-                      <span className="font-mono font-black text-indigo-600 dark:text-indigo-400">{region.taxNumber}</span>
-                    </div>
-                  )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenAddCode(region.id)}
-                    className="px-3.5 py-2 rounded-xl bg-indigo-50 dark:bg-accent hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 text-xs font-extrabold flex items-center gap-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add HSN/SAC</span>
-                  </button>
+                {/* HSN & SAC Codes Table */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider">
+                    Product HSN / SAC Codes Dictionary ({region.hsnSacCodes?.length || 0})
+                  </h4>
 
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEditRegion(region)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-accent hover:bg-slate-200 text-slate-700 dark:text-slate-300"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
+                  {region.hsnSacCodes && region.hsnSacCodes.length > 0 ? (
+                    <div className="divide-y divide-slate-100 dark:divide-border border border-slate-100 dark:border-border rounded-2xl overflow-hidden text-xs">
+                      {region.hsnSacCodes.map((code) => (
+                        <div key={code.id} className="p-3.5 bg-slate-50/50 dark:bg-accent/20 flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <span className="px-2 py-1 rounded-lg bg-slate-900 text-white font-mono font-black text-[10px]">
+                              {code.code}
+                            </span>
+                            <div>
+                              <span className="font-extrabold text-slate-900 dark:text-foreground block">{code.description}</span>
+                              <span className="text-[10px] text-slate-400 block">{code.type} Classification</span>
+                            </div>
+                          </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteRegion(region.id)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-accent text-rose-500 hover:bg-rose-50"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Rates Breakdown Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-100 dark:border-border">
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Standard Tax Rate</span>
-                  <span className="text-lg font-black text-slate-900 dark:text-foreground">{region.standardRate}%</span>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-100 dark:border-border">
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Reduced Rate</span>
-                  <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">{region.reducedRate || 5.0}%</span>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-100 dark:border-border">
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Pricing Calculation</span>
-                  <span className={`text-xs font-black uppercase ${region.isTaxInclusive ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {region.isTaxInclusive ? 'Tax-Inclusive' : 'Tax-Exclusive'}
-                  </span>
-                </div>
-              </div>
-
-              {/* HSN & SAC Codes Table */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider">
-                  Product HSN / SAC Codes Dictionary ({region.hsnSacCodes?.length || 0})
-                </h4>
-
-                {region.hsnSacCodes && region.hsnSacCodes.length > 0 ? (
-                  <div className="divide-y divide-slate-100 dark:divide-border border border-slate-100 dark:border-border rounded-2xl overflow-hidden text-xs">
-                    {region.hsnSacCodes.map((code) => (
-                      <div key={code.id} className="p-3.5 bg-slate-50/50 dark:bg-accent/20 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <span className="px-2 py-1 rounded-lg bg-slate-900 text-white font-mono font-black text-[10px]">
-                            {code.code}
-                          </span>
-                          <div>
-                            <span className="font-extrabold text-slate-900 dark:text-foreground block">{code.description}</span>
-                            <span className="text-[10px] text-slate-400 block">{code.type} Classification</span>
+                          <div className="flex items-center gap-4">
+                            <span className="font-black text-indigo-600 dark:text-indigo-400">{code.taxRate}% Tax</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCode(region.id, code.id)}
+                              className="p-1 rounded-lg hover:bg-rose-100 text-rose-600"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">No HSN/SAC product classification codes mapped for this region.</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
 
-                        <div className="flex items-center gap-4">
-                          <span className="font-black text-indigo-600 dark:text-indigo-400">{code.taxRate}% Tax</span>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCode(region.id, code.id)}
-                            className="p-1 rounded-lg hover:bg-rose-100 text-rose-600"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
+          {/* RIGHT COLUMN: REAL-TIME TAX CALCULATOR SIMULATOR */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-xl space-y-5 sticky top-6">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                  <Calculator className="w-4 h-4" />
+                  <span>Real-Time Tax Calculator</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                  Live Engine
+                </span>
+              </div>
+
+              {/* SIMULATED INPUTS */}
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-300">Target Tax Region</label>
+                  <select
+                    value={simRegionId}
+                    onChange={(e) => setSimRegionId(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-800 bg-slate-950 text-white text-xs font-bold"
+                  >
+                    {taxRegions.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name} ({r.standardRate}%)
+                      </option>
                     ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-300">Item Price ({currencySymbol})</label>
+                  <input
+                    type="number"
+                    step="10"
+                    value={simItemPrice}
+                    onChange={(e) => setSimItemPrice(parseFloat(e.target.value) || 0)}
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-800 bg-slate-950 text-white font-mono font-black text-sm"
+                  />
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-slate-300">Tax Inclusive Pricing Mode</span>
+                    <button
+                      type="button"
+                      onClick={() => setSimIsInclusive(!simIsInclusive)}
+                      className={`px-3 py-1 rounded-full text-xs font-black ${
+                        simIsInclusive ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'
+                      }`}
+                    >
+                      {simIsInclusive ? 'ON (Inclusive)' : 'OFF (Exclusive)'}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    {simIsInclusive
+                      ? '✓ Tax is already included in item price. Base Price = Price / (1 + Rate/100).'
+                      : '✓ Tax is calculated & added on top at checkout. Tax = Price * (Rate/100).'}
+                  </p>
+                </div>
+              </div>
+
+              {/* SIMULATOR TAX OUTPUT */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
+                <div className="flex justify-between text-slate-400">
+                  <span>Standard Rate:</span>
+                  <span className="font-bold text-white">{selectedSimRegion?.standardRate || 0}%</span>
+                </div>
+
+                {selectedSimRegion?.taxName === 'GST' ? (
+                  <div className="space-y-1 pt-2 border-t border-slate-800">
+                    <div className="flex justify-between text-slate-300">
+                      <span>Intra-State CGST ({(selectedSimRegion?.standardRate || 0) / 2}%):</span>
+                      <span className="font-bold text-indigo-400">{currencySymbol}{simTax.cgst.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Intra-State SGST ({(selectedSimRegion?.standardRate || 0) / 2}%):</span>
+                      <span className="font-bold text-indigo-400">{currencySymbol}{simTax.sgst.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-300 pt-1 border-t border-slate-800/60">
+                      <span>Inter-State IGST ({selectedSimRegion?.standardRate || 0}%):</span>
+                      <span className="font-bold text-purple-400">{currencySymbol}{simTax.igst.toFixed(2)}</span>
+                    </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400 italic">No HSN/SAC product classification codes mapped for this region.</p>
+                  <div className="flex justify-between text-indigo-400 font-bold border-t border-slate-800 pt-2">
+                    <span>Calculated Tax:</span>
+                    <span>+{currencySymbol}{simTax.taxAmount.toFixed(2)}</span>
+                  </div>
                 )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* RIGHT COLUMN: REAL-TIME TAX CALCULATOR SIMULATOR */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-xl space-y-5 sticky top-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
-                <Calculator className="w-4 h-4" />
-                <span>Real-Time Tax Calculator</span>
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
-                Live Engine
-              </span>
-            </div>
-
-            {/* SIMULATED INPUTS */}
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-300">Target Tax Region</label>
-                <select
-                  value={simRegionId}
-                  onChange={(e) => setSimRegionId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-800 bg-slate-950 text-white text-xs font-bold"
-                >
-                  {taxRegions.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name} ({r.standardRate}%)
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-300">Item Price ($)</label>
-                <input
-                  type="number"
-                  step="10"
-                  value={simItemPrice}
-                  onChange={(e) => setSimItemPrice(parseFloat(e.target.value) || 0)}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-800 bg-slate-950 text-white font-mono font-black text-sm"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950 border border-slate-800">
-                <span className="text-xs font-extrabold text-slate-300">Tax Inclusive Pricing Mode</span>
-                <button
-                  type="button"
-                  onClick={() => setSimIsInclusive(!simIsInclusive)}
-                  className={`px-3 py-1 rounded-full text-xs font-black ${
-                    simIsInclusive ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'
-                  }`}
-                >
-                  {simIsInclusive ? 'ON (Inclusive)' : 'OFF (Exclusive)'}
-                </button>
-              </div>
-            </div>
-
-            {/* SIMULATOR TAX OUTPUT */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
-              <div className="flex justify-between text-slate-400">
-                <span>Standard Rate:</span>
-                <span className="font-bold text-white">{selectedSimRegion?.standardRate}%</span>
-              </div>
-
-              {selectedSimRegion?.taxName === 'GST' ? (
-                <div className="space-y-1 pt-2 border-t border-slate-800">
-                  <div className="flex justify-between text-slate-300">
-                    <span>Intra-State CGST ({selectedSimRegion.standardRate / 2}%):</span>
-                    <span className="font-bold text-indigo-400">${simTax.cgst.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-300">
-                    <span>Intra-State SGST ({selectedSimRegion.standardRate / 2}%):</span>
-                    <span className="font-bold text-indigo-400">${simTax.sgst.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-300 pt-1 border-t border-slate-800/60">
-                    <span>Inter-State IGST ({selectedSimRegion.standardRate}%):</span>
-                    <span className="font-bold text-purple-400">${simTax.igst.toFixed(2)}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-between text-indigo-400 font-bold">
-                  <span>Calculated Tax:</span>
-                  <span>+${simTax.taxAmount.toFixed(2)}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between font-black text-sm text-white pt-2 border-t border-slate-800">
-                <span>Final Order Price:</span>
-                <span className="text-amber-400">${simTax.finalPrice.toFixed(2)}</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* CREATE / EDIT TAX REGION MODAL */}
       {isRegionModalOpen && (
@@ -813,17 +872,17 @@ export const TaxStudio: React.FC = () => {
                     <td className="py-3 font-bold">Studio Wireless Headphones Pro</td>
                     <td className="py-3 font-mono">85183000</td>
                     <td className="py-3 text-center">2</td>
-                    <td className="py-3 text-right">$200.00</td>
-                    <td className="py-3 text-right">$36.00</td>
-                    <td className="py-3 text-right font-bold">$236.00</td>
+                    <td className="py-3 text-right">{currencySymbol}200.00</td>
+                    <td className="py-3 text-right">{currencySymbol}36.00</td>
+                    <td className="py-3 text-right font-bold">{currencySymbol}236.00</td>
                   </tr>
                   <tr>
                     <td className="py-3 font-bold">Organic Cotton Brand T-Shirt</td>
                     <td className="py-3 font-mono">61091000</td>
                     <td className="py-3 text-center">1</td>
-                    <td className="py-3 text-right">$40.00</td>
-                    <td className="py-3 text-right">$4.80</td>
-                    <td className="py-3 text-right font-bold">$44.80</td>
+                    <td className="py-3 text-right">{currencySymbol}40.00</td>
+                    <td className="py-3 text-right">{currencySymbol}4.80</td>
+                    <td className="py-3 text-right font-bold">{currencySymbol}44.80</td>
                   </tr>
                 </tbody>
               </table>
@@ -833,15 +892,15 @@ export const TaxStudio: React.FC = () => {
                 <div className="w-64 space-y-1.5 text-xs text-slate-700">
                   <div className="flex justify-between">
                     <span>Total Taxable Subtotal:</span>
-                    <span className="font-bold">$240.00</span>
+                    <span className="font-bold">{currencySymbol}240.00</span>
                   </div>
                   <div className="flex justify-between text-indigo-600 font-bold">
                     <span>Integrated Tax (IGST):</span>
-                    <span>$40.80</span>
+                    <span>{currencySymbol}40.80</span>
                   </div>
                   <div className="flex justify-between font-black text-sm text-slate-900 pt-2 border-t">
                     <span>Invoice Grand Total:</span>
-                    <span className="text-indigo-600">$280.80 USD</span>
+                    <span className="text-indigo-600">{currencySymbol}280.80 {currencyCode}</span>
                   </div>
                 </div>
               </div>

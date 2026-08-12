@@ -65,6 +65,7 @@ export const NavigationManager: React.FC = () => {
 
   // Create New Menu Modal
   const [isCreateMenuModalOpen, setIsCreateMenuModalOpen] = useState(false);
+  const [menuModalError, setMenuModalError] = useState<string | null>(null);
   const [newMenuFormData, setNewMenuFormData] = useState({
     title: '',
     handle: '',
@@ -255,11 +256,12 @@ export const NavigationManager: React.FC = () => {
 
   const handleCreateNewMenu = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMenuModalError(null);
     try {
       setIsSaving(true);
       const created = await cmsService.createMenu({
         title: newMenuFormData.title,
-        handle: newMenuFormData.handle || `menu-${Date.now()}`,
+        handle: (newMenuFormData.handle || `menu-${Date.now()}`).toLowerCase().trim(),
         location: newMenuFormData.location,
         items: [{ id: `item-${Date.now()}`, label: 'Home', url: '/', target: '_self' }],
       });
@@ -269,7 +271,9 @@ export const NavigationManager: React.FC = () => {
       await loadMenus();
       setActiveMenuId(created.id);
     } catch (err: any) {
-      showToast(err.message || 'Failed to create menu.', 'error');
+      const msg = err.response?.data?.message || err.message || 'Failed to create menu.';
+      setMenuModalError(msg);
+      showToast(msg, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -802,6 +806,21 @@ export const NavigationManager: React.FC = () => {
             </div>
 
             <form onSubmit={handleCreateNewMenu} className="p-6 space-y-4">
+              {menuModalError && (
+                <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center justify-between animate-in fade-in">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                    <span>{menuModalError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMenuModalError(null)}
+                    className="p-1 text-rose-400 hover:text-rose-600 font-bold"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-slate-700">Menu Title</label>
                 <input

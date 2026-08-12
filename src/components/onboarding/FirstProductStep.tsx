@@ -91,11 +91,12 @@ export const FirstProductStep: React.FC<FirstProductStepProps> = ({
     initialValues?.image || PRESET_IMAGES[0].url
   );
 
-  const defaultCategory = storeDetails.category.includes('Tech')
+  const categoryStr = storeDetails.category || '';
+  const defaultCategory = categoryStr.includes('Tech')
     ? 'Electronics'
-    : storeDetails.category.includes('Fashion')
+    : categoryStr.includes('Fashion')
     ? 'Fashion'
-    : storeDetails.category.includes('Living')
+    : categoryStr.includes('Living')
     ? 'Home & Living'
     : 'General';
 

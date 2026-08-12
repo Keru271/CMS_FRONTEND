@@ -78,6 +78,7 @@ export interface CMSProduct {
   costPrice?: number | null;
   taxRate?: number | null;
   taxable?: boolean;
+  isTaxInclusive?: boolean;
   inventory: number;
   stockQuantity: number;
   weight?: number | null;
@@ -110,6 +111,7 @@ export interface ProductFormData {
   costPrice?: number | string;
   taxRate?: number | string;
   taxable?: boolean;
+  isTaxInclusive?: boolean;
   inventory?: number | string;
   stockQuantity?: number | string;
   weight?: number | string;
@@ -135,6 +137,16 @@ export interface BrandData {
   website?: string | null;
   status: string;
   productCount?: number;
+  createdAt?: string;
+}
+
+export interface BrandFormData {
+  name: string;
+  slug: string;
+  logo?: string;
+  description?: string;
+  website?: string;
+  status?: string;
 }
 
 export type CollectionType = 'MANUAL' | 'AUTOMATIC';
@@ -162,6 +174,21 @@ export interface CollectionData {
   metaTitle?: string | null;
   metaDescription?: string | null;
   productCount?: number;
+  createdAt?: string;
+}
+
+export interface CollectionFormData {
+  name: string;
+  slug: string;
+  image?: string;
+  description?: string;
+  type?: string;
+  rules?: CollectionRule[];
+  ruleMatch?: string;
+  manualProductIds?: string[];
+  featured?: boolean;
+  metaTitle?: string;
+  metaDescription?: string;
 }
 
 export interface ProductReviewData {
@@ -182,23 +209,117 @@ export interface CMSCategory {
   id: string;
   name: string;
   slug: string;
+  icon?: string;
   productCount: number;
   description?: string;
+  createdAt?: string;
+}
+
+export interface InventoryHealthMetrics {
+  totalProducts: number;
+  activeProducts: number;
+  draftProducts: number;
+  outOfStockProducts: number;
+  lowStockProducts: number;
+  noImagesProducts: number;
+  noPriceProducts: number;
+  noInventoryProducts: number;
+}
+
+export interface CustomerAnalyticsMetrics {
+  totalCustomers: number;
+  newCustomers: number;
+  returningCustomers: number;
+  repeatPurchaseRate: number;
+  topCustomers: { name: string; email: string; orders: number; totalSpent: number }[];
+}
+
+export interface StoreFunnelMetrics {
+  visitors: number;
+  sessions: number;
+  pageViews: number;
+  productViews: number;
+  addToCart: number;
+  checkoutStarted: number;
+  purchases: number;
+  conversionRate: number;
+}
+
+export interface MarketingAnalyticsMetrics {
+  activeDiscounts: number;
+  couponUsage: number;
+  abandonedCartsCount: number;
+  abandonedCartsValue: number;
+  emailCampaignsCount: number;
+  referralOrdersCount: number;
+}
+
+export interface PaymentAnalyticsMetrics {
+  successfulAmount: number;
+  failedAmount: number;
+  pendingAmount: number;
+  refundsAmount: number;
+  breakdown: {
+    razorpay: number;
+    stripe: number;
+    cod: number;
+    upi: number;
+  };
+}
+
+export interface ShippingOperationsMetrics {
+  awaitingShipment: number;
+  shipped: number;
+  delivered: number;
+  failedDeliveries: number;
+  returns: number;
+  rto: number;
+  shippingCostTotal: number;
+}
+
+export interface OnboardingChecklistItem {
+  id: string;
+  label: string;
+  completed: boolean;
+  actionUrl?: string;
+}
+
+export interface OnboardingProgressData {
+  percentage: number;
+  items: OnboardingChecklistItem[];
 }
 
 export interface DashboardStats {
+  // Top-level KPI cards
+  totalSales: number;
   totalRevenue: number;
   totalOrders: number;
+  averageOrderValue: number;
+  totalCustomers: number;
   totalProducts: number;
+  conversionRate: number;
+  refundsTotal: number;
+  pendingPaymentsTotal: number;
   lowStockCount: number;
   revenueGrowth: number;
   ordersGrowth: number;
+
+  // Analytics sub-structures
+  inventoryHealth?: InventoryHealthMetrics;
+  customerAnalytics?: CustomerAnalyticsMetrics;
+  storeFunnel?: StoreFunnelMetrics;
+  marketingSummary?: MarketingAnalyticsMetrics;
+  paymentMetrics?: PaymentAnalyticsMetrics;
+  shippingOperations?: ShippingOperationsMetrics;
+  onboardingProgress?: OnboardingProgressData;
 }
 
 export interface CategoryFormData {
   name: string;
   slug: string;
+  icon?: string;
   description?: string;
+  createdAt?: string;
 }
 
 export interface ApiResponse<T> {
@@ -217,11 +338,11 @@ export interface MerchantUser {
 
 export interface StoreDetails {
   storeName: string;
-  tagline: string;
-  category: string;
+  tagline?: string;
+  category?: string;
   currency: string;
-  supportEmail: string;
-  supportPhone: string;
+  supportEmail?: string;
+  supportPhone?: string;
 }
 
 export interface StoreSetupData {
@@ -325,8 +446,8 @@ export interface StoreIndustryCategory {
 
 export interface MerchantOnboardingData {
   merchant: MerchantUser;
-  store: StoreDetails;
-  selectedTemplate: StoreTemplate;
+  store?: StoreDetails;
+  selectedTemplate?: StoreTemplate;
   firstProduct?: ProductFormData;
 }
 

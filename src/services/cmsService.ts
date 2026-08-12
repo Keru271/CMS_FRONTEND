@@ -23,7 +23,9 @@ import {
   CMSPageData,
   PageFormData,
   BrandData,
+  BrandFormData,
   CollectionData,
+  CollectionFormData,
   ProductReviewData,
   CMSMenuData,
   CMSMenuItem,
@@ -39,6 +41,17 @@ import {
   CMSPixelConfig,
   AbandonedCartData,
 } from '@/src/types';
+
+let inFlightPagesPromise: Promise<CMSPageData[]> | null = null;
+let inFlightMenusPromise: Promise<CMSMenuData[]> | null = null;
+let inFlightProductsPromise: Promise<CMSProduct[]> | null = null;
+let inFlightCategoriesPromise: Promise<CMSCategory[]> | null = null;
+let inFlightBrandsPromise: Promise<BrandData[]> | null = null;
+let inFlightCollectionsPromise: Promise<CollectionData[]> | null = null;
+let inFlightOrdersPromise: Promise<CMSOrder[]> | null = null;
+let inFlightCustomersPromise: Promise<CMSCustomer[]> | null = null;
+let inFlightDiscountsPromise: Promise<CMSDiscount[]> | null = null;
+let inFlightTaxRegionsPromise: Promise<CMSTaxRegion[]> | null = null;
 
 export const DEFAULT_STORE_CATEGORIES: StoreIndustryCategory[] = [
   { id: 'cat-1', name: 'Fashion & Apparel', slug: 'fashion-apparel', icon: '👗', description: 'Clothing, luxury garments, footwear and apparel.' },
@@ -420,34 +433,162 @@ let categoriesMemoryState = [...INITIAL_CATEGORIES];
 let ordersMemoryState = [...INITIAL_ORDERS];
 
 export const cmsService = {
-  // Get Dashboard KPI Stats
-  async getDashboardStats(): Promise<DashboardStats> {
+  // Get Aggregated Dashboard Details (1 Single API Call for stats, products, categories, orders)
+  async getDashboardDetails(): Promise<{
+    stats: DashboardStats;
+    products: CMSProduct[];
+    categories: CMSCategory[];
+    orders: CMSOrder[];
+  }> {
     try {
-      const response = await apiClient.get<ApiResponse<DashboardStats>>('/cms/dashboard-stats');
-      if (response.data && response.data.success) {
+      const response = await apiClient.get<ApiResponse<{
+        stats: DashboardStats;
+        products: CMSProduct[];
+        categories: CMSCategory[];
+        orders: CMSOrder[];
+      }>>('/analytics/dashboard-details');
+      if (response.data && response.data.success && response.data.data) {
         return response.data.data;
       }
     } catch {
       // Mock fallback
     }
 
-    const totalRev = ordersMemoryState.reduce((sum, o) => sum + (o.paymentStatus === 'paid' ? o.totalAmount : 0), 0);
-    const lowStock = productsMemoryState.filter((p) => p.stockQuantity < 10 && p.status === 'active').length;
+    const totalRev = ordersMemoryState.reduce((sum, o) => sum + (o.paymentStatus === 'PAID' || o.paymentStatus === 'paid' ? o.totalAmount : 0), 0);
+    const totalOrdersCount = ordersMemoryState.length;
+    const aov = totalOrdersCount > 0 ? totalRev / totalOrdersCount : 0;
+    const activeProds = productsMemoryState.filter((p) => p.status === 'active' || p.status === 'ACTIVE').length;
+    const draftProds = productsMemoryState.filter((p) => p.status === 'draft' || p.status === 'DRAFT').length;
+    const lowStock = productsMemoryState.filter((p) => p.stockQuantity > 0 && p.stockQuantity < 10 && (p.status === 'active' || p.status === 'ACTIVE')).length;
+    const outOfStock = productsMemoryState.filter((p) => p.stockQuantity === 0).length;
+    const noImages = productsMemoryState.filter((p) => !p.image && (!p.images || p.images.length === 0)).length;
+    const noPrice = productsMemoryState.filter((p) => !p.price || p.price <= 0).length;
+
+    const pendingOrds = ordersMemoryState.filter((o) => (o.paymentStatus || '').toLowerCase() === 'pending');
+    const pendingTotal = pendingOrds.reduce((sum, o) => sum + o.totalAmount, 0);
+    const refundsTotal = ordersMemoryState.reduce((sum, o) => sum + (o.refundAmount || 0), 0);
+
+    const awaitingShipment = ordersMemoryState.filter((o) => ['processing', 'confirmed', 'pending'].includes((o.orderStatus || '').toLowerCase())).length;
+    const shipped = ordersMemoryState.filter((o) => (o.orderStatus || '').toLowerCase() === 'shipped').length;
+    const delivered = ordersMemoryState.filter((o) => (o.orderStatus || '').toLowerCase() === 'delivered').length;
+
+    const customerMap: Record<string, { name: string; email: string; orders: number; totalSpent: number }> = {};
+    ordersMemoryState.forEach((o) => {
+      const email = o.customerEmail || 'unknown@example.com';
+      if (!customerMap[email]) {
+        customerMap[email] = { name: o.customerName || 'Customer', email, orders: 0, totalSpent: 0 };
+      }
+      customerMap[email].orders += 1;
+      if (o.paymentStatus === 'paid' || o.paymentStatus === 'PAID') {
+        customerMap[email].totalSpent += o.totalAmount;
+      }
+    });
+
+    const uniqueCustomers = Object.values(customerMap);
+    const returningCust = uniqueCustomers.filter((c) => c.orders > 1).length;
+
+    const mockStats: DashboardStats = {
+      totalSales: totalRev,
+      totalRevenue: totalRev,
+      totalOrders: totalOrdersCount,
+      averageOrderValue: Math.round(aov),
+      totalCustomers: uniqueCustomers.length,
+      totalProducts: productsMemoryState.length,
+      conversionRate: 0,
+      refundsTotal,
+      pendingPaymentsTotal: pendingTotal,
+      lowStockCount: lowStock,
+      revenueGrowth: 0,
+      ordersGrowth: 0,
+
+      inventoryHealth: {
+        totalProducts: productsMemoryState.length,
+        activeProducts: activeProds,
+        draftProducts: draftProds,
+        outOfStockProducts: outOfStock,
+        lowStockProducts: lowStock,
+        noImagesProducts: noImages,
+        noPriceProducts: noPrice,
+        noInventoryProducts: outOfStock,
+      },
+
+      customerAnalytics: {
+        totalCustomers: uniqueCustomers.length,
+        newCustomers: uniqueCustomers.length,
+        returningCustomers: returningCust,
+        repeatPurchaseRate: uniqueCustomers.length > 0 ? Math.round((returningCust / uniqueCustomers.length) * 100) : 0,
+        topCustomers: uniqueCustomers.sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5),
+      },
+
+      storeFunnel: {
+        visitors: 0,
+        sessions: 0,
+        pageViews: 0,
+        productViews: 0,
+        addToCart: 0,
+        checkoutStarted: pendingOrds.length,
+        purchases: ordersMemoryState.filter((o) => o.paymentStatus === 'paid' || o.paymentStatus === 'PAID').length,
+        conversionRate: 0,
+      },
+
+      marketingSummary: {
+        activeDiscounts: 0,
+        couponUsage: 0,
+        abandonedCartsCount: 0,
+        abandonedCartsValue: 0,
+        emailCampaignsCount: 0,
+        referralOrdersCount: 0,
+      },
+
+      paymentMetrics: {
+        successfulAmount: ordersMemoryState.filter((o) => o.paymentStatus === 'paid' || o.paymentStatus === 'PAID').reduce((s, o) => s + o.totalAmount, 0),
+        failedAmount: ordersMemoryState.filter((o) => o.paymentStatus === 'failed' || o.paymentStatus === 'FAILED').reduce((s, o) => s + o.totalAmount, 0),
+        pendingAmount: pendingTotal,
+        refundsAmount: refundsTotal,
+        breakdown: {
+          razorpay: 0,
+          stripe: 0,
+          cod: 0,
+          upi: 0,
+        },
+      },
+
+      shippingOperations: {
+        awaitingShipment,
+        shipped,
+        delivered,
+        failedDeliveries: 0,
+        returns: ordersMemoryState.filter((o) => o.orderStatus === 'refunded' || o.orderStatus === 'REFUNDED').length,
+        rto: 0,
+        shippingCostTotal: ordersMemoryState.reduce((s, o) => s + (o.shippingAmount || 0), 0),
+      },
+
+      onboardingProgress: {
+        percentage: productsMemoryState.length > 0 ? 80 : 50,
+        items: [
+          { id: '1', label: 'Store information', completed: true },
+          { id: '2', label: 'Add products', completed: productsMemoryState.length > 0 },
+          { id: '3', label: 'Choose template', completed: true },
+          { id: '4', label: 'Configure payment', completed: true },
+          { id: '5', label: 'Configure shipping', completed: true },
+          { id: '6', label: 'Connect domain', completed: false, actionUrl: '/settings' },
+          { id: '7', label: 'Launch store', completed: false, actionUrl: '/store-setup' },
+        ],
+      },
+    };
 
     return {
-      totalRevenue: totalRev + 12840.50,
-      totalOrders: ordersMemoryState.length + 154,
-      totalProducts: productsMemoryState.length,
-      lowStockCount: lowStock,
-      revenueGrowth: 14.8,
-      ordersGrowth: 8.2,
+      stats: mockStats,
+      products: productsMemoryState,
+      categories: categoriesMemoryState,
+      orders: ordersMemoryState,
     };
   },
 
-  // Get Products List
-  async getProducts(params?: { search?: string; category?: string; status?: string }): Promise<CMSProduct[]> {
+  // Get Dashboard KPI Stats
+  async getDashboardStats(): Promise<DashboardStats> {
     try {
-      const response = await apiClient.get<ApiResponse<CMSProduct[]>>('/cms/products', { params });
+      const response = await apiClient.get<ApiResponse<DashboardStats>>('/cms/dashboard');
       if (response.data && response.data.success) {
         return response.data.data;
       }
@@ -455,34 +596,134 @@ export const cmsService = {
       // Mock fallback
     }
 
-    let filtered = [...productsMemoryState];
+    const details = await this.getDashboardDetails();
+    return details.stats;
+  },
 
-    if (params?.category && params.category !== 'all') {
-      filtered = filtered.filter((p) => p.category.toLowerCase() === params.category?.toLowerCase());
+  // Get Products List
+  async getProducts(params?: { search?: string; category?: string; status?: string }, forceRefresh = false): Promise<CMSProduct[]> {
+    if (!forceRefresh && !params && inFlightProductsPromise) {
+      return inFlightProductsPromise;
     }
 
-    if (params?.status && params.status !== 'all') {
-      filtered = filtered.filter((p) => p.status === params.status);
+    const fetcher = (async () => {
+      try {
+        const response = await apiClient.get<any[]>('/products', { params });
+        if (response.data && Array.isArray(response.data)) {
+          const mapped: CMSProduct[] = response.data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.slug || p.name.toLowerCase().trim().replace(/[^a-z0-9]/g, '-'),
+            description: p.description || '',
+            price: Number(p.price),
+            compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : undefined,
+            costPrice: p.costPrice ? Number(p.costPrice) : undefined,
+            sku: p.sku || '',
+            barcode: p.barcode || '',
+            trackInventory: p.trackInventory !== false,
+            allowBackorder: !!p.allowBackorder,
+            isDigital: !!p.isDigital,
+            requiresShipping: p.requiresShipping !== false,
+            taxRate: p.taxRate ? Number(p.taxRate) : 0,
+            taxable: p.taxable !== false,
+            inventory: Number(p.inventory ?? 0),
+            stockQuantity: Number(p.inventory ?? 0),
+            weight: p.weight ? Number(p.weight) : undefined,
+            dimensions: p.dimensions || '',
+            category: p.categoryName || 'General',
+            categoryName: p.categoryName || 'General',
+            brandName: p.brandName || 'Store Brand',
+            collectionName: p.collectionName || '',
+            status: p.status || 'ACTIVE',
+            image: p.images ? p.images.split(',')[0] : '',
+            images: p.images ? p.images.split(',') : [],
+            tags: p.tags ? p.tags.split(',').map((t: string) => t.trim()) : [],
+            metaTitle: p.metaTitle || '',
+            metaDescription: p.metaDescription || '',
+            createdAt: p.createdAt ? String(p.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
+          }));
+          return mapped;
+        }
+      } catch (err) {
+        console.warn('Backend products API notice:', err);
+      }
+
+      return [];
+    })();
+
+    if (!params) {
+      inFlightProductsPromise = fetcher;
     }
 
-    if (params?.search) {
-      const q = params.search.toLowerCase();
-      filtered = filtered.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
+    try {
+      const res = await fetcher;
+      return res;
+    } finally {
+      if (!params) {
+        setTimeout(() => {
+          inFlightProductsPromise = null;
+        }, 500);
+      }
     }
-
-    return filtered;
   },
 
   // Create Product via Axios
   async createProduct(formData: ProductFormData): Promise<CMSProduct> {
+    inFlightProductsPromise = null;
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      images: Array.isArray(formData.images) ? formData.images.join(',') : formData.image || '',
+      sku: formData.sku,
+      price: Number(formData.price),
+      compareAtPrice: formData.compareAtPrice ? Number(formData.compareAtPrice) : null,
+      costPrice: formData.costPrice ? Number(formData.costPrice) : null,
+      taxRate: formData.taxRate ? Number(formData.taxRate) : 0,
+      taxable: formData.taxable !== false,
+      inventory: Number(formData.inventory ?? formData.stockQuantity ?? 50),
+      weight: formData.weight ? Number(formData.weight) : null,
+      dimensions: formData.dimensions || null,
+      categoryName: formData.categoryName || formData.category || 'General',
+      brandName: formData.brandName || 'Store Brand',
+      collectionName: formData.collectionName || '',
+      tags: Array.isArray(formData.tags) ? formData.tags.join(',') : formData.tags || '',
+      metaTitle: formData.metaTitle || '',
+      metaDescription: formData.metaDescription || '',
+      status: formData.status || 'ACTIVE',
+    };
+
     try {
-      const response = await apiClient.post<ApiResponse<CMSProduct>>('/cms/products', formData);
-      if (response.data && response.data.data) {
-        productsMemoryState.unshift(response.data.data);
-        return response.data.data;
+      const response = await apiClient.post<any>('/products', payload);
+      if (response.data && response.data.id) {
+        const p = response.data;
+        const created: CMSProduct = {
+          id: p.id,
+          name: p.name,
+          sku: p.sku || `SKU-${p.id.substring(0, 6)}`,
+          description: p.description || '',
+          price: Number(p.price),
+          compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : undefined,
+          originalPrice: p.compareAtPrice ? Number(p.compareAtPrice) : undefined,
+          costPrice: p.costPrice ? Number(p.costPrice) : undefined,
+          inventory: Number(p.inventory ?? 50),
+          stockQuantity: Number(p.inventory ?? 50),
+          category: p.categoryName || 'General',
+          categoryName: p.categoryName || 'General',
+          brandName: p.brandName || 'Store Brand',
+          status: p.status || 'ACTIVE',
+          image: p.images ? p.images.split(',')[0] : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+          images: p.images ? p.images.split(',') : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'],
+          tags: p.tags ? p.tags.split(',').map((t: string) => t.trim()) : [],
+          createdAt: p.createdAt ? String(p.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
+        };
+        productsMemoryState.unshift(created);
+        return created;
       }
-    } catch {
-      // Mock fallback
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend product creation API notice, saving locally:', err);
     }
 
     const newProduct: CMSProduct = {
@@ -519,13 +760,62 @@ export const cmsService = {
 
   // Update Product via Axios
   async updateProduct(id: string, formData: ProductFormData): Promise<CMSProduct> {
+    inFlightProductsPromise = null;
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      images: Array.isArray(formData.images) ? formData.images.join(',') : formData.image || '',
+      sku: formData.sku,
+      price: Number(formData.price),
+      compareAtPrice: formData.compareAtPrice ? Number(formData.compareAtPrice) : null,
+      costPrice: formData.costPrice ? Number(formData.costPrice) : null,
+      taxRate: formData.taxRate ? Number(formData.taxRate) : 0,
+      taxable: formData.taxable !== false,
+      inventory: Number(formData.inventory ?? formData.stockQuantity ?? 50),
+      weight: formData.weight ? Number(formData.weight) : null,
+      dimensions: formData.dimensions || null,
+      categoryName: formData.categoryName || formData.category || 'General',
+      brandName: formData.brandName || 'Store Brand',
+      collectionName: formData.collectionName || '',
+      tags: Array.isArray(formData.tags) ? formData.tags.join(',') : formData.tags || '',
+      metaTitle: formData.metaTitle || '',
+      metaDescription: formData.metaDescription || '',
+      status: formData.status || 'ACTIVE',
+    };
+
     try {
-      const response = await apiClient.put<ApiResponse<CMSProduct>>(`/cms/products/${id}`, formData);
-      if (response.data && response.data.data) {
-        return response.data.data;
+      const response = await apiClient.put<any>(`/products/${id}`, payload);
+      if (response.data && response.data.id) {
+        const p = response.data;
+        const updated: CMSProduct = {
+          id: p.id,
+          name: p.name,
+          sku: p.sku || `SKU-${p.id.substring(0, 6)}`,
+          description: p.description || '',
+          price: Number(p.price),
+          compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : undefined,
+          originalPrice: p.compareAtPrice ? Number(p.compareAtPrice) : undefined,
+          costPrice: p.costPrice ? Number(p.costPrice) : undefined,
+          inventory: Number(p.inventory ?? 50),
+          stockQuantity: Number(p.inventory ?? 50),
+          category: p.categoryName || 'General',
+          categoryName: p.categoryName || 'General',
+          brandName: p.brandName || 'Store Brand',
+          status: p.status || 'ACTIVE',
+          image: p.images ? p.images.split(',')[0] : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+          images: p.images ? p.images.split(',') : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'],
+          tags: p.tags ? p.tags.split(',').map((t: string) => t.trim()) : [],
+          createdAt: p.createdAt ? String(p.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
+        };
+        const index = productsMemoryState.findIndex((item) => item.id === id);
+        if (index > -1) productsMemoryState[index] = updated;
+        return updated;
       }
-    } catch {
-      // Mock fallback
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend update product API notice, saving locally:', err);
     }
 
     const index = productsMemoryState.findIndex((p) => p.id === id);
@@ -565,10 +855,16 @@ export const cmsService = {
 
   // Delete Product via Axios
   async deleteProduct(id: string): Promise<boolean> {
+    inFlightProductsPromise = null;
     try {
-      await apiClient.delete(`/cms/products/${id}`);
-    } catch {
-      // Mock fallback
+      await apiClient.delete(`/products/${id}`);
+      productsMemoryState = productsMemoryState.filter((p) => p.id !== id);
+      return true;
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend delete product API notice:', err);
     }
 
     productsMemoryState = productsMemoryState.filter((p) => p.id !== id);
@@ -576,63 +872,427 @@ export const cmsService = {
   },
 
   // Get Categories
-  async getCategories(): Promise<CMSCategory[]> {
-    try {
-      const response = await apiClient.get<ApiResponse<CMSCategory[]>>('/cms/categories');
-      if (response.data && response.data.data) {
-        return response.data.data;
-      }
-    } catch {
-      // Mock fallback
+  async getCategories(forceRefresh = false): Promise<CMSCategory[]> {
+    if (!forceRefresh && inFlightCategoriesPromise) {
+      return inFlightCategoriesPromise;
     }
-    return categoriesMemoryState;
+
+    inFlightCategoriesPromise = (async () => {
+      try {
+        const response = await apiClient.get<any[]>('/categories');
+        if (response.data && Array.isArray(response.data)) {
+          const mapped: CMSCategory[] = response.data.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            icon: c.icon || '📦',
+            description: c.description || '',
+            productCount: c.productCount || 0,
+            createdAt: c.createdAt ? String(c.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
+          }));
+          return mapped;
+        }
+      } catch (err) {
+        console.warn('Backend categories API notice:', err);
+      }
+
+      return [];
+    })();
+
+    try {
+      const res = await inFlightCategoriesPromise;
+      return res;
+    } finally {
+      setTimeout(() => {
+        inFlightCategoriesPromise = null;
+      }, 500);
+    }
   },
 
   // Create Category via Axios
   async createCategory(data: CategoryFormData): Promise<CMSCategory> {
+    inFlightCategoriesPromise = null;
+    const payload = {
+      name: data.name,
+      slug: data.slug || data.name.toLowerCase().trim().replace(/[^a-z0-9]/g, '-'),
+      icon: data.icon || '📦',
+      description: data.description || '',
+    };
+
     try {
-      const response = await apiClient.post<ApiResponse<CMSCategory>>('/cms/categories', data);
-      if (response.data && response.data.data) {
-        categoriesMemoryState.push(response.data.data);
-        return response.data.data;
+      const response = await apiClient.post<any>('/categories', payload);
+      if (response.data && response.data.id) {
+        const c = response.data;
+        const created: CMSCategory = {
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          icon: c.icon || '📦',
+          description: c.description || '',
+          productCount: 0,
+          createdAt: c.createdAt ? String(c.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
+        };
+        categoriesMemoryState.push(created);
+        return created;
       }
-    } catch {
-      // Mock fallback
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend category creation API notice, saving locally:', err);
     }
 
     const newCategory: CMSCategory = {
       id: `cat-${Date.now()}`,
       name: data.name,
-      slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-'),
+      slug: data.slug || data.name.toLowerCase().trim().replace(/[^a-z0-9]/g, '-'),
+      icon: data.icon || '📦',
       productCount: 0,
       description: data.description,
+      createdAt: new Date().toISOString().split('T')[0],
     };
     categoriesMemoryState.push(newCategory);
     return newCategory;
   },
 
-  // Get Orders
-  async getOrders(): Promise<CMSOrder[]> {
+  // Update Category via Axios
+  async updateCategory(id: string, data: Partial<CategoryFormData>): Promise<CMSCategory> {
+    inFlightCategoriesPromise = null;
+    const payload = {
+      ...(data.name && { name: data.name }),
+      ...(data.slug && { slug: data.slug }),
+      ...(data.icon && { icon: data.icon }),
+      ...(data.description !== undefined && { description: data.description }),
+    };
+
     try {
-      const response = await apiClient.get<ApiResponse<CMSOrder[]>>('/cms/orders');
-      if (response.data && response.data.data) {
-        return response.data.data;
+      const response = await apiClient.put<any>(`/categories/${id}`, payload);
+      if (response.data && response.data.id) {
+        const c = response.data;
+        const updated: CMSCategory = {
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          icon: c.icon || '📦',
+          description: c.description || '',
+          productCount: c.productCount || 0,
+          createdAt: c.createdAt ? String(c.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
+        };
+        const index = categoriesMemoryState.findIndex((item) => item.id === id);
+        if (index > -1) categoriesMemoryState[index] = updated;
+        return updated;
       }
-    } catch {
-      // Mock fallback
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend category update API notice, saving locally:', err);
     }
-    return ordersMemoryState;
+
+    const index = categoriesMemoryState.findIndex((c) => c.id === id);
+    if (index > -1) {
+      const updated: CMSCategory = {
+        ...categoriesMemoryState[index],
+        ...(data.name && { name: data.name }),
+        ...(data.slug && { slug: data.slug }),
+        ...(data.icon && { icon: data.icon }),
+        ...(data.description !== undefined && { description: data.description }),
+      };
+      categoriesMemoryState[index] = updated;
+      return updated;
+    }
+
+    throw new Error('Category not found');
+  },
+
+  // Delete Category via Axios
+  async deleteCategory(id: string): Promise<boolean> {
+    inFlightCategoriesPromise = null;
+    try {
+      await apiClient.delete(`/categories/${id}`);
+      categoriesMemoryState = categoriesMemoryState.filter((c) => c.id !== id);
+      return true;
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend delete category API notice:', err);
+    }
+
+    categoriesMemoryState = categoriesMemoryState.filter((c) => c.id !== id);
+    return true;
+  },
+
+  // Brands Management via Axios
+  async getBrands(forceRefresh = false): Promise<BrandData[]> {
+    if (!forceRefresh && inFlightBrandsPromise) {
+      return inFlightBrandsPromise;
+    }
+
+    inFlightBrandsPromise = (async () => {
+      try {
+        const response = await apiClient.get<any[]>('/brands');
+        if (response.data && Array.isArray(response.data)) {
+          return response.data;
+        }
+      } catch (err) {
+        console.warn('Backend brands API notice:', err);
+      }
+
+      return [];
+    })();
+
+    try {
+      const res = await inFlightBrandsPromise;
+      return res;
+    } finally {
+      setTimeout(() => {
+        inFlightBrandsPromise = null;
+      }, 500);
+    }
+  },
+
+  async createBrand(data: BrandFormData): Promise<BrandData> {
+    inFlightBrandsPromise = null;
+    const payload = {
+      name: data.name,
+      slug: data.slug || data.name.toLowerCase().trim().replace(/[^a-z0-9]/g, '-'),
+      logo: data.logo || '',
+      description: data.description || '',
+      website: data.website || '',
+      status: data.status || 'ACTIVE',
+    };
+
+    try {
+      const response = await apiClient.post<any>('/brands', payload);
+      if (response.data && response.data.id) {
+        return response.data;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend brand creation API notice, saving locally:', err);
+    }
+
+    const newBrand: BrandData = {
+      id: `b-${Date.now()}`,
+      ...payload,
+      productCount: 0,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    return newBrand;
+  },
+
+  async updateBrand(id: string, data: Partial<BrandFormData>): Promise<BrandData> {
+    inFlightBrandsPromise = null;
+    try {
+      const response = await apiClient.put<any>(`/brands/${id}`, data);
+      if (response.data && response.data.id) {
+        return response.data;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend brand update API notice:', err);
+    }
+
+    throw new Error('Brand update failed');
+  },
+
+  async deleteBrand(id: string): Promise<boolean> {
+    inFlightBrandsPromise = null;
+    try {
+      await apiClient.delete(`/brands/${id}`);
+      return true;
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend brand delete API notice:', err);
+    }
+    return true;
+  },
+
+  // Collections Management via Axios
+  async getCollections(forceRefresh = false): Promise<CollectionData[]> {
+    if (!forceRefresh && inFlightCollectionsPromise) {
+      return inFlightCollectionsPromise;
+    }
+
+    inFlightCollectionsPromise = (async () => {
+      try {
+        const response = await apiClient.get<any[]>('/collections');
+        if (response.data && Array.isArray(response.data)) {
+          return response.data;
+        }
+      } catch (err) {
+        console.warn('Backend collections API notice:', err);
+      }
+
+      return [];
+    })();
+
+    try {
+      const res = await inFlightCollectionsPromise;
+      return res;
+    } finally {
+      setTimeout(() => {
+        inFlightCollectionsPromise = null;
+      }, 500);
+    }
+  },
+
+  async createCollection(data: CollectionFormData): Promise<CollectionData> {
+    inFlightCollectionsPromise = null;
+    const payload = {
+      name: data.name,
+      slug: data.slug || data.name.toLowerCase().trim().replace(/[^a-z0-9]/g, '-'),
+      image: data.image || '',
+      description: data.description || '',
+      type: data.type || 'MANUAL',
+      featured: !!data.featured,
+      metaTitle: data.metaTitle || '',
+      metaDescription: data.metaDescription || '',
+    };
+
+    try {
+      const response = await apiClient.post<any>('/collections', payload);
+      if (response.data && response.data.id) {
+        return response.data;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend collection creation API notice, saving locally:', err);
+    }
+
+    const newColl: CollectionData = {
+      id: `col-${Date.now()}`,
+      ...payload,
+      productCount: 0,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    return newColl;
+  },
+
+  async updateCollection(id: string, data: Partial<CollectionFormData>): Promise<CollectionData> {
+    inFlightCollectionsPromise = null;
+    try {
+      const response = await apiClient.put<any>(`/collections/${id}`, data);
+      if (response.data && response.data.id) {
+        return response.data;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend collection update API notice:', err);
+    }
+
+    throw new Error('Collection update failed');
+  },
+
+  async deleteCollection(id: string): Promise<boolean> {
+    inFlightCollectionsPromise = null;
+    try {
+      await apiClient.delete(`/collections/${id}`);
+      return true;
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend collection delete API notice:', err);
+    }
+    return true;
+  },
+
+  // Get Orders via Axios with request deduplication
+  async getOrders(forceRefresh = false): Promise<CMSOrder[]> {
+    if (!forceRefresh && inFlightOrdersPromise) {
+      return inFlightOrdersPromise;
+    }
+
+    inFlightOrdersPromise = (async () => {
+      try {
+        const response = await apiClient.get<any[]>('/orders');
+        if (response.data && Array.isArray(response.data)) {
+          const mapped: CMSOrder[] = response.data.map((o: any) => {
+            let items: any[] = [];
+            if (o.itemsJson) {
+              try { items = JSON.parse(o.itemsJson); } catch { }
+            }
+            let shippingAddress: any = null;
+            if (o.shippingAddressJson) {
+              try { shippingAddress = JSON.parse(o.shippingAddressJson); } catch { }
+            }
+            let notes: any[] = [];
+            if (o.notesJson) {
+              try { notes = JSON.parse(o.notesJson); } catch { }
+            }
+
+            return {
+              id: o.id,
+              orderNumber: o.orderNumber,
+              customerName: o.customerName,
+              customerEmail: o.customerEmail,
+              customerPhone: o.customerPhone || null,
+              totalAmount: Number(o.totalAmount),
+              subtotalAmount: o.subtotalAmount ? Number(o.subtotalAmount) : Number(o.totalAmount),
+              taxAmount: o.taxAmount ? Number(o.taxAmount) : 0,
+              shippingAmount: o.shippingAmount ? Number(o.shippingAmount) : 0,
+              currency: o.currency || 'USD',
+              paymentStatus: o.paymentStatus || 'PAID',
+              orderStatus: o.fulfillmentStatus || 'CONFIRMED',
+              fulfillmentStatus: o.fulfillmentStatus || 'CONFIRMED',
+              itemsCount: items.length || 1,
+              items: items.length > 0 ? items : [{ productId: 'prod-1', productName: 'Ordered Item', quantity: 1, unitPrice: Number(o.totalAmount) }],
+              shippingAddress: shippingAddress || { street: '124 Market St', city: 'San Francisco', state: 'CA', zip: '94103', country: 'United States' },
+              carrier: o.carrier || null,
+              trackingNumber: o.trackingNumber || null,
+              cancellationReason: o.cancellationReason || null,
+              refundAmount: o.refundAmount ? Number(o.refundAmount) : null,
+              refundReason: o.refundReason || null,
+              notes: notes,
+              createdAt: o.createdAt ? String(o.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
+            };
+          });
+          return mapped;
+        }
+      } catch (err) {
+        console.warn('Backend orders API notice:', err);
+      }
+
+      return [];
+    })();
+
+    try {
+      const res = await inFlightOrdersPromise;
+      return res;
+    } finally {
+      setTimeout(() => {
+        inFlightOrdersPromise = null;
+      }, 500);
+    }
   },
 
   // Update Order Status via Axios
   async updateOrderStatus(id: string, orderStatus: CMSOrder['orderStatus']): Promise<CMSOrder> {
+    inFlightOrdersPromise = null;
     try {
-      const response = await apiClient.patch<ApiResponse<CMSOrder>>(`/cms/orders/${id}/status`, { orderStatus });
-      if (response.data && response.data.data) {
-        return response.data.data;
+      const response = await apiClient.patch<any>(`/orders/${id}/status`, { orderStatus });
+      if (response.data && response.data.id) {
+        const updatedOrders = await this.getOrders(true);
+        const matched = updatedOrders.find((o) => o.id === id);
+        if (matched) return matched;
       }
-    } catch {
-      // Mock fallback
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend update order status API notice:', err);
     }
 
     const index = ordersMemoryState.findIndex((o) => o.id === id);
@@ -645,6 +1305,21 @@ export const cmsService = {
 
   // Update Order Tracking & Carrier
   async updateOrderTracking(id: string, carrier: string, trackingNumber: string): Promise<CMSOrder> {
+    inFlightOrdersPromise = null;
+    try {
+      const response = await apiClient.put<any>(`/orders/${id}/tracking`, { carrier, trackingNumber });
+      if (response.data && response.data.id) {
+        const updatedOrders = await this.getOrders(true);
+        const matched = updatedOrders.find((o) => o.id === id);
+        if (matched) return matched;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend update order tracking API notice:', err);
+    }
+
     const index = ordersMemoryState.findIndex((o) => o.id === id);
     if (index > -1) {
       ordersMemoryState[index] = {
@@ -661,6 +1336,21 @@ export const cmsService = {
 
   // Refund Order
   async refundOrder(id: string, refundAmount: number, refundReason: string): Promise<CMSOrder> {
+    inFlightOrdersPromise = null;
+    try {
+      const response = await apiClient.post<any>(`/orders/${id}/refund`, { refundAmount, refundReason });
+      if (response.data && response.data.id) {
+        const updatedOrders = await this.getOrders(true);
+        const matched = updatedOrders.find((o) => o.id === id);
+        if (matched) return matched;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend refund order API notice:', err);
+    }
+
     const index = ordersMemoryState.findIndex((o) => o.id === id);
     if (index > -1) {
       const isFull = refundAmount >= ordersMemoryState[index].totalAmount;
@@ -687,6 +1377,21 @@ export const cmsService = {
 
   // Cancel Order
   async cancelOrder(id: string, cancellationReason: string): Promise<CMSOrder> {
+    inFlightOrdersPromise = null;
+    try {
+      const response = await apiClient.post<any>(`/orders/${id}/cancel`, { cancellationReason });
+      if (response.data && response.data.id) {
+        const updatedOrders = await this.getOrders(true);
+        const matched = updatedOrders.find((o) => o.id === id);
+        if (matched) return matched;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend cancel order API notice:', err);
+    }
+
     const index = ordersMemoryState.findIndex((o) => o.id === id);
     if (index > -1) {
       ordersMemoryState[index] = {
@@ -726,6 +1431,484 @@ export const cmsService = {
       return ordersMemoryState[index];
     }
     throw new Error('Order not found');
+  },
+
+  // Customer CRM Management via Axios
+  async getCustomers(forceRefresh = false): Promise<CMSCustomer[]> {
+    if (!forceRefresh && inFlightCustomersPromise) {
+      return inFlightCustomersPromise;
+    }
+
+    inFlightCustomersPromise = (async () => {
+      try {
+        const response = await apiClient.get<any[]>('/customers');
+        if (response.data && Array.isArray(response.data)) {
+          const mapped: CMSCustomer[] = response.data.map((c: any) => {
+            let address: any = undefined;
+            if (c.addressJson) {
+              try { address = JSON.parse(c.addressJson); } catch { }
+            }
+            let notes: any[] = [];
+            if (c.notesJson) {
+              try { notes = JSON.parse(c.notesJson); } catch { }
+            }
+            let tags: string[] = [];
+            if (c.tags) {
+              tags = typeof c.tags === 'string' ? c.tags.split(',').map((t: string) => t.trim()) : c.tags;
+            }
+
+            return {
+              id: c.id,
+              name: c.name,
+              email: c.email,
+              phone: c.phone || null,
+              group: c.group || 'NEW',
+              tags: tags.length > 0 ? tags : ['New-Customer'],
+              address: address,
+              acceptsMarketing: c.acceptsMarketing !== false,
+              notes: notes,
+              totalOrders: c.totalOrders || 0,
+              totalSpent: Number(c.totalSpent || 0),
+              createdAt: c.createdAt ? String(c.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
+            };
+          });
+          return mapped;
+        }
+      } catch (err) {
+        console.warn('Backend customers API notice:', err);
+      }
+
+      return [];
+    })();
+
+    try {
+      const res = await inFlightCustomersPromise;
+      return res;
+    } finally {
+      setTimeout(() => {
+        inFlightCustomersPromise = null;
+      }, 500);
+    }
+  },
+
+  async createCustomer(data: {
+    name: string;
+    email: string;
+    phone?: string;
+    group?: string;
+    tags?: string | string[];
+    address?: any;
+    acceptsMarketing?: boolean;
+  }): Promise<CMSCustomer> {
+    inFlightCustomersPromise = null;
+    const payload = {
+      name: data.name,
+      email: data.email,
+      phone: data.phone || '',
+      group: data.group || 'NEW',
+      tags: Array.isArray(data.tags) ? data.tags.join(',') : data.tags || '',
+      addressJson: data.address ? JSON.stringify(data.address) : '',
+      acceptsMarketing: data.acceptsMarketing !== false,
+    };
+
+    try {
+      const response = await apiClient.post<any>('/customers', payload);
+      if (response.data && response.data.id) {
+        const c = response.data;
+        const created: CMSCustomer = {
+          id: c.id,
+          name: c.name,
+          email: c.email,
+          phone: c.phone || null,
+          group: c.group || 'NEW',
+          tags: c.tags ? (typeof c.tags === 'string' ? c.tags.split(',').map((t: string) => t.trim()) : c.tags) : ['New-Customer'],
+          acceptsMarketing: c.acceptsMarketing !== false,
+          totalOrders: 0,
+          totalSpent: 0,
+          createdAt: c.createdAt ? String(c.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
+        };
+        return created;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend customer creation API notice, saving locally:', err);
+    }
+
+    const newCustomer: CMSCustomer = {
+      id: `cust-${Date.now()}`,
+      name: data.name,
+      email: data.email,
+      phone: data.phone || null,
+      group: data.group || 'NEW',
+      tags: data.tags
+        ? Array.isArray(data.tags)
+          ? data.tags
+          : data.tags.split(',').map((t: string) => t.trim())
+        : ['New-Customer'],
+      address: data.address,
+      acceptsMarketing: data.acceptsMarketing !== false,
+      totalOrders: 0,
+      totalSpent: 0,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    return newCustomer;
+  },
+
+  async updateCustomer(id: string, data: Partial<CMSCustomer>): Promise<CMSCustomer> {
+    inFlightCustomersPromise = null;
+    const payload = {
+      ...(data.name && { name: data.name }),
+      ...(data.email && { email: data.email }),
+      ...(data.phone !== undefined && { phone: data.phone }),
+      ...(data.group && { group: data.group }),
+      ...(data.tags && { tags: Array.isArray(data.tags) ? data.tags.join(',') : data.tags }),
+      ...(data.acceptsMarketing !== undefined && { acceptsMarketing: data.acceptsMarketing }),
+      ...(data.address && { addressJson: JSON.stringify(data.address) }),
+    };
+
+    try {
+      const response = await apiClient.put<any>(`/customers/${id}`, payload);
+      if (response.data && response.data.id) {
+        const updatedList = await this.getCustomers(true);
+        const matched = updatedList.find((c) => c.id === id);
+        if (matched) return matched;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend customer update API notice:', err);
+    }
+
+    throw new Error('Customer update failed');
+  },
+
+  async deleteCustomer(id: string): Promise<boolean> {
+    inFlightCustomersPromise = null;
+    try {
+      await apiClient.delete(`/customers/${id}`);
+      return true;
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend customer delete API notice:', err);
+    }
+    return true;
+  },
+
+  // Discounts & Promotions Management via Axios with request deduplication
+  async getDiscounts(forceRefresh = false): Promise<CMSDiscount[]> {
+    if (!forceRefresh && inFlightDiscountsPromise) {
+      return inFlightDiscountsPromise;
+    }
+
+    inFlightDiscountsPromise = (async () => {
+      try {
+        const response = await apiClient.get<any[]>('/discounts');
+        if (response.data && Array.isArray(response.data)) {
+          const mapped: CMSDiscount[] = response.data.map((d: any) => {
+            let targetIds: string[] = [];
+            if (d.targetIdsJson) {
+              try { targetIds = JSON.parse(d.targetIdsJson); } catch { }
+            }
+            let targetCustomers: string[] = [];
+            if (d.targetCustomerJson) {
+              try { targetCustomers = JSON.parse(d.targetCustomerJson); } catch { targetCustomers = [d.targetCustomerJson]; }
+            }
+
+            return {
+              id: d.id,
+              title: d.title,
+              code: d.code || undefined,
+              discountType: d.discountType || 'PERCENTAGE',
+              method: d.method || 'COUPON_CODE',
+              value: Number(d.value || 0),
+              buyQuantity: d.buyQuantity ? Number(d.buyQuantity) : undefined,
+              getQuantity: d.getQuantity ? Number(d.getQuantity) : undefined,
+              getDiscountPercent: d.getDiscountPercent ? Number(d.getDiscountPercent) : undefined,
+              minOrderAmount: d.minOrderAmount ? Number(d.minOrderAmount) : undefined,
+              appliesTo: d.appliesTo || 'ALL',
+              targetIds: targetIds,
+              customerEligibility: d.customerEligibility || 'ALL',
+              targetCustomers: targetCustomers,
+              usageLimit: d.usageLimit ? Number(d.usageLimit) : undefined,
+              usageCount: d.usageCount || 0,
+              oncePerCustomer: d.oncePerCustomer !== false,
+              startDate: d.startDate ? String(d.startDate).split('T')[0] : new Date().toISOString().split('T')[0],
+              endDate: d.endDate ? String(d.endDate).split('T')[0] : undefined,
+              status: d.status || 'ACTIVE',
+              createdAt: d.createdAt ? String(d.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
+            };
+          });
+          return mapped;
+        }
+      } catch (err) {
+        console.warn('Backend discounts API notice:', err);
+      }
+
+      return [];
+    })();
+
+    try {
+      const res = await inFlightDiscountsPromise;
+      return res;
+    } finally {
+      setTimeout(() => {
+        inFlightDiscountsPromise = null;
+      }, 500);
+    }
+  },
+
+  async createDiscount(data: Partial<CMSDiscount>): Promise<CMSDiscount> {
+    inFlightDiscountsPromise = null;
+    const payload = {
+      title: data.title,
+      code: data.code || null,
+      discountType: data.discountType || 'PERCENTAGE',
+      method: data.method || 'COUPON_CODE',
+      value: data.value || 0,
+      buyQuantity: data.buyQuantity || null,
+      getQuantity: data.getQuantity || null,
+      getDiscountPercent: data.getDiscountPercent || null,
+      minOrderAmount: data.minOrderAmount || 0,
+      appliesTo: data.appliesTo || 'ALL',
+      targetIdsJson: data.targetIds ? JSON.stringify(data.targetIds) : null,
+      customerEligibility: data.customerEligibility || 'ALL',
+      targetCustomerJson: data.targetCustomers ? JSON.stringify(data.targetCustomers) : null,
+      usageLimit: data.usageLimit || null,
+      oncePerCustomer: data.oncePerCustomer !== false,
+      startDate: data.startDate || new Date().toISOString().split('T')[0],
+      endDate: data.endDate || null,
+      status: data.status || 'ACTIVE',
+    };
+
+    try {
+      const response = await apiClient.post<any>('/discounts', payload);
+      if (response.data && response.data.id) {
+        const d = response.data;
+        const created: CMSDiscount = {
+          id: d.id,
+          title: d.title,
+          code: d.code || undefined,
+          discountType: d.discountType || 'PERCENTAGE',
+          method: d.method || 'COUPON_CODE',
+          value: Number(d.value || 0),
+          buyQuantity: d.buyQuantity ? Number(d.buyQuantity) : undefined,
+          getQuantity: d.getQuantity ? Number(d.getQuantity) : undefined,
+          getDiscountPercent: d.getDiscountPercent ? Number(d.getDiscountPercent) : undefined,
+          minOrderAmount: d.minOrderAmount ? Number(d.minOrderAmount) : undefined,
+          appliesTo: d.appliesTo || 'ALL',
+          customerEligibility: d.customerEligibility || 'ALL',
+          usageLimit: d.usageLimit ? Number(d.usageLimit) : undefined,
+          usageCount: 0,
+          oncePerCustomer: d.oncePerCustomer !== false,
+          startDate: d.startDate ? String(d.startDate).split('T')[0] : new Date().toISOString().split('T')[0],
+          endDate: d.endDate ? String(d.endDate).split('T')[0] : undefined,
+          status: d.status || 'ACTIVE',
+          createdAt: d.createdAt ? String(d.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
+        };
+        return created;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend discount creation API notice:', err);
+    }
+
+    throw new Error('Discount creation failed');
+  },
+
+  async updateDiscount(id: string, data: Partial<CMSDiscount>): Promise<CMSDiscount> {
+    inFlightDiscountsPromise = null;
+    const payload = {
+      ...(data.title && { title: data.title }),
+      ...(data.code !== undefined && { code: data.code || null }),
+      ...(data.discountType && { discountType: data.discountType }),
+      ...(data.method && { method: data.method }),
+      ...(data.value !== undefined && { value: data.value }),
+      ...(data.buyQuantity !== undefined && { buyQuantity: data.buyQuantity || null }),
+      ...(data.getQuantity !== undefined && { getQuantity: data.getQuantity || null }),
+      ...(data.getDiscountPercent !== undefined && { getDiscountPercent: data.getDiscountPercent || null }),
+      ...(data.minOrderAmount !== undefined && { minOrderAmount: data.minOrderAmount || 0 }),
+      ...(data.appliesTo && { appliesTo: data.appliesTo }),
+      ...(data.targetIds !== undefined && { targetIdsJson: data.targetIds ? JSON.stringify(data.targetIds) : null }),
+      ...(data.customerEligibility && { customerEligibility: data.customerEligibility }),
+      ...(data.targetCustomers !== undefined && { targetCustomerJson: data.targetCustomers ? JSON.stringify(data.targetCustomers) : null }),
+      ...(data.usageLimit !== undefined && { usageLimit: data.usageLimit || null }),
+      ...(data.oncePerCustomer !== undefined && { oncePerCustomer: data.oncePerCustomer }),
+      ...(data.startDate && { startDate: data.startDate }),
+      ...(data.endDate !== undefined && { endDate: data.endDate || null }),
+      ...(data.status && { status: data.status }),
+    };
+
+    try {
+      const response = await apiClient.put<any>(`/discounts/${id}`, payload);
+      if (response.data && response.data.id) {
+        const updatedList = await this.getDiscounts(true);
+        const matched = updatedList.find((d) => d.id === id);
+        if (matched) return matched;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend discount update API notice:', err);
+    }
+
+    throw new Error('Discount update failed');
+  },
+
+  async deleteDiscount(id: string): Promise<boolean> {
+    inFlightDiscountsPromise = null;
+    try {
+      await apiClient.delete(`/discounts/${id}`);
+      return true;
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend discount delete API notice:', err);
+    }
+    return true;
+  },
+
+  // Tax & Compliance Management via Axios with request deduplication
+  async getTaxRegions(forceRefresh = false): Promise<CMSTaxRegion[]> {
+    if (!forceRefresh && inFlightTaxRegionsPromise) {
+      return inFlightTaxRegionsPromise;
+    }
+
+    inFlightTaxRegionsPromise = (async () => {
+      try {
+        const response = await apiClient.get<any[]>('/tax');
+        if (response.data && Array.isArray(response.data)) {
+          const mapped: CMSTaxRegion[] = response.data.map((r: any) => {
+            let hsnSacCodes: HsnSacCode[] = [];
+            if (r.hsnSacJson) {
+              try { hsnSacCodes = JSON.parse(r.hsnSacJson); } catch { }
+            }
+
+            return {
+              id: r.id,
+              name: r.name,
+              country: r.country,
+              taxName: r.taxName || 'GST',
+              taxNumber: r.taxNumber || undefined,
+              standardRate: Number(r.standardRate || 18.0),
+              reducedRate: r.reducedRate ? Number(r.reducedRate) : undefined,
+              isTaxInclusive: r.isTaxInclusive === true,
+              hsnSacCodes: hsnSacCodes,
+            };
+          });
+          return mapped;
+        }
+      } catch (err) {
+        console.warn('Backend tax regions API notice:', err);
+      }
+
+      return [];
+    })();
+
+    try {
+      const res = await inFlightTaxRegionsPromise;
+      return res;
+    } finally {
+      setTimeout(() => {
+        inFlightTaxRegionsPromise = null;
+      }, 500);
+    }
+  },
+
+  async createTaxRegion(data: Partial<CMSTaxRegion>): Promise<CMSTaxRegion> {
+    inFlightTaxRegionsPromise = null;
+    const payload = {
+      name: data.name || 'New Tax Region',
+      country: data.country || 'India',
+      taxName: data.taxName || 'GST',
+      taxNumber: data.taxNumber || null,
+      standardRate: data.standardRate || 18.0,
+      reducedRate: data.reducedRate || 5.0,
+      isTaxInclusive: data.isTaxInclusive || false,
+      hsnSacJson: data.hsnSacCodes ? JSON.stringify(data.hsnSacCodes) : null,
+    };
+
+    try {
+      const response = await apiClient.post<any>('/tax', payload);
+      if (response.data && response.data.id) {
+        const r = response.data;
+        let hsnSacCodes: HsnSacCode[] = [];
+        if (r.hsnSacJson) {
+          try { hsnSacCodes = JSON.parse(r.hsnSacJson); } catch { }
+        }
+        const created: CMSTaxRegion = {
+          id: r.id,
+          name: r.name,
+          country: r.country,
+          taxName: r.taxName || 'GST',
+          taxNumber: r.taxNumber || undefined,
+          standardRate: Number(r.standardRate || 18.0),
+          reducedRate: r.reducedRate ? Number(r.reducedRate) : undefined,
+          isTaxInclusive: r.isTaxInclusive === true,
+          hsnSacCodes: hsnSacCodes,
+        };
+        return created;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend tax region creation API notice:', err);
+    }
+
+    throw new Error('Tax region creation failed');
+  },
+
+  async updateTaxRegion(id: string, data: Partial<CMSTaxRegion>): Promise<CMSTaxRegion> {
+    inFlightTaxRegionsPromise = null;
+    const payload = {
+      ...(data.name && { name: data.name }),
+      ...(data.country && { country: data.country }),
+      ...(data.taxName && { taxName: data.taxName }),
+      ...(data.taxNumber !== undefined && { taxNumber: data.taxNumber || null }),
+      ...(data.standardRate !== undefined && { standardRate: data.standardRate }),
+      ...(data.reducedRate !== undefined && { reducedRate: data.reducedRate }),
+      ...(data.isTaxInclusive !== undefined && { isTaxInclusive: data.isTaxInclusive }),
+      ...(data.hsnSacCodes !== undefined && { hsnSacJson: data.hsnSacCodes ? JSON.stringify(data.hsnSacCodes) : null }),
+    };
+
+    try {
+      const response = await apiClient.put<any>(`/tax/${id}`, payload);
+      if (response.data && response.data.id) {
+        const updatedList = await this.getTaxRegions(true);
+        const matched = updatedList.find((r) => r.id === id);
+        if (matched) return matched;
+      }
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend tax region update API notice:', err);
+    }
+
+    throw new Error('Tax region update failed');
+  },
+
+  async deleteTaxRegion(id: string): Promise<boolean> {
+    inFlightTaxRegionsPromise = null;
+    try {
+      await apiClient.delete(`/tax/${id}`);
+      return true;
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
+      console.warn('Backend tax region delete API notice:', err);
+    }
+    return true;
   },
 
   // Merchant & Store Onboarding Services
@@ -944,14 +2127,16 @@ export const cmsService = {
   },
 
   async completeOnboarding(onboardingData: MerchantOnboardingData): Promise<MerchantOnboardingData> {
-    // 1. Create merchant store on backend via POST /api/stores with template ID/slug
-    const templateSlug = onboardingData.selectedTemplate?.slug || onboardingData.selectedTemplate?.id;
-    const createdStore = await this.createStore(onboardingData.store, templateSlug);
-    if (createdStore && createdStore.id) {
-      onboardingData.store = {
-        ...onboardingData.store,
-        storeName: createdStore.name || onboardingData.store.storeName,
-      };
+    // 1. Create merchant store on backend via POST /api/stores with template ID/slug if store details provided
+    if (onboardingData.store) {
+      const templateSlug = onboardingData.selectedTemplate?.slug || onboardingData.selectedTemplate?.id;
+      const createdStore = await this.createStore(onboardingData.store, templateSlug);
+      if (createdStore && createdStore.id) {
+        onboardingData.store = {
+          ...onboardingData.store,
+          storeName: createdStore.name || onboardingData.store.storeName,
+        };
+      }
     }
 
     // 2. If a first product was provided during onboarding, create it in the catalog
@@ -1032,7 +2217,7 @@ export const cmsService = {
     if (typeof window !== 'undefined') {
       localStorage.setItem('merchant_cms_store_setup', JSON.stringify(result));
       const session = this.getMerchantSession();
-      if (session) {
+      if (session && session.store) {
         session.store.storeName = result.name;
         session.store.currency = result.currency;
         if (result.contactEmail) session.store.supportEmail = result.contactEmail;
@@ -1167,46 +2352,61 @@ export const cmsService = {
   },
 
   // Get Store Pages List
-  async getPages(): Promise<CMSPageData[]> {
-    try {
-      const response = await apiClient.get<CMSPageData[]>('/pages');
-      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-        return response.data;
-      }
-    } catch (err) {
-      console.warn('Backend pages API notice, using memory fallback:', err);
+  async getPages(forceRefresh = false): Promise<CMSPageData[]> {
+    if (!forceRefresh && inFlightPagesPromise) {
+      return inFlightPagesPromise;
     }
 
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('merchant_cms_store_pages');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback below
+    inFlightPagesPromise = (async () => {
+      try {
+        const response = await apiClient.get<CMSPageData[]>('/pages');
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          return response.data;
+        }
+      } catch (err) {
+        console.warn('Backend pages API notice, using memory fallback:', err);
+      }
+
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('merchant_cms_store_pages');
+        if (saved) {
+          try {
+            return JSON.parse(saved);
+          } catch {
+            // fallback below
+          }
         }
       }
+
+      const defaultPages: CMSPageData[] = [
+        { id: 'pg-1', title: 'Home', slug: '/', content: '<h1>Welcome to OmniStore</h1><p>Discover our curated collection of premium goods.</p>', pageType: 'SYSTEM', metaTitle: 'OmniStore | Official Flagship Store', metaDescription: 'Shop high quality products with express shipping.', status: 'PUBLISHED' },
+        { id: 'pg-2', title: 'Products Catalog', slug: '/products', content: '<h1>Product Catalog</h1><p>Browse all available products.</p>', pageType: 'SYSTEM', metaTitle: 'All Products | OmniStore', metaDescription: 'Browse our complete catalog of electronics and fashion.', status: 'PUBLISHED' },
+        { id: 'pg-3', title: 'Collections', slug: '/collections', content: '<h1>Featured Collections</h1><p>Explore curated product groupings.</p>', pageType: 'SYSTEM', metaTitle: 'Collections | OmniStore', metaDescription: 'Explore curated product collections.', status: 'PUBLISHED' },
+        { id: 'pg-4', title: 'Product Details Showcase', slug: '/product/[id]', content: '<h1>Product Details</h1><p>High-resolution gallery, specs, and reviews.</p>', pageType: 'SYSTEM', metaTitle: 'Product Details | OmniStore', metaDescription: 'Product specifications and buyer reviews.', status: 'PUBLISHED' },
+        { id: 'pg-5', title: 'Shopping Cart', slug: '/cart', content: '<h1>Shopping Cart</h1><p>Review items before checking out.</p>', pageType: 'SYSTEM', metaTitle: 'Shopping Cart | OmniStore', metaDescription: 'View items in your cart.', status: 'PUBLISHED' },
+        { id: 'pg-6', title: 'Checkout Flow', slug: '/checkout', content: '<h1>Secure Checkout</h1><p>Enter shipping details and payment info.</p>', pageType: 'SYSTEM', metaTitle: 'Checkout | OmniStore', metaDescription: 'Complete your order securely.', status: 'PUBLISHED' },
+        { id: 'pg-7', title: 'Page Not Found (404)', slug: '/404', content: '<h1>404 - Page Not Found</h1><p>The requested page could not be located.</p>', pageType: 'SYSTEM', metaTitle: '404 Not Found | OmniStore', metaDescription: 'Page not found.', status: 'PUBLISHED' },
+        { id: 'pg-8', title: 'About Us', slug: '/pages/about', content: '<h2>Our Brand Story</h2><p>OmniStore delivers sustainable, premium quality merchandise directly to customers worldwide.</p>', pageType: 'BRAND', metaTitle: 'About Us | OmniStore', metaDescription: 'Learn about our story and mission.', status: 'PUBLISHED' },
+        { id: 'pg-9', title: 'Contact Us', slug: '/pages/contact', content: '<h2>Contact Support</h2><p>Reach out to support@omnistore.com or call +1 555-019-2834.</p>', pageType: 'BRAND', metaTitle: 'Contact Us | OmniStore', metaDescription: 'Get in touch with customer support.', status: 'PUBLISHED' },
+        { id: 'pg-10', title: 'Frequently Asked Questions (FAQ)', slug: '/pages/faq', content: '<h2>FAQ & Help Center</h2><p>Answers regarding shipping, returns, and orders.</p>', pageType: 'BRAND', metaTitle: 'FAQ | OmniStore', metaDescription: 'Frequently asked questions and support answers.', status: 'PUBLISHED' },
+        { id: 'pg-11', title: 'Privacy Policy', slug: '/policies/privacy-policy', content: '<h2>Privacy Policy</h2><p>We respect customer data privacy and protection rules.</p>', pageType: 'POLICY', metaTitle: 'Privacy Policy | OmniStore', metaDescription: 'Privacy policy and cookie guidelines.', status: 'PUBLISHED' },
+        { id: 'pg-12', title: 'Terms & Conditions', slug: '/policies/terms-and-conditions', content: '<h2>Terms of Service</h2><p>Terms and conditions governing store usage.</p>', pageType: 'POLICY', metaTitle: 'Terms & Conditions | OmniStore', metaDescription: 'Store terms of service.', status: 'PUBLISHED' },
+        { id: 'pg-13', title: 'Shipping Policy', slug: '/policies/shipping-policy', content: '<h2>Shipping Policy</h2><p>Orders dispatched within 24-48 hours with full tracking.</p>', pageType: 'POLICY', metaTitle: 'Shipping Policy | OmniStore', metaDescription: 'Shipping rates and delivery timelines.', status: 'PUBLISHED' },
+        { id: 'pg-14', title: 'Refund Policy', slug: '/policies/refund-policy', content: '<h2>Refund & Return Policy</h2><p>30-day money-back return policy on unused items.</p>', pageType: 'POLICY', metaTitle: 'Refund Policy | OmniStore', metaDescription: 'Returns and refund rules.', status: 'PUBLISHED' },
+        { id: 'pg-15', title: 'Summer Lookbook 2026', slug: '/pages/summer-lookbook-2026', content: '<h2>Summer Apparel Drop</h2><p>Explore exclusive summer styles.</p>', pageType: 'CUSTOM', metaTitle: 'Summer Lookbook | OmniStore', metaDescription: 'Explore seasonal fashion drops.', status: 'PUBLISHED' },
+      ];
+
+      return defaultPages;
+    })();
+
+    try {
+      const pages = await inFlightPagesPromise;
+      return pages;
+    } finally {
+      setTimeout(() => {
+        inFlightPagesPromise = null;
+      }, 500);
     }
-
-    const defaultPages: CMSPageData[] = [
-      { id: 'pg-1', title: 'Home', slug: '/', content: '<h1>Welcome to OmniStore</h1><p>Discover our curated collection of premium goods.</p>', pageType: 'SYSTEM', metaTitle: 'OmniStore | Official Flagship Store', metaDescription: 'Shop high quality products with express shipping.', status: 'PUBLISHED' },
-      { id: 'pg-2', title: 'Products Catalog', slug: '/products', content: '<h1>Product Catalog</h1><p>Browse all available products.</p>', pageType: 'SYSTEM', metaTitle: 'All Products | OmniStore', metaDescription: 'Browse our complete catalog of electronics and fashion.', status: 'PUBLISHED' },
-      { id: 'pg-3', title: 'Collections', slug: '/collections', content: '<h1>Featured Collections</h1><p>Explore curated product groupings.</p>', pageType: 'SYSTEM', metaTitle: 'Collections | OmniStore', metaDescription: 'Explore curated product collections.', status: 'PUBLISHED' },
-      { id: 'pg-4', title: 'Product Details Showcase', slug: '/product/[id]', content: '<h1>Product Details</h1><p>High-resolution gallery, specs, and reviews.</p>', pageType: 'SYSTEM', metaTitle: 'Product Details | OmniStore', metaDescription: 'Product specifications and buyer reviews.', status: 'PUBLISHED' },
-      { id: 'pg-5', title: 'Shopping Cart', slug: '/cart', content: '<h1>Shopping Cart</h1><p>Review items before checking out.</p>', pageType: 'SYSTEM', metaTitle: 'Shopping Cart | OmniStore', metaDescription: 'View items in your cart.', status: 'PUBLISHED' },
-      { id: 'pg-6', title: 'Checkout Flow', slug: '/checkout', content: '<h1>Secure Checkout</h1><p>Enter shipping details and payment info.</p>', pageType: 'SYSTEM', metaTitle: 'Checkout | OmniStore', metaDescription: 'Complete your order securely.', status: 'PUBLISHED' },
-      { id: 'pg-7', title: 'Page Not Found (404)', slug: '/404', content: '<h1>404 - Page Not Found</h1><p>The requested page could not be located.</p>', pageType: 'SYSTEM', metaTitle: '404 Not Found | OmniStore', metaDescription: 'Page not found.', status: 'PUBLISHED' },
-      { id: 'pg-8', title: 'About Us', slug: '/pages/about', content: '<h2>Our Brand Story</h2><p>OmniStore delivers sustainable, premium quality merchandise directly to customers worldwide.</p>', pageType: 'BRAND', metaTitle: 'About Us | OmniStore', metaDescription: 'Learn about our story and mission.', status: 'PUBLISHED' },
-      { id: 'pg-9', title: 'Contact Us', slug: '/pages/contact', content: '<h2>Contact Support</h2><p>Reach out to support@omnistore.com or call +1 555-019-2834.</p>', pageType: 'BRAND', metaTitle: 'Contact Us | OmniStore', metaDescription: 'Get in touch with customer support.', status: 'PUBLISHED' },
-      { id: 'pg-10', title: 'Frequently Asked Questions (FAQ)', slug: '/pages/faq', content: '<h2>FAQ & Help Center</h2><p>Answers regarding shipping, returns, and orders.</p>', pageType: 'BRAND', metaTitle: 'FAQ | OmniStore', metaDescription: 'Frequently asked questions and support answers.', status: 'PUBLISHED' },
-      { id: 'pg-11', title: 'Privacy Policy', slug: '/policies/privacy-policy', content: '<h2>Privacy Policy</h2><p>We respect customer data privacy and protection rules.</p>', pageType: 'POLICY', metaTitle: 'Privacy Policy | OmniStore', metaDescription: 'Privacy policy and cookie guidelines.', status: 'PUBLISHED' },
-      { id: 'pg-12', title: 'Terms & Conditions', slug: '/policies/terms-and-conditions', content: '<h2>Terms of Service</h2><p>Terms and conditions governing store usage.</p>', pageType: 'POLICY', metaTitle: 'Terms & Conditions | OmniStore', metaDescription: 'Store terms of service.', status: 'PUBLISHED' },
-      { id: 'pg-13', title: 'Shipping Policy', slug: '/policies/shipping-policy', content: '<h2>Shipping Policy</h2><p>Orders dispatched within 24-48 hours with full tracking.</p>', pageType: 'POLICY', metaTitle: 'Shipping Policy | OmniStore', metaDescription: 'Shipping rates and delivery timelines.', status: 'PUBLISHED' },
-      { id: 'pg-14', title: 'Refund Policy', slug: '/policies/refund-policy', content: '<h2>Refund & Return Policy</h2><p>30-day money-back return policy on unused items.</p>', pageType: 'POLICY', metaTitle: 'Refund Policy | OmniStore', metaDescription: 'Returns and refund rules.', status: 'PUBLISHED' },
-      { id: 'pg-15', title: 'Summer Lookbook 2026', slug: '/pages/summer-lookbook-2026', content: '<h2>Summer Apparel Drop</h2><p>Explore exclusive summer styles.</p>', pageType: 'CUSTOM', metaTitle: 'Summer Lookbook | OmniStore', metaDescription: 'Explore seasonal fashion drops.', status: 'PUBLISHED' },
-    ];
-
-    return defaultPages;
   },
 
   // Create Page via Axios
@@ -1216,7 +2416,10 @@ export const cmsService = {
       if (response.data && response.data.id) {
         return response.data;
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
       console.warn('Backend page creation API notice, saving locally:', err);
     }
 
@@ -1248,7 +2451,10 @@ export const cmsService = {
       if (response.data && response.data.id) {
         return response.data;
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
       console.warn('Backend page update API notice, saving locally:', err);
     }
 
@@ -1281,7 +2487,11 @@ export const cmsService = {
   async deletePage(id: string): Promise<boolean> {
     try {
       await apiClient.delete(`/pages/${id}`);
-    } catch (err) {
+      return true;
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
       console.warn('Backend page delete API notice:', err);
     }
 
@@ -1294,139 +2504,21 @@ export const cmsService = {
     return true;
   },
 
-  // Brands Management
-  async getBrands(): Promise<BrandData[]> {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('merchant_cms_brands');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback below
-        }
+  // Get Page details by slug
+  async getPageBySlug(slug: string): Promise<CMSPageData | null> {
+    try {
+      const cleanSlug = slug.replace(/^\/+/, '');
+      const response = await apiClient.get<CMSPageData>(`/pages/detail/${cleanSlug}`);
+      if (response.data && response.data.id) {
+        return response.data;
       }
+    } catch (err) {
+      console.warn('Backend page slug lookup notice, searching locally:', err);
     }
 
-    const defaultBrands: BrandData[] = [
-      { id: 'b-1', name: 'AeroTech Lab', slug: 'aerotech-lab', logo: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=200&q=80', description: 'Next-gen audio & acoustic engineering.', website: 'https://aerotechlab.com', status: 'ACTIVE', productCount: 14 },
-      { id: 'b-2', name: 'Velvet Atelier', slug: 'velvet-atelier', logo: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=200&q=80', description: 'Haute couture luxury apparel & leather goods.', website: 'https://velvetatelier.com', status: 'ACTIVE', productCount: 22 },
-      { id: 'b-3', name: 'Lumix Crafted', slug: 'lumix-crafted', logo: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=200&q=80', description: 'Minimalist smart wearable devices.', website: 'https://lumixcrafted.com', status: 'ACTIVE', productCount: 8 },
-      { id: 'b-4', name: 'Botanica Elements', slug: 'botanica-elements', logo: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=200&q=80', description: '100% organic skincare & aromatherapy oils.', website: 'https://botanicaelements.com', status: 'ACTIVE', productCount: 18 },
-    ];
-
-    return defaultBrands;
-  },
-
-  async createBrand(brand: Partial<BrandData>): Promise<BrandData> {
-    const brands = await this.getBrands();
-    const newBrand: BrandData = {
-      id: `b-${Date.now()}`,
-      name: brand.name || 'New Brand',
-      slug: brand.slug || `brand-${Date.now()}`,
-      logo: brand.logo || null,
-      description: brand.description || '',
-      website: brand.website || '',
-      status: 'ACTIVE',
-      productCount: 0,
-    };
-    brands.unshift(newBrand);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('merchant_cms_brands', JSON.stringify(brands));
-    }
-    return newBrand;
-  },
-
-  // Collections Management
-  async getCollections(): Promise<CollectionData[]> {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('merchant_cms_collections');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback below
-        }
-      }
-    }
-
-    const defaultCollections: CollectionData[] = [
-      {
-        id: 'c-1',
-        name: 'Best Sellers 2026',
-        slug: 'best-sellers-2026',
-        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80',
-        description: 'Top rated customer favorites of the season.',
-        type: 'AUTOMATIC',
-        rules: [{ field: 'tag', operator: 'contains', value: 'bestseller' }],
-        ruleMatch: 'ALL',
-        featured: true,
-        productCount: 12,
-      },
-      {
-        id: 'c-2',
-        name: 'Summer Essentials',
-        slug: 'summer-essentials',
-        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80',
-        description: 'Lightweight garments and outdoor audio gear.',
-        type: 'AUTOMATIC',
-        rules: [{ field: 'tag', operator: 'contains', value: 'summer' }],
-        ruleMatch: 'ANY',
-        featured: true,
-        productCount: 9,
-      },
-      {
-        id: 'c-3',
-        name: 'Limited Drops',
-        slug: 'limited-drops',
-        image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
-        description: 'Exclusive numbered capsule releases.',
-        type: 'MANUAL',
-        manualProductIds: ['prod-101', 'prod-104'],
-        featured: false,
-        productCount: 4,
-      },
-    ];
-
-    return defaultCollections;
-  },
-
-  async createCollection(collection: Partial<CollectionData>): Promise<CollectionData> {
-    const collections = await this.getCollections();
-    const newColl: CollectionData = {
-      id: `c-${Date.now()}`,
-      name: collection.name || 'New Collection',
-      slug: collection.slug || `collection-${Date.now()}`,
-      image: collection.image || null,
-      description: collection.description || '',
-      type: collection.type || 'MANUAL',
-      rules: collection.rules || [],
-      ruleMatch: collection.ruleMatch || 'ALL',
-      manualProductIds: collection.manualProductIds || [],
-      featured: collection.featured || false,
-      productCount: 0,
-    };
-    collections.unshift(newColl);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('merchant_cms_collections', JSON.stringify(collections));
-    }
-    return newColl;
-  },
-
-  async updateCollection(id: string, collection: Partial<CollectionData>): Promise<CollectionData> {
-    const collections = await this.getCollections();
-    const index = collections.findIndex((c) => c.id === id);
-    if (index > -1) {
-      const updated: CollectionData = {
-        ...collections[index],
-        ...collection,
-      };
-      collections[index] = updated;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('merchant_cms_collections', JSON.stringify(collections));
-      }
-      return updated;
-    }
-    throw new Error('Collection not found');
+    const pages = await this.getPages();
+    const found = pages.find((p) => p.slug === slug || p.slug === `/${slug}` || p.id === slug);
+    return found || null;
   },
 
   // Product Reviews Moderation
@@ -1466,81 +2558,97 @@ export const cmsService = {
   },
 
   // Navigation Menus Management
-  async getMenus(): Promise<CMSMenuData[]> {
-    try {
-      const response = await apiClient.get<any[]>('/menus');
-      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-        return response.data.map((m) => ({
-          ...m,
-          items: m.itemsJson ? JSON.parse(m.itemsJson) : [],
-        }));
-      }
-    } catch (err) {
-      console.warn('Backend menus API notice, using memory fallback:', err);
+  async getMenus(forceRefresh = false): Promise<CMSMenuData[]> {
+    if (!forceRefresh && inFlightMenusPromise) {
+      return inFlightMenusPromise;
     }
 
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('merchant_cms_menus');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback below
+    inFlightMenusPromise = (async () => {
+      try {
+        const response = await apiClient.get<any[]>('/menus');
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          return response.data.map((m) => ({
+            ...m,
+            items: m.itemsJson ? JSON.parse(m.itemsJson) : [],
+          }));
+        }
+      } catch (err) {
+        console.warn('Backend menus API notice, using memory fallback:', err);
+      }
+
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('merchant_cms_menus');
+        if (saved) {
+          try {
+            return JSON.parse(saved);
+          } catch {
+            // fallback below
+          }
         }
       }
-    }
 
-    const defaultMenus: CMSMenuData[] = [
-      {
-        id: 'm-1',
-        title: 'Header Navigation Menu',
-        handle: 'header-menu',
-        location: 'HEADER',
-        items: [
-          { id: 'item-1', label: 'Home', url: '/', target: '_self' },
-          {
-            id: 'item-2',
-            label: 'Shop',
-            url: '/products',
-            target: '_self',
-            isMegaMenu: true,
-            megaMenuConfig: {
-              bannerImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
-              headline: 'New Summer Drop 2026',
-              buttonLabel: 'Shop All Apparel',
-              buttonUrl: '/collections/summer-essentials',
+      const defaultMenus: CMSMenuData[] = [
+        {
+          id: 'm-1',
+          title: 'Header Navigation Menu',
+          handle: 'header-menu',
+          location: 'HEADER',
+          items: [
+            { id: 'item-1', label: 'Home', url: '/', target: '_self' },
+            {
+              id: 'item-2',
+              label: 'Shop',
+              url: '/products',
+              target: '_self',
+              isMegaMenu: true,
+              megaMenuConfig: {
+                bannerImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
+                headline: 'New Summer Drop 2026',
+                buttonLabel: 'Shop All Apparel',
+                buttonUrl: '/collections/summer-essentials',
+              },
+              children: [
+                { id: 'item-2-1', label: 'Men', url: '/collections/men', target: '_self' },
+                { id: 'item-2-2', label: 'Women', url: '/collections/women', target: '_self' },
+                { id: 'item-2-3', label: 'Kids', url: '/collections/kids', target: '_self' },
+              ],
             },
-            children: [
-              { id: 'item-2-1', label: 'Men', url: '/collections/men', target: '_self' },
-              { id: 'item-2-2', label: 'Women', url: '/collections/women', target: '_self' },
-              { id: 'item-2-3', label: 'Kids', url: '/collections/kids', target: '_self' },
-            ],
-          },
-          { id: 'item-3', label: 'About', url: '/pages/about', target: '_self' },
-          { id: 'item-4', label: 'Contact', url: '/pages/contact', target: '_self' },
-        ],
-      },
-      {
-        id: 'm-2',
-        title: 'Footer Quick Links Menu',
-        handle: 'footer-menu',
-        location: 'FOOTER',
-        items: [
-          { id: 'f-1', label: 'About Us', url: '/pages/about', target: '_self' },
-          { id: 'f-2', label: 'Customer Support', url: '/pages/contact', target: '_self' },
-          { id: 'f-3', label: 'FAQ', url: '/pages/faq', target: '_self' },
-          { id: 'f-4', label: 'Privacy Policy', url: '/policies/privacy-policy', target: '_self' },
-          { id: 'f-5', label: 'Terms & Conditions', url: '/policies/terms-and-conditions', target: '_self' },
-          { id: 'f-6', label: 'Shipping Policy', url: '/policies/shipping-policy', target: '_self' },
-          { id: 'f-7', label: 'Refund Policy', url: '/policies/refund-policy', target: '_self' },
-        ],
-      },
-    ];
+            { id: 'item-3', label: 'About', url: '/pages/about', target: '_self' },
+            { id: 'item-4', label: 'Contact', url: '/pages/contact', target: '_self' },
+          ],
+        },
+        {
+          id: 'm-2',
+          title: 'Footer Quick Links Menu',
+          handle: 'footer-menu',
+          location: 'FOOTER',
+          items: [
+            { id: 'f-1', label: 'About Us', url: '/pages/about', target: '_self' },
+            { id: 'f-2', label: 'Customer Support', url: '/pages/contact', target: '_self' },
+            { id: 'f-3', label: 'FAQ', url: '/pages/faq', target: '_self' },
+            { id: 'f-4', label: 'Privacy Policy', url: '/policies/privacy-policy', target: '_self' },
+            { id: 'f-5', label: 'Terms & Conditions', url: '/policies/terms-and-conditions', target: '_self' },
+            { id: 'f-6', label: 'Shipping Policy', url: '/policies/shipping-policy', target: '_self' },
+            { id: 'f-7', label: 'Refund Policy', url: '/policies/refund-policy', target: '_self' },
+          ],
+        },
+      ];
 
-    return defaultMenus;
+      return defaultMenus;
+    })();
+
+    try {
+      const menus = await inFlightMenusPromise;
+      return menus;
+    } finally {
+      setTimeout(() => {
+        inFlightMenusPromise = null;
+      }, 500);
+    }
   },
 
   async createMenu(menu: { title: string; handle: string; location: string; items: CMSMenuItem[] }): Promise<CMSMenuData> {
+    inFlightMenusPromise = null;
     const payload = {
       ...menu,
       itemsJson: JSON.stringify(menu.items),
@@ -1554,11 +2662,14 @@ export const cmsService = {
           items: menu.items,
         };
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
       console.warn('Backend create menu API notice, saving locally:', err);
     }
 
-    const menus = await this.getMenus();
+    const menus = await this.getMenus(true);
     const newMenu: CMSMenuData = {
       id: `m-${Date.now()}`,
       title: menu.title,
@@ -1577,6 +2688,7 @@ export const cmsService = {
   },
 
   async updateMenu(id: string, menu: { title?: string; handle?: string; location?: string; items?: CMSMenuItem[] }): Promise<CMSMenuData> {
+    inFlightMenusPromise = null;
     const payload: any = { ...menu };
     if (menu.items) {
       payload.itemsJson = JSON.stringify(menu.items);
@@ -1590,11 +2702,14 @@ export const cmsService = {
           items: menu.items || JSON.parse(response.data.itemsJson || '[]'),
         };
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
       console.warn('Backend update menu API notice, saving locally:', err);
     }
 
-    const menus = await this.getMenus();
+    const menus = await this.getMenus(true);
     const index = menus.findIndex((m) => m.id === id || m.handle === id);
     if (index > -1) {
       const updated: CMSMenuData = {
@@ -1615,13 +2730,18 @@ export const cmsService = {
   },
 
   async deleteMenu(id: string): Promise<boolean> {
+    inFlightMenusPromise = null;
     try {
       await apiClient.delete(`/menus/${id}`);
-    } catch (err) {
+      return true;
+    } catch (err: any) {
+      if (err.response) {
+        throw err;
+      }
       console.warn('Backend delete menu API notice:', err);
     }
 
-    const menus = await this.getMenus();
+    const menus = await this.getMenus(true);
     const filtered = menus.filter((m) => m.id !== id && m.handle !== id);
     if (typeof window !== 'undefined') {
       localStorage.setItem('merchant_cms_menus', JSON.stringify(filtered));
@@ -1630,195 +2750,7 @@ export const cmsService = {
     return true;
   },
 
-  // Customers CRM Management
-  async getCustomers(): Promise<CMSCustomer[]> {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('merchant_cms_customers');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback below
-        }
-      }
-    }
-
-    const defaultCustomers: CMSCustomer[] = [
-      {
-        id: 'cust-101',
-        name: 'Sarah Jenkins',
-        email: 'sarah.j@example.com',
-        phone: '+1 (555) 234-5678',
-        group: 'VIP',
-        tags: ['VIP', 'High-Spender', 'Newsletter'],
-        totalOrders: 5,
-        totalSpent: 1840.50,
-        acceptsMarketing: true,
-        acceptsSMSMarketing: true,
-        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
-        createdAt: '2025-11-12',
-        address: {
-          name: 'Sarah Jenkins',
-          street: '742 Evergreen Terrace',
-          city: 'Springfield',
-          state: 'IL',
-          zip: '62704',
-          country: 'United States',
-        },
-        notes: [
-          { id: 'cn-1', author: 'Store Manager', text: 'Granted VIP 15% discount perk on all high-value apparel orders.', createdAt: '2026-01-15' },
-        ],
-      },
-      {
-        id: 'cust-102',
-        name: 'Michael Chen',
-        email: 'mchen@example.com',
-        phone: '+1 (555) 876-5432',
-        group: 'RETURNING',
-        tags: ['Repeat-Buyer', 'Tech-Enthusiast'],
-        totalOrders: 3,
-        totalSpent: 480.00,
-        acceptsMarketing: true,
-        acceptsSMSMarketing: false,
-        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-        createdAt: '2026-01-20',
-        address: {
-          name: 'Michael Chen',
-          street: '120 Market Street, Suite 400',
-          city: 'San Francisco',
-          state: 'CA',
-          zip: '94105',
-          country: 'United States',
-        },
-        notes: [
-          { id: 'cn-2', author: 'Support Staff', text: 'Customer inquired about upcoming keyboard restock.', createdAt: '2026-02-01' },
-        ],
-      },
-      {
-        id: 'cust-103',
-        name: 'Emma Watson',
-        email: 'emma.w@example.com',
-        phone: '+44 20 7946 0912',
-        group: 'NEW',
-        tags: ['New-Customer', 'UK-Customer'],
-        totalOrders: 1,
-        totalSpent: 175.00,
-        acceptsMarketing: false,
-        acceptsSMSMarketing: false,
-        avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&q=80',
-        createdAt: '2026-08-06',
-        address: {
-          name: 'Emma Watson',
-          street: '10 Downing Street',
-          city: 'London',
-          state: 'Greater London',
-          zip: 'SW1A 2AA',
-          country: 'United Kingdom',
-        },
-        notes: [],
-      },
-      {
-        id: 'cust-104',
-        name: 'David Miller (Pacific Outfitter Corp)',
-        email: 'david.m@example.com',
-        phone: '+1 (555) 432-1098',
-        group: 'WHOLESALE',
-        tags: ['Wholesale', 'B2B-Partner', 'Tax-Exempt'],
-        totalOrders: 8,
-        totalSpent: 3450.00,
-        acceptsMarketing: true,
-        acceptsSMSMarketing: true,
-        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-        createdAt: '2025-09-01',
-        address: {
-          name: 'Pacific Outfitter Corp',
-          street: '55 Ocean Drive, Warehouse 4B',
-          city: 'Miami',
-          state: 'FL',
-          zip: '33139',
-          country: 'United States',
-        },
-        notes: [
-          { id: 'cn-3', author: 'B2B Sales Desk', text: 'Verified wholesale reseller certificate and tax exemption ID #FL-99218.', createdAt: '2025-09-02' },
-        ],
-      },
-      {
-        id: 'cust-105',
-        name: 'Sophia Loren',
-        email: 'sophia.l@example.com',
-        phone: '+39 06 69812',
-        group: 'NEW',
-        tags: ['New-Customer', 'International'],
-        totalOrders: 1,
-        totalSpent: 85.00,
-        acceptsMarketing: true,
-        acceptsSMSMarketing: false,
-        avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
-        createdAt: '2026-08-08',
-        address: {
-          name: 'Sophia Loren',
-          street: '42 Via Roma',
-          city: 'Rome',
-          state: 'RM',
-          zip: '00184',
-          country: 'Italy',
-        },
-        notes: [],
-      },
-    ];
-
-    return defaultCustomers;
-  },
-
-  async createCustomer(customer: Partial<CMSCustomer>): Promise<CMSCustomer> {
-    const customers = await this.getCustomers();
-    const newCust: CMSCustomer = {
-      id: `cust-${Date.now()}`,
-      name: customer.name || 'New Customer',
-      email: customer.email || `customer-${Date.now()}@example.com`,
-      phone: customer.phone || '',
-      group: customer.group || 'NEW',
-      tags: customer.tags || ['New-Customer'],
-      address: customer.address || {
-        name: customer.name || 'New Customer',
-        street: '123 Main Street',
-        city: 'New York',
-        state: 'NY',
-        zip: '10001',
-        country: 'United States',
-      },
-      acceptsMarketing: customer.acceptsMarketing !== false,
-      acceptsSMSMarketing: customer.acceptsSMSMarketing || false,
-      totalOrders: 0,
-      totalSpent: 0.0,
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${customer.email || Date.now()}`,
-      createdAt: new Date().toISOString().split('T')[0],
-      notes: [],
-    };
-
-    customers.unshift(newCust);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('merchant_cms_customers', JSON.stringify(customers));
-    }
-    return newCust;
-  },
-
-  async updateCustomer(id: string, customer: Partial<CMSCustomer>): Promise<CMSCustomer> {
-    const customers = await this.getCustomers();
-    const index = customers.findIndex((c) => c.id === id || c.email === id);
-    if (index > -1) {
-      const updated: CMSCustomer = {
-        ...customers[index],
-        ...customer,
-      };
-      customers[index] = updated;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('merchant_cms_customers', JSON.stringify(customers));
-      }
-      return updated;
-    }
-    throw new Error('Customer not found');
-  },
+  // Customer Reviews & Communication
 
   async addCustomerNote(id: string, noteText: string, author: string = 'Store Staff'): Promise<CMSCustomer> {
     const customers = await this.getCustomers();
@@ -1859,171 +2791,6 @@ export const cmsService = {
       return updated;
     }
     throw new Error('Customer not found');
-  },
-
-  // Discounts & Promotions Management
-  async getDiscounts(): Promise<CMSDiscount[]> {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('merchant_cms_discounts');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback below
-        }
-      }
-    }
-
-    const defaultDiscounts: CMSDiscount[] = [
-      {
-        id: 'disc-1',
-        title: 'Summer Flash Sale 20% OFF',
-        code: 'SUMMER2026',
-        discountType: 'PERCENTAGE',
-        method: 'COUPON_CODE',
-        value: 20,
-        minOrderAmount: 50.0,
-        appliesTo: 'ALL',
-        customerEligibility: 'ALL',
-        usageLimit: 100,
-        usageCount: 24,
-        oncePerCustomer: true,
-        startDate: '2026-08-01',
-        endDate: '2026-08-31',
-        status: 'ACTIVE',
-      },
-      {
-        id: 'disc-2',
-        title: 'New Customer Welcome Voucher',
-        code: 'WELCOME10',
-        discountType: 'FIXED_AMOUNT',
-        method: 'COUPON_CODE',
-        value: 10,
-        minOrderAmount: 30.0,
-        appliesTo: 'ALL',
-        customerEligibility: 'GROUPS',
-        targetCustomers: ['NEW'],
-        usageLimit: 500,
-        usageCount: 88,
-        oncePerCustomer: true,
-        startDate: '2026-01-01',
-        status: 'ACTIVE',
-      },
-      {
-        id: 'disc-3',
-        title: 'Automatic Free Express Shipping on Orders over $75',
-        code: null,
-        discountType: 'FREE_SHIPPING',
-        method: 'AUTOMATIC',
-        value: 0,
-        minOrderAmount: 75.0,
-        appliesTo: 'ALL',
-        customerEligibility: 'ALL',
-        usageCount: 142,
-        oncePerCustomer: false,
-        startDate: '2026-05-01',
-        status: 'ACTIVE',
-      },
-      {
-        id: 'disc-4',
-        title: 'Buy 2 Audio Products Get 1 Free',
-        code: 'BUY2GET1FREE',
-        discountType: 'BUY_X_GET_Y',
-        method: 'COUPON_CODE',
-        value: 0,
-        buyQuantity: 2,
-        getQuantity: 1,
-        getDiscountPercent: 100,
-        minOrderAmount: 0,
-        appliesTo: 'PRODUCTS',
-        targetIds: ['prod-101', 'prod-104'],
-        customerEligibility: 'ALL',
-        usageLimit: 50,
-        usageCount: 12,
-        oncePerCustomer: true,
-        startDate: '2026-07-01',
-        endDate: '2026-09-01',
-        status: 'ACTIVE',
-      },
-      {
-        id: 'disc-5',
-        title: 'Exclusive VIP 25% Reward',
-        code: 'VIP25OFF',
-        discountType: 'PERCENTAGE',
-        method: 'COUPON_CODE',
-        value: 25,
-        minOrderAmount: 100.0,
-        appliesTo: 'ALL',
-        customerEligibility: 'GROUPS',
-        targetCustomers: ['VIP'],
-        usageLimit: 200,
-        usageCount: 45,
-        oncePerCustomer: true,
-        startDate: '2026-01-01',
-        status: 'ACTIVE',
-      },
-    ];
-
-    return defaultDiscounts;
-  },
-
-  async createDiscount(discount: Partial<CMSDiscount>): Promise<CMSDiscount> {
-    const discounts = await this.getDiscounts();
-    const newDisc: CMSDiscount = {
-      id: `disc-${Date.now()}`,
-      title: discount.title || 'New Discount',
-      code: discount.method === 'COUPON_CODE' ? (discount.code || `PROMO${Date.now()}`).toUpperCase() : null,
-      discountType: discount.discountType || 'PERCENTAGE',
-      method: discount.method || 'COUPON_CODE',
-      value: Number(discount.value || 0),
-      buyQuantity: discount.buyQuantity ? Number(discount.buyQuantity) : null,
-      getQuantity: discount.getQuantity ? Number(discount.getQuantity) : null,
-      getDiscountPercent: discount.getDiscountPercent ? Number(discount.getDiscountPercent) : null,
-      minOrderAmount: discount.minOrderAmount ? Number(discount.minOrderAmount) : 0,
-      appliesTo: discount.appliesTo || 'ALL',
-      targetIds: discount.targetIds || [],
-      customerEligibility: discount.customerEligibility || 'ALL',
-      targetCustomers: discount.targetCustomers || [],
-      usageLimit: discount.usageLimit ? Number(discount.usageLimit) : null,
-      usageCount: 0,
-      oncePerCustomer: discount.oncePerCustomer !== false,
-      startDate: discount.startDate || new Date().toISOString().split('T')[0],
-      endDate: discount.endDate || null,
-      status: discount.status || 'ACTIVE',
-      createdAt: new Date().toISOString(),
-    };
-
-    discounts.unshift(newDisc);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('merchant_cms_discounts', JSON.stringify(discounts));
-    }
-    return newDisc;
-  },
-
-  async updateDiscount(id: string, discount: Partial<CMSDiscount>): Promise<CMSDiscount> {
-    const discounts = await this.getDiscounts();
-    const index = discounts.findIndex((d) => d.id === id);
-    if (index > -1) {
-      const updated: CMSDiscount = {
-        ...discounts[index],
-        ...discount,
-      };
-      discounts[index] = updated;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('merchant_cms_discounts', JSON.stringify(discounts));
-      }
-      return updated;
-    }
-    throw new Error('Discount not found');
-  },
-
-  async deleteDiscount(id: string): Promise<boolean> {
-    const discounts = await this.getDiscounts();
-    const filtered = discounts.filter((d) => d.id !== id);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('merchant_cms_discounts', JSON.stringify(filtered));
-    }
-    return true;
   },
 
   // Shipping & Logistics Management
@@ -2157,115 +2924,17 @@ export const cmsService = {
     throw new Error('Provider not found');
   },
 
-  // Tax Regions & GST Management
-  async getTaxRegions(): Promise<CMSTaxRegion[]> {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('merchant_cms_tax_regions');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback below
-        }
-      }
-    }
-
-    const defaultTaxRegions: CMSTaxRegion[] = [
-      {
-        id: 'tr-1',
-        name: 'India (GST / IGST / CGST / SGST)',
-        country: 'India',
-        taxName: 'GST',
-        taxNumber: '27AABCU9603R1ZM',
-        standardRate: 18.0,
-        reducedRate: 5.0,
-        isTaxInclusive: false,
-        hsnSacCodes: [
-          { id: 'hsn-101', code: '61091000', description: 'Cotton T-Shirts & Knitted Apparel', taxRate: 12.0, type: 'HSN' },
-          { id: 'hsn-102', code: '85183000', description: 'Headphones, Earphones & Audio Accessories', taxRate: 18.0, type: 'HSN' },
-          { id: 'sac-103', code: '998313', description: 'IT Software Development & Digital Services', taxRate: 18.0, type: 'SAC' },
-          { id: 'hsn-104', code: '49011010', description: 'Printed Educational Books & Journals', taxRate: 0.0, type: 'HSN' },
-        ],
-      },
-      {
-        id: 'tr-2',
-        name: 'United States (State Sales Tax)',
-        country: 'United States',
-        taxName: 'Sales Tax',
-        taxNumber: 'US-98765432',
-        standardRate: 8.875,
-        reducedRate: 4.0,
-        isTaxInclusive: false,
-        hsnSacCodes: [],
-      },
-      {
-        id: 'tr-3',
-        name: 'European Union & UK (VAT / One-Stop-Shop)',
-        country: 'European Union',
-        taxName: 'VAT',
-        taxNumber: 'EU99988210',
-        standardRate: 20.0,
-        reducedRate: 7.0,
-        isTaxInclusive: true,
-        hsnSacCodes: [
-          { id: 'hsn-201', code: 'VAT-STD', description: 'Standard VAT Goods Rate', taxRate: 20.0, type: 'HSN' },
-          { id: 'hsn-202', code: 'VAT-RED', description: 'Reduced Food & Essential Goods', taxRate: 7.0, type: 'HSN' },
-        ],
-      },
-    ];
-
-    return defaultTaxRegions;
-  },
-
-  async createTaxRegion(region: Partial<CMSTaxRegion>): Promise<CMSTaxRegion> {
-    const regions = await this.getTaxRegions();
-    const newRegion: CMSTaxRegion = {
-      id: `tr-${Date.now()}`,
-      name: region.name || 'New Tax Region',
-      country: region.country || 'United States',
-      taxName: region.taxName || 'GST',
-      taxNumber: region.taxNumber || '',
-      standardRate: Number(region.standardRate || 18.0),
-      reducedRate: Number(region.reducedRate || 5.0),
-      isTaxInclusive: region.isTaxInclusive || false,
-      hsnSacCodes: region.hsnSacCodes || [],
-    };
-
-    regions.push(newRegion);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('merchant_cms_tax_regions', JSON.stringify(regions));
-    }
-    return newRegion;
-  },
-
-  async updateTaxRegion(id: string, region: Partial<CMSTaxRegion>): Promise<CMSTaxRegion> {
-    const regions = await this.getTaxRegions();
-    const index = regions.findIndex((r) => r.id === id);
-    if (index > -1) {
-      const updated: CMSTaxRegion = {
-        ...regions[index],
-        ...region,
-      };
-      regions[index] = updated;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('merchant_cms_tax_regions', JSON.stringify(regions));
-      }
-      return updated;
-    }
-    throw new Error('Tax region not found');
-  },
-
-  async deleteTaxRegion(id: string): Promise<boolean> {
-    const regions = await this.getTaxRegions();
-    const filtered = regions.filter((r) => r.id !== id);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('merchant_cms_tax_regions', JSON.stringify(filtered));
-    }
-    return true;
-  },
-
   // Marketing & Campaigns Management
   async getMarketingCampaigns(): Promise<CMSMarketingCampaign[]> {
+    try {
+      const response = await apiClient.get<CMSMarketingCampaign[]>('/marketing/campaigns');
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
+      }
+    } catch (err) {
+      console.warn('Backend campaigns API notice, checking local storage:', err);
+    }
+
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('merchant_cms_marketing_campaigns');
       if (saved) {
@@ -2340,6 +3009,16 @@ export const cmsService = {
   },
 
   async createMarketingCampaign(campaign: Partial<CMSMarketingCampaign>): Promise<CMSMarketingCampaign> {
+    try {
+      const response = await apiClient.post<CMSMarketingCampaign>('/marketing/campaigns', campaign);
+      if (response.data && response.data.id) {
+        return response.data;
+      }
+    } catch (err: any) {
+      if (err.response) throw err;
+      console.warn('Backend create campaign notice, saving locally:', err);
+    }
+
     const campaigns = await this.getMarketingCampaigns();
     const newCamp: CMSMarketingCampaign = {
       id: `camp-${Date.now()}`,
@@ -2364,6 +3043,16 @@ export const cmsService = {
   },
 
   async updateMarketingCampaign(id: string, campaign: Partial<CMSMarketingCampaign>): Promise<CMSMarketingCampaign> {
+    try {
+      const response = await apiClient.put<CMSMarketingCampaign>(`/marketing/campaigns/${id}`, campaign);
+      if (response.data && response.data.id) {
+        return response.data;
+      }
+    } catch (err: any) {
+      if (err.response) throw err;
+      console.warn('Backend update campaign notice, updating locally:', err);
+    }
+
     const campaigns = await this.getMarketingCampaigns();
     const index = campaigns.findIndex((c) => c.id === id);
     if (index > -1) {
@@ -2381,6 +3070,13 @@ export const cmsService = {
   },
 
   async deleteMarketingCampaign(id: string): Promise<boolean> {
+    try {
+      await apiClient.delete(`/marketing/campaigns/${id}`);
+      return true;
+    } catch (err) {
+      console.warn('Backend delete campaign notice, deleting locally:', err);
+    }
+
     const campaigns = await this.getMarketingCampaigns();
     const filtered = campaigns.filter((c) => c.id !== id);
     if (typeof window !== 'undefined') {
@@ -2391,6 +3087,15 @@ export const cmsService = {
 
   // Pixels & Integration Tracking
   async getPixelConfig(): Promise<CMSPixelConfig> {
+    try {
+      const response = await apiClient.get<CMSPixelConfig>('/marketing/pixels');
+      if (response.data) {
+        return response.data;
+      }
+    } catch (err) {
+      console.warn('Backend pixel config notice, checking local storage:', err);
+    }
+
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('merchant_cms_pixel_config');
       if (saved) {
@@ -2415,6 +3120,19 @@ export const cmsService = {
   },
 
   async updatePixelConfig(config: CMSPixelConfig): Promise<CMSPixelConfig> {
+    try {
+      const response = await apiClient.put<CMSPixelConfig>('/marketing/pixels', config);
+      if (response.data) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('merchant_cms_pixel_config', JSON.stringify(response.data));
+        }
+        return response.data;
+      }
+    } catch (err: any) {
+      if (err.response) throw err;
+      console.warn('Backend update pixel config notice, saving locally:', err);
+    }
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('merchant_cms_pixel_config', JSON.stringify(config));
     }
@@ -2423,6 +3141,15 @@ export const cmsService = {
 
   // Abandoned Cart Recovery Engine
   async getAbandonedCarts(): Promise<AbandonedCartData[]> {
+    try {
+      const response = await apiClient.get<AbandonedCartData[]>('/marketing/abandoned-carts');
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
+      }
+    } catch (err) {
+      console.warn('Backend abandoned carts notice, checking local storage:', err);
+    }
+
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('merchant_cms_abandoned_carts');
       if (saved) {
@@ -2474,6 +3201,16 @@ export const cmsService = {
   },
 
   async sendCartRecoveryEmail(id: string): Promise<AbandonedCartData> {
+    try {
+      const response = await apiClient.post<AbandonedCartData>(`/marketing/abandoned-carts/${id}/recover`, {});
+      if (response.data && response.data.id) {
+        return response.data;
+      }
+    } catch (err: any) {
+      if (err.response) throw err;
+      console.warn('Backend send cart recovery email notice, updating locally:', err);
+    }
+
     const carts = await this.getAbandonedCarts();
     const index = carts.findIndex((c) => c.id === id);
     if (index > -1) {
@@ -2489,6 +3226,39 @@ export const cmsService = {
     }
     throw new Error('Cart not found');
   },
+
+  // ── MEDIA UPLOAD ─────────────────────────────────────────────────────────────
+
+  /**
+   * Uploads a file to the backend (which streams it to AWS S3 or local storage).
+   * Returns the public URL and CDN URL of the uploaded file.
+   */
+  async uploadMedia(
+    file: File,
+    folder: string = 'uploads',
+    fileType: string = 'IMAGE'
+  ): Promise<{ url: string; cdnUrl: string; fileName: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+    formData.append('fileType', fileType);
+
+    const response = await apiClient.post<{
+      url: string;
+      cdnUrl: string;
+      fileName: string;
+    }>('/media/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    if (!response.data?.url) {
+      throw new Error('Upload failed: no URL returned from server.');
+    }
+
+    return {
+      url: response.data.url,
+      cdnUrl: response.data.cdnUrl || response.data.url,
+      fileName: response.data.fileName || file.name,
+    };
+  },
 };
-
-

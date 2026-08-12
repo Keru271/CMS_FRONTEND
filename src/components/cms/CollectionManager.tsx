@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CollectionData, CollectionRule, CMSProduct } from '@/src/types';
+import { CollectionData, CollectionFormData, CollectionRule, CMSProduct } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import {
   Layers,
@@ -237,19 +237,18 @@ export const CollectionManager: React.FC = () => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const payload: Partial<CollectionData> = {
+      const payload: CollectionFormData = {
         name: formData.name,
         slug: formData.slug,
-        image: formData.image,
-        description: formData.description,
+        image: formData.image || '',
+        description: formData.description || '',
         type: formData.type,
         rules: formData.rules,
         ruleMatch: formData.ruleMatch,
         manualProductIds: formData.manualProductIds,
         featured: formData.featured,
-        metaTitle: formData.metaTitle,
-        metaDescription: formData.metaDescription,
-        productCount: matchingProductsPreview.length,
+        metaTitle: formData.metaTitle || '',
+        metaDescription: formData.metaDescription || '',
       };
 
       if (editingCollection) {

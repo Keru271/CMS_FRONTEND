@@ -14,9 +14,12 @@ export default function StoreSetupPage() {
           setMerchantData({
             ...merchantData,
             store: {
-              ...merchantData.store,
               storeName: updated.name,
               currency: updated.currency,
+              tagline: updated.description || merchantData.store?.tagline || 'Official Store',
+              category: merchantData.store?.category || 'General',
+              supportEmail: updated.contactEmail || merchantData.store?.supportEmail || '',
+              supportPhone: updated.contactPhone || merchantData.store?.supportPhone || '',
             },
           });
         }

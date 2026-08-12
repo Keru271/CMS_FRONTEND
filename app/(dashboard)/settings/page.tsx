@@ -34,29 +34,33 @@ export default function SettingsPage() {
 
         {merchantData && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#cbd5e0]/60">
-            <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
-              <span className="text-[10px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider block">
-                Store Brand
-              </span>
-              <p className="text-sm font-serif font-normal text-[#191a1b]">{merchantData.store.storeName}</p>
-              <p className="text-xs font-sans text-[#5e5a5a] italic">"{merchantData.store.tagline}"</p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
-              <span className="text-[10px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider block">
-                Selected Storefront Theme
-              </span>
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-3 h-3 rounded-full shadow-xs"
-                  style={{ backgroundColor: merchantData.selectedTemplate.accentColor }}
-                />
-                <p className="text-sm font-serif font-normal text-[#191a1b]">
-                  {merchantData.selectedTemplate.name}
-                </p>
+            {merchantData.store && (
+              <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
+                <span className="text-[10px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider block">
+                  Store Brand
+                </span>
+                <p className="text-sm font-serif font-normal text-[#191a1b]">{merchantData.store.storeName}</p>
+                <p className="text-xs font-sans text-[#5e5a5a] italic">"{merchantData.store.tagline || 'Official Store'}"</p>
               </div>
-              <p className="text-xs font-sans text-[#5e5a5a]">{merchantData.selectedTemplate.tagline}</p>
-            </div>
+            )}
+
+            {merchantData.selectedTemplate && (
+              <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
+                <span className="text-[10px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider block">
+                  Selected Storefront Theme
+                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-3 h-3 rounded-full shadow-xs"
+                    style={{ backgroundColor: merchantData.selectedTemplate.accentColor }}
+                  />
+                  <p className="text-sm font-serif font-normal text-[#191a1b]">
+                    {merchantData.selectedTemplate.name}
+                  </p>
+                </div>
+                <p className="text-xs font-sans text-[#5e5a5a]">{merchantData.selectedTemplate.tagline}</p>
+              </div>
+            )}
 
             <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
               <span className="text-[10px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider block">

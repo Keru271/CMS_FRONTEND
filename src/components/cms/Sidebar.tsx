@@ -76,8 +76,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'pages' as CMSView, path: '/pages', label: 'Pages', icon: FileText },
     { id: 'navigation' as CMSView, path: '/navigation', label: 'Navigation', icon: Compass },
     { id: 'products' as CMSView, path: '/products', label: 'Products Studio', icon: Package, badge: productsCount },
-    { id: 'orders' as CMSView, path: '/orders', label: 'Requests', icon: ShoppingBag, badge: 6 },
-    { id: 'customers' as CMSView, path: '/customers', label: 'Users & CRM', icon: Users },
+    { id: 'orders' as CMSView, path: '/orders', label: 'Orders', icon: ShoppingBag, badge: 6 },
+    { id: 'customers' as CMSView, path: '/customers', label: 'Customers', icon: Users },
     { id: 'discounts' as CMSView, path: '/discounts', label: 'Discounts', icon: Tag },
     { id: 'tax' as CMSView, path: '/tax', label: 'Taxation', icon: Receipt },
     { id: 'shipping' as CMSView, path: '/shipping', label: 'Logistics', icon: Truck },
@@ -86,9 +86,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const secondaryNavItems = [
-    { id: 'pages' as CMSView, path: '/pages', label: 'Pages', icon: FileText },
-    { id: 'themes' as CMSView, path: '/themes', label: 'Themes', icon: Palette },
-    { id: 'store-setup' as CMSView, path: '/store-setup', label: 'Store Setup', icon: Store },
     { id: 'settings' as CMSView, path: '/settings', label: 'Settings', icon: Settings },
   ];
 
@@ -129,9 +126,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       <aside
-        className={`bg-[#fdf1ef] border-r border-[#cbd5e0]/70 h-screen flex flex-col justify-between transition-all duration-300 z-40 p-3 sm:p-4 ${
-          mobileOpen ? 'fixed inset-y-0 left-0 w-64 shadow-2xl bg-[#ffffff]' : 'hidden md:flex sticky top-0'
-        } ${collapsed ? 'md:w-20' : 'md:w-60'}`}
+        className={`bg-[#fdf1ef] border-r border-[#cbd5e0]/70 h-screen flex flex-col justify-between transition-all duration-300 z-40 p-3 sm:p-4 ${mobileOpen ? 'fixed inset-y-0 left-0 w-64 shadow-2xl bg-[#ffffff]' : 'hidden md:flex sticky top-0'
+          } ${collapsed ? 'md:w-20' : 'md:w-60'}`}
       >
         <div className="space-y-6">
           {/* Statamic Brand Header */}
@@ -185,26 +181,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={idx}
                   onClick={() => handleNavClick(item.id, item.path)}
                   title={collapsed && !mobileOpen ? item.label : undefined}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-sans transition-all min-h-[40px] ${
-                    isActive
-                      ? 'bg-[#191a1b] text-[#ffffff] font-medium shadow-xs'
-                      : 'text-[#5e5a5a] hover:bg-[#ffffff] hover:text-[#191a1b] font-normal'
-                  } ${collapsed && !mobileOpen ? 'justify-center' : 'justify-between'}`}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-sans transition-all min-h-[40px] ${isActive
+                    ? 'bg-[#191a1b] text-[#ffffff] font-medium shadow-xs'
+                    : 'text-[#5e5a5a] hover:bg-[#ffffff] hover:text-[#191a1b] font-normal'
+                    } ${collapsed && !mobileOpen ? 'justify-center' : 'justify-between'}`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Icon
-                      className={`w-4 h-4 shrink-0 ${
-                        isActive ? 'text-[#d4ff4c]' : 'text-[#5e5a5a]'
-                      }`}
+                      className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#d4ff4c]' : 'text-[#5e5a5a]'
+                        }`}
                     />
                     {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
                   </div>
 
                   {(!collapsed || mobileOpen) && item.badge !== undefined && item.badge > 0 && (
                     <span
-                      className={`w-5 h-5 rounded-full font-bold text-[10px] flex items-center justify-center shrink-0 ${
-                        isActive ? 'bg-[#d4ff4c] text-[#191a1b]' : 'bg-[#191a1b] text-[#d4ff4c]'
-                      }`}
+                      className={`w-5 h-5 rounded-full font-bold text-[10px] flex items-center justify-center shrink-0 ${isActive ? 'bg-[#d4ff4c] text-[#191a1b]' : 'bg-[#191a1b] text-[#d4ff4c]'
+                        }`}
                     >
                       {item.badge}
                     </span>
@@ -226,11 +219,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 key={idx}
                 onClick={() => handleNavClick(item.id, item.path)}
                 title={collapsed && !mobileOpen ? item.label : undefined}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-sans transition-all ${
-                  isActive
-                    ? 'bg-[#191a1b] text-[#ffffff] font-medium'
-                    : 'text-[#5e5a5a] hover:text-[#191a1b] font-normal hover:bg-[#ffffff]'
-                } ${collapsed && !mobileOpen ? 'justify-center' : ''}`}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-sans transition-all ${isActive
+                  ? 'bg-[#191a1b] text-[#ffffff] font-medium'
+                  : 'text-[#5e5a5a] hover:text-[#191a1b] font-normal hover:bg-[#ffffff]'
+                  } ${collapsed && !mobileOpen ? 'justify-center' : ''}`}
               >
                 <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#d4ff4c]' : 'text-[#5e5a5a]'}`} />
                 {(!collapsed || mobileOpen) && <span>{item.label}</span>}

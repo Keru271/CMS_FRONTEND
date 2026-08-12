@@ -37,6 +37,7 @@ export const PageManager: React.FC = () => {
   const [editingPage, setEditingPage] = useState<CMSPageData | null>(null);
   const [previewPage, setPreviewPage] = useState<CMSPageData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<PageFormData>({
@@ -72,6 +73,7 @@ export const PageManager: React.FC = () => {
 
   const handleOpenCreateModal = () => {
     setEditingPage(null);
+    setModalError(null);
     setFormData({
       title: '',
       slug: '/pages/',
@@ -86,6 +88,7 @@ export const PageManager: React.FC = () => {
 
   const handleOpenEditModal = (page: CMSPageData) => {
     setEditingPage(page);
+    setModalError(null);
     setFormData({
       title: page.title,
       slug: page.slug,
@@ -119,18 +122,25 @@ export const PageManager: React.FC = () => {
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setModalError(null);
+    const normalizedPayload: PageFormData = {
+      ...formData,
+      slug: (formData.slug || '').toLowerCase().trim(),
+    };
     try {
       if (editingPage) {
-        await cmsService.updatePage(editingPage.id, formData);
+        await cmsService.updatePage(editingPage.id, normalizedPayload);
         showToast(`Page "${formData.title}" updated successfully!`, 'success');
       } else {
-        await cmsService.createPage(formData);
+        await cmsService.createPage(normalizedPayload);
         showToast(`Custom Page "${formData.title}" created!`, 'success');
       }
       setIsEditModalOpen(false);
       await loadPages();
     } catch (err: any) {
-      showToast(err.message || 'Failed to save page.', 'error');
+      const msg = err.response?.data?.message || err.message || 'Failed to save page.';
+      setModalError(msg);
+      showToast(msg, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -466,6 +476,22 @@ export const PageManager: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmitForm} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+              {/* Modal Error Banner */}
+              {modalError && (
+                <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center justify-between animate-in fade-in">
+                  <div className="flex items-center gap-2.5">
+                    <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
+                    <span>{modalError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setModalError(null)}
+                    className="p-1 text-rose-400 hover:text-rose-600 font-bold"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Title */}
                 <div className="space-y-1.5">

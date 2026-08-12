@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CollectionManager } from '@/src/components/cms/CollectionManager';
+import { CategoryManager } from '@/src/components/cms/CategoryManager';
 import {
   CMSProduct,
   ProductFormData,
@@ -863,44 +864,13 @@ export const ProductStudio: React.FC = () => {
       )}
 
       {/* SUB-MODULE 3: CATEGORIES MANAGER */}
-      {activeSubTab === 'categories' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {categories.map((cat) => (
-            <div key={cat.id} className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-2xl">{cat.slug.includes('fashion') ? '👗' : '💻'}</span>
-                <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs">
-                  {cat.productCount} Products
-                </span>
-              </div>
-              <h3 className="font-black text-base text-slate-900">{cat.name}</h3>
-              <p className="text-xs text-slate-500">{cat.description}</p>
-              <span className="text-[10px] font-mono text-slate-400 block">/category/{cat.slug}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {activeSubTab === 'categories' && <CategoryManager initialTab="CATEGORIES" />}
 
       {/* SUB-MODULE 4: COLLECTIONS MANAGER STUDIO */}
-      {activeSubTab === 'collections' && <CollectionManager />}
+      {activeSubTab === 'collections' && <CategoryManager initialTab="COLLECTIONS" />}
 
       {/* SUB-MODULE 5: BRANDS DIRECTORY */}
-      {activeSubTab === 'brands' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {brands.map((brand) => (
-            <div key={brand.id} className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-3">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
-                <img src={brand.logo || ''} alt={brand.name} className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <h3 className="font-black text-base text-slate-900">{brand.name}</h3>
-                <p className="text-xs text-slate-500">{brand.description}</p>
-              </div>
-              <span className="text-[10px] font-extrabold text-indigo-600 block">{brand.productCount} Linked Products</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {activeSubTab === 'brands' && <CategoryManager initialTab="BRANDS" />}
 
       {/* SUB-MODULE 6: INVENTORY CONTROL */}
       {activeSubTab === 'inventory' && (

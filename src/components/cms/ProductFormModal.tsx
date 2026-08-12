@@ -46,6 +46,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       price: initialProduct?.price ?? '',
       originalPrice: initialProduct?.originalPrice ?? '',
       stockQuantity: initialProduct?.stockQuantity ?? 10,
+      isTaxInclusive: initialProduct?.isTaxInclusive || false,
       status: initialProduct?.status || 'active',
       image: initialProduct?.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
       description: initialProduct?.description || '',
@@ -191,6 +192,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               isInvalid={formik.touched.stockQuantity && Boolean(formik.errors.stockQuantity)}
               errorMessage={formik.touched.stockQuantity && formik.errors.stockQuantity}
             />
+          </div>
+
+          {/* Tax Inclusive Setting */}
+          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <input
+              type="checkbox"
+              id="isTaxInclusive"
+              name="isTaxInclusive"
+              checked={Boolean(formik.values.isTaxInclusive)}
+              onChange={formik.handleChange}
+              className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer"
+            />
+            <label htmlFor="isTaxInclusive" className="text-xs font-bold text-slate-800 cursor-pointer">
+              Product price is inclusive of tax (Tax is included in the listed price)
+            </label>
           </div>
 
           {/* Row 4: Image URL & Tags */}

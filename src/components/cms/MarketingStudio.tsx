@@ -198,11 +198,10 @@ export const MarketingStudio: React.FC = () => {
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 ${
-            toastMessage.type === 'success'
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 ${toastMessage.type === 'success'
               ? 'bg-emerald-900/90 text-white border-emerald-700'
               : 'bg-rose-900/90 text-white border-rose-700'
-          }`}
+            }`}
         >
           {toastMessage.type === 'success' ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -307,11 +306,10 @@ export const MarketingStudio: React.FC = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 shrink-0 ${
-                  isActive
+                className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 shrink-0 ${isActive
                     ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md'
                     : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-                }`}
+                  }`}
               >
                 <IconC className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
@@ -483,9 +481,8 @@ export const MarketingStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setPixelConfig({ ...pixelConfig, isGa4Active: !pixelConfig.isGa4Active })}
-                  className={`px-3 py-1 rounded-full text-xs font-black ${
-                    pixelConfig.isGa4Active ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-black ${pixelConfig.isGa4Active ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
+                    }`}
                 >
                   {pixelConfig.isGa4Active ? 'Enabled' : 'Disabled'}
                 </button>
@@ -506,9 +503,8 @@ export const MarketingStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setPixelConfig({ ...pixelConfig, isMetaActive: !pixelConfig.isMetaActive })}
-                  className={`px-3 py-1 rounded-full text-xs font-black ${
-                    pixelConfig.isMetaActive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-black ${pixelConfig.isMetaActive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
+                    }`}
                 >
                   {pixelConfig.isMetaActive ? 'Enabled' : 'Disabled'}
                 </button>
@@ -529,9 +525,8 @@ export const MarketingStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setPixelConfig({ ...pixelConfig, isTikTokActive: !pixelConfig.isTikTokActive })}
-                  className={`px-3 py-1 rounded-full text-xs font-black ${
-                    pixelConfig.isTikTokActive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-black ${pixelConfig.isTikTokActive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
+                    }`}
                 >
                   {pixelConfig.isTikTokActive ? 'Enabled' : 'Disabled'}
                 </button>
@@ -552,9 +547,8 @@ export const MarketingStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setPixelConfig({ ...pixelConfig, isPinterestActive: !pixelConfig.isPinterestActive })}
-                  className={`px-3 py-1 rounded-full text-xs font-black ${
-                    pixelConfig.isPinterestActive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-black ${pixelConfig.isPinterestActive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
+                    }`}
                 >
                   {pixelConfig.isPinterestActive ? 'Enabled' : 'Disabled'}
                 </button>

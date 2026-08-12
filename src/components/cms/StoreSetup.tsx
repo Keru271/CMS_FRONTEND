@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import DragDropUpload from '@/src/components/ui/DragDropUpload';
 import { StoreSetupData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import {
@@ -95,26 +96,6 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
     }
   };
 
-  const handleSimulateLogoUpload = () => {
-    const sampleLogos = [
-      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
-      'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?auto=format&fit=crop&w=400&q=80',
-      'https://images.unsplash.com/photo-1572021335469-31706a17aaef?auto=format&fit=crop&w=400&q=80',
-    ];
-    const randomLogo = sampleLogos[Math.floor(Math.random() * sampleLogos.length)];
-    handleChange('logo', randomLogo);
-    showToast('Uploaded logo updated', 'success');
-  };
-
-  const handleSimulateFaviconUpload = () => {
-    const sampleFavicons = [
-      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=64&q=80',
-      'https://images.unsplash.com/photo-1614680376593-902f749f705c?auto=format&fit=crop&w=64&q=80',
-    ];
-    const randomFav = sampleFavicons[Math.floor(Math.random() * sampleFavicons.length)];
-    handleChange('favicon', randomFav);
-    showToast('Favicon updated', 'success');
-  };
 
   const handleVerifyDomain = () => {
     setIsVerifyingDomain(true);
@@ -358,48 +339,23 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
                   <span className="text-[10px] font-bold text-slate-400">Rec: 512x512 PNG / SVG</span>
                 </div>
 
-                {/* Logo Preview Container */}
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-accent border border-slate-200/80">
-                  <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-card border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
-                    {formData.logo ? (
-                      <img src={formData.logo} alt="Store Logo Preview" className="w-full h-full object-contain p-1" />
-                    ) : (
-                      <Store className="w-8 h-8 text-slate-300" />
-                    )}
-                  </div>
-                  <div className="space-y-1.5 flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-800 dark:text-foreground truncate">
-                      {formData.name || 'Store Logo'}
-                    </p>
-                    <p className="text-[10px] text-slate-400 truncate">
-                      {formData.logo ? formData.logo : 'No logo uploaded yet'}
-                    </p>
-                    <div className="flex items-center gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={handleSimulateLogoUpload}
-                        className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-extrabold flex items-center gap-1.5 transition-all"
-                      >
-                        <Upload className="w-3 h-3" />
-                        <span>Upload Logo</span>
-                      </button>
-                      {formData.logo && (
-                        <button
-                          type="button"
-                          onClick={() => handleChange('logo', '')}
-                          className="px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 hover:bg-rose-100 text-[10px] font-bold transition-all"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <DragDropUpload
+                  folder="logos"
+                  fileType="LOGO"
+                  currentUrl={formData.logo || undefined}
+                  onUploadComplete={(url) => {
+                    handleChange('logo', url);
+                    if (url) showToast('Logo uploaded successfully!', 'success');
+                  }}
+                  hint="PNG or SVG with transparent background recommended."
+                  previewShape="square"
+                  maxSizeMB={5}
+                />
 
-                {/* Direct Logo URL Input */}
+                {/* Direct Logo URL fallback */}
                 <div className="space-y-1">
                   <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                    Direct Image URL
+                    Or paste an image URL directly
                   </label>
                   <input
                     type="url"
@@ -421,13 +377,13 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
                   <span className="text-[10px] font-bold text-slate-400">Rec: 32x32 ICO / PNG</span>
                 </div>
 
-                {/* Browser Tab Preview Mockup */}
-                <div className="p-4 rounded-xl bg-white dark:bg-accent border border-slate-200/80 space-y-2">
+                {/* Browser Tab Mockup Preview */}
+                <div className="p-3 rounded-xl bg-white dark:bg-accent border border-slate-200/80 space-y-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    Browser Tab Mockup Preview
+                    Browser Tab Mockup
                   </span>
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-t-xl bg-slate-200 dark:bg-card border border-slate-300 dark:border-border w-48">
-                    <div className="w-4 h-4 rounded bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
+                    <div className="w-4 h-4 rounded bg-white flex items-center justify-center overflow-hidden shrink-0">
                       {formData.favicon ? (
                         <img src={formData.favicon} alt="Favicon" className="w-full h-full object-cover" />
                       ) : (
@@ -438,32 +394,25 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
                       {formData.name || 'Store'} | Official
                     </span>
                   </div>
-
-                  <div className="flex items-center gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={handleSimulateFaviconUpload}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-extrabold flex items-center gap-1.5 transition-all"
-                    >
-                      <Upload className="w-3 h-3" />
-                      <span>Upload Favicon</span>
-                    </button>
-                    {formData.favicon && (
-                      <button
-                        type="button"
-                        onClick={() => handleChange('favicon', '')}
-                        className="px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 hover:bg-rose-100 text-[10px] font-bold transition-all"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
                 </div>
 
-                {/* Direct Favicon URL Input */}
+                <DragDropUpload
+                  folder="logos"
+                  fileType="FAVICON"
+                  currentUrl={formData.favicon || undefined}
+                  onUploadComplete={(url) => {
+                    handleChange('favicon', url);
+                    if (url) showToast('Favicon uploaded successfully!', 'success');
+                  }}
+                  hint="ICO or 32×32 PNG for best browser compatibility."
+                  previewShape="favicon"
+                  maxSizeMB={1}
+                />
+
+                {/* Direct Favicon URL fallback */}
                 <div className="space-y-1">
                   <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                    Direct Favicon URL
+                    Or paste a favicon URL directly
                   </label>
                   <input
                     type="url"
