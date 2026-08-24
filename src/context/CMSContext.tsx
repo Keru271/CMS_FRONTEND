@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { cmsService, STORE_TEMPLATES } from '@/src/services/cmsService';
 import {
@@ -8,15 +8,24 @@ import {
   CMSCategory,
   CMSOrder,
   DashboardStats,
-  ProductFormData,
-  CategoryFormData,
-  OrderStatus,
   MerchantOnboardingData,
+  CMSStore,
+  CreateStorePayload,
 } from '@/src/types';
 
 interface CMSContextType {
   merchantData: MerchantOnboardingData | null;
   setMerchantData: React.Dispatch<React.SetStateAction<MerchantOnboardingData | null>>;
+  
+  // Multi-Store Portfolio Management
+  stores: CMSStore[];
+  activeStore: CMSStore | null;
+  switchActiveStore: (storeId: string) => Promise<void>;
+  createNewStore: (storeData: CreateStorePayload) => Promise<CMSStore>;
+  refreshStores: () => Promise<CMSStore[]>;
+  isCreateStoreModalOpen: boolean;
+  setIsCreateStoreModalOpen: (open: boolean) => void;
+
   products: CMSProduct[];
   setProducts: React.Dispatch<React.SetStateAction<CMSProduct[]>>;
   categories: CMSCategory[];
@@ -29,6 +38,12 @@ interface CMSContextType {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   fetchDashboardDetails: () => Promise<void>;
   
+  // Store Suspension State
+  isSuspended: boolean;
+  storeStatus: string;
+  isCheckingStatus: boolean;
+  refreshStoreStatus: () => Promise<void>;
+
   // Product Modal State
   isProductModalOpen: boolean;
   setIsProductModalOpen: (open: boolean) => void;
@@ -53,11 +68,20 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const router = useRouter();
 
   const [merchantData, setMerchantData] = useState<MerchantOnboardingData | null>(null);
+  const [stores, setStores] = useState<CMSStore[]>([]);
+  const [activeStore, setActiveStore] = useState<CMSStore | null>(null);
+  const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState<boolean>(false);
+
   const [products, setProducts] = useState<CMSProduct[]>([]);
   const [categories, setCategories] = useState<CMSCategory[]>([]);
   const [orders, setOrders] = useState<CMSOrder[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Store Suspension State
+  const [storeStatus, setStoreStatus] = useState<string>('ACTIVE');
+  const [isSuspended, setIsSuspended] = useState<boolean>(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
 
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<CMSProduct | null>(null);
@@ -65,67 +89,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    const initCMS = async () => {
-      const session = cmsService.getMerchantSession();
-      if (session && session.merchant && session.store) {
-        setMerchantData(session);
-        setIsLoading(false);
-        return;
-      }
-
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-      if (!token) {
-        router.push('/login');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const backendUser = await cmsService.getCurrentUser();
-        const nameParts = (backendUser.name || 'Merchant Owner').split(' ');
-        const firstName = nameParts[0] || 'Merchant';
-        const lastName = nameParts.slice(1).join(' ') || 'Owner';
-
-        const user = {
-          firstName,
-          lastName,
-          mobileNumber: '+1 555-0199',
-          email: backendUser.email,
-        };
-
-        if (backendUser.stores && backendUser.stores.length > 0) {
-          const store = backendUser.stores[0];
-          const newSession = {
-            merchant: user,
-            store: {
-              storeName: store.name,
-              tagline: 'Official Store',
-              category: 'Tech & Electronics',
-              currency: store.currency || 'USD',
-              supportEmail: user.email,
-              supportPhone: user.mobileNumber,
-            },
-            selectedTemplate: STORE_TEMPLATES[0],
-          };
-          cmsService.saveMerchantSession(newSession);
-          setMerchantData(newSession);
-        } else {
-          router.push('/merchant-details');
-        }
-      } catch (err) {
-        cmsService.clearMerchantSession();
-        router.push('/login');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initCMS();
-  }, [router]);
-
-  // Fetch Dashboard Details via single endpoint /api/analytics/dashboard-details
-  const fetchDashboardDetails = async () => {
+  // Fetch Dashboard Details via /api/analytics/dashboard-details scoped to active store
+  const fetchDashboardDetails = useCallback(async () => {
     setIsLoading(true);
     try {
       const details = await cmsService.getDashboardDetails();
@@ -138,9 +103,222 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  const syncUserAndStoreStatus = useCallback(async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const backendUser = await cmsService.getCurrentUser();
+      const nameParts = (backendUser.name || 'Merchant Owner').split(' ');
+      const firstName = nameParts[0] || 'Merchant';
+      const lastName = nameParts.slice(1).join(' ') || 'Owner';
+
+      const user = {
+        firstName,
+        lastName,
+        mobileNumber: '+1 555-0199',
+        email: backendUser.email,
+        role: backendUser.role,
+      };
+
+      // Collect all stores owned or accessible by merchant
+      const ownedStores = backendUser.stores || [];
+      const memberStores = (backendUser.storeMemberships || [])
+        .map((m) => m.store)
+        .filter((s): s is CMSStore => Boolean(s));
+
+      const storeMap = new Map<string, CMSStore>();
+      [...ownedStores, ...memberStores].forEach((st) => {
+        if (st && st.id) storeMap.set(st.id, st);
+      });
+      const allStores = Array.from(storeMap.values());
+      setStores(allStores);
+
+      // Determine active store from localStorage, or default to first store
+      const storedStoreId = typeof window !== 'undefined' ? localStorage.getItem('selected_store_id') : null;
+      let currentActiveStore = allStores.find((s) => s.id === storedStoreId) || allStores[0] || null;
+
+      if (currentActiveStore) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('selected_store_id', currentActiveStore.id);
+        }
+        setActiveStore(currentActiveStore);
+        const currentStatus = (currentActiveStore.status || 'ACTIVE').toUpperCase();
+        setStoreStatus(currentStatus);
+        setIsSuspended(currentStatus === 'SUSPENDED');
+
+        const session = cmsService.getMerchantSession();
+        const updatedSession: MerchantOnboardingData = {
+          merchant: {
+            ...user,
+            ...(session?.merchant || {}),
+            role: backendUser.role,
+          },
+          store: {
+            id: currentActiveStore.id,
+            slug: currentActiveStore.slug,
+            storeName: currentActiveStore.name,
+            tagline: session?.store?.tagline || currentActiveStore.description || 'Official Store',
+            category: session?.store?.category || 'Tech & Electronics',
+            currency: currentActiveStore.currency || 'USD',
+            status: currentStatus,
+            supportEmail: user.email,
+            supportPhone: user.mobileNumber,
+          },
+          selectedTemplate: session?.selectedTemplate || STORE_TEMPLATES[0],
+        };
+
+        cmsService.saveMerchantSession(updatedSession);
+        setMerchantData(updatedSession);
+        return updatedSession;
+      } else {
+        // Fallback default store
+        const fallbackStore: CMSStore = {
+          id: 'store-default',
+          slug: 'store',
+          name: `${user.firstName}'s Store`,
+          currency: 'USD',
+          status: 'ACTIVE',
+        };
+        setActiveStore(fallbackStore);
+        setStores([fallbackStore]);
+
+        const session = cmsService.getMerchantSession();
+        const updatedSession: MerchantOnboardingData = {
+          merchant: {
+            ...user,
+            ...(session?.merchant || {}),
+            role: backendUser.role,
+          },
+          store: {
+            id: fallbackStore.id,
+            slug: fallbackStore.slug,
+            storeName: fallbackStore.name,
+            tagline: 'Official Store',
+            category: 'Tech & Electronics',
+            currency: 'USD',
+            status: 'ACTIVE',
+            supportEmail: user.email,
+            supportPhone: user.mobileNumber,
+          },
+          selectedTemplate: session?.selectedTemplate || STORE_TEMPLATES[0],
+        };
+        cmsService.saveMerchantSession(updatedSession);
+        setMerchantData(updatedSession);
+        return updatedSession;
+      }
+    } catch (err) {
+      console.warn('Failed to sync store status (stale token or reset DB):', err);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('selected_store_id');
+      }
+      cmsService.clearMerchantSession();
+      router.push('/login');
+    }
+  }, [router]);
+
+  // 1-Click Store Switcher
+  const switchActiveStore = async (storeId: string) => {
+    const targetStore = stores.find((s) => s.id === storeId);
+    if (!targetStore) return;
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selected_store_id', targetStore.id);
+    }
+    setActiveStore(targetStore);
+    const currentStatus = (targetStore.status || 'ACTIVE').toUpperCase();
+    setStoreStatus(currentStatus);
+    setIsSuspended(currentStatus === 'SUSPENDED');
+
+    if (merchantData) {
+      const updatedSession: MerchantOnboardingData = {
+        ...merchantData,
+        store: {
+          ...merchantData.store,
+          id: targetStore.id,
+          slug: targetStore.slug,
+          storeName: targetStore.name,
+          currency: targetStore.currency || 'USD',
+          status: currentStatus,
+        },
+      };
+      cmsService.saveMerchantSession(updatedSession);
+      setMerchantData(updatedSession);
+    }
+
+    // Refresh all store-scoped resources
+    await fetchDashboardDetails();
   };
 
+  // Create New Store for Merchant Portfolio
+  const createNewStore = async (storePayload: CreateStorePayload): Promise<CMSStore> => {
+    setIsLoading(true);
+    try {
+      const newStore = await cmsService.createStore(storePayload);
+      const updatedStores = [newStore, ...stores.filter((s) => s.id !== newStore.id)];
+      setStores(updatedStores);
+      await switchActiveStore(newStore.id);
+      setIsCreateStoreModalOpen(false);
+      return newStore;
+    } catch (err) {
+      console.error('Failed to create store:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshStores = async (): Promise<CMSStore[]> => {
+    try {
+      const fetchedStores = await cmsService.getMerchantStores();
+      if (fetchedStores && fetchedStores.length > 0) {
+        setStores(fetchedStores);
+      }
+      return fetchedStores;
+    } catch {
+      return stores;
+    }
+  };
+
+  const refreshStoreStatus = async () => {
+    setIsCheckingStatus(true);
+    try {
+      await syncUserAndStoreStatus();
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  };
+
+  useEffect(() => {
+    const initCMS = async () => {
+      // First populate from local session if available to avoid flash
+      const session = cmsService.getMerchantSession();
+      if (session && session.merchant && session.store) {
+        setMerchantData(session);
+        const localStatus = (session.store.status || 'ACTIVE').toUpperCase();
+        setStoreStatus(localStatus);
+        setIsSuspended(localStatus === 'SUSPENDED');
+      }
+
+      // Then verify fresh live status and store list from backend
+      await syncUserAndStoreStatus();
+      await fetchDashboardDetails();
+      setIsLoading(false);
+    };
+
+    initCMS();
+  }, [syncUserAndStoreStatus, fetchDashboardDetails]);
+
   const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('selected_store_id');
+    }
     cmsService.clearMerchantSession();
     setMerchantData(null);
     router.push('/login');
@@ -161,6 +339,13 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         merchantData,
         setMerchantData,
+        stores,
+        activeStore,
+        switchActiveStore,
+        createNewStore,
+        refreshStores,
+        isCreateStoreModalOpen,
+        setIsCreateStoreModalOpen,
         products,
         setProducts,
         categories,
@@ -172,6 +357,10 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isLoading,
         setIsLoading,
         fetchDashboardDetails,
+        isSuspended,
+        storeStatus,
+        isCheckingStatus,
+        refreshStoreStatus,
         isProductModalOpen,
         setIsProductModalOpen,
         editingProduct,
@@ -197,3 +386,5 @@ export const useCMSContext = () => {
   }
   return context;
 };
+
+export const useCMS = useCMSContext;

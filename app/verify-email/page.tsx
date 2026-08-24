@@ -28,13 +28,16 @@ function VerifyEmailContent() {
 
   const handleVerificationSuccess = (merchant: MerchantUser) => {
     const activeEmail = unverifiedEmail || merchant.email;
-    // Save user session state without auto-creating store or merchant setup
+    // Save user session state
     cmsService.saveMerchantSession({
       merchant: { ...merchant, email: activeEmail },
     });
 
-    sessionStorage.removeItem('cms_pending_verification_email');
-    router.push('/login');
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('just_registered', 'true');
+      sessionStorage.removeItem('cms_pending_verification_email');
+    }
+    router.push('/login?registered=true');
   };
 
   if (!unverifiedEmail) {

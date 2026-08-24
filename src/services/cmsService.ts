@@ -19,6 +19,8 @@ import {
   ResendCodeResponse,
   StoreIndustryCategory,
   StoreSetupData,
+  CMSStore,
+  CreateStorePayload,
   ThemeConfigData,
   CMSPageData,
   PageFormData,
@@ -40,6 +42,31 @@ import {
   CMSMarketingCampaign,
   CMSPixelConfig,
   AbandonedCartData,
+  CMSPaymentSettings,
+  UpdatePaymentSettingsPayload,
+  RazorpayConnectStatus,
+  RazorpayConnectInitiatePayload,
+  RazorpayConnectAuthorizePayload,
+  StripeConnectStatus,
+  StripeConnectInitiatePayload,
+  StripeConnectAuthorizePayload,
+  PaymentTestResponse,
+  PaymentTransactionData,
+  PaymentTransactionsSummary,
+  ReviewMetricsData,
+  PriceTierData,
+  StoreSubscriptionData,
+  StoreBillingInvoiceData,
+  DomainListResponse,
+  CustomDomainData,
+  NotificationConfigData,
+  ApiKeyData,
+  WebhookData,
+  LoyaltyConfigData,
+  LoyaltyTierData,
+  LoyaltyMemberData,
+  GlobalSeoData,
+  ProductSeoData,
 } from '@/src/types';
 
 let inFlightPagesPromise: Promise<CMSPageData[]> | null = null;
@@ -52,6 +79,9 @@ let inFlightOrdersPromise: Promise<CMSOrder[]> | null = null;
 let inFlightCustomersPromise: Promise<CMSCustomer[]> | null = null;
 let inFlightDiscountsPromise: Promise<CMSDiscount[]> | null = null;
 let inFlightTaxRegionsPromise: Promise<CMSTaxRegion[]> | null = null;
+let _inFlightStoreSetupPromise: Promise<StoreSetupData> | null = null;
+let _cachedStoreSetup: StoreSetupData | null = null;
+let _lastStoreSetupFetch = 0;
 
 export const DEFAULT_STORE_CATEGORIES: StoreIndustryCategory[] = [
   { id: 'cat-1', name: 'Fashion & Apparel', slug: 'fashion-apparel', icon: '👗', description: 'Clothing, luxury garments, footwear and apparel.' },
@@ -64,6 +94,17 @@ export const DEFAULT_STORE_CATEGORIES: StoreIndustryCategory[] = [
 ];
 
 export const STORE_TEMPLATES: StoreTemplate[] = [
+  {
+    id: 'funo',
+    slug: 'funo',
+    name: 'Funo / Funie Studio',
+    tagline: 'Minimalist Scandinavian furniture & interior studio',
+    description: 'Clean geometry, stylized lamp wordmark header, rich category mega menu, and warm organic living aesthetics.',
+    accentColor: '#F97316',
+    badge: 'Trending',
+    previewImage: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80',
+    features: ['Stylized Funie Lamp Header', 'Interactive Mega Menu Dropdown', 'White-Glove Cart Drawer', 'Curated Room Collections'],
+  },
   {
     id: 'nova-tech',
     name: 'Nova Tech & Minimal',
@@ -871,6 +912,95 @@ export const cmsService = {
     return true;
   },
 
+  // Preview Product Import from Excel / CSV / Shopify
+  async previewProductImport(file: File, format?: 'standard' | 'shopify'): Promise<{
+    sourceFormat: string;
+    totalRows: number;
+    productsCount: number;
+    validCount: number;
+    invalidCount: number;
+    existingSkuCount: number;
+    products: any[];
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (format) formData.append('format', format);
+
+    const response = await apiClient.post<any>('/products/import/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    return response.data;
+  },
+
+  // Execute Batch Product Import
+  async batchImportProducts(
+    products: any[],
+    duplicateStrategy: 'UPDATE' | 'SKIP' = 'UPDATE'
+  ): Promise<{
+    success: boolean;
+    message: string;
+    createdCount: number;
+    updatedCount: number;
+    skippedCount: number;
+    errors: { name: string; sku?: string; error: string }[];
+  }> {
+    inFlightProductsPromise = null;
+    const response = await apiClient.post<any>('/products/import/batch', {
+      products,
+      duplicateStrategy,
+    });
+    return response.data;
+  },
+
+  // Export Products to Excel
+  async exportProductsExcel(params?: {
+    format?: 'standard' | 'shopify';
+    status?: string;
+    category?: string;
+    search?: string;
+  }): Promise<void> {
+    const response = await apiClient.get('/products/export/excel', {
+      params,
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const filename =
+      params?.format === 'shopify'
+        ? `shopify_products_${Date.now()}.xlsx`
+        : `products_catalog_${Date.now()}.xlsx`;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
+  // Download Sample Excel Import Template
+  async downloadProductImportTemplate(): Promise<void> {
+    const response = await apiClient.get('/products/export/template', {
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'product_import_template.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
   // Get Categories
   async getCategories(forceRefresh = false): Promise<CMSCategory[]> {
     if (!forceRefresh && inFlightCategoriesPromise) {
@@ -1222,7 +1352,32 @@ export const cmsService = {
           const mapped: CMSOrder[] = response.data.map((o: any) => {
             let items: any[] = [];
             if (o.itemsJson) {
-              try { items = JSON.parse(o.itemsJson); } catch { }
+              try {
+                const parsed = typeof o.itemsJson === 'string' ? JSON.parse(o.itemsJson) : o.itemsJson;
+                if (Array.isArray(parsed)) {
+                  items = parsed.map((item: any) => {
+                    const unitPrice = Number(item.unitPrice ?? item.price ?? item.cost ?? 0);
+                    const quantity = Number(item.quantity ?? 1);
+                    const subtotal = Number(item.subtotal ?? (unitPrice * quantity));
+                    const productName = item.productName || item.name || item.title || 'Ordered Item';
+                    const image = item.image || item.imageUrl || item.thumbnail || null;
+                    const sku = item.sku || null;
+                    const productId = item.productId || item.id || 'prod-1';
+
+                    return {
+                      productId,
+                      productName,
+                      name: productName,
+                      unitPrice,
+                      price: unitPrice,
+                      quantity,
+                      subtotal,
+                      image,
+                      sku,
+                    };
+                  });
+                }
+              } catch { }
             }
             let shippingAddress: any = null;
             if (o.shippingAddressJson) {
@@ -1239,8 +1394,8 @@ export const cmsService = {
               customerName: o.customerName,
               customerEmail: o.customerEmail,
               customerPhone: o.customerPhone || null,
-              totalAmount: Number(o.totalAmount),
-              subtotalAmount: o.subtotalAmount ? Number(o.subtotalAmount) : Number(o.totalAmount),
+              totalAmount: Number(o.totalAmount || 0),
+              subtotalAmount: o.subtotalAmount ? Number(o.subtotalAmount) : Number(o.totalAmount || 0),
               taxAmount: o.taxAmount ? Number(o.taxAmount) : 0,
               shippingAmount: o.shippingAmount ? Number(o.shippingAmount) : 0,
               currency: o.currency || 'USD',
@@ -1248,7 +1403,7 @@ export const cmsService = {
               orderStatus: o.fulfillmentStatus || 'CONFIRMED',
               fulfillmentStatus: o.fulfillmentStatus || 'CONFIRMED',
               itemsCount: items.length || 1,
-              items: items.length > 0 ? items : [{ productId: 'prod-1', productName: 'Ordered Item', quantity: 1, unitPrice: Number(o.totalAmount) }],
+              items: items.length > 0 ? items : [{ productId: 'prod-1', productName: 'Ordered Item', name: 'Ordered Item', quantity: 1, unitPrice: Number(o.totalAmount || 0), price: Number(o.totalAmount || 0), subtotal: Number(o.totalAmount || 0) }],
               shippingAddress: shippingAddress || { street: '124 Market St', city: 'San Francisco', state: 'CA', zip: '94103', country: 'United States' },
               carrier: o.carrier || null,
               trackingNumber: o.trackingNumber || null,
@@ -1626,16 +1781,16 @@ export const cmsService = {
               discountType: d.discountType || 'PERCENTAGE',
               method: d.method || 'COUPON_CODE',
               value: Number(d.value || 0),
-              buyQuantity: d.buyQuantity ? Number(d.buyQuantity) : undefined,
-              getQuantity: d.getQuantity ? Number(d.getQuantity) : undefined,
-              getDiscountPercent: d.getDiscountPercent ? Number(d.getDiscountPercent) : undefined,
-              minOrderAmount: d.minOrderAmount ? Number(d.minOrderAmount) : undefined,
+              buyQuantity: d.buyQuantity !== null && d.buyQuantity !== undefined ? Number(d.buyQuantity) : undefined,
+              getQuantity: d.getQuantity !== null && d.getQuantity !== undefined ? Number(d.getQuantity) : undefined,
+              getDiscountPercent: d.getDiscountPercent !== null && d.getDiscountPercent !== undefined ? Number(d.getDiscountPercent) : undefined,
+              minOrderAmount: d.minOrderAmount !== null && d.minOrderAmount !== undefined ? Number(d.minOrderAmount) : undefined,
               appliesTo: d.appliesTo || 'ALL',
               targetIds: targetIds,
               customerEligibility: d.customerEligibility || 'ALL',
               targetCustomers: targetCustomers,
-              usageLimit: d.usageLimit ? Number(d.usageLimit) : undefined,
-              usageCount: d.usageCount || 0,
+              usageLimit: d.usageLimit !== null && d.usageLimit !== undefined ? Number(d.usageLimit) : undefined,
+              usageCount: Number(d.usageCount || 0),
               oncePerCustomer: d.oncePerCustomer !== false,
               startDate: d.startDate ? String(d.startDate).split('T')[0] : new Date().toISOString().split('T')[0],
               endDate: d.endDate ? String(d.endDate).split('T')[0] : undefined,
@@ -1669,16 +1824,16 @@ export const cmsService = {
       code: data.code || null,
       discountType: data.discountType || 'PERCENTAGE',
       method: data.method || 'COUPON_CODE',
-      value: data.value || 0,
-      buyQuantity: data.buyQuantity || null,
-      getQuantity: data.getQuantity || null,
-      getDiscountPercent: data.getDiscountPercent || null,
-      minOrderAmount: data.minOrderAmount || 0,
+      value: Number(data.value || 0),
+      buyQuantity: data.buyQuantity !== undefined && data.buyQuantity !== null ? Number(data.buyQuantity) : null,
+      getQuantity: data.getQuantity !== undefined && data.getQuantity !== null ? Number(data.getQuantity) : null,
+      getDiscountPercent: data.getDiscountPercent !== undefined && data.getDiscountPercent !== null ? Number(data.getDiscountPercent) : null,
+      minOrderAmount: Number(data.minOrderAmount || 0),
       appliesTo: data.appliesTo || 'ALL',
       targetIdsJson: data.targetIds ? JSON.stringify(data.targetIds) : null,
       customerEligibility: data.customerEligibility || 'ALL',
       targetCustomerJson: data.targetCustomers ? JSON.stringify(data.targetCustomers) : null,
-      usageLimit: data.usageLimit || null,
+      usageLimit: data.usageLimit !== undefined && data.usageLimit !== null ? Number(data.usageLimit) : null,
       oncePerCustomer: data.oncePerCustomer !== false,
       startDate: data.startDate || new Date().toISOString().split('T')[0],
       endDate: data.endDate || null,
@@ -1689,6 +1844,15 @@ export const cmsService = {
       const response = await apiClient.post<any>('/discounts', payload);
       if (response.data && response.data.id) {
         const d = response.data;
+        let targetIds: string[] = [];
+        if (d.targetIdsJson) {
+          try { targetIds = JSON.parse(d.targetIdsJson); } catch { }
+        }
+        let targetCustomers: string[] = [];
+        if (d.targetCustomerJson) {
+          try { targetCustomers = JSON.parse(d.targetCustomerJson); } catch { targetCustomers = [d.targetCustomerJson]; }
+        }
+
         const created: CMSDiscount = {
           id: d.id,
           title: d.title,
@@ -1696,13 +1860,15 @@ export const cmsService = {
           discountType: d.discountType || 'PERCENTAGE',
           method: d.method || 'COUPON_CODE',
           value: Number(d.value || 0),
-          buyQuantity: d.buyQuantity ? Number(d.buyQuantity) : undefined,
-          getQuantity: d.getQuantity ? Number(d.getQuantity) : undefined,
-          getDiscountPercent: d.getDiscountPercent ? Number(d.getDiscountPercent) : undefined,
-          minOrderAmount: d.minOrderAmount ? Number(d.minOrderAmount) : undefined,
+          buyQuantity: d.buyQuantity !== null && d.buyQuantity !== undefined ? Number(d.buyQuantity) : undefined,
+          getQuantity: d.getQuantity !== null && d.getQuantity !== undefined ? Number(d.getQuantity) : undefined,
+          getDiscountPercent: d.getDiscountPercent !== null && d.getDiscountPercent !== undefined ? Number(d.getDiscountPercent) : undefined,
+          minOrderAmount: d.minOrderAmount !== null && d.minOrderAmount !== undefined ? Number(d.minOrderAmount) : undefined,
           appliesTo: d.appliesTo || 'ALL',
+          targetIds: targetIds,
           customerEligibility: d.customerEligibility || 'ALL',
-          usageLimit: d.usageLimit ? Number(d.usageLimit) : undefined,
+          targetCustomers: targetCustomers,
+          usageLimit: d.usageLimit !== null && d.usageLimit !== undefined ? Number(d.usageLimit) : undefined,
           usageCount: 0,
           oncePerCustomer: d.oncePerCustomer !== false,
           startDate: d.startDate ? String(d.startDate).split('T')[0] : new Date().toISOString().split('T')[0],
@@ -1729,16 +1895,16 @@ export const cmsService = {
       ...(data.code !== undefined && { code: data.code || null }),
       ...(data.discountType && { discountType: data.discountType }),
       ...(data.method && { method: data.method }),
-      ...(data.value !== undefined && { value: data.value }),
-      ...(data.buyQuantity !== undefined && { buyQuantity: data.buyQuantity || null }),
-      ...(data.getQuantity !== undefined && { getQuantity: data.getQuantity || null }),
-      ...(data.getDiscountPercent !== undefined && { getDiscountPercent: data.getDiscountPercent || null }),
-      ...(data.minOrderAmount !== undefined && { minOrderAmount: data.minOrderAmount || 0 }),
+      ...(data.value !== undefined && { value: Number(data.value || 0) }),
+      ...(data.buyQuantity !== undefined && { buyQuantity: data.buyQuantity !== null ? Number(data.buyQuantity) : null }),
+      ...(data.getQuantity !== undefined && { getQuantity: data.getQuantity !== null ? Number(data.getQuantity) : null }),
+      ...(data.getDiscountPercent !== undefined && { getDiscountPercent: data.getDiscountPercent !== null ? Number(data.getDiscountPercent) : null }),
+      ...(data.minOrderAmount !== undefined && { minOrderAmount: Number(data.minOrderAmount || 0) }),
       ...(data.appliesTo && { appliesTo: data.appliesTo }),
       ...(data.targetIds !== undefined && { targetIdsJson: data.targetIds ? JSON.stringify(data.targetIds) : null }),
       ...(data.customerEligibility && { customerEligibility: data.customerEligibility }),
       ...(data.targetCustomers !== undefined && { targetCustomerJson: data.targetCustomers ? JSON.stringify(data.targetCustomers) : null }),
-      ...(data.usageLimit !== undefined && { usageLimit: data.usageLimit || null }),
+      ...(data.usageLimit !== undefined && { usageLimit: data.usageLimit !== null ? Number(data.usageLimit) : null }),
       ...(data.oncePerCustomer !== undefined && { oncePerCustomer: data.oncePerCustomer }),
       ...(data.startDate && { startDate: data.startDate }),
       ...(data.endDate !== undefined && { endDate: data.endDate || null }),
@@ -1926,6 +2092,9 @@ export const cmsService = {
   saveMerchantSession(session: MerchantOnboardingData): void {
     if (typeof window !== 'undefined') {
       localStorage.setItem('merchant_cms_session', JSON.stringify(session));
+      if (session.store && (session.store as any).id) {
+        localStorage.setItem('current_store_id', (session.store as any).id);
+      }
     }
   },
 
@@ -1933,6 +2102,10 @@ export const cmsService = {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('merchant_cms_session');
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('current_store_id');
+      localStorage.removeItem('active_store_id');
+      localStorage.removeItem('user_role');
+      localStorage.removeItem('user_permissions');
       sessionStorage.removeItem('cms_pending_verification_email');
       sessionStorage.removeItem('cms_latest_verification_token');
     }
@@ -1978,6 +2151,43 @@ export const cmsService = {
     return response.data;
   },
 
+  async forgotPassword(email: string): Promise<{
+    success: boolean;
+    message: string;
+    email: string;
+    resetToken?: string | null;
+  }> {
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      email: string;
+      resetToken?: string | null;
+    }>('/users/forgot-password', { email });
+    if (response.data && response.data.resetToken) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('cms_latest_reset_token', response.data.resetToken);
+      }
+    }
+    return response.data;
+  },
+
+  async verifyResetToken(email: string, token: string): Promise<{ valid: boolean; message: string }> {
+    const response = await apiClient.post<{ valid: boolean; message: string }>('/users/verify-reset-token', {
+      email,
+      token,
+    });
+    return response.data;
+  },
+
+  async resetPassword(payload: {
+    email: string;
+    token: string;
+    newPassword: string;
+  }): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.post<{ success: boolean; message: string }>('/users/reset-password', payload);
+    return response.data;
+  },
+
   async loginMerchant(
     email: string,
     password?: string
@@ -2015,26 +2225,95 @@ export const cmsService = {
     // Fetch full profile details
     const backendUser = await this.getCurrentUser();
 
-    // Map backend user to MerchantUser
+    // Map backend user to MerchantUser with role & permissions
     const nameParts = (backendUser.name || 'Merchant Owner').split(' ');
     const firstName = nameParts[0] || 'Merchant';
     const lastName = nameParts.slice(1).join(' ') || 'Owner';
+
+    // Determine Role & Permissions from storeMemberships or direct role
+    let userRole = backendUser.role || 'MERCHANT';
+    let customRoleTitle = backendUser.customRoleTitle || 'Store Owner';
+    let permissions = {
+      canManageProducts: true,
+      canManageInventory: true,
+      canManageOrders: true,
+      canManageCustomers: true,
+      canManageThemes: true,
+      canManageSettings: true,
+      canManagePayments: true,
+      canManageLogistics: true,
+      canManageAnalytics: true,
+    };
+
+    if (backendUser.storeMemberships && backendUser.storeMemberships.length > 0) {
+      const activeMembership = backendUser.storeMemberships[0];
+      userRole = activeMembership.role;
+      customRoleTitle = activeMembership.customRoleTitle || userRole;
+      permissions = {
+        canManageProducts: activeMembership.canManageProducts,
+        canManageInventory: activeMembership.canManageInventory,
+        canManageOrders: activeMembership.canManageOrders,
+        canManageCustomers: activeMembership.canManageCustomers,
+        canManageThemes: activeMembership.canManageThemes,
+        canManageSettings: activeMembership.canManageSettings,
+        canManagePayments: activeMembership.canManagePayments,
+        canManageLogistics: activeMembership.canManageLogistics,
+        canManageAnalytics: activeMembership.canManageAnalytics,
+      };
+    }
 
     const merchantUser: MerchantUser = {
       firstName,
       lastName,
       mobileNumber: '+1 555-0199',
       email: backendUser.email,
+      role: userRole,
+      customRoleTitle,
+      permissions,
     };
 
-    // Update existing local session state
-    const existingSession = this.getMerchantSession();
-    if (existingSession) {
-      this.saveMerchantSession({
-        ...existingSession,
-        merchant: merchantUser,
-      });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user_role', userRole);
+      localStorage.setItem('user_permissions', JSON.stringify(permissions));
     }
+
+    const resolvedStoreId =
+      (backendUser.stores && backendUser.stores.length > 0 ? backendUser.stores[0].id : null) ||
+      (backendUser.storeMemberships && backendUser.storeMemberships.length > 0 && backendUser.storeMemberships[0].store
+        ? backendUser.storeMemberships[0].store.id
+        : null) ||
+      null;
+
+    if (resolvedStoreId && typeof window !== 'undefined') {
+      localStorage.setItem('current_store_id', resolvedStoreId);
+    }
+
+    const existingSession = this.getMerchantSession();
+
+    const storeInfo =
+      existingSession?.store ||
+      (backendUser.stores && backendUser.stores.length > 0
+        ? {
+            id: backendUser.stores[0].id,
+            storeName: backendUser.stores[0].name,
+            currency: backendUser.stores[0].currency || 'USD',
+          }
+        : backendUser.storeMemberships && backendUser.storeMemberships.length > 0 && backendUser.storeMemberships[0].store
+        ? {
+            id: backendUser.storeMemberships[0].store.id,
+            storeName: backendUser.storeMemberships[0].store.name,
+            currency: backendUser.storeMemberships[0].store.currency || 'USD',
+          }
+        : {
+            storeName: 'OmniStore Flagship',
+            currency: 'USD',
+          });
+
+    this.saveMerchantSession({
+      ...(existingSession || {}),
+      merchant: merchantUser,
+      store: storeInfo as any,
+    });
 
     return { requiresVerification: false, user: merchantUser, backendUser };
   },
@@ -2091,35 +2370,35 @@ export const cmsService = {
     return DEFAULT_STORE_CATEGORIES;
   },
 
-  async createStore(storeDetails: StoreDetails, templateSlug?: string): Promise<any> {
-    const slug = storeDetails.storeName
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-');
+  async createStore(payloadOrDetails: CreateStorePayload | StoreDetails, templateSlug?: string): Promise<CMSStore> {
+    let payload: CreateStorePayload;
+    if ('storeName' in payloadOrDetails) {
+      const slug = payloadOrDetails.storeName
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
 
-    const payload = {
-      name: storeDetails.storeName,
-      slug: slug || `store-${Date.now()}`,
-      description: storeDetails.tagline || 'Merchant store',
-      currency: storeDetails.currency || 'USD',
-      templateSlug: templateSlug || 'nova-tech',
-      categoryName: storeDetails.category,
-    };
-
-    try {
-      const response = await apiClient.post('/stores', payload);
-      return response.data;
-    } catch (err: any) {
-      console.warn('Backend store creation API notice:', err.response?.data?.message || err.message);
-      return null;
+      payload = {
+        name: payloadOrDetails.storeName,
+        slug: slug || `store-${Date.now()}`,
+        description: payloadOrDetails.tagline || 'Merchant store',
+        currency: payloadOrDetails.currency || 'INR',
+        templateSlug: templateSlug || 'nova-tech',
+        categoryName: payloadOrDetails.category,
+      };
+    } else {
+      payload = payloadOrDetails;
     }
+
+    const response = await apiClient.post<CMSStore>('/stores', payload);
+    return response.data;
   },
 
-  async getMerchantStores(): Promise<any[]> {
+  async getMerchantStores(): Promise<CMSStore[]> {
     try {
-      const response = await apiClient.get('/stores');
+      const response = await apiClient.get<CMSStore[]>('/stores');
       return response.data || [];
     } catch {
       return [];
@@ -2147,59 +2426,80 @@ export const cmsService = {
     return onboardingData;
   },
 
-  // Get Store Setup details
-  async getStoreSetup(): Promise<StoreSetupData> {
-    try {
-      const response = await apiClient.get<StoreSetupData>('/stores/setup');
-      if (response.data && response.data.name) {
-        return response.data;
-      }
-    } catch (err) {
-      console.warn('Backend store setup API notice, using fallback state:', err);
+  // Get Store Setup details with in-flight deduplication and caching
+  async getStoreSetup(forceFresh = false): Promise<StoreSetupData> {
+    if (!forceFresh && _cachedStoreSetup && (Date.now() - _lastStoreSetupFetch < 30000)) {
+      return _cachedStoreSetup;
     }
 
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('merchant_cms_store_setup');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback below
+    if (!forceFresh && _inFlightStoreSetupPromise) {
+      return _inFlightStoreSetupPromise;
+    }
+
+    _inFlightStoreSetupPromise = (async () => {
+      try {
+        const response = await apiClient.get<StoreSetupData>('/stores/setup');
+        if (response.data && response.data.name) {
+          _cachedStoreSetup = response.data;
+          _lastStoreSetupFetch = Date.now();
+          return response.data;
+        }
+      } catch (err) {
+        console.warn('Backend store setup API notice, using fallback state:', err);
+      } finally {
+        _inFlightStoreSetupPromise = null;
+      }
+
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('merchant_cms_store_setup');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            _cachedStoreSetup = parsed;
+            _lastStoreSetupFetch = Date.now();
+            return parsed;
+          } catch {
+            // fallback below
+          }
         }
       }
-    }
 
-    const session = this.getMerchantSession();
-    const defaultData: StoreSetupData = {
-      name: session?.store?.storeName || 'OmniStore Retail',
-      slug: (session?.store?.storeName || 'omnistore-retail')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-'),
-      logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
-      favicon: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=64&q=80',
-      description: 'Official flagship online storefront offering premium products with fast global shipping.',
-      contactEmail: session?.merchant?.email || 'support@omnistore.com',
-      contactPhone: session?.merchant?.mobileNumber || '+1 (555) 019-2834',
-      addressStreet: '742 Evergreen Terrace, Suite 100',
-      addressCity: 'San Francisco',
-      addressState: 'CA',
-      addressZip: '94107',
-      addressCountry: 'United States',
-      socialFacebook: 'https://facebook.com/omnistore',
-      socialInstagram: 'https://instagram.com/omnistore',
-      socialTwitter: 'https://twitter.com/omnistore',
-      socialLinkedin: 'https://linkedin.com/company/omnistore',
-      socialYoutube: 'https://youtube.com/@omnistore',
-      socialTiktok: 'https://tiktok.com/@omnistore',
-      socialPinterest: 'https://pinterest.com/omnistore',
-      customDomain: 'shop.omnistore.com',
-      domainStatus: 'ACTIVE',
-      currency: session?.store?.currency || 'USD',
-      language: 'en-US',
-      timezone: 'America/New_York',
-    };
+      const session = this.getMerchantSession();
+      const defaultData: StoreSetupData = {
+        name: session?.store?.storeName || 'OmniStore Retail',
+        slug: (session?.store?.storeName || 'omnistore-retail')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-'),
+        logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
+        favicon: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=64&q=80',
+        description: 'Official flagship online storefront offering premium products with fast global shipping.',
+        contactEmail: session?.merchant?.email || 'support@omnistore.com',
+        contactPhone: session?.merchant?.mobileNumber || '+1 (555) 019-2834',
+        addressStreet: '742 Evergreen Terrace, Suite 100',
+        addressCity: 'San Francisco',
+        addressState: 'CA',
+        addressZip: '94107',
+        addressCountry: 'United States',
+        socialFacebook: 'https://facebook.com/omnistore',
+        socialInstagram: 'https://instagram.com/omnistore',
+        socialTwitter: 'https://twitter.com/omnistore',
+        socialLinkedin: 'https://linkedin.com/company/omnistore',
+        socialYoutube: 'https://youtube.com/@omnistore',
+        socialTiktok: 'https://tiktok.com/@omnistore',
+        socialPinterest: 'https://pinterest.com/omnistore',
+        customDomain: 'shop.omnistore.com',
+        domainStatus: 'ACTIVE',
+        currency: session?.store?.currency || 'USD',
+        language: 'en-US',
+        timezone: 'America/New_York',
+      };
 
-    return defaultData;
+      _cachedStoreSetup = defaultData;
+      _lastStoreSetupFetch = Date.now();
+      return defaultData;
+    })();
+
+    return _inFlightStoreSetupPromise;
   },
 
   // Update Store Setup details
@@ -2213,6 +2513,10 @@ export const cmsService = {
     } catch (err) {
       console.warn('Backend store setup update notice, persisting locally:', err);
     }
+
+    _cachedStoreSetup = result;
+    _lastStoreSetupFetch = Date.now();
+    _inFlightStoreSetupPromise = null;
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('merchant_cms_store_setup', JSON.stringify(result));
@@ -2544,7 +2848,7 @@ export const cmsService = {
     return defaultReviews;
   },
 
-  async updateReviewStatus(id: string, status: 'APPROVED' | 'PENDING' | 'REJECTED'): Promise<boolean> {
+  async updateProductReviewStatus(id: string, status: 'APPROVED' | 'PENDING' | 'REJECTED'): Promise<boolean> {
     const reviews = await this.getProductReviews();
     const index = reviews.findIndex((r) => r.id === id);
     if (index > -1) {
@@ -2795,6 +3099,15 @@ export const cmsService = {
 
   // Shipping & Logistics Management
   async getShippingZones(): Promise<CMSShippingZone[]> {
+    try {
+      const response = await apiClient.get<any[]>('/shipping/zones');
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
+      }
+    } catch (err) {
+      console.warn('Backend shipping zones API notice, checking fallback:', err);
+    }
+
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('merchant_cms_shipping_zones');
       if (saved) {
@@ -2842,6 +3155,20 @@ export const cmsService = {
   },
 
   async createShippingZone(zone: Partial<CMSShippingZone>): Promise<CMSShippingZone> {
+    try {
+      const response = await apiClient.post<any>('/shipping/zones', {
+        name: zone.name || 'New Shipping Zone',
+        countries: zone.countries || ['United States'],
+        rates: zone.rates || [],
+      });
+      if (response.data && response.data.id) {
+        return response.data;
+      }
+    } catch (err: any) {
+      if (err.response) throw err;
+      console.warn('Backend create zone fallback to local:', err);
+    }
+
     const zones = await this.getShippingZones();
     const newZone: CMSShippingZone = {
       id: `sz-${Date.now()}`,
@@ -2859,6 +3186,16 @@ export const cmsService = {
   },
 
   async updateShippingZone(id: string, zone: Partial<CMSShippingZone>): Promise<CMSShippingZone> {
+    try {
+      const response = await apiClient.put<any>(`/shipping/zones/${id}`, zone);
+      if (response.data && response.data.id) {
+        return response.data;
+      }
+    } catch (err: any) {
+      if (err.response) throw err;
+      console.warn('Backend update zone fallback to local:', err);
+    }
+
     const zones = await this.getShippingZones();
     const index = zones.findIndex((z) => z.id === id);
     if (index > -1) {
@@ -2876,6 +3213,14 @@ export const cmsService = {
   },
 
   async deleteShippingZone(id: string): Promise<boolean> {
+    try {
+      await apiClient.delete(`/shipping/zones/${id}`);
+      return true;
+    } catch (err: any) {
+      if (err.response) throw err;
+      console.warn('Backend delete zone fallback to local:', err);
+    }
+
     const zones = await this.getShippingZones();
     const filtered = zones.filter((z) => z.id !== id);
     if (typeof window !== 'undefined') {
@@ -2886,6 +3231,15 @@ export const cmsService = {
 
   // Shipping Providers & Carriers
   async getShippingProviders(): Promise<CMSShippingProvider[]> {
+    try {
+      const response = await apiClient.get<any[]>('/shipping/providers');
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
+      }
+    } catch (err) {
+      console.warn('Backend shipping providers API notice, checking fallback:', err);
+    }
+
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('merchant_cms_shipping_providers');
       if (saved) {
@@ -2908,6 +3262,16 @@ export const cmsService = {
   },
 
   async updateShippingProvider(id: string, provider: Partial<CMSShippingProvider>): Promise<CMSShippingProvider> {
+    try {
+      const response = await apiClient.put<any>(`/shipping/providers/${id}`, provider);
+      if (response.data && response.data.id) {
+        return response.data;
+      }
+    } catch (err: any) {
+      if (err.response) throw err;
+      console.warn('Backend update provider fallback to local:', err);
+    }
+
     const providers = await this.getShippingProviders();
     const index = providers.findIndex((p) => p.id === id);
     if (index > -1) {
@@ -2922,6 +3286,85 @@ export const cmsService = {
       return updated;
     }
     throw new Error('Provider not found');
+  },
+
+  // Calculate live shipping rates for cart and destination
+  async calculateShippingRates(payload: {
+    country: string;
+    weightKg?: number;
+    cartSubtotal?: number;
+  }): Promise<{
+    matchedZoneId?: string;
+    matchedZoneName: string;
+    country: string;
+    packageWeightKg: number;
+    cartSubtotal: number;
+    eligibleRates: any[];
+    cheapestRate: number;
+    fastestRateDays: number;
+  }> {
+    try {
+      const response = await apiClient.post<any>('/shipping/calculate', payload);
+      return response.data;
+    } catch (err) {
+      console.warn('Calculate shipping API notice, simulating locally:', err);
+      return {
+        matchedZoneName: payload.country === 'United States' ? 'Domestic - United States' : 'International Zone',
+        country: payload.country,
+        packageWeightKg: payload.weightKg || 1.0,
+        cartSubtotal: payload.cartSubtotal || 50.0,
+        eligibleRates: [
+          { id: 'sr-flat', name: 'Standard Express Ground', type: 'FLAT', price: 5.99, estimatedDays: '3-5 business days', minDeliveryDays: 3 },
+          { id: 'sr-fast', name: 'Overnight Air Priority', type: 'FLAT', price: 14.99, estimatedDays: '1-2 business days', minDeliveryDays: 1 },
+        ],
+        cheapestRate: 5.99,
+        fastestRateDays: 1,
+      };
+    }
+  },
+
+  // Live Shipment Tracking & Timeline
+  async trackShipment(trackingNumber: string, carrier = 'FEDEX'): Promise<{
+    trackingNumber: string;
+    carrier: string;
+    carrierCode: string;
+    status: string;
+    estimatedDelivery: string;
+    trackingUrl: string;
+    events: { status: string; title: string; location: string; timestamp: string; completed: boolean }[];
+  }> {
+    const response = await apiClient.get<any>('/shipping/track', {
+      params: { trackingNumber, carrier },
+    });
+    return response.data;
+  },
+
+  // Indian PIN Code Serviceability Resolver
+  async checkIndianPincode(pincode: string): Promise<{
+    success: boolean;
+    pincode: string;
+    city: string;
+    state: string;
+    zoneType: string;
+    estimatedDays: number;
+    isCodAvailable: boolean;
+    courierPartners: string[];
+  }> {
+    try {
+      const response = await apiClient.get(`/shipping/pincode/${pincode}`);
+      return response.data;
+    } catch {
+      return {
+        success: true,
+        pincode,
+        city: 'Bengaluru / Urban Center',
+        state: 'Karnataka',
+        zoneType: 'Metro',
+        estimatedDays: 2,
+        isCodAvailable: true,
+        courierPartners: ['Shiprocket', 'Delhivery', 'Blue Dart', 'Xpressbees', 'India Post'],
+      };
+    }
   },
 
   // Marketing & Campaigns Management
@@ -3200,9 +3643,19 @@ export const cmsService = {
     return defaultAbandoned;
   },
 
-  async sendCartRecoveryEmail(id: string): Promise<AbandonedCartData> {
+  async sendCartRecoveryEmail(
+    id: string,
+    channel: 'EMAIL' | 'WHATSAPP' | 'SMS' = 'EMAIL',
+    discountCode = 'RECOVER10'
+  ): Promise<AbandonedCartData> {
     try {
-      const response = await apiClient.post<AbandonedCartData>(`/marketing/abandoned-carts/${id}/recover`, {});
+      const response = await apiClient.post<any>(`/marketing/abandoned-carts/${id}/recover`, {
+        channel,
+        discountCode,
+      });
+      if (response.data && response.data.cart) {
+        return response.data.cart;
+      }
       if (response.data && response.data.id) {
         return response.data;
       }
@@ -3216,7 +3669,8 @@ export const cmsService = {
     if (index > -1) {
       const updated: AbandonedCartData = {
         ...carts[index],
-        status: 'EMAIL_SENT',
+        status: channel === 'WHATSAPP' ? 'WHATSAPP_SENT' : channel === 'SMS' ? 'SMS_SENT' : 'EMAIL_SENT',
+        recoveryDiscountCode: discountCode,
       };
       carts[index] = updated;
       if (typeof window !== 'undefined') {
@@ -3224,7 +3678,7 @@ export const cmsService = {
       }
       return updated;
     }
-    throw new Error('Cart not found');
+    throw new Error('Abandoned cart record not found');
   },
 
   // ── MEDIA UPLOAD ─────────────────────────────────────────────────────────────
@@ -3261,4 +3715,1065 @@ export const cmsService = {
       fileName: response.data.fileName || file.name,
     };
   },
+
+  /**
+   * Delete uploaded media file asset from AWS S3 and database by ID
+   */
+  async deleteMedia(id: string): Promise<void> {
+    await apiClient.delete(`/media/${id}`);
+  },
+
+  /**
+   * Delete uploaded media file asset directly from AWS S3 and storage by URL
+   */
+  async deleteMediaByUrl(url: string): Promise<void> {
+    if (!url) return;
+    try {
+      await apiClient.post('/media/delete-by-url', { url });
+    } catch (err) {
+      console.warn('Failed to remove media from S3:', err);
+    }
+  },
+
+  /**
+   * ==========================================
+   * STORE MEMBERS & USER MANAGEMENT MODULE
+   * ==========================================
+   */
+
+  async getStoreMembers(): Promise<{
+    storeId: string;
+    storeName: string;
+    owner: any;
+    members: any[];
+    totalMembers: number;
+  }> {
+    try {
+      const response = await apiClient.get('/store-members');
+      if (response.data) return response.data;
+    } catch (err) {
+      console.warn('Failed to fetch store members from backend:', err);
+    }
+
+    return {
+      storeId: 'store-default',
+      storeName: 'OmniStore Flagship',
+      owner: {
+        id: 'owner-default',
+        name: 'Store Owner',
+        email: 'owner@omnistore.com',
+        role: 'OWNER',
+        customRoleTitle: 'Store Owner / Primary Account Holder',
+        status: 'ACTIVE',
+        isOwner: true,
+        canManageProducts: true,
+        canManageInventory: true,
+        canManageOrders: true,
+        canManageCustomers: true,
+        canManageThemes: true,
+        canManageSettings: true,
+        canManagePayments: true,
+        canManageLogistics: true,
+        canManageAnalytics: true,
+        createdAt: new Date().toISOString(),
+      },
+      members: [],
+      totalMembers: 1,
+    };
+  },
+
+  async addStoreMember(payload: any): Promise<any> {
+    const response = await apiClient.post('/store-members', payload);
+    return response.data;
+  },
+
+  async updateStoreMember(id: string, payload: any): Promise<any> {
+    const response = await apiClient.put(`/store-members/${id}`, payload);
+    return response.data;
+  },
+
+  async deleteStoreMember(id: string): Promise<void> {
+    await apiClient.delete(`/store-members/${id}`);
+  },
+
+  async transferStoreOwnership(payload: {
+    targetEmail: string;
+    retainAsAdmin?: boolean;
+    passwordConfirm?: string;
+  }): Promise<{
+    message: string;
+    newOwnerEmail: string;
+    newOwnerName: string;
+    retainedPreviousOwnerAsAdmin: boolean;
+  }> {
+    const response = await apiClient.post('/store-members/transfer-ownership', payload);
+    return response.data;
+  },
+
+  // ─── Payment Gateway & Transaction Services ──────────────────────────────────
+  async getPaymentSettings(): Promise<CMSPaymentSettings> {
+    try {
+      const response = await apiClient.get('/payments/settings');
+      return response.data;
+    } catch (err) {
+      console.warn('Failed to fetch payment settings from API, using fallback defaults', err);
+      return {
+        id: 'store-1',
+        paymentStripeActive: true,
+        paymentRazorpayActive: true,
+        paymentCodActive: true,
+        paymentTestMode: true,
+        razorpayKeyId: 'rzp_test_standardDemo2026',
+        razorpayKeySecretMasked: 'rzp_test_••••••••secret',
+        razorpayWebhookSecretMasked: 'whsec_••••••••1234',
+        razorpayAutoCapture: true,
+        stripePublishableKey: 'pk_test_standardDemoStripe2026',
+        stripeSecretKeyMasked: 'sk_test_••••••••secret',
+        stripeWebhookSecretMasked: 'whsec_••••••••5678',
+        codFee: 0,
+        codMinLimit: 0,
+        codMaxLimit: 50000,
+        currencyRoutingRulesJson: JSON.stringify({
+          indiaDomesticGateway: 'RAZORPAY',
+          internationalGateway: 'STRIPE',
+          domesticCurrency: 'INR',
+          internationalCurrencies: ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'SGD', 'AED'],
+          autoRouteByGeo: true,
+        }),
+        webhookUrls: {
+          razorpay: 'http://localhost:5001/api/storefront/checkout/razorpay/webhook',
+          stripe: 'http://localhost:5001/api/storefront/checkout/stripe/webhook',
+        },
+      };
+    }
+  },
+
+  async updatePaymentSettings(payload: UpdatePaymentSettingsPayload): Promise<{
+    success?: boolean;
+    requiresVerification?: boolean;
+    email?: string;
+    message: string;
+    settings?: any;
+  }> {
+    const response = await apiClient.put('/payments/settings', payload);
+    return response.data;
+  },
+
+  async requestPaymentVerification(storeId?: string): Promise<{
+    success: boolean;
+    email: string;
+    expiresInMinutes: number;
+    message: string;
+  }> {
+    const response = await apiClient.post('/payments/request-verification', { storeId });
+    return response.data;
+  },
+
+  async verifyPaymentCode(code: string, storeId?: string): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.post('/payments/verify-code', { code, storeId });
+    return response.data;
+  },
+
+  async testPaymentGateway(payload: {
+    gateway: 'RAZORPAY' | 'STRIPE';
+    keyId?: string;
+    keySecret?: string;
+    publishableKey?: string;
+    secretKey?: string;
+    testMode?: boolean;
+  }): Promise<PaymentTestResponse> {
+    const response = await apiClient.post('/payments/test-connection', payload);
+    return response.data;
+  },
+
+  async getPaymentTransactions(params?: {
+    limit?: number;
+    page?: number;
+    gateway?: string;
+    status?: string;
+  }): Promise<{
+    transactions: PaymentTransactionData[];
+    pagination: { total: number; page: number; limit: number; totalPages: number };
+    summary: PaymentTransactionsSummary;
+  }> {
+    try {
+      const response = await apiClient.get('/payments/transactions', { params });
+      return response.data;
+    } catch (err) {
+      console.warn('Failed to fetch payment transactions from backend, returning sample summary', err);
+      return {
+        transactions: [
+          {
+            id: 'txn-1',
+            transactionNumber: 'TXN-1723801923-8812',
+            orderId: 'ord-101',
+            customerName: 'Aarav Sharma',
+            customerEmail: 'aarav@example.in',
+            gateway: 'RAZORPAY',
+            paymentMethod: 'UPI',
+            status: 'SUCCESS',
+            amount: 2499.00,
+            currency: 'INR',
+            gatewayFee: 0.00,
+            netAmount: 2499.00,
+            gatewayPaymentId: 'pay_upi_Qz981249aa',
+            gatewayOrderId: 'order_Nx81726a',
+            createdAt: new Date().toISOString(),
+          },
+          {
+            id: 'txn-2',
+            transactionNumber: 'TXN-1723801452-9931',
+            orderId: 'ord-102',
+            customerName: 'Sarah Jenkins',
+            customerEmail: 'sarah.j@example.com',
+            gateway: 'STRIPE',
+            paymentMethod: 'CARD',
+            status: 'SUCCESS',
+            amount: 145.00,
+            currency: 'USD',
+            gatewayFee: 4.51,
+            netAmount: 140.49,
+            gatewayPaymentId: 'pi_3MtwBwLkdIwHu7ix28qBg1DF',
+            createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+          },
+        ],
+        pagination: { total: 2, page: 1, limit: 20, totalPages: 1 },
+        summary: {
+          totalOrdersCount: 24,
+          inrVolume: 184500,
+          usdVolume: 3420,
+          razorpayEstimatedSavings: 2767.50,
+          stripeInternationalVolume: 3420,
+          successRatePercentage: 99.2,
+        },
+      };
+    }
+  },
+
+  async refundPaymentTransaction(payload: {
+    transactionId: string;
+    amount?: number;
+    reason?: string;
+  }): Promise<{ success: boolean; message: string; transaction: PaymentTransactionData }> {
+    const response = await apiClient.post('/payments/refund', payload);
+    return response.data;
+  },
+
+  // ── Razorpay Connect Partner Integration ─────────────────────────────────────
+  async getRazorpayConnectStatus(): Promise<RazorpayConnectStatus> {
+    try {
+      const response = await apiClient.get('/payments/razorpay/connect/status');
+      return response.data;
+    } catch (err) {
+      console.warn('Failed to fetch Razorpay Connect status, using active fallback', err);
+      return {
+        isConnected: true,
+        accountId: 'acc_M98K28D91',
+        merchantName: 'OmniStore India Flagship',
+        kycStatus: 'VERIFIED',
+        connectedAt: new Date().toISOString(),
+        mode: 'TEST / SANDBOX',
+        keyId: 'rzp_test_standardDemo2026',
+        keySecretMasked: 'rzp_test_••••••••secret',
+        webhookSecretMasked: 'whsec_••••••••1234',
+        autoCapture: true,
+        webhookUrl: 'http://localhost:5001/api/storefront/checkout/razorpay/webhook',
+        settlementCycle: 'T+1 Instant Bank Settlement (NEFT/IMPS)',
+        supportedMethods: [
+          'UPI Intent & Dynamic QR (GPay, PhonePe, Paytm, BHIM - 0% MDR)',
+          'Cards (RuPay, Visa, MasterCard, Maestro)',
+          'NetBanking (50+ Indian Banks)',
+          'Wallets (Mobikwik, Freecharge, Airtel Money)',
+          'EMI & PayLater (Simpl, LazyPay, ICICI/HDFC Cardless EMI)',
+        ],
+        features: {
+          instantRefunds: true,
+          autoCapture: true,
+          routeSplitSettlement: true,
+          webhookVerified: true,
+        },
+      };
+    }
+  },
+
+  async initiateRazorpayConnect(payload?: RazorpayConnectInitiatePayload): Promise<{
+    success: boolean;
+    authUrl: string;
+    clientId: string;
+    state: string;
+    redirectUri: string;
+    scopes: string[];
+  }> {
+    const response = await apiClient.post('/payments/razorpay/connect/initiate', payload || {});
+    return response.data;
+  },
+
+  async authorizeRazorpayConnect(payload: RazorpayConnectAuthorizePayload): Promise<{
+    success: boolean;
+    message: string;
+    connection: any;
+  }> {
+    const response = await apiClient.post('/payments/razorpay/connect/authorize', payload);
+    return response.data;
+  },
+
+  async disconnectRazorpayConnect(reason?: string): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.post('/payments/razorpay/connect/disconnect', { reason });
+    return response.data;
+  },
+
+  // ── Stripe Connect Merchant Integration ──────────────────────────────────────
+  async getStripeConnectStatus(): Promise<StripeConnectStatus> {
+    try {
+      const response = await apiClient.get('/payments/stripe/connect/status');
+      return response.data;
+    } catch (err) {
+      console.warn('Failed to fetch Stripe Connect status, using fallback', err);
+      return {
+        isConnected: true,
+        accountId: 'acct_1N9xStandardStripe',
+        merchantName: 'OmniStore Global Direct',
+        chargesEnabled: true,
+        payoutsEnabled: true,
+        country: 'US',
+        defaultCurrency: 'USD',
+        connectedAt: new Date().toISOString(),
+        mode: 'TEST / SANDBOX',
+        publishableKey: 'pk_test_standardDemoStripe2026',
+        secretKeyMasked: 'sk_test_••••••••secret',
+        webhookSecretMasked: 'whsec_••••••••5678',
+        webhookUrl: 'http://localhost:5001/api/storefront/checkout/stripe/webhook',
+        settlementCycle: 'Rolling 2-day Automatic Bank Payouts',
+        supportedCurrencies: [
+          'USD ($)', 'EUR (€)', 'GBP (£)', 'CAD ($)', 'AUD ($)',
+          'SGD ($)', 'JPY (¥)', 'AED (د.إ)', 'CHF (Fr)', 'SEK (kr)'
+        ],
+        supportedPaymentMethods: [
+          'Global Credit & Debit Cards (Visa, MasterCard, American Express, Discover, Diners)',
+          'Apple Pay (Instant Biometric Checkout)',
+          'Google Pay (1-Tap Web Checkout)',
+          '3D Secure 2.0 Strong Customer Authentication (SCA)',
+        ],
+        features: {
+          radarFraudProtection: true,
+          dynamic3DSecure: true,
+          multiCurrencyPresentment: true,
+          instantRefunds: true,
+          webhookVerified: true,
+        },
+      };
+    }
+  },
+
+  async initiateStripeConnect(payload?: StripeConnectInitiatePayload): Promise<{
+    success: boolean;
+    authUrl: string;
+    clientId: string;
+    state: string;
+    redirectUri: string;
+    scopes: string[];
+  }> {
+    const response = await apiClient.post('/payments/stripe/connect/initiate', payload || {});
+    return response.data;
+  },
+
+  async authorizeStripeConnect(payload: StripeConnectAuthorizePayload): Promise<{
+    success: boolean;
+    message: string;
+    connection: any;
+  }> {
+    const response = await apiClient.post('/payments/stripe/connect/authorize', payload);
+    return response.data;
+  },
+
+  async disconnectStripeConnect(reason?: string): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.post('/payments/stripe/connect/disconnect', { reason });
+    return response.data;
+  },
+
+  // ── Product Review Management & Moderation ──────────────────────────────
+  async getReviews(params?: {
+    status?: string;
+    productId?: string;
+    rating?: number;
+    search?: string;
+  }): Promise<{
+    reviews: ProductReviewData[];
+    total: number;
+    metrics: ReviewMetricsData;
+  }> {
+    const cacheKey = JSON.stringify(params || {});
+    if ((this as any)._inFlightReviewsMap?.has(cacheKey)) {
+      return (this as any)._inFlightReviewsMap.get(cacheKey)!;
+    }
+
+    if (!(this as any)._inFlightReviewsMap) {
+      (this as any)._inFlightReviewsMap = new Map();
+    }
+
+    const fetchPromise = (async () => {
+      try {
+        const response = await apiClient.get('/reviews', { params });
+        return response.data;
+      } catch (err) {
+        console.warn('Failed to fetch reviews from backend, returning fallback reviews', err);
+        return {
+          reviews: [
+            {
+              id: 'rev-1',
+              productId: 'p-101',
+              productTitle: 'Acoustic Noise-Canceling Wireless Headphones',
+              productImage: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=120&q=80',
+              productSlug: 'wireless-headphones',
+              userName: 'Priya Sundaram',
+              userEmail: 'priya.sundaram@example.com',
+              rating: 5,
+              title: 'Exceptional build quality and lightning-fast delivery!',
+              comment: 'Ordered this from Bengaluru and received it in just 2 days via Blue Dart Air Express. Packaging was pristine, and the product quality exceeded my expectations. Highly recommended!',
+              verified: true,
+              status: 'APPROVED',
+              adminReply: 'Thank you so much Priya for your wonderful review! We are thrilled you enjoyed the express delivery.',
+              adminReplyAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+              helpfulCount: 24,
+              createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+            {
+              id: 'rev-2',
+              productId: 'p-102',
+              productTitle: 'Minimalist Titanium Chronograph Watch',
+              productImage: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=120&q=80',
+              productSlug: 'minimalist-watch',
+              userName: 'Rahul Verma',
+              userEmail: 'rahul.v@example.com',
+              rating: 4,
+              title: 'Great value for money',
+              comment: 'The finish and ergonomics are top-notch. Battery life easily lasts throughout the entire day. Only minor feedback is the user manual could have been a bit more comprehensive.',
+              verified: true,
+              status: 'APPROVED',
+              adminReply: null,
+              helpfulCount: 12,
+              createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+            {
+              id: 'rev-3',
+              productId: 'p-103',
+              productTitle: 'Classic Oxford Cotton Button-Down Shirt',
+              productImage: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=120&q=80',
+              productSlug: 'oxford-shirt',
+              userName: 'Amit Deshmukh',
+              userEmail: 'amit.d@example.com',
+              rating: 3,
+              title: 'Good, but sizing runs slightly large',
+              comment: 'Decent material quality, however the size is slightly larger than standard charts. Exchanged it easily thanks to customer support.',
+              verified: true,
+              status: 'PENDING',
+              adminReply: null,
+              helpfulCount: 5,
+              createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+            {
+              id: 'rev-4',
+              productId: 'p-101',
+              productTitle: 'Acoustic Noise-Canceling Wireless Headphones',
+              productImage: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=120&q=80',
+              productSlug: 'wireless-headphones',
+              userName: 'Anonymous Bot',
+              userEmail: 'bot@spam.test',
+              rating: 1,
+              title: 'Spam voucher link',
+              comment: 'Visit external site for cheap coupon vouchers http://example-spam-link.com',
+              verified: false,
+              status: 'REJECTED',
+              adminReply: null,
+              helpfulCount: 0,
+              createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+          ],
+          total: 4,
+          metrics: {
+            totalReviews: 4,
+            pendingReviews: 1,
+            approvedReviews: 2,
+            rejectedReviews: 1,
+            averageRating: 4.3,
+            ratingDistribution: {
+              fiveStar: 1,
+              fourStar: 1,
+              threeStar: 1,
+              twoStar: 0,
+              oneStar: 1,
+            },
+          },
+        };
+      } finally {
+        setTimeout(() => {
+          (this as any)._inFlightReviewsMap?.delete(cacheKey);
+        }, 1000);
+      }
+    })();
+
+    (this as any)._inFlightReviewsMap.set(cacheKey, fetchPromise);
+    return fetchPromise;
+  },
+
+  async updateReviewStatus(id: string, status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'SPAM'): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.patch(`/reviews/${id}/status`, { status });
+    return response.data;
+  },
+
+  async editReview(id: string, payload: {
+    rating?: number;
+    title?: string;
+    comment?: string;
+    verified?: boolean;
+    status?: 'APPROVED' | 'PENDING' | 'REJECTED' | 'SPAM';
+  }): Promise<{ success: boolean; message: string; review: ProductReviewData }> {
+    const response = await apiClient.put(`/reviews/${id}`, payload);
+    return response.data;
+  },
+
+  async replyToReview(id: string, adminReply: string): Promise<{ success: boolean; message: string; review: ProductReviewData }> {
+    const response = await apiClient.post(`/reviews/${id}/reply`, { adminReply });
+    return response.data;
+  },
+
+  async deleteReview(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.delete(`/reviews/${id}`);
+    return response.data;
+  },
+
+  // ── Pricing Tiers & Store Billing Management ─────────────────────────────
+  async getPriceTiers(): Promise<{ tiers: PriceTierData[] }> {
+    try {
+      const response = await apiClient.get('/billing/tiers');
+      return response.data;
+    } catch {
+      return {
+        tiers: [
+          {
+            id: 'STARTER',
+            name: 'Starter Tier',
+            badge: 'Free Forever',
+            description: 'Perfect for new entrepreneurs launching their first online storefront.',
+            priceMonthlyInr: 0,
+            priceMonthlyUsd: 0,
+            priceAnnualInr: 0,
+            priceAnnualUsd: 0,
+            transactionFeePercent: 2.0,
+            maxProducts: 50,
+            maxStaff: 2,
+            customDomain: false,
+            analyticsTier: 'Basic Analytics',
+            supportTier: 'Community & Email Support',
+            popular: false,
+            features: [
+              'Up to 50 Product Listings',
+              '2 Team / Staff Logins',
+              'Razorpay & Stripe Integration',
+              'Standard Storefront Themes',
+              'Indian PIN Code & Shipping Resolver',
+              'Basic Sales Reports',
+              '2.0% Platform Transaction Fee',
+            ],
+          },
+          {
+            id: 'GROWTH',
+            name: 'Growth Pro',
+            badge: 'Most Popular',
+            description: 'Designed for scaling e-commerce brands needing higher volume and custom branding.',
+            priceMonthlyInr: 1999,
+            priceMonthlyUsd: 29,
+            priceAnnualInr: 19990,
+            priceAnnualUsd: 290,
+            transactionFeePercent: 0.5,
+            maxProducts: 1000,
+            maxStaff: 10,
+            customDomain: true,
+            analyticsTier: 'Advanced Funnel & Conversion Analytics',
+            supportTier: 'Priority 24/7 Live Chat & WhatsApp',
+            popular: true,
+            features: [
+              'Up to 1,000 Product Listings',
+              '10 Team / Staff Accounts',
+              'Custom Domain Connection (SSL Included)',
+              '0.5% Ultra-Low Platform Fee',
+              'All Theme Customizer Engines',
+              'Automated Indian Logistics (Delhivery, Blue Dart)',
+              'Abandoned Cart Email Recovery',
+              'Customer Product Review Moderation Studio',
+            ],
+          },
+          {
+            id: 'ENTERPRISE',
+            name: 'Scale Enterprise',
+            badge: 'Zero Transaction Fee',
+            description: 'High-volume retailers and omni-channel enterprises demanding maximum power.',
+            priceMonthlyInr: 5999,
+            priceMonthlyUsd: 79,
+            priceAnnualInr: 59990,
+            priceAnnualUsd: 790,
+            transactionFeePercent: 0.0,
+            maxProducts: 999999,
+            maxStaff: 999,
+            customDomain: true,
+            analyticsTier: 'Real-time BI & Custom Export Engine',
+            supportTier: 'Dedicated VIP Account Manager & Phone',
+            popular: false,
+            features: [
+              'Unlimited Products & Digital Catalog',
+              'Unlimited Staff & Multi-role RBAC',
+              '0.0% Zero Platform Transaction Surcharge',
+              'Custom Domains with Dedicated Edge CDN',
+              'Advanced Multi-Currency Currency Routing',
+              'Custom Webhooks & REST API Access',
+              'Automated Tax Invoicing (GST & VAT)',
+              'Dedicated Account Manager (SLA 1-Hour)',
+            ],
+          },
+        ],
+      };
+    }
+  },
+
+  async getStoreSubscription(): Promise<StoreSubscriptionData> {
+    try {
+      const response = await apiClient.get('/billing/subscription');
+      return response.data;
+    } catch {
+      return {
+        storeId: 'store-1',
+        storeName: 'OmniStore India',
+        plan: 'GROWTH',
+        planConfig: {
+          id: 'GROWTH',
+          name: 'Growth Pro',
+          badge: 'Most Popular',
+          description: 'Designed for scaling e-commerce brands needing higher volume and custom branding.',
+          priceMonthlyInr: 1999,
+          priceMonthlyUsd: 29,
+          priceAnnualInr: 19990,
+          priceAnnualUsd: 290,
+          transactionFeePercent: 0.5,
+          maxProducts: 1000,
+          maxStaff: 10,
+          customDomain: true,
+          analyticsTier: 'Advanced Funnel & Conversion Analytics',
+          supportTier: 'Priority 24/7 Live Chat & WhatsApp',
+          popular: true,
+          features: [
+            'Up to 1,000 Product Listings',
+            '10 Team / Staff Accounts',
+            'Custom Domain Connection (SSL Included)',
+            '0.5% Ultra-Low Platform Fee',
+          ],
+        },
+        billingCycle: 'MONTHLY',
+        planStartedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+        planRenewsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+        planPaymentMethod: 'RAZORPAY_UPI',
+        planPaymentMethodDetails: 'UPI: merchant@oksbi (Auto-Debit)',
+        planStatus: 'ACTIVE',
+        planTransactionFeePercent: 0.5,
+        usage: {
+          products: { current: 12, max: 1000, percent: 1.2 },
+          staff: { current: 3, max: 10, percent: 30 },
+        },
+        invoices: [
+          {
+            id: 'inv-1',
+            invoiceNumber: 'INV-849201',
+            tierName: 'Growth Pro',
+            billingCycle: 'MONTHLY',
+            amount: 1999,
+            currency: 'INR',
+            paymentMethod: 'RAZORPAY_UPI',
+            paymentStatus: 'PAID',
+            paidAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+        ],
+      };
+    }
+  },
+
+  async changeStorePlan(payload: {
+    plan: 'STARTER' | 'GROWTH' | 'ENTERPRISE';
+    billingCycle: 'MONTHLY' | 'ANNUAL';
+    paymentMethod: 'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'STRIPE_CARD' | 'NETBANKING';
+    paymentMethodDetails?: string;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    plan: string;
+    billingCycle: string;
+    invoice?: StoreBillingInvoiceData;
+  }> {
+    const response = await apiClient.post('/billing/change-plan', payload);
+    return response.data;
+  },
+
+  async updateStorePaymentMethod(payload: {
+    paymentMethod: 'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'STRIPE_CARD' | 'NETBANKING';
+    paymentMethodDetails: string;
+  }): Promise<{ success: boolean; message: string; planPaymentMethod: string; planPaymentMethodDetails: string }> {
+    const response = await apiClient.post('/billing/payment-method', payload);
+    return response.data;
+  },
+
+  // ── Custom Domains, Origin DNS & Edge Theme Deployment ──────────────────
+  async getDomains(): Promise<DomainListResponse> {
+    try {
+      const response = await apiClient.get('/domains');
+      return response.data;
+    } catch {
+      return {
+        storeId: 'store-1',
+        storeName: 'OmniStore India',
+        primaryDomain: 'omnistore.shop',
+        originConfig: {
+          aRecordExpected: '76.76.21.21',
+          cnameExpected: 'cname.omnistore-edge.com',
+          caaRecordExpected: '0 issue "letsencrypt.org"',
+          edgeIps: ['76.76.21.21', '76.76.21.22'],
+          globalCdnNodes: [
+            { city: 'Mumbai', code: 'BOM', status: 'ONLINE', latencyMs: 8 },
+            { city: 'Singapore', code: 'SIN', status: 'ONLINE', latencyMs: 24 },
+            { city: 'Frankfurt', code: 'FRA', status: 'ONLINE', latencyMs: 42 },
+            { city: 'Virginia (US-East)', code: 'IAD', status: 'ONLINE', latencyMs: 65 },
+            { city: 'Tokyo', code: 'NRT', status: 'ONLINE', latencyMs: 38 },
+          ],
+        },
+        domains: [
+          {
+            id: 'dom-1',
+            domain: 'store.omnistore.shop',
+            isPrimary: true,
+            autoRedirectWww: false,
+            sslStatus: 'SSL_ACTIVE',
+            dnsStatus: 'VERIFIED',
+            dnsRecords: [
+              {
+                type: 'A',
+                name: '@',
+                value: '76.76.21.21',
+                ttl: 300,
+                status: 'VALID',
+                description: 'Apex origin routing to Global Edge Anycast IP',
+              },
+              {
+                type: 'CNAME',
+                name: 'www',
+                value: 'cname.omnistore-edge.com',
+                ttl: 300,
+                status: 'VALID',
+                description: 'Subdomain proxy routing to OmniStore Edge CDN',
+              },
+              {
+                type: 'TXT',
+                name: '@',
+                value: 'omnistore-site-verification=a89f921b7c',
+                ttl: 300,
+                status: 'VALID',
+                description: 'SSL Certificate & Domain Ownership Verification',
+              },
+              {
+                type: 'CAA',
+                name: '@',
+                value: '0 issue "letsencrypt.org"',
+                ttl: 3600,
+                status: 'VALID',
+                description: 'Certificate Authority Authorization (Let’s Encrypt)',
+              },
+            ],
+            themeDeployment: {
+              deployedThemeSlug: 'default',
+              deployedThemeName: 'Modern Luxury Dark',
+              edgeCacheTtl: 3600,
+              edgeCdnRegion: 'BOM_MUMBAI',
+              edgeDeploymentStatus: 'DEPLOYED',
+              edgeDeploymentUrl: 'https://store.omnistore.shop',
+              lastDeployedAt: new Date().toISOString(),
+            },
+            lastCheckedAt: new Date().toISOString(),
+            createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+        ],
+      };
+    }
+  },
+
+  async addDomain(payload: {
+    domain: string;
+    autoRedirectWww?: boolean;
+    isPrimary?: boolean;
+    deployedThemeSlug?: string;
+  }): Promise<{ success: boolean; message: string; domain: CustomDomainData }> {
+    const response = await apiClient.post('/domains', payload);
+    return response.data;
+  },
+
+  async verifyDomainDns(domainId: string): Promise<{
+    success: boolean;
+    message: string;
+    diagnostics: any;
+    domain: CustomDomainData;
+  }> {
+    const response = await apiClient.post('/domains/verify-dns', { domainId });
+    return response.data;
+  },
+
+  async deployThemeToDomain(payload: {
+    domainId: string;
+    themeSlug: string;
+    themeName: string;
+    edgeCdnRegion?: 'BOM_MUMBAI' | 'SIN_SINGAPORE' | 'IAD_US_EAST' | 'FRA_FRANKFURT';
+    purgeCache?: boolean;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    purgeCacheExecuted: boolean;
+    deployment: any;
+    domain: CustomDomainData;
+  }> {
+    const response = await apiClient.post('/domains/deploy-theme', payload);
+    return response.data;
+  },
+
+  async setPrimaryDomain(domainId: string): Promise<{ success: boolean; message: string; domain: CustomDomainData }> {
+    const response = await apiClient.post('/domains/set-primary', { domainId });
+    return response.data;
+  },
+
+  async deleteDomain(domainId: string): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.delete(`/domains/${domainId}`);
+    return response.data;
+  },
+
+  // ── Automated Customer Notifications (WhatsApp / SMS / Email) ───────────
+  async getNotificationConfigs(): Promise<NotificationConfigData[]> {
+    try {
+      const response = await apiClient.get<NotificationConfigData[]>('/notifications/configs');
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
+      }
+    } catch (err) {
+      console.warn('Notification configs notice, falling back:', err);
+    }
+    return [
+      {
+        trigger: 'ORDER_CONFIRMATION',
+        title: 'Order Confirmation',
+        emailEnabled: true,
+        smsEnabled: false,
+        whatsAppEnabled: true,
+        pushEnabled: true,
+        subjectTemplate: 'Order Confirmed #{{order_number}} - {{store_name}}',
+        emailBodyTemplate: 'Hi {{customer_name}},\n\nThank you for shopping with {{store_name}}! We have received your order #{{order_number}} for a total of {{total_amount}}.\n\nItems:\n{{order_items}}\n\nWe will notify you as soon as your package ships!',
+        smsBodyTemplate: '{{store_name}}: Your order #{{order_number}} for {{total_amount}} is confirmed! Track here: {{tracking_url}}',
+        whatsAppTemplate: '🎉 Order Confirmed!\nHi {{customer_name}}, your order #{{order_number}} ({{total_amount}}) is confirmed at {{store_name}}. Track package: {{tracking_url}}',
+        pushBodyTemplate: '📦 Order Confirmed #{{order_number}}! Thank you for buying from {{store_name}}.',
+      },
+      {
+        trigger: 'ORDER_SHIPPED',
+        title: 'Order Shipped & Out for Delivery',
+        emailEnabled: true,
+        smsEnabled: false,
+        whatsAppEnabled: true,
+        pushEnabled: true,
+        subjectTemplate: 'Your Order #{{order_number}} has Shipped!',
+        emailBodyTemplate: 'Great news {{customer_name}}!\n\nYour package for order #{{order_number}} is on its way via {{carrier}}.\nTracking Number: {{tracking_number}}\nLive Tracking URL: {{tracking_url}}',
+        smsBodyTemplate: '🚚 {{store_name}}: Order #{{order_number}} shipped via {{carrier}}! Track: {{tracking_url}}',
+        whatsAppTemplate: '🚚 Your package has shipped!\nOrder #{{order_number}} via {{carrier}}.\nTracking ID: {{tracking_number}}\nTrack live: {{tracking_url}}',
+        pushBodyTemplate: '🚚 Package Shipped! Order #{{order_number}} is on the move with {{carrier}}.',
+      },
+      {
+        trigger: 'ORDER_DELIVERED',
+        title: 'Order Delivered',
+        emailEnabled: true,
+        smsEnabled: false,
+        whatsAppEnabled: true,
+        pushEnabled: false,
+        subjectTemplate: 'Package Delivered - Order #{{order_number}}',
+        emailBodyTemplate: 'Hi {{customer_name}},\n\nYour order #{{order_number}} has been delivered to your shipping address.\n\nWe hope you love your products! Please leave us a review.',
+        smsBodyTemplate: '🎁 {{store_name}}: Order #{{order_number}} was delivered today. Enjoy your purchase!',
+        whatsAppTemplate: '🎁 Package Delivered!\nHi {{customer_name}}, your order #{{order_number}} was delivered today. Have feedback? Let us know!',
+        pushBodyTemplate: '🎁 Package Delivered! Order #{{order_number}} has arrived.',
+      },
+      {
+        trigger: 'ABANDONED_CART',
+        title: 'Abandoned Cart Recovery Reminder',
+        emailEnabled: true,
+        smsEnabled: false,
+        whatsAppEnabled: true,
+        pushEnabled: false,
+        subjectTemplate: 'You left something behind! Complete your order for 10% off',
+        emailBodyTemplate: 'Hi {{customer_name}},\n\nWe noticed you left items in your shopping bag at {{store_name}}!\n\nUse code RECOVER10 to enjoy 10% off when completing your checkout:\n{{recovery_url}}',
+        smsBodyTemplate: '{{store_name}}: Finish your order now and save 10% with code RECOVER10! Link: {{recovery_url}}',
+        whatsAppTemplate: '🛒 Still thinking about it?\nHi {{customer_name}}, complete your order at {{store_name}} with code RECOVER10: {{recovery_url}}',
+        pushBodyTemplate: '🛒 Complete your purchase before items sell out!',
+      },
+    ];
+  },
+
+  async updateNotificationConfig(
+    trigger: string,
+    payload: Partial<NotificationConfigData>
+  ): Promise<NotificationConfigData> {
+    const response = await apiClient.patch<NotificationConfigData>(`/notifications/configs/${trigger}`, payload);
+    return response.data;
+  },
+
+  async dispatchTestNotification(payload: {
+    trigger: string;
+    channel: 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PUSH';
+    recipient: string;
+  }): Promise<{ success: boolean; message: string; preview: any }> {
+    const response = await apiClient.post('/notifications/dispatch-test', payload);
+    return response.data;
+  },
+
+  // ── AI Magic Copywriter Engine ─────────────────────────────────────────
+  async generateAiProductContent(payload: {
+    productName: string;
+    category?: string;
+    brand?: string;
+    tone?: 'LUXURY' | 'HIGH_CONVERTING' | 'CASUAL' | 'TECHNICAL';
+    keywords?: string;
+  }): Promise<{
+    success: boolean;
+    tone: string;
+    productName: string;
+    refinedTitle: string;
+    tagline: string;
+    description: string;
+    keyFeatures: string[];
+    metaTitle: string;
+    metaDescription: string;
+    suggestedTags: string[];
+    socialPostCaption: string;
+  }> {
+    const response = await apiClient.post('/products/generate-ai-content', payload);
+    return response.data;
+  },
+
+  // ── Developer Studio: Scoped API Keys & Webhooks ───────────────────────
+  async getApiKeys(): Promise<ApiKeyData[]> {
+    const response = await apiClient.get<ApiKeyData[]>('/developer/api-keys');
+    return response.data;
+  },
+
+  async createApiKey(payload: {
+    name: string;
+    scopes: string[];
+    expiresInDays?: number;
+  }): Promise<ApiKeyData> {
+    const response = await apiClient.post<ApiKeyData>('/developer/api-keys', payload);
+    return response.data;
+  },
+
+  async deleteApiKey(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.delete(`/developer/api-keys/${id}`);
+    return response.data;
+  },
+
+  async getWebhooks(): Promise<WebhookData[]> {
+    const response = await apiClient.get<WebhookData[]>('/developer/webhooks');
+    return response.data;
+  },
+
+  async createWebhook(payload: {
+    url: string;
+    events: string[];
+    secret?: string;
+    description?: string;
+  }): Promise<WebhookData> {
+    const response = await apiClient.post<WebhookData>('/developer/webhooks', payload);
+    return response.data;
+  },
+
+  async deleteWebhook(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.delete(`/developer/webhooks/${id}`);
+    return response.data;
+  },
+
+  async testWebhookDispatch(payload: {
+    webhookId: string;
+    event: string;
+  }): Promise<{
+    success: boolean;
+    webhookId: string;
+    targetUrl: string;
+    event: string;
+    httpStatus: number;
+    latencyMs: number;
+    responseBody: any;
+    dispatchedPayload: any;
+  }> {
+    const response = await apiClient.post('/developer/webhooks/test-dispatch', payload);
+    return response.data;
+  },
+
+  // ── Customer Loyalty & VIP Rewards Engine ──────────────────────────────
+  async getLoyaltyData(): Promise<{
+    config: LoyaltyConfigData;
+    tiers: LoyaltyTierData[];
+    stats: {
+      totalMembers: number;
+      totalPointsIssued: number;
+      totalPointsRedeemed: number;
+      rewardsRedemptionRate: string;
+    };
+  }> {
+    const response = await apiClient.get('/loyalty/config');
+    return response.data;
+  },
+
+  async updateLoyaltyConfig(payload: Partial<LoyaltyConfigData>): Promise<{ success: boolean; config: LoyaltyConfigData }> {
+    const response = await apiClient.patch('/loyalty/config', payload);
+    return response.data;
+  },
+
+  async getLoyaltyMembers(): Promise<LoyaltyMemberData[]> {
+    const response = await apiClient.get<LoyaltyMemberData[]>('/loyalty/members');
+    return response.data;
+  },
+
+  // ── Support Queries & Suspension Appeals ──────────────────────────────
+  async submitSupportAppeal(payload: {
+    storeId?: string;
+    storeName?: string;
+    storeSlug?: string;
+    userEmail: string;
+    userName?: string;
+    type?: 'APPEAL' | 'COMPLIANCE' | 'TECHNICAL' | 'BILLING' | 'GENERAL';
+    subject: string;
+    message: string;
+    priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+  }): Promise<{ success: boolean; message: string; data?: any }> {
+    const response = await apiClient.post('/support/queries', payload);
+    return response.data;
+  },
+
+  // ── SEO Governance & Meta Optimization ──────────────────────────────
+  async getGlobalSeo(): Promise<GlobalSeoData> {
+    const response = await apiClient.get<GlobalSeoData>('/seo/global');
+    return response.data;
+  },
+
+  async updateGlobalSeo(payload: Partial<GlobalSeoData>): Promise<GlobalSeoData> {
+    const response = await apiClient.put<GlobalSeoData>('/seo/global', payload);
+    return response.data;
+  },
+
+  async getProductSeo(productId: string): Promise<ProductSeoData> {
+    const response = await apiClient.get<ProductSeoData>(`/seo/product/${productId}`);
+    return response.data;
+  },
+
+  async updateProductSeo(productId: string, payload: Partial<ProductSeoData>): Promise<ProductSeoData> {
+    const response = await apiClient.put<ProductSeoData>(`/seo/product/${productId}`, payload);
+    return response.data;
+  },
 };
+
+
+

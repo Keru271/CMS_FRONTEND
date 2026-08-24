@@ -1,15 +1,21 @@
 'use client';
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { MerchantAuthModal } from '@/src/components/auth/MerchantAuthModal';
+import React, { Suspense } from 'react';
+import { ForgotPasswordFlow } from '@/src/components/auth/ForgotPasswordFlow';
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
-
-  const handleAuthSuccess = () => {
-    router.push('/login');
-  };
-
-  return <MerchantAuthModal onSuccess={handleAuthSuccess} initialMode="forgot" />;
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen w-full flex items-center justify-center bg-background">
+          <div className="text-center space-y-2">
+            <div className="w-8 h-8 border-2 border-sage-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-sage-muted font-bold">Loading password recovery...</p>
+          </div>
+        </div>
+      }
+    >
+      <ForgotPasswordFlow />
+    </Suspense>
+  );
 }

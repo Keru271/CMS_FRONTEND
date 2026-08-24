@@ -25,8 +25,11 @@ import {
   Clock,
   ExternalLink,
   Inbox,
+  MessageSquare,
 } from 'lucide-react';
 import { DashboardStats, CMSOrder, CMSProduct, OrderStatus } from '@/src/types';
+import { usePlanAccess } from '@/src/hooks/usePlanAccess';
+import { useTranslation } from '@/src/context/LanguageContext';
 
 interface DashboardOverviewProps {
   stats: DashboardStats;
@@ -46,6 +49,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   onUpdateOrderStatus,
 }) => {
   const router = useRouter();
+  const { isStarter, isGrowth, isEnterprise, canUseAdvancedAnalytics, planName } = usePlanAccess();
+  const { t } = useTranslation();
 
   // Metric & Filter States
   const [dateRange, setDateRange] = useState('Last 7 days');
@@ -67,11 +72,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
   // 13. Quick Actions Bar Data
   const quickActions = [
-    { label: '+ Add Product', action: () => onNavigateProducts(), bg: 'bg-[#191a1b] text-[#d4ff4c] hover:bg-[#000000]' },
-    { label: 'View Orders', action: () => onNavigateOrders(), bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]' },
-    { label: 'Create Discount', action: () => router.push('/discounts'), bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]' },
-    { label: 'Customize Store', action: () => router.push('/themes'), bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]' },
-    { label: 'Add Collection', action: () => router.push('/products'), bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]' },
+    { label: `+ ${t('header.add_product', 'Add Product')}`, action: () => onNavigateProducts(), bg: 'bg-[#191a1b] text-[#d4ff4c] hover:bg-[#000000]' },
+    { label: t('nav.orders', 'View Orders'), action: () => onNavigateOrders(), bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]' },
+    { label: t('nav.discounts', 'Discounts'), action: () => router.push('/discounts'), bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]' },
+    { label: t('nav.themes', 'Customize Store'), action: () => router.push('/themes'), bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]' },
+    { label: t('nav.categories', 'Categories'), action: () => router.push('/categories'), bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]' },
   ];
 
   // REAL Pipeline counts calculated from DB orders
@@ -290,13 +295,22 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
           </div>
 
-          <button
-            onClick={() => router.push('/store-setup')}
-            className="px-4 py-2 bg-[#191a1b] text-[#d4ff4c] font-sans font-medium text-xs rounded-xl hover:bg-[#000000] transition-colors shrink-0 flex items-center gap-1.5"
-          >
-            <span>Continue Setup</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => router.push('/store-setup')}
+              className="px-3.5 py-2 bg-[#075e54] text-white font-sans font-semibold text-xs rounded-xl hover:bg-[#128c7e] transition-all flex items-center gap-1.5 shadow-xs"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-[#25d366]" />
+              <span>WhatsApp Setup Chat</span>
+            </button>
+            <button
+              onClick={() => router.push('/store-setup')}
+              className="px-3.5 py-2 bg-[#191a1b] text-[#d4ff4c] font-sans font-medium text-xs rounded-xl hover:bg-[#000000] transition-colors flex items-center gap-1.5"
+            >
+              <span>Settings Form</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Progress Bar */}
@@ -387,7 +401,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           {/* Card 1: Total Sales */}
           <div className="p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic space-y-2">
             <div className="flex items-center justify-between text-xs text-[#5e5a5a] font-sans">
-              <span className="font-semibold uppercase tracking-wider">Total Sales</span>
+              <span className="font-semibold uppercase tracking-wider">{t('dashboard.total_revenue', 'Total Sales')}</span>
               <DollarSign className="w-4 h-4 text-[#191a1b]" />
             </div>
             <div className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b]">
@@ -401,7 +415,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           {/* Card 2: Orders */}
           <div className="p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic space-y-2">
             <div className="flex items-center justify-between text-xs text-[#5e5a5a] font-sans">
-              <span className="font-semibold uppercase tracking-wider">Orders</span>
+              <span className="font-semibold uppercase tracking-wider">{t('dashboard.total_orders', 'Orders')}</span>
               <ShoppingBag className="w-4 h-4 text-[#191a1b]" />
             </div>
             <div className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b]">
@@ -415,7 +429,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           {/* Card 3: AOV */}
           <div className="p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic space-y-2">
             <div className="flex items-center justify-between text-xs text-[#5e5a5a] font-sans">
-              <span className="font-semibold uppercase tracking-wider">Avg Order Value</span>
+              <span className="font-semibold uppercase tracking-wider">{t('dashboard.average_order', 'Avg Order Value')}</span>
               <DollarSign className="w-4 h-4 text-[#191a1b]" />
             </div>
             <div className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b]">
@@ -429,7 +443,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           {/* Card 4: Customers */}
           <div className="p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic space-y-2">
             <div className="flex items-center justify-between text-xs text-[#5e5a5a] font-sans">
-              <span className="font-semibold uppercase tracking-wider">Total Customers</span>
+              <span className="font-semibold uppercase tracking-wider">{t('nav.customers', 'Total Customers')}</span>
               <Users className="w-4 h-4 text-[#191a1b]" />
             </div>
             <div className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b]">
@@ -956,29 +970,31 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
           </div>
 
-          {/* Funnel Visualizer */}
-          <div className="space-y-2 pt-2 text-xs font-sans">
-            <div className="p-3 rounded-xl bg-[#191a1b] text-[#ffffff] flex justify-between items-center">
-              <span>1. Visitors</span>
-              <strong className="font-serif">{(stats.storeFunnel?.visitors || 0).toLocaleString()}</strong>
+          {/* Funnel Visualizer (Growth & Enterprise Only) */}
+          {canUseAdvancedAnalytics && (
+            <div className="space-y-2 pt-2 text-xs font-sans">
+              <div className="p-3 rounded-xl bg-[#191a1b] text-[#ffffff] flex justify-between items-center">
+                <span>1. Visitors</span>
+                <strong className="font-serif">{(stats.storeFunnel?.visitors || 0).toLocaleString()}</strong>
+              </div>
+              <div className="p-3 rounded-xl bg-[#334155] text-[#ffffff] flex justify-between items-center ml-4">
+                <span>2. Product Views</span>
+                <strong className="font-serif">{(stats.storeFunnel?.productViews || 0).toLocaleString()}</strong>
+              </div>
+              <div className="p-3 rounded-xl bg-[#475569] text-[#ffffff] flex justify-between items-center ml-8">
+                <span>3. Add to Cart</span>
+                <strong className="font-serif">{(stats.storeFunnel?.addToCart || 0).toLocaleString()}</strong>
+              </div>
+              <div className="p-3 rounded-xl bg-[#64748b] text-[#ffffff] flex justify-between items-center ml-12">
+                <span>4. Checkout Started</span>
+                <strong className="font-serif">{(stats.storeFunnel?.checkoutStarted || 0).toLocaleString()}</strong>
+              </div>
+              <div className="p-3 rounded-xl bg-[#034f46] text-[#ffffeb] flex justify-between items-center ml-16">
+                <span>5. Orders Purchased</span>
+                <strong className="font-serif">{(stats.storeFunnel?.purchases || 0).toLocaleString()}</strong>
+              </div>
             </div>
-            <div className="p-3 rounded-xl bg-[#334155] text-[#ffffff] flex justify-between items-center ml-4">
-              <span>2. Product Views</span>
-              <strong className="font-serif">{(stats.storeFunnel?.productViews || 0).toLocaleString()}</strong>
-            </div>
-            <div className="p-3 rounded-xl bg-[#475569] text-[#ffffff] flex justify-between items-center ml-8">
-              <span>3. Add to Cart</span>
-              <strong className="font-serif">{(stats.storeFunnel?.addToCart || 0).toLocaleString()}</strong>
-            </div>
-            <div className="p-3 rounded-xl bg-[#64748b] text-[#ffffff] flex justify-between items-center ml-12">
-              <span>4. Checkout Started</span>
-              <strong className="font-serif">{(stats.storeFunnel?.checkoutStarted || 0).toLocaleString()}</strong>
-            </div>
-            <div className="p-3 rounded-xl bg-[#034f46] text-[#ffffeb] flex justify-between items-center ml-16">
-              <span>5. Orders Purchased</span>
-              <strong className="font-serif">{(stats.storeFunnel?.purchases || 0).toLocaleString()}</strong>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* 8. Marketing Summary (Col 5) */}

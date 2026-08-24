@@ -24,11 +24,11 @@ export default function SettingsPage() {
           </div>
 
           <button
-            onClick={() => router.push('/merchant-details')}
+            onClick={() => router.push('/store-setup')}
             className="px-4 py-2 bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] text-xs font-sans font-medium rounded-lg shadow-xs flex items-center gap-2 shrink-0 transition-colors"
           >
-            <RotateCcw className="w-4 h-4 text-[#d4ff4c]" />
-            <span>Re-run Onboarding Setup Studio</span>
+            <Store className="w-4 h-4 text-[#d4ff4c]" />
+            <span>Store Configuration</span>
           </button>
         </div>
 

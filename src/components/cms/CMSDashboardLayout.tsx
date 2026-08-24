@@ -1,14 +1,22 @@
 'use client';
 
 import React from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { Sidebar } from '@/src/components/cms/Sidebar';
 import { AdminHeader } from '@/src/components/cms/AdminHeader';
 import { ProductFormModal } from '@/src/components/cms/ProductFormModal';
+import { StoreSuspendedModal } from '@/src/components/cms/StoreSuspendedModal';
+import { CreateStoreModal } from '@/src/components/cms/CreateStoreModal';
+import { CMSChatbot } from '@/src/components/cms/CMSChatbot';
 import { cmsService } from '@/src/services/cmsService';
 import { ProductFormData } from '@/src/types';
+import { Lock, ShieldAlert, ArrowLeft, Home, Package } from 'lucide-react';
 
 export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const pathname = usePathname();
+  const router = useRouter();
+
   const {
     merchantData,
     products,
@@ -16,6 +24,8 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     categories,
     orders,
     isLoading,
+    isSuspended,
+    storeStatus,
     sidebarCollapsed,
     setSidebarCollapsed,
     mobileSidebarOpen,
@@ -38,6 +48,89 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     }
     const updatedProducts = await cmsService.getProducts();
     setProducts(updatedProducts);
+  };
+
+  // Determine active user role and permissions
+  const userRole = (
+    merchantData?.merchant?.role ||
+    (typeof window !== 'undefined' ? localStorage.getItem('user_role') : null) ||
+    'OWNER'
+  ).toUpperCase();
+
+  const userPermissions =
+    merchantData?.merchant?.permissions ||
+    (typeof window !== 'undefined' && localStorage.getItem('user_permissions')
+      ? JSON.parse(localStorage.getItem('user_permissions') || '{}')
+      : null);
+
+  const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN' || userRole === 'MERCHANT';
+
+  // Check if current path is authorized
+  const checkRouteAuthorization = (path: string): boolean => {
+    if (isOwnerOrAdmin) return true;
+    if (path === '/dashboard' || path === '/') return true;
+
+    if (userRole === 'STOCK_CHECKER') {
+      return path.startsWith('/products') || path.startsWith('/categories');
+    }
+
+    if (userRole === 'FULFILLMENT') {
+      return path.startsWith('/orders') || path.startsWith('/shipping');
+    }
+
+    if (userRole === 'SUPPORT') {
+      return path.startsWith('/customers') || path.startsWith('/orders');
+    }
+
+    if (userRole === 'EDITOR') {
+      return path.startsWith('/themes') || path.startsWith('/pages') || path.startsWith('/navigation') || path.startsWith('/seo');
+    }
+
+    if (userRole === 'MANAGER') {
+      return (
+        path.startsWith('/products') ||
+        path.startsWith('/categories') ||
+        path.startsWith('/orders') ||
+        path.startsWith('/customers') ||
+        path.startsWith('/discounts') ||
+        path.startsWith('/shipping') ||
+        path.startsWith('/marketing') ||
+        path.startsWith('/seo')
+      );
+    }
+
+    if (userPermissions) {
+      if (path.startsWith('/products') || path.startsWith('/categories')) {
+        return !!userPermissions.canManageProducts || !!userPermissions.canManageInventory;
+      }
+      if (path.startsWith('/orders')) return !!userPermissions.canManageOrders;
+      if (path.startsWith('/customers')) return !!userPermissions.canManageCustomers;
+      if (path.startsWith('/themes') || path.startsWith('/pages') || path.startsWith('/navigation')) {
+        return !!userPermissions.canManageThemes;
+      }
+      if (path.startsWith('/shipping')) return !!userPermissions.canManageLogistics;
+      if (path.startsWith('/discounts') || path.startsWith('/marketing')) {
+        return !!userPermissions.canManageAnalytics;
+      }
+      if (path.startsWith('/store-setup') || path.startsWith('/settings')) {
+        return !!userPermissions.canManageSettings;
+      }
+      if (path.startsWith('/tax')) return !!userPermissions.canManagePayments;
+      if (path.startsWith('/team')) return false;
+    }
+
+    return false;
+  };
+
+  const isAuthorized = checkRouteAuthorization(pathname);
+
+  // Determine fallback redirect target for this role
+  const getDefaultAllowedPath = () => {
+    if (userRole === 'STOCK_CHECKER') return '/products';
+    if (userRole === 'FULFILLMENT') return '/orders';
+    if (userRole === 'SUPPORT') return '/customers';
+    if (userRole === 'EDITOR') return '/themes';
+    return '/dashboard';
   };
 
   return (
@@ -74,15 +167,68 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
                 </span>
               </div>
             </div>
+          ) : isSuspended ? (
+            /* STORE SUSPENDED CONTENT BARRIER */
+            <div className="min-h-[500px] flex items-center justify-center p-6">
+              <div className="max-w-lg w-full p-8 rounded-3xl bg-rose-950/20 border-2 border-rose-600/50 shadow-2xl text-center space-y-4">
+                <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto animate-pulse" />
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Store Operations Blocked
+                </h2>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  This store is currently suspended by Master Administration. Review the suspension notice modal.
+                </p>
+              </div>
+            </div>
+          ) : !isAuthorized ? (
+            /* ACCESS RESTRICTED SCREEN FOR UNAUTHORIZED ROLES */
+            <div className="min-h-[500px] flex items-center justify-center p-6">
+              <div className="max-w-lg w-full p-8 rounded-3xl bg-white dark:bg-card border border-rose-200 dark:border-rose-900/50 shadow-2xl text-center space-y-6">
+                <div className="w-16 h-16 rounded-3xl bg-rose-100 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center mx-auto shadow-lg shadow-rose-600/20">
+                  <Lock className="w-8 h-8" />
+                </div>
+
+                <div className="space-y-2">
+                  <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-[10px] font-black uppercase tracking-wider">
+                    Access Restricted
+                  </span>
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-foreground">
+                    Section Not Permitted
+                  </h2>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
+                    Your assigned staff role (<strong className="text-rose-600">{userRole.replace('_', ' ')}</strong>) does not have authorization to access <strong>{pathname}</strong>.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-xs text-slate-500 space-y-1 text-left">
+                  <span className="font-bold text-slate-700 dark:text-slate-200 block">Need access to this module?</span>
+                  <p className="text-[11px]">
+                    Please request a permission upgrade or role adjustment from your primary Store Administrator.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => router.push(getDefaultAllowedPath())}
+                  className="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Return to Authorized Workspace</span>
+                </button>
+              </div>
+            </div>
           ) : (
             children
           )}
         </main>
       </div>
 
+      {/* Store Suspended Full Blocking Modal */}
+      {isSuspended && <StoreSuspendedModal />}
+
       {/* Product Form Modal (Shared across views) */}
       <ProductFormModal
-        isOpen={isProductModalOpen}
+        isOpen={isProductModalOpen && !isSuspended}
         onClose={() => {
           setIsProductModalOpen(false);
           setEditingProduct(null);
@@ -91,6 +237,12 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
         initialProduct={editingProduct}
         categories={categoryNames}
       />
+
+      {/* Floating AI Store Copilot Chatbot */}
+      {!isSuspended && <CMSChatbot />}
+
+      {/* Multi-Store Portfolio Creation Modal */}
+      <CreateStoreModal />
     </div>
   );
 };

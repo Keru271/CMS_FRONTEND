@@ -108,11 +108,16 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({
     e.target.value = '';
   };
 
-  const handleClear = () => {
+  const handleClear = async () => {
+    const toDeleteUrl = uploadedUrl || activeUrl;
     setLocalPreview(null);
     setUploadedUrl(null);
     setError(null);
     onUploadComplete('');
+
+    if (toDeleteUrl) {
+      await cmsService.deleteMediaByUrl(toDeleteUrl).catch(() => {});
+    }
   };
 
   const previewSrc = localPreview || activeUrl;

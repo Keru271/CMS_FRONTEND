@@ -1,12 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@heroui/react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { X, Save, Package, Image as ImageIcon, Tag } from 'lucide-react';
+import { X, Save, Package, Image as ImageIcon, Tag, Sparkles, Wand2, Check } from 'lucide-react';
 import { CMSProduct, ProductFormData } from '@/src/types';
 import { Input } from '@/src/components/ui/Input';
+import DragDropUpload from '@/src/components/ui/DragDropUpload';
+import { cmsService } from '@/src/services/cmsService';
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -24,7 +26,7 @@ const productValidationSchema = Yup.object({
   originalPrice: Yup.number().typeError('Price must be a number').positive('Price must be positive').nullable(),
   stockQuantity: Yup.number().typeError('Quantity must be a number').integer('Quantity must be an integer').min(0, 'Cannot be negative').required('Stock quantity is required'),
   status: Yup.string().oneOf(['active', 'draft', 'archived']).required('Status is required'),
-  image: Yup.string().url('Must be a valid image URL').required('Product image URL is required'),
+  image: Yup.string().url('Must be a valid image URL').required('Product image is required'),
   description: Yup.string().min(10, 'Description must be at least 10 characters').required('Description is required'),
 });
 
@@ -36,6 +38,12 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   categories,
 }) => {
   const isEditing = !!initialProduct;
+
+  // AI Copywriter Modal State
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [aiTone, setAiTone] = useState<'LUXURY' | 'HIGH_CONVERTING' | 'CASUAL' | 'TECHNICAL'>('HIGH_CONVERTING');
+  const [aiKeywords, setAiKeywords] = useState('');
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
   const formik = useFormik<ProductFormData>({
     enableReinitialize: true,
@@ -63,6 +71,42 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       }
     },
   });
+
+  const handleGenerateAi = async () => {
+    if (!formik.values.name || formik.values.name.trim().length === 0) {
+      alert('Please enter a product title first so the AI knows what to write!');
+      return;
+    }
+    setIsGeneratingAi(true);
+    try {
+      const res = await cmsService.generateAiProductContent({
+        productName: formik.values.name,
+        category: formik.values.category,
+        tone: aiTone,
+        keywords: aiKeywords,
+      });
+
+      if (res.description) {
+        let fullDesc = res.description;
+        if (res.keyFeatures && res.keyFeatures.length > 0) {
+          fullDesc += '\n\nKey Highlights:\n' + res.keyFeatures.map((f) => `• ${f}`).join('\n');
+        }
+        formik.setFieldValue('description', fullDesc);
+      }
+      if (res.suggestedTags && res.suggestedTags.length > 0) {
+        formik.setFieldValue('tags', res.suggestedTags.join(', '));
+      }
+      if (res.refinedTitle && res.refinedTitle !== formik.values.name) {
+        formik.setFieldValue('name', res.refinedTitle);
+      }
+      setIsAiModalOpen(false);
+    } catch (err) {
+      console.error('AI generation error:', err);
+      alert('Failed to generate AI content. Please try again.');
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -209,19 +253,37 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </label>
           </div>
 
-          {/* Row 4: Image URL & Tags */}
+          {/* Row 4: Product Image Upload & Tags */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Input
-              name="image"
-              label="Image URL *"
-              placeholder="https://images.unsplash.com/..."
-              startContent={<ImageIcon className="w-4 h-4 text-[#5e5a5a]" />}
-              value={formik.values.image}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              isInvalid={formik.touched.image && Boolean(formik.errors.image)}
-              errorMessage={formik.touched.image && formik.errors.image}
-            />
+            {/* Product Image — Drag & Drop */}
+            <div className="space-y-1.5">
+              <DragDropUpload
+                folder="products"
+                fileType="PRODUCT_IMAGE"
+                label="Product Image *"
+                currentUrl={formik.values.image || undefined}
+                onUploadComplete={(url) => {
+                  formik.setFieldValue('image', url);
+                  formik.setFieldTouched('image', true);
+                }}
+                hint="Recommended: 1000×1000px JPG or PNG."
+                previewShape="square"
+                maxSizeMB={5}
+              />
+              {/* URL fallback */}
+              <input
+                type="url"
+                name="image"
+                placeholder="Or paste image URL…"
+                value={formik.values.image}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              {formik.touched.image && formik.errors.image && (
+                <p className="text-[10px] text-rose-500 font-semibold">{formik.errors.image}</p>
+              )}
+            </div>
 
             <Input
               name="tags"
@@ -234,12 +296,22 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             />
           </div>
 
-          {/* Row 5: Description Textarea */}
+          {/* Row 5: Description Textarea with AI Copywriter */}
           <div className="flex flex-col gap-1.5 w-full">
-            <label className="text-xs font-sans font-medium text-[#191a1b]">Product Description *</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-sans font-medium text-[#191a1b]">Product Description *</label>
+              <button
+                type="button"
+                onClick={() => setIsAiModalOpen(true)}
+                className="px-2.5 py-1 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold transition flex items-center gap-1.5 border border-indigo-200"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <span>✨ AI Magic Copywriter</span>
+              </button>
+            </div>
             <textarea
               name="description"
-              rows={3}
+              rows={4}
               placeholder="Provide detailed features, specifications, and selling points..."
               value={formik.values.description}
               onChange={formik.handleChange}
@@ -254,6 +326,84 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               <span className="text-[10px] text-[#ef4444] font-medium">{formik.errors.description}</span>
             )}
           </div>
+
+          {/* AI Magic Copywriter Dialog Modal */}
+          {isAiModalOpen && (
+            <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-indigo-600" />
+                    <h3 className="font-bold text-sm text-slate-900">AI Product Copywriter</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsAiModalOpen(false)}
+                    className="text-slate-400 hover:text-slate-700 text-xs"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Target Tone of Voice:</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'HIGH_CONVERTING', label: '🔥 High-Conversion' },
+                        { id: 'LUXURY', label: '✨ Luxury & Premium' },
+                        { id: 'CASUAL', label: '👟 Casual & Lifestyle' },
+                        { id: 'TECHNICAL', label: '⚙️ Technical Specs' },
+                      ].map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setAiTone(t.id as any)}
+                          className={`p-2 rounded-xl text-[11px] font-bold border text-left transition ${
+                            aiTone === t.id
+                              ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Key Feature Keywords (Optional):</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. noise-cancelling, 40h battery, fast charge"
+                      value={aiKeywords}
+                      onChange={(e) => setAiKeywords(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                    />
+                  </div>
+
+                  <div className="pt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsAiModalOpen(false)}
+                      className="flex-1 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isGeneratingAi}
+                      onClick={handleGenerateAi}
+                      className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-sm flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>{isGeneratingAi ? 'Generating…' : 'Generate Copy'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Footer CTA Buttons */}
           <div className="flex justify-end gap-3 border-t border-[#cbd5e0]/60 pt-4 mt-4">

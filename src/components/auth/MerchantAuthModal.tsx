@@ -15,6 +15,8 @@ import {
   CheckCircle2,
   KeyRound,
   ShieldCheck,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { MerchantUser } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
@@ -96,6 +98,8 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
   const [resendCooldown, setResendCooldown] = useState(0);
   const [serverError, setServerError] = useState<string | null>(null);
   const [latestToken, setLatestToken] = useState<string | null>(null);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -642,7 +646,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                       </label>
                       <input
                         name="password"
-                        type="password"
+                        type={showRegisterPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         value={registerFormik.values.password}
                         onChange={registerFormik.handleChange}
@@ -650,6 +654,19 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                         className="w-full bg-transparent text-xs font-semibold text-sage-text outline-none"
                       />
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                      className="p-1 text-sage-muted hover:text-sage-primary transition focus:outline-none"
+                      tabIndex={-1}
+                      aria-label={showRegisterPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showRegisterPassword ? (
+                        <EyeOff className="w-4 h-4 text-sage-muted hover:text-sage-text" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-sage-primary" />
+                      )}
+                    </button>
                   </div>
                   {registerFormik.touched.password && registerFormik.errors.password && (
                     <span className="text-[10px] text-sage-danger font-medium mt-1 block">
@@ -800,7 +817,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                       </label>
                       <input
                         name="password"
-                        type="password"
+                        type={showLoginPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         value={loginFormik.values.password}
                         onChange={loginFormik.handleChange}
@@ -808,6 +825,19 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                         className="w-full bg-transparent text-xs sm:text-sm font-semibold text-sage-text placeholder:text-sage-muted outline-none"
                       />
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="p-1 text-sage-muted hover:text-sage-primary transition focus:outline-none"
+                      tabIndex={-1}
+                      aria-label={showLoginPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showLoginPassword ? (
+                        <EyeOff className="w-4 h-4 text-sage-muted hover:text-sage-text" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-sage-primary" />
+                      )}
+                    </button>
                   </div>
                   {loginFormik.touched.password && loginFormik.errors.password && (
                     <span className="text-[11px] text-sage-danger font-medium mt-1 block">

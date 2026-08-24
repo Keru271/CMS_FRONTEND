@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { CMSDiscount, DiscountType, DiscountMethod, DiscountAppliesTo, DiscountCustomerEligibility, CMSProduct, CollectionData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import { useCMSContext } from '@/src/context/CMSContext';
 import {
   Tag,
   Plus,
@@ -30,7 +31,28 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
+const getSymbolFromCurrencyCode = (code?: string): string => {
+  if (!code) return '$';
+  const c = code.toUpperCase().trim();
+  if (c === 'INR' || c === '₹' || c === 'RUPEE' || c === 'RS') return '₹';
+  if (c === 'EUR' || c === '€') return '€';
+  if (c === 'GBP' || c === '£') return '£';
+  if (c === 'JPY' || c === '¥' || c === 'CNY') return '¥';
+  if (c === 'CAD' || c === 'AUD' || c === 'NZD' || c === 'SGD') return '$';
+  if (c === 'AED') return 'AED ';
+  return c.length <= 3 ? `${code} ` : '$';
+};
+
 export const DiscountStudio: React.FC = () => {
+  let merchantData = null;
+  try {
+    const context = useCMSContext();
+    merchantData = context.merchantData;
+  } catch {
+    merchantData = cmsService.getMerchantSession();
+  }
+  const [currencySymbol, setCurrencySymbol] = useState<string>('$');
+  const [currencyCode, setCurrencyCode] = useState<string>('USD');
   const [discounts, setDiscounts] = useState<CMSDiscount[]>([]);
   const [products, setProducts] = useState<CMSProduct[]>([]);
   const [collections, setCollections] = useState<CollectionData[]>([]);
@@ -90,6 +112,14 @@ export const DiscountStudio: React.FC = () => {
   const [testPromoCodeInput, setTestPromoCodeInput] = useState<string>('SUMMER2026');
 
   useEffect(() => {
+    const rawCurrency = merchantData?.store?.currency;
+    if (rawCurrency) {
+      setCurrencyCode(rawCurrency);
+      setCurrencySymbol(getSymbolFromCurrencyCode(rawCurrency));
+    }
+  }, [merchantData]);
+
+  useEffect(() => {
     loadData();
   }, []);
 
@@ -104,6 +134,9 @@ export const DiscountStudio: React.FC = () => {
       setDiscounts(discList);
       setProducts(prodList);
       setCollections(collList);
+      const activeCurr = merchantData?.store?.currency || 'USD';
+      setCurrencyCode(activeCurr);
+      setCurrencySymbol(getSymbolFromCurrencyCode(activeCurr));
     } catch (err) {
       console.error('Failed to load discounts:', err);
     } finally {
@@ -146,22 +179,22 @@ export const DiscountStudio: React.FC = () => {
     setFormData({
       title: disc.title,
       code: disc.code || '',
-      discountType: disc.discountType as DiscountType,
-      method: disc.method as DiscountMethod,
-      value: disc.value || 0,
-      buyQuantity: disc.buyQuantity || 2,
-      getQuantity: disc.getQuantity || 1,
-      getDiscountPercent: disc.getDiscountPercent || 100,
-      minOrderAmount: disc.minOrderAmount || 0,
-      appliesTo: disc.appliesTo as DiscountAppliesTo,
+      discountType: (disc.discountType as DiscountType) || 'PERCENTAGE',
+      method: (disc.method as DiscountMethod) || 'COUPON_CODE',
+      value: disc.value !== undefined && disc.value !== null ? disc.value : 20,
+      buyQuantity: disc.buyQuantity !== undefined && disc.buyQuantity !== null ? disc.buyQuantity : 2,
+      getQuantity: disc.getQuantity !== undefined && disc.getQuantity !== null ? disc.getQuantity : 1,
+      getDiscountPercent: disc.getDiscountPercent !== undefined && disc.getDiscountPercent !== null ? disc.getDiscountPercent : 100,
+      minOrderAmount: disc.minOrderAmount !== undefined && disc.minOrderAmount !== null ? disc.minOrderAmount : 0,
+      appliesTo: (disc.appliesTo as DiscountAppliesTo) || 'ALL',
       targetIds: disc.targetIds || [],
-      customerEligibility: disc.customerEligibility as DiscountCustomerEligibility,
+      customerEligibility: (disc.customerEligibility as DiscountCustomerEligibility) || 'ALL',
       targetCustomers: disc.targetCustomers || [],
       usageLimit: disc.usageLimit !== undefined && disc.usageLimit !== null ? disc.usageLimit : '',
-      oncePerCustomer: disc.oncePerCustomer,
+      oncePerCustomer: disc.oncePerCustomer !== false,
       startDate: disc.startDate || new Date().toISOString().split('T')[0],
       endDate: disc.endDate || '',
-      status: disc.status === 'EXPIRED' ? 'DRAFT' : (disc.status as any),
+      status: disc.status === 'EXPIRED' ? 'DRAFT' : ((disc.status as any) || 'ACTIVE'),
     });
     setIsModalOpen(true);
   };
@@ -172,13 +205,13 @@ export const DiscountStudio: React.FC = () => {
     try {
       const payload: Partial<CMSDiscount> = {
         title: formData.title,
-        code: formData.method === 'COUPON_CODE' ? formData.code.toUpperCase() : null,
+        code: formData.method === 'COUPON_CODE' ? (formData.code ? formData.code.trim().toUpperCase() : null) : null,
         discountType: formData.discountType,
         method: formData.method,
-        value: Number(formData.value),
-        buyQuantity: formData.discountType === 'BUY_X_GET_Y' ? Number(formData.buyQuantity) : null,
-        getQuantity: formData.discountType === 'BUY_X_GET_Y' ? Number(formData.getQuantity) : null,
-        getDiscountPercent: formData.discountType === 'BUY_X_GET_Y' ? Number(formData.getDiscountPercent) : null,
+        value: Number(formData.value || 0),
+        buyQuantity: formData.discountType === 'BUY_X_GET_Y' ? Number(formData.buyQuantity || 1) : null,
+        getQuantity: formData.discountType === 'BUY_X_GET_Y' ? Number(formData.getQuantity || 1) : null,
+        getDiscountPercent: formData.discountType === 'BUY_X_GET_Y' ? Number(formData.getDiscountPercent || 100) : null,
         minOrderAmount: Number(formData.minOrderAmount || 0),
         appliesTo: formData.appliesTo,
         targetIds: formData.targetIds,
@@ -238,7 +271,7 @@ export const DiscountStudio: React.FC = () => {
       return {
         savings: 0,
         applied: appliedDisc,
-        message: `Requires minimum cart subtotal of $${appliedDisc.minOrderAmount.toFixed(2)} (Add $${(
+        message: `Requires minimum cart subtotal of ${currencySymbol}${appliedDisc.minOrderAmount.toFixed(2)} (Add ${currencySymbol}${(
           appliedDisc.minOrderAmount - testCartSubtotal
         ).toFixed(2)} more).`,
       };
@@ -253,13 +286,17 @@ export const DiscountStudio: React.FC = () => {
     } else if (appliedDisc.discountType === 'FREE_SHIPPING') {
       calculatedSavings = 15.0; // Simulated shipping fee waiver
     } else if (appliedDisc.discountType === 'BUY_X_GET_Y') {
-      calculatedSavings = 42.0; // Simulated item value
+      const getQty = appliedDisc.getQuantity || 1;
+      const pct = appliedDisc.getDiscountPercent || 100;
+      // Simulated sample item value = 30
+      const simulatedItemPrice = 30.0;
+      calculatedSavings = (getQty * simulatedItemPrice * pct) / 100;
     }
 
     return {
       savings: calculatedSavings,
       applied: appliedDisc,
-      message: `✓ Applied "${appliedDisc.title}" successfully! Saved $${calculatedSavings.toFixed(2)}.`,
+      message: `✓ Applied "${appliedDisc.title}" successfully! Saved ${currencySymbol}${calculatedSavings.toFixed(2)}.`,
     };
   };
 
@@ -449,13 +486,14 @@ export const DiscountStudio: React.FC = () => {
                         <div className="flex items-center gap-2 pt-1">
                           <span className="font-extrabold text-xs text-indigo-600 dark:text-indigo-400">
                             {disc.discountType === 'PERCENTAGE' && `${disc.value}% OFF`}
-                            {disc.discountType === 'FIXED_AMOUNT' && `$${disc.value.toFixed(2)} OFF`}
+                            {disc.discountType === 'FIXED_AMOUNT' && `${currencySymbol}${disc.value.toFixed(2)} OFF`}
                             {disc.discountType === 'FREE_SHIPPING' && 'Free Express Shipping'}
-                            {disc.discountType === 'BUY_X_GET_Y' && `Buy ${disc.buyQuantity} Get ${disc.getQuantity} Free`}
+                            {disc.discountType === 'BUY_X_GET_Y' &&
+                              `Buy ${disc.buyQuantity || 2} Get ${disc.getQuantity || 1} ${disc.getDiscountPercent && disc.getDiscountPercent < 100 ? `at ${disc.getDiscountPercent}% OFF` : 'Free'}`}
                           </span>
                           {disc.minOrderAmount ? (
                             <span className="text-[10px] font-bold text-slate-500">
-                              (Min ${disc.minOrderAmount.toFixed(2)} spend)
+                              (Min {currencySymbol}{disc.minOrderAmount.toFixed(2)} spend)
                             </span>
                           ) : null}
                         </div>
@@ -517,7 +555,7 @@ export const DiscountStudio: React.FC = () => {
             {/* SIMULATED CART INPUTS */}
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-300">Simulated Cart Subtotal ($)</label>
+                <label className="block text-xs font-bold text-slate-300">Simulated Cart Subtotal ({currencySymbol})</label>
                 <input
                   type="number"
                   step="5"
@@ -546,17 +584,17 @@ export const DiscountStudio: React.FC = () => {
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between text-slate-400">
                   <span>Cart Subtotal:</span>
-                  <span className="font-bold text-white">${testCartSubtotal.toFixed(2)}</span>
+                  <span className="font-bold text-white">{currencySymbol}{testCartSubtotal.toFixed(2)}</span>
                 </div>
 
                 <div className="flex justify-between text-emerald-400 font-bold">
                   <span>Discount Savings:</span>
-                  <span>-${simResult.savings.toFixed(2)}</span>
+                  <span>-{currencySymbol}{simResult.savings.toFixed(2)}</span>
                 </div>
 
                 <div className="flex justify-between font-black text-sm text-white pt-2 border-t border-slate-800">
                   <span>Final Order Total:</span>
-                  <span className="text-amber-400">${Math.max(0, testCartSubtotal - simResult.savings).toFixed(2)}</span>
+                  <span className="text-amber-400">{currencySymbol}{Math.max(0, testCartSubtotal - simResult.savings).toFixed(2)}</span>
                 </div>
               </div>
 
@@ -671,7 +709,7 @@ export const DiscountStudio: React.FC = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     { type: 'PERCENTAGE', label: 'Percentage %', icon: Percent },
-                    { type: 'FIXED_AMOUNT', label: 'Fixed Amount $', icon: DollarSign },
+                    { type: 'FIXED_AMOUNT', label: `Fixed Amount (${currencySymbol})`, icon: DollarSign },
                     { type: 'FREE_SHIPPING', label: 'Free Shipping', icon: Truck },
                     { type: 'BUY_X_GET_Y', label: 'Buy X Get Y', icon: Gift },
                   ].map((item) => {
@@ -715,7 +753,7 @@ export const DiscountStudio: React.FC = () => {
 
                 {formData.discountType === 'FIXED_AMOUNT' && (
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">Fixed Discount Amount ($ Off)</label>
+                    <label className="block text-xs font-bold text-slate-700">Fixed Discount Amount ({currencySymbol} Off)</label>
                     <input
                       type="number"
                       required
@@ -765,7 +803,7 @@ export const DiscountStudio: React.FC = () => {
 
                 {/* MINIMUM SPEND REQUIREMENT */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Minimum Order Cart Subtotal ($)</label>
+                  <label className="block text-xs font-bold text-slate-700">Minimum Order Cart Subtotal ({currencySymbol})</label>
                   <input
                     type="number"
                     step="5"
@@ -868,7 +906,7 @@ export const DiscountStudio: React.FC = () => {
                                 {prod.sku && <span className="text-[10px] text-slate-400 font-mono">({prod.sku})</span>}
                               </div>
                               <span className="font-extrabold text-indigo-600 dark:text-indigo-400">
-                                ${prod.price.toFixed(2)}
+                                {currencySymbol}{prod.price.toFixed(2)}
                               </span>
                             </label>
                           );

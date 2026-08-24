@@ -22,11 +22,9 @@ import {
   CreditCard,
   X,
   Plus,
-  RefreshCw,
-  FileText,
-  DollarSign,
   Send,
   ExternalLink,
+  Download,
 } from 'lucide-react';
 
 export const OrderStudio: React.FC = () => {
@@ -56,6 +54,30 @@ export const OrderStudio: React.FC = () => {
 
   const [noteInput, setNoteInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [storeCurrency, setStoreCurrency] = useState<string>('INR');
+
+  const getCurrencySymbol = (currency?: string): string => {
+    const c = (currency || storeCurrency || 'INR').toUpperCase();
+    switch (c) {
+      case 'INR': return '₹';
+      case 'EUR': return '€';
+      case 'GBP': return '£';
+      case 'JPY': return '¥';
+      case 'CAD': return 'CA$';
+      case 'AUD': return 'A$';
+      case 'SGD': return 'S$';
+      case 'AED': return 'AED ';
+      case 'USD':
+      default:
+        return '$';
+    }
+  };
+
+  const formatPrice = (amount: number, currency?: string): string => {
+    const curr = (currency || storeCurrency || 'INR').toUpperCase();
+    const sym = getCurrencySymbol(curr);
+    return `${sym}${Number(amount || 0).toFixed(2)}`;
+  };
 
   useEffect(() => {
     loadOrders();
@@ -64,8 +86,14 @@ export const OrderStudio: React.FC = () => {
   const loadOrders = async () => {
     setIsLoading(true);
     try {
-      const data = await cmsService.getOrders();
+      const [data, setup] = await Promise.all([
+        cmsService.getOrders(),
+        cmsService.getStoreSetup().catch(() => null),
+      ]);
       setOrders(data);
+      if (setup?.currency) {
+        setStoreCurrency(setup.currency);
+      }
     } catch (err) {
       console.error('Failed to load orders:', err);
     } finally {
@@ -254,6 +282,21 @@ export const OrderStudio: React.FC = () => {
               Track customer orders, manage payment & fulfillment statuses, assign shipping tracking numbers, issue refunds, print invoices, and record staff notes.
             </p>
           </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/orders/export/excel`;
+                window.open(url, '_blank');
+                showToast('Downloading Orders Excel export...', 'success');
+              }}
+              className="px-5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition border border-white/20 flex items-center gap-2 shadow-sm"
+            >
+              <Download className="w-4 h-4 text-emerald-400" />
+              <span>Export Orders (Excel)</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -350,7 +393,7 @@ export const OrderStudio: React.FC = () => {
                       </td>
                       <td className="py-4 px-6 font-bold">{o.itemsCount} Items</td>
                       <td className="py-4 px-6 font-black text-sm text-slate-900 dark:text-foreground">
-                        ${o.totalAmount.toFixed(2)} {o.currency || 'USD'}
+                        {formatPrice(o.totalAmount, o.currency)} <span className="text-[10px] font-normal text-slate-400">{o.currency || storeCurrency}</span>
                       </td>
                       <td className="py-4 px-6">
                         <span
@@ -574,32 +617,39 @@ export const OrderStudio: React.FC = () => {
 
                 <div className="divide-y divide-slate-100">
                   {selectedOrder.items && selectedOrder.items.length > 0 ? (
-                    selectedOrder.items.map((item, i) => (
-                      <div key={i} className="py-3 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden border shrink-0">
-                            <img
-                              src={item.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=200&q=80'}
-                              alt={item.productName}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div>
-                            <span className="font-extrabold text-xs text-slate-900 block">{item.productName}</span>
-                            <span className="text-[10px] font-mono text-slate-400 block">SKU: {item.sku || 'N/A'}</span>
-                          </div>
-                        </div>
+                    selectedOrder.items.map((item, i) => {
+                      const unitPrice = Number(item.unitPrice ?? item.price ?? 0);
+                      const quantity = Number(item.quantity ?? 1);
+                      const subtotal = Number(item.subtotal ?? (unitPrice * quantity));
+                      const productName = item.productName || item.name || 'Ordered Item';
 
-                        <div className="text-right">
-                          <span className="font-extrabold text-xs text-slate-900 block">
-                            ${item.unitPrice.toFixed(2)} x {item.quantity}
-                          </span>
-                          <span className="font-black text-xs text-indigo-600 block">
-                            ${(item.subtotal || item.unitPrice * item.quantity).toFixed(2)}
-                          </span>
+                      return (
+                        <div key={i} className="py-3 flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden border shrink-0">
+                              <img
+                                src={item.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=200&q=80'}
+                                alt={productName}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div>
+                              <span className="font-extrabold text-xs text-slate-900 block">{productName}</span>
+                              <span className="text-[10px] font-mono text-slate-400 block">SKU: {item.sku || 'N/A'}</span>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <span className="font-extrabold text-xs text-slate-900 block">
+                              {formatPrice(unitPrice, selectedOrder.currency)} x {quantity}
+                            </span>
+                            <span className="font-black text-xs text-indigo-600 block">
+                              {formatPrice(subtotal, selectedOrder.currency)}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="py-4 text-center text-slate-400 font-semibold text-xs">No item breakdown available.</div>
                   )}
@@ -609,15 +659,15 @@ export const OrderStudio: React.FC = () => {
                 <div className="pt-3 border-t border-slate-200 space-y-1.5 text-xs text-slate-700">
                   <div className="flex justify-between">
                     <span className="text-slate-500">Subtotal:</span>
-                    <span className="font-bold">${(selectedOrder.subtotalAmount || selectedOrder.totalAmount * 0.9).toFixed(2)}</span>
+                    <span className="font-bold">{formatPrice(selectedOrder.subtotalAmount || selectedOrder.totalAmount * 0.9, selectedOrder.currency)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">Tax Fee:</span>
-                    <span className="font-bold">${(selectedOrder.taxAmount || 0).toFixed(2)}</span>
+                    <span className="font-bold">{formatPrice(selectedOrder.taxAmount || 0, selectedOrder.currency)}</span>
                   </div>
                   <div className="flex justify-between font-black text-sm text-slate-900 pt-2 border-t border-slate-200">
                     <span>Total Paid Amount:</span>
-                    <span className="text-indigo-600">${selectedOrder.totalAmount.toFixed(2)} {selectedOrder.currency || 'USD'}</span>
+                    <span className="text-indigo-600 font-mono">{formatPrice(selectedOrder.totalAmount, selectedOrder.currency)} {selectedOrder.currency || storeCurrency}</span>
                   </div>
                 </div>
               </div>
@@ -747,7 +797,7 @@ export const OrderStudio: React.FC = () => {
 
             <form onSubmit={handleProcessRefund} className="p-6 space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Refund Amount ($)</label>
+                <label className="block text-xs font-bold text-slate-700">Refund Amount ({getCurrencySymbol(selectedOrder?.currency || storeCurrency)})</label>
                 <input
                   type="number"
                   step="0.01"
@@ -910,14 +960,21 @@ export const OrderStudio: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y text-slate-800">
-                  {selectedOrder.items?.map((item, i) => (
-                    <tr key={i}>
-                      <td className="py-3 font-bold">{item.productName}</td>
-                      <td className="py-3 text-center">{item.quantity}</td>
-                      <td className="py-3 text-right">${item.unitPrice.toFixed(2)}</td>
-                      <td className="py-3 text-right font-bold">${(item.subtotal || item.unitPrice * item.quantity).toFixed(2)}</td>
-                    </tr>
-                  ))}
+                  {selectedOrder.items?.map((item, i) => {
+                    const unitPrice = Number(item.unitPrice ?? item.price ?? 0);
+                    const quantity = Number(item.quantity ?? 1);
+                    const subtotal = Number(item.subtotal ?? (unitPrice * quantity));
+                    const productName = item.productName || item.name || 'Ordered Item';
+
+                    return (
+                      <tr key={i}>
+                        <td className="py-3 font-bold">{productName}</td>
+                        <td className="py-3 text-center">{quantity}</td>
+                        <td className="py-3 text-right">{formatPrice(unitPrice, selectedOrder.currency)}</td>
+                        <td className="py-3 text-right font-bold">{formatPrice(subtotal, selectedOrder.currency)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
 
@@ -926,11 +983,11 @@ export const OrderStudio: React.FC = () => {
                 <div className="w-60 space-y-1.5 text-xs text-slate-700">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span className="font-bold">${(selectedOrder.subtotalAmount || selectedOrder.totalAmount * 0.9).toFixed(2)}</span>
+                    <span className="font-bold">{formatPrice(selectedOrder.subtotalAmount || selectedOrder.totalAmount * 0.9, selectedOrder.currency)}</span>
                   </div>
                   <div className="flex justify-between font-black text-sm text-slate-900 pt-2 border-t">
                     <span>Grand Total:</span>
-                    <span className="text-indigo-600">${selectedOrder.totalAmount.toFixed(2)} USD</span>
+                    <span className="text-indigo-600 font-mono">{formatPrice(selectedOrder.totalAmount, selectedOrder.currency)} {selectedOrder.currency || storeCurrency}</span>
                   </div>
                 </div>
               </div>

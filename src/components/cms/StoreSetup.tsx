@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
 import { StoreSetupData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
@@ -43,8 +43,11 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
   const [activeTab, setActiveTab] = useState<'general' | 'branding' | 'contact' | 'domain' | 'regional'>('general');
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [isVerifyingDomain, setIsVerifyingDomain] = useState(false);
+  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
     loadStoreSetup();
   }, []);
 
@@ -758,22 +761,35 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                   <Languages className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Primary Language</span>
+                  <span>Primary Store Language (Regional & Global)</span>
                 </label>
                 <select
                   value={formData.language}
                   onChange={(e) => handleChange('language', e.target.value)}
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
-                  <option value="en-US">English (United States)</option>
-                  <option value="en-GB">English (United Kingdom)</option>
-                  <option value="es-ES">Spanish (Español)</option>
-                  <option value="fr-FR">French (Français)</option>
-                  <option value="de-DE">German (Deutsch)</option>
-                  <option value="hi-IN">Hindi (हिन्दी)</option>
-                  <option value="ja-JP">Japanese (日本語)</option>
+                  <optgroup label="Indian Regional Languages">
+                    <option value="hi-IN">Hindi (हिन्दी)</option>
+                    <option value="ta-IN">Tamil (தமிழ்)</option>
+                    <option value="te-IN">Telugu (తెలుగు)</option>
+                    <option value="ml-IN">Malayalam (മലയാളം)</option>
+                    <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
+                    <option value="bn-IN">Bengali (বাংলা)</option>
+                    <option value="gu-IN">Gujarati (ગુજરાતી)</option>
+                    <option value="mr-IN">Marathi (मराठी)</option>
+                    <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
+                  </optgroup>
+                  <optgroup label="Global Languages">
+                    <option value="en-US">English (United States)</option>
+                    <option value="en-GB">English (United Kingdom)</option>
+                    <option value="es-ES">Spanish (Español)</option>
+                    <option value="fr-FR">French (Français)</option>
+                    <option value="de-DE">German (Deutsch)</option>
+                    <option value="ja-JP">Japanese (日本語)</option>
+                    <option value="ar-SA">Arabic (العربية)</option>
+                  </optgroup>
                 </select>
-                <p className="text-[10px] text-slate-400">Default storefront text and system notification language.</p>
+                <p className="text-[10px] text-slate-400">Default storefront text, regional WhatsApp catalog, and system notification language.</p>
               </div>
 
               {/* Time zone */}

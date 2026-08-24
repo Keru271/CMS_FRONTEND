@@ -622,7 +622,9 @@ export const CustomerStudio: React.FC = () => {
                           <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-extrabold text-[10px] uppercase text-slate-700">
                             {ord.orderStatus}
                           </span>
-                          <span className="font-black text-xs text-slate-900">${ord.totalAmount.toFixed(2)}</span>
+                          <span className="font-black text-xs text-slate-900 font-mono">
+                            {ord.currency === 'INR' ? '₹' : ord.currency === 'EUR' ? '€' : ord.currency === 'GBP' ? '£' : '$'}{ord.totalAmount.toFixed(2)} {ord.currency || ''}
+                          </span>
                         </div>
                       ))
                   )}

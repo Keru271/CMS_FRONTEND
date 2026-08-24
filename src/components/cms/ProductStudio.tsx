@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { CollectionManager } from '@/src/components/cms/CollectionManager';
 import { CategoryManager } from '@/src/components/cms/CategoryManager';
+import { ProductImportModal } from '@/src/components/cms/ProductImportModal';
+import { ProductExportModal } from '@/src/components/cms/ProductExportModal';
 import {
   CMSProduct,
   ProductFormData,
@@ -12,6 +14,8 @@ import {
   ProductReviewData,
 } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import { usePlanAccess } from '@/src/hooks/usePlanAccess';
+import { PlanLockOverlay } from '@/src/components/cms/PlanLockOverlay';
 import {
   Package,
   Plus,
@@ -42,9 +46,12 @@ import {
   ShieldCheck,
   ArrowUpRight,
   Code2,
+  FileSpreadsheet,
+  Download,
 } from 'lucide-react';
 
 export const ProductStudio: React.FC = () => {
+  const { plan, planName, maxProducts } = usePlanAccess();
   const [products, setProducts] = useState<CMSProduct[]>([]);
   const [categories, setCategories] = useState<CMSCategory[]>([]);
   const [brands, setBrands] = useState<BrandData[]>([]);
@@ -61,6 +68,9 @@ export const ProductStudio: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'DRAFT' | 'ARCHIVED'>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   // Form State for Add / Edit Product (All 23 options)
   const [editingProduct, setEditingProduct] = useState<CMSProduct | null>(null);
@@ -75,21 +85,20 @@ export const ProductStudio: React.FC = () => {
     price: '',
     compareAtPrice: '',
     costPrice: '',
-    taxRate: 10,
+    taxRate: 18,
     taxable: true,
     inventory: 50,
-    weight: 0.8,
-    dimensions: '25 x 15 x 10 cm',
-    sizeOptions: ['S', 'M', 'L', 'XL'],
-    colorOptions: ['#3B82F6', '#18181B', '#EC4899'],
-    material: '100% Organic Cotton',
-    tags: 'bestseller, new-arrival, premium',
-    brandName: 'AeroTech Lab',
-    categoryName: 'Tech & Electronics',
-    collectionName: 'Best Sellers 2026',
+    weight: 0.5,
+    dimensions: '10x10x10 cm',
+    sizeOptions: [],
+    colorOptions: [],
+    material: '',
+    categoryName: 'General',
+    brandName: '',
+    collectionName: '',
+    status: 'ACTIVE',
     metaTitle: '',
     metaDescription: '',
-    status: 'ACTIVE',
   });
 
   useEffect(() => {
@@ -124,6 +133,10 @@ export const ProductStudio: React.FC = () => {
   };
 
   const handleOpenAddProduct = () => {
+    if (products.length >= maxProducts) {
+      setIsUpgradeModalOpen(true);
+      return;
+    }
     setEditingProduct(null);
     setFormData({
       name: '',
@@ -283,7 +296,7 @@ export const ProductStudio: React.FC = () => {
               </span>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                {products.length} Products Active
+                {products.length} / {maxProducts >= 999999 ? 'Unlimited' : maxProducts} Products ({planName})
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
@@ -295,14 +308,40 @@ export const ProductStudio: React.FC = () => {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleOpenAddProduct}
-            className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add New Product</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                if (products.length >= maxProducts) {
+                  setIsUpgradeModalOpen(true);
+                  return;
+                }
+                setIsImportModalOpen(true);
+              }}
+              className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 backdrop-blur-sm flex items-center gap-2 transition-all shadow-md"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+              <span>Import Products</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsExportModalOpen(true)}
+              className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 backdrop-blur-sm flex items-center gap-2 transition-all shadow-md"
+            >
+              <Download className="w-4 h-4 text-indigo-300" />
+              <span>Export Excel</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenAddProduct}
+              className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New Product</span>
+            </button>
+          </div>
         </div>
 
         {/* Sub-Navigation Tabs Bar */}
@@ -975,6 +1014,56 @@ export const ProductStudio: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Product Import Modal (Excel & Shopify) */}
+      <ProductImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => {
+          loadData();
+          showToast('Products imported successfully! Catalog refreshed.', 'success');
+        }}
+      />
+
+      {/* Product Export Modal (Excel & Shopify) */}
+      <ProductExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        totalProductsCount={products.length}
+        filteredProductsCount={filteredProducts.length}
+        currentFilters={{
+          status: statusFilter,
+          category: categoryFilter,
+          search: searchQuery,
+        }}
+      />
+
+      {/* Plan Upgrade Modal when limit is exceeded */}
+      {isUpgradeModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="relative w-full max-w-lg">
+            <button
+              type="button"
+              onClick={() => setIsUpgradeModalOpen(false)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-slate-100 dark:bg-accent text-slate-500 hover:text-slate-900 transition"
+            >
+              ✕
+            </button>
+            <PlanLockOverlay
+              requiredPlan="GROWTH"
+              featureTitle="Add More Products (10 Limit Reached)"
+              featureDescription="Your store is on the Free Starter plan which is limited to 10 product listings. Upgrade to Growth Pro (up to 1,000 products) or Scale Enterprise (unlimited products) to expand your catalog."
+              perks={[
+                'Up to 1,000 Products Listing Capacity',
+                'Custom Apex Domains & SSL Included',
+                '0.5% Low Platform Transaction Fee',
+                'Customer Loyalty & VIP Rewards Studio',
+                'Automated Abandoned Cart Email & WhatsApp',
+              ]}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
-const PUBLIC_ROUTES = ['/login', '/register', '/verify-email'];
+const PUBLIC_ROUTES = ['/login', '/register', '/verify-email', '/forgot-password', '/reset-password'];
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

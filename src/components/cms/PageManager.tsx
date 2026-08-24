@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { CMSPageData, PageFormData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import { PageBuilderStudio } from '@/src/components/cms/PageBuilderStudio';
 import {
   FileText,
   Plus,
@@ -23,6 +24,7 @@ import {
   HelpCircle,
   FileCheck,
   Code2,
+  LayoutTemplate,
 } from 'lucide-react';
 
 export const PageManager: React.FC = () => {
@@ -31,6 +33,10 @@ export const PageManager: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'ALL' | 'SYSTEM' | 'BRAND' | 'POLICY' | 'CUSTOM' | 'DRAFT'>('ALL');
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  // Page Builder States
+  const [isPageBuilderOpen, setIsPageBuilderOpen] = useState(false);
+  const [builderEditingPage, setBuilderEditingPage] = useState<CMSPageData | null>(null);
 
   // Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -232,14 +238,28 @@ export const PageManager: React.FC = () => {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleOpenCreateModal}
-            className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create Custom Page</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setBuilderEditingPage(null);
+                setIsPageBuilderOpen(true);
+              }}
+              className="px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-extrabold border border-white/20 shadow-lg backdrop-blur-sm flex items-center gap-2 transition-all cursor-pointer"
+            >
+              <LayoutTemplate className="w-4 h-4 text-indigo-300" />
+              <span>Visual Page Builder</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenCreateModal}
+              className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Custom Page</span>
+            </button>
+          </div>
         </div>
 
         {/* Overview Stats Bar */}
@@ -419,6 +439,18 @@ export const PageManager: React.FC = () => {
                           className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-200 transition-colors"
                         >
                           <Eye className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBuilderEditingPage(page);
+                            setIsPageBuilderOpen(true);
+                          }}
+                          title="Open Visual Block Page Builder"
+                          className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-600 transition-colors"
+                        >
+                          <LayoutTemplate className="w-4 h-4" />
                         </button>
 
                         <button
@@ -743,6 +775,20 @@ export const PageManager: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Visual Block Page Builder Studio */}
+      <PageBuilderStudio
+        initialPage={builderEditingPage}
+        isOpen={isPageBuilderOpen}
+        onClose={() => {
+          setIsPageBuilderOpen(false);
+          setBuilderEditingPage(null);
+        }}
+        onSaved={() => {
+          loadPages();
+          showToast('Storefront page updated with Visual Page Builder!', 'success');
+        }}
+      />
     </div>
   );
 };

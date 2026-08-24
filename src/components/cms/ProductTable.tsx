@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import { Button } from '@heroui/react';
-import { Search, Plus, Edit2, Trash2, Package, AlertCircle } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Package, AlertCircle, FileSpreadsheet, Download } from 'lucide-react';
 import { CMSProduct } from '@/src/types';
+import { ProductImportModal } from '@/src/components/cms/ProductImportModal';
+import { ProductExportModal } from '@/src/components/cms/ProductExportModal';
 
 interface ProductTableProps {
   products: CMSProduct[];
@@ -11,6 +13,7 @@ interface ProductTableProps {
   onAddProduct: () => void;
   onEditProduct: (product: CMSProduct) => void;
   onDeleteProduct: (id: string) => void;
+  onRefreshProducts?: () => void;
 }
 
 export const ProductTable: React.FC<ProductTableProps> = ({
@@ -19,10 +22,13 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   onAddProduct,
   onEditProduct,
   onDeleteProduct,
+  onRefreshProducts,
 }) => {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch =
@@ -79,14 +85,34 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             <option value="archived">Archived</option>
           </select>
 
-          {/* Add Product CTA */}
-          <button
-            onClick={onAddProduct}
-            className="bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] font-sans font-medium text-xs px-4 py-2 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors"
-          >
-            <Plus className="w-4 h-4 text-[#d4ff4c]" />
-            <span>Add Product</span>
-          </button>
+          {/* Import / Export / Add Buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsImportModalOpen(true)}
+              className="bg-[#fdf1ef] hover:bg-[#fae1dc] border border-[#cbd5e0] text-[#191a1b] font-sans font-medium text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-[#10b981]" />
+              <span>Import</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsExportModalOpen(true)}
+              className="bg-[#fdf1ef] hover:bg-[#fae1dc] border border-[#cbd5e0] text-[#191a1b] font-sans font-medium text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-[#6366f1]" />
+              <span>Export</span>
+            </button>
+
+            <button
+              onClick={onAddProduct}
+              className="bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] font-sans font-medium text-xs px-4 py-2 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4 text-[#d4ff4c]" />
+              <span>Add Product</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -225,6 +251,29 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           </span>
         </div>
       </div>
+
+      {/* Product Import Modal */}
+      <ProductImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => {
+          if (onRefreshProducts) onRefreshProducts();
+          window.location.reload();
+        }}
+      />
+
+      {/* Product Export Modal */}
+      <ProductExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        totalProductsCount={products.length}
+        filteredProductsCount={filteredProducts.length}
+        currentFilters={{
+          status: selectedStatus,
+          category: selectedCategory,
+          search,
+        }}
+      />
     </div>
   );
 };

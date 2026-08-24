@@ -25,6 +25,10 @@ import {
   Check,
   Search,
   Settings,
+  Navigation,
+  CheckCircle,
+  Radio,
+  ArrowRight,
 } from 'lucide-react';
 
 export const ShippingStudio: React.FC = () => {
@@ -32,6 +36,9 @@ export const ShippingStudio: React.FC = () => {
   const [providers, setProviders] = useState<CMSShippingProvider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  // Sub Tab Navigation: 'zones' | 'tracking'
+  const [activeTab, setActiveTab] = useState<'zones' | 'tracking'>('zones');
 
   // Zone Modal
   const [isZoneModalOpen, setIsZoneModalOpen] = useState(false);
@@ -70,12 +77,37 @@ export const ShippingStudio: React.FC = () => {
   const [simCountry, setSimCountry] = useState('United States');
   const [simWeightKg, setSimWeightKg] = useState(1.5);
   const [simCartSubtotal, setSimCartSubtotal] = useState(65.0);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [liveSimResult, setLiveSimResult] = useState<{
+    matchedZoneName: string;
+    eligibleRates: any[];
+    cheapestRate: number;
+    fastestRateDays: number;
+  } | null>(null);
+
+  // Tracking Lookup State
+  const [trackingNumberInput, setTrackingNumberInput] = useState('FEDEX-9824-7102-US');
+  const [selectedCarrier, setSelectedCarrier] = useState('FEDEX');
+  const [isTrackingLoading, setIsTrackingLoading] = useState(false);
+  const [trackingResult, setTrackingResult] = useState<{
+    trackingNumber: string;
+    carrier: string;
+    carrierCode: string;
+    status: string;
+    estimatedDelivery: string;
+    trackingUrl: string;
+    events: { status: string; title: string; location: string; timestamp: string; completed: boolean }[];
+  } | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    runLiveRateCalculation();
+  }, [simCountry, simWeightKg, simCartSubtotal, zones]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -96,6 +128,39 @@ export const ShippingStudio: React.FC = () => {
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // Run backend calculation engine
+  const runLiveRateCalculation = async () => {
+    setIsCalculating(true);
+    try {
+      const res = await cmsService.calculateShippingRates({
+        country: simCountry,
+        weightKg: simWeightKg,
+        cartSubtotal: simCartSubtotal,
+      });
+      setLiveSimResult(res);
+    } catch (err) {
+      console.error('Rate calculation error:', err);
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
+  // Tracking lookup handler
+  const handleTrackShipment = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!trackingNumberInput.trim()) return;
+
+    setIsTrackingLoading(true);
+    try {
+      const result = await cmsService.trackShipment(trackingNumberInput.trim(), selectedCarrier);
+      setTrackingResult(result);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to lookup tracking details.', 'error');
+    } finally {
+      setIsTrackingLoading(false);
+    }
   };
 
   // ZONE CRUD
@@ -263,34 +328,6 @@ export const ShippingStudio: React.FC = () => {
     }
   };
 
-  // CALCULATE SIMULATOR RATES
-  const calculateSimulatedRates = () => {
-    const matchingZone = zones.find((z) =>
-      z.countries.some((c) => c.toLowerCase().includes(simCountry.toLowerCase()))
-    ) || zones[0];
-
-    if (!matchingZone) return [];
-
-    return matchingZone.rates.filter((r) => {
-      if (r.type === 'FREE') {
-        return r.minOrderPrice ? simCartSubtotal >= r.minOrderPrice : true;
-      }
-      if (r.type === 'WEIGHT_BASED') {
-        const minW = r.minWeightKg || 0;
-        const maxW = r.maxWeightKg || 999;
-        return simWeightKg >= minW && simWeightKg <= maxW;
-      }
-      if (r.type === 'PRICE_BASED') {
-        const minP = r.minOrderPrice || 0;
-        const maxP = r.maxOrderPrice || 99999;
-        return simCartSubtotal >= minP && simCartSubtotal <= maxP;
-      }
-      return true; // FLAT
-    });
-  };
-
-  const simRates = calculateSimulatedRates();
-
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[350px] gap-3">
@@ -338,18 +375,55 @@ export const ShippingStudio: React.FC = () => {
               <span>Shipping & Logistics Studio</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              Configure regional shipping zones, flat-rate fees, free shipping thresholds, weight-based tiers, price-based rules, delivery timeframe estimates, and carrier tracking links.
+              Configure regional shipping zones, flat-rate fees, free shipping thresholds, weight-based tiers, live checkout rate calculation, and carrier tracking links.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleOpenCreateZone}
-            className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create Shipping Zone</span>
-          </button>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleOpenCreateZone}
+              className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Shipping Zone</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Sub-Navigation Tabs */}
+        <div className="flex items-center gap-2 pt-6 mt-6 border-t border-slate-700/60 overflow-x-auto no-scrollbar">
+          {[
+            { id: 'zones', label: 'Shipping Zones & Rates', icon: Layers, count: zones.length },
+            { id: 'tracking', label: 'Live Carrier Tracking & Lookup', icon: Navigation },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-extrabold whitespace-nowrap transition-all ${
+                  isActive
+                    ? 'bg-white text-slate-900 shadow-md scale-105'
+                    : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+                <span>{tab.label}</span>
+                {tab.count !== undefined && (
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      isActive ? 'bg-indigo-100 text-indigo-700' : 'bg-white/10 text-slate-300'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -383,7 +457,7 @@ export const ShippingStudio: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleToggleProvider(p)}
-                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase transition-all ${
                   p.isActive
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
@@ -396,212 +470,357 @@ export const ShippingStudio: React.FC = () => {
         </div>
       </div>
 
-      {/* MAIN GRID: SHIPPING ZONES + REAL-TIME CALCULATOR SIMULATOR */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* LEFT COLUMN: SHIPPING ZONES CARDS */}
-        <div className="lg:col-span-8 space-y-6">
-          {zones.map((z) => (
-            <div
-              key={z.id}
-              className="p-6 rounded-3xl border border-slate-200/80 dark:border-border bg-white dark:bg-card shadow-sm space-y-5"
-            >
-              {/* Zone Header */}
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-border pb-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-5 h-5 text-indigo-600" />
-                    <h2 className="font-black text-lg text-slate-900 dark:text-foreground">{z.name}</h2>
+      {activeTab === 'zones' ? (
+        /* MAIN GRID: SHIPPING ZONES + REAL-TIME CALCULATOR SIMULATOR */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* LEFT COLUMN: SHIPPING ZONES CARDS */}
+          <div className="lg:col-span-8 space-y-6">
+            {zones.map((z) => (
+              <div
+                key={z.id}
+                className="p-6 rounded-3xl border border-slate-200/80 dark:border-border bg-white dark:bg-card shadow-sm space-y-5"
+              >
+                {/* Zone Header */}
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-border pb-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-5 h-5 text-indigo-600" />
+                      <h2 className="font-black text-lg text-slate-900 dark:text-foreground">{z.name}</h2>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {z.countries.map((c, i) => (
+                        <span key={i} className="px-2.5 py-0.5 rounded-lg bg-indigo-50 dark:bg-accent text-indigo-700 dark:text-indigo-300 text-[10px] font-extrabold">
+                          {c}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-1">
-                    {z.countries.map((c, i) => (
-                      <span key={i} className="px-2.5 py-0.5 rounded-lg bg-indigo-50 dark:bg-accent text-indigo-700 dark:text-indigo-300 text-[10px] font-extrabold">
-                        {c}
-                      </span>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAddRate(z.id)}
+                      className="px-3.5 py-2 rounded-xl bg-indigo-50 dark:bg-accent hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 text-xs font-extrabold flex items-center gap-1 transition-all"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Rate</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditZone(z)}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-accent hover:bg-slate-200 text-slate-700 dark:text-slate-300 transition-all"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteZone(z.id)}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-accent text-rose-500 hover:bg-rose-50 transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Rates List */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider">Configured Shipping Rates ({z.rates.length})</h4>
+                  <div className="divide-y divide-slate-100 dark:divide-border border border-slate-100 dark:border-border rounded-2xl overflow-hidden">
+                    {z.rates.map((r) => (
+                      <div key={r.id} className="p-4 bg-slate-50/50 dark:bg-accent/20 flex flex-wrap items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-sm text-slate-900 dark:text-foreground">{r.name}</span>
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                r.type === 'FREE'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : r.type === 'WEIGHT_BASED'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : r.type === 'PRICE_BASED'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}
+                            >
+                              {r.type}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-indigo-500" />
+                              {r.minDeliveryDays} - {r.maxDeliveryDays} business days
+                            </span>
+
+                            {r.type === 'WEIGHT_BASED' && (
+                              <span className="flex items-center gap-1 font-mono text-purple-600">
+                                <Scale className="w-3 h-3" />
+                                {r.minWeightKg}kg - {r.maxWeightKg}kg
+                              </span>
+                            )}
+
+                            {r.type === 'FREE' && r.minOrderPrice ? (
+                              <span className="font-bold text-emerald-600">Min Cart: ${r.minOrderPrice.toFixed(2)}</span>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <span className="font-black text-base text-slate-900 dark:text-foreground">
+                            {r.price === 0 ? 'FREE' : `$${r.price.toFixed(2)}`}
+                          </span>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditRate(z.id, r)}
+                              className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-600"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteRate(z.id, r.id)}
+                              className="p-1.5 rounded-lg hover:bg-rose-100 text-rose-600"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenAddRate(z.id)}
-                    className="px-3.5 py-2 rounded-xl bg-indigo-50 dark:bg-accent hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 text-xs font-extrabold flex items-center gap-1"
+          {/* RIGHT COLUMN: REAL-TIME CHECKOUT SHIPPING RATE CALCULATOR */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-xl space-y-5 sticky top-6">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                  <Calculator className="w-4 h-4" />
+                  <span>Live Checkout Rate Engine</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                  Backend Verified
+                </span>
+              </div>
+
+              {/* SIMULATED INPUTS */}
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-300">Destination Country</label>
+                  <select
+                    value={simCountry}
+                    onChange={(e) => setSimCountry(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-800 bg-slate-950 text-white text-xs font-bold"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Rate</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEditZone(z)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-accent hover:bg-slate-200 text-slate-700 dark:text-slate-300"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteZone(z.id)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-accent text-rose-500 hover:bg-rose-50"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                    <option value="India">🇮🇳 India (Shiprocket / Delhivery / Blue Dart)</option>
+                    <option value="United States">🇺🇸 United States</option>
+                    <option value="Canada">🇨🇦 Canada</option>
+                    <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                    <option value="Germany">🇩🇪 Germany</option>
+                    <option value="Mexico">🇲🇽 Mexico</option>
+                    <option value="France">🇫🇷 France</option>
+                    <option value="Australia">🇦🇺 Australia</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-300">Cart Weight (kg)</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      value={simWeightKg}
+                      onChange={(e) => setSimWeightKg(parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-800 bg-slate-950 text-white font-mono font-bold text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-300">Order Subtotal ($)</label>
+                    <input
+                      type="number"
+                      step="10"
+                      value={simCartSubtotal}
+                      onChange={(e) => setSimCartSubtotal(parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-800 bg-slate-950 text-white font-mono font-bold text-xs"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Rates List */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider">Configured Shipping Rates ({z.rates.length})</h4>
-                <div className="divide-y divide-slate-100 dark:divide-border border border-slate-100 dark:border-border rounded-2xl overflow-hidden">
-                  {z.rates.map((r) => (
-                    <div key={r.id} className="p-4 bg-slate-50/50 dark:bg-accent/20 flex flex-wrap items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-sm text-slate-900 dark:text-foreground">{r.name}</span>
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                              r.type === 'FREE'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : r.type === 'WEIGHT_BASED'
-                                ? 'bg-purple-100 text-purple-800'
-                                : r.type === 'PRICE_BASED'
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}
-                          >
-                            {r.type}
-                          </span>
+              {/* CALCULATOR RESULTS */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[11px] font-black uppercase text-slate-400 tracking-wider">
+                    Eligible Shipping Options
+                  </h4>
+                  {liveSimResult?.matchedZoneName && (
+                    <span className="text-[10px] text-indigo-400 font-mono font-semibold">
+                      {liveSimResult.matchedZoneName}
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  {!liveSimResult || liveSimResult.eligibleRates.length === 0 ? (
+                    <p className="text-xs text-amber-400 font-semibold italic">No matching rates found for specified weight/price.</p>
+                  ) : (
+                    liveSimResult.eligibleRates.map((sr: any) => (
+                      <div key={sr.id} className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                        <div>
+                          <span className="font-extrabold text-xs text-white block">{sr.name}</span>
+                          <span className="text-[10px] text-slate-400 block">{sr.estimatedDays}</span>
                         </div>
-
-                        <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-indigo-500" />
-                            {r.minDeliveryDays} - {r.maxDeliveryDays} business days
-                          </span>
-
-                          {r.type === 'WEIGHT_BASED' && (
-                            <span className="flex items-center gap-1 font-mono text-purple-600">
-                              <Scale className="w-3 h-3" />
-                              {r.minWeightKg}kg - {r.maxWeightKg}kg
-                            </span>
-                          )}
-
-                          {r.type === 'FREE' && r.minOrderPrice ? (
-                            <span className="font-bold text-emerald-600">Min Cart: ${r.minOrderPrice.toFixed(2)}</span>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4">
-                        <span className="font-black text-base text-slate-900 dark:text-foreground">
-                          {r.price === 0 ? 'FREE' : `$${r.price.toFixed(2)}`}
+                        <span className="font-black text-xs text-emerald-400">
+                          {sr.price === 0 ? 'FREE' : `$${sr.price.toFixed(2)}`}
                         </span>
-
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEditRate(z.id, r)}
-                            className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-600"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteRate(z.id, r.id)}
-                            className="p-1.5 rounded-lg hover:bg-rose-100 text-rose-600"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* RIGHT COLUMN: REAL-TIME CHECKOUT SHIPPING RATE CALCULATOR */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-xl space-y-5 sticky top-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
-                <Calculator className="w-4 h-4" />
-                <span>Checkout Shipping Calculator</span>
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
-                Live Simulator
-              </span>
-            </div>
-
-            {/* SIMULATED INPUTS */}
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-300">Destination Country</label>
-                <select
-                  value={simCountry}
-                  onChange={(e) => setSimCountry(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-800 bg-slate-950 text-white text-xs font-bold"
-                >
-                  <option value="United States">United States</option>
-                  <option value="Canada">Canada</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                  <option value="Germany">Germany</option>
-                  <option value="Mexico">Mexico</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300">Cart Weight (kg)</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    value={simWeightKg}
-                    onChange={(e) => setSimWeightKg(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-800 bg-slate-950 text-white font-mono font-bold text-xs"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300">Order Subtotal ($)</label>
-                  <input
-                    type="number"
-                    step="10"
-                    value={simCartSubtotal}
-                    onChange={(e) => setSimCartSubtotal(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-800 bg-slate-950 text-white font-mono font-bold text-xs"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* CALCULATOR RESULTS */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-              <h4 className="text-[11px] font-black uppercase text-slate-400 tracking-wider">
-                Available Shipping Options ({simRates.length})
-              </h4>
-
-              <div className="space-y-2">
-                {simRates.length === 0 ? (
-                  <p className="text-xs text-amber-400 font-semibold italic">No matching rates found for specified weight/price.</p>
-                ) : (
-                  simRates.map((sr) => (
-                    <div key={sr.id} className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-                      <div>
-                        <span className="font-extrabold text-xs text-white block">{sr.name}</span>
-                        <span className="text-[10px] text-slate-400 block">{sr.minDeliveryDays}-{sr.maxDeliveryDays} Days</span>
-                      </div>
-                      <span className="font-black text-xs text-emerald-400">
-                        {sr.price === 0 ? 'FREE' : `$${sr.price.toFixed(2)}`}
-                      </span>
-                    </div>
-                  ))
-                )}
               </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        /* TAB 2: LIVE CARRIER TRACKING LOOKUP */
+        <div className="space-y-6">
+          <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5">
+            <div className="space-y-1">
+              <h3 className="text-base font-black text-slate-900 dark:text-foreground flex items-center gap-2">
+                <Navigation className="w-5 h-5 text-indigo-600" />
+                <span>Package Tracking & Courier Status Lookup</span>
+              </h3>
+              <p className="text-xs text-slate-500">
+                Query carrier delivery status, event milestones, and direct tracking links for customer orders.
+              </p>
+            </div>
+
+            <form onSubmit={handleTrackShipment} className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="w-full sm:w-48">
+                <select
+                  value={selectedCarrier}
+                  onChange={(e) => setSelectedCarrier(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
+                >
+                  <option value="SHIPROCKET">🇮🇳 Shiprocket (Aggregator)</option>
+                  <option value="DELHIVERY">🇮🇳 Delhivery Express</option>
+                  <option value="BLUEDART">🇮🇳 Blue Dart Express</option>
+                  <option value="XPRESSBEES">🇮🇳 Xpressbees Logistics</option>
+                  <option value="INDIAPOST">🇮🇳 India Post Speed Post</option>
+                  <option value="SHADOWFAX">🇮🇳 Shadowfax Hyperlocal</option>
+                  <option value="DTDC">🇮🇳 DTDC Express</option>
+                  <option value="FEDEX">🌍 FedEx Express</option>
+                  <option value="DHL">🌍 DHL Express</option>
+                  <option value="UPS">🌍 UPS Ground</option>
+                  <option value="USPS">🌍 USPS Priority</option>
+                </select>
+              </div>
+
+              <div className="relative flex-1 w-full">
+                <input
+                  type="text"
+                  required
+                  value={trackingNumberInput}
+                  onChange={(e) => setTrackingNumberInput(e.target.value)}
+                  placeholder="Enter tracking number (e.g. FEDEX-9824-7102-US)..."
+                  className="w-full pl-4 pr-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isTrackingLoading}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all shrink-0"
+              >
+                {isTrackingLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4" />
+                )}
+                <span>Track Package</span>
+              </button>
+            </form>
+          </div>
+
+          {/* TRACKING TIMELINE DISPLAY */}
+          {trackingResult && (
+            <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6 animate-in fade-in">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-border pb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-black text-base text-slate-900 dark:text-foreground">
+                      {trackingResult.trackingNumber}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-xs font-extrabold">
+                      {trackingResult.carrier}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-extrabold">
+                      {trackingResult.status.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Estimated Delivery: <strong className="text-slate-800 dark:text-foreground">{trackingResult.estimatedDelivery}</strong>
+                  </p>
+                </div>
+
+                <a
+                  href={trackingResult.trackingUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-accent hover:bg-slate-200 text-slate-800 dark:text-foreground text-xs font-bold transition-all"
+                >
+                  <span>Open Official Carrier Tracking</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-indigo-600" />
+                </a>
+              </div>
+
+              {/* TIMELINE MILESTONES */}
+              <div className="space-y-6 max-w-2xl py-2">
+                {trackingResult.events.map((ev, idx) => (
+                  <div key={idx} className="flex items-start gap-4 relative">
+                    {/* Line connector */}
+                    {idx < trackingResult.events.length - 1 && (
+                      <div
+                        className={`absolute left-3.5 top-7 bottom-0 w-0.5 -mb-6 ${
+                          ev.completed ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
+                        }`}
+                      />
+                    )}
+
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 ${
+                        ev.completed
+                          ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/40'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+                      }`}
+                    >
+                      {ev.completed ? <Check className="w-4 h-4" /> : <div className="w-2 h-2 rounded-full bg-slate-400" />}
+                    </div>
+
+                    <div className="space-y-0.5 flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-extrabold text-xs text-slate-900 dark:text-foreground block">
+                          {ev.title}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {new Date(ev.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">{ev.location}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* CREATE / EDIT ZONE MODAL */}
       {isZoneModalOpen && (
@@ -620,26 +839,26 @@ export const ShippingStudio: React.FC = () => {
 
             <form onSubmit={handleSaveZone} className="p-6 space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Zone Name *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Zone Name *</label>
                 <input
                   type="text"
                   required
                   value={zoneNameInput}
                   onChange={(e) => setZoneNameInput(e.target.value)}
                   placeholder="e.g. Domestic - United States"
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Assigned Countries (comma-separated)</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Assigned Countries (comma-separated)</label>
                 <textarea
                   rows={3}
                   required
                   value={zoneCountriesInput}
                   onChange={(e) => setZoneCountriesInput(e.target.value)}
                   placeholder="United States, Puerto Rico, Canada, Mexico"
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-semibold"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-semibold"
                 />
               </div>
 
@@ -647,7 +866,7 @@ export const ShippingStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsZoneModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold"
+                  className="px-5 py-2.5 rounded-2xl bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 text-xs font-bold"
                 >
                   Cancel
                 </button>
@@ -681,24 +900,24 @@ export const ShippingStudio: React.FC = () => {
 
             <form onSubmit={handleSaveRate} className="p-6 space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Rate Name *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Rate Name *</label>
                 <input
                   type="text"
                   required
                   value={rateForm.name}
                   onChange={(e) => setRateForm({ ...rateForm, name: e.target.value })}
                   placeholder="Standard Ground Shipping"
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Calculation Type</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Calculation Type</label>
                   <select
                     value={rateForm.type}
                     onChange={(e) => setRateForm({ ...rateForm, type: e.target.value as ShippingRateType })}
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
                   >
                     <option value="FLAT">FLAT RATE</option>
                     <option value="FREE">FREE SHIPPING</option>
@@ -709,14 +928,14 @@ export const ShippingStudio: React.FC = () => {
 
                 {rateForm.type !== 'FREE' && (
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">Shipping Price ($)</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Shipping Price ($)</label>
                     <input
                       type="number"
                       step="0.5"
                       required
                       value={rateForm.price}
                       onChange={(e) => setRateForm({ ...rateForm, price: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-black text-indigo-600"
+                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-black text-indigo-600"
                     />
                   </div>
                 )}
@@ -725,63 +944,63 @@ export const ShippingStudio: React.FC = () => {
               {/* DELIVERY ESTIMATES */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Min Business Days</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Min Business Days</label>
                   <input
                     type="number"
                     min={1}
                     value={rateForm.minDeliveryDays}
                     onChange={(e) => setRateForm({ ...rateForm, minDeliveryDays: parseInt(e.target.value, 10) || 1 })}
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Max Business Days</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Max Business Days</label>
                   <input
                     type="number"
                     min={1}
                     value={rateForm.maxDeliveryDays}
                     onChange={(e) => setRateForm({ ...rateForm, maxDeliveryDays: parseInt(e.target.value, 10) || 1 })}
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
                   />
                 </div>
               </div>
 
               {/* DYNAMIC WEIGHT / PRICE TIERS */}
               {rateForm.type === 'WEIGHT_BASED' && (
-                <div className="grid grid-cols-2 gap-4 p-3 rounded-xl bg-purple-50 border border-purple-100">
+                <div className="grid grid-cols-2 gap-4 p-3 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/50">
                   <div className="space-y-1">
-                    <label className="block text-[11px] font-bold text-purple-900">Min Weight (kg)</label>
+                    <label className="block text-[11px] font-bold text-purple-900 dark:text-purple-300">Min Weight (kg)</label>
                     <input
                       type="number"
                       step="0.1"
                       value={rateForm.minWeightKg}
                       onChange={(e) => setRateForm({ ...rateForm, minWeightKg: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 rounded-lg border border-purple-200 bg-white text-xs font-bold"
+                      className="w-full px-3 py-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-card text-xs font-bold"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-[11px] font-bold text-purple-900">Max Weight (kg)</label>
+                    <label className="block text-[11px] font-bold text-purple-900 dark:text-purple-300">Max Weight (kg)</label>
                     <input
                       type="number"
                       step="0.1"
                       value={rateForm.maxWeightKg}
                       onChange={(e) => setRateForm({ ...rateForm, maxWeightKg: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 rounded-lg border border-purple-200 bg-white text-xs font-bold"
+                      className="w-full px-3 py-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-card text-xs font-bold"
                     />
                   </div>
                 </div>
               )}
 
               {(rateForm.type === 'FREE' || rateForm.type === 'PRICE_BASED') && (
-                <div className="space-y-1.5 p-3 rounded-xl bg-emerald-50 border border-emerald-100">
-                  <label className="block text-[11px] font-bold text-emerald-900">Min Cart Order Price Trigger ($)</label>
+                <div className="space-y-1.5 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50">
+                  <label className="block text-[11px] font-bold text-emerald-900 dark:text-emerald-300">Min Cart Order Price Trigger ($)</label>
                   <input
                     type="number"
                     step="5"
                     value={rateForm.minOrderPrice}
                     onChange={(e) => setRateForm({ ...rateForm, minOrderPrice: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-4 py-2 rounded-lg border border-emerald-200 bg-white text-xs font-bold text-emerald-700"
+                    className="w-full px-4 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-card text-xs font-bold text-emerald-700 dark:text-emerald-300"
                   />
                 </div>
               )}
@@ -790,7 +1009,7 @@ export const ShippingStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsRateModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold"
+                  className="px-5 py-2.5 rounded-2xl bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 text-xs font-bold"
                 >
                   Cancel
                 </button>

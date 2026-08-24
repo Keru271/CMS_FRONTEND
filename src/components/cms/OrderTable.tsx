@@ -86,7 +86,9 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
                       <div className="text-[10px] font-sans text-[#5e5a5a]">{o.customerEmail}</div>
                     </td>
                     <td className="py-3.5 px-4 text-[#5e5a5a] font-mono text-[10px]">{o.createdAt}</td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#191a1b]">${o.totalAmount.toFixed(2)}</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-[#191a1b]">
+                      {o.currency === 'INR' ? '₹' : o.currency === 'EUR' ? '€' : o.currency === 'GBP' ? '£' : '$'}{o.totalAmount.toFixed(2)} <span className="text-[10px] text-[#5e5a5a]">{o.currency || ''}</span>
+                    </td>
                     <td className="py-3.5 px-4">
                       <span
                         className={`px-2.5 py-1 rounded-full text-[10px] font-sans font-medium ${
