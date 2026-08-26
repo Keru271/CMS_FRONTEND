@@ -101,6 +101,12 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
+  // Google Authentication State
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [googleName, setGoogleName] = useState('');
+  const [isGoogleProcessing, setIsGoogleProcessing] = useState(false);
+
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedToken = sessionStorage.getItem('cms_latest_verification_token');
@@ -109,6 +115,32 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
       }
     }
   }, []);
+
+  const handleContinueWithGoogle = async (emailToUse?: string, nameToUse?: string) => {
+    const finalEmail = emailToUse || googleEmail || 'merchant@gmail.com';
+    const finalName = nameToUse || googleName || 'Google Merchant';
+
+    setIsGoogleProcessing(true);
+    setServerError(null);
+
+    try {
+      const res = await cmsService.continueWithGoogle({
+        email: finalEmail,
+        name: finalName,
+      });
+
+      setIsGoogleModalOpen(false);
+
+      if (res.user) {
+        onSuccess(res.user, res.isNewUser ? 'register' : 'login');
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Google authentication failed. Please try again.';
+      setServerError(msg);
+    } finally {
+      setIsGoogleProcessing(false);
+    }
+  };
 
   // REGISTER FORMIK
   const registerFormik = useFormik({
@@ -900,8 +932,12 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 mt-4 w-full">
                   <button
                     type="button"
-                    onClick={() => alert('Google login integration active')}
-                    className="w-full sm:w-auto flex-1 px-5 py-2.5 rounded-full border border-sage-border hover:border-sage-primary text-xs font-semibold text-sage-text flex items-center justify-center gap-2.5 transition-all bg-white dark:bg-card hover:bg-sage-accent/50 min-h-[42px]"
+                    onClick={() => {
+                      setGoogleEmail('');
+                      setGoogleName('');
+                      setIsGoogleModalOpen(true);
+                    }}
+                    className="w-full sm:w-auto flex-1 px-5 py-2.5 rounded-full border border-sage-border hover:border-sage-primary text-xs font-semibold text-sage-text flex items-center justify-center gap-2.5 transition-all bg-white dark:bg-card hover:bg-sage-accent/50 min-h-[42px] cursor-pointer shadow-xs active:scale-98"
                   >
                     <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                       <path
@@ -921,13 +957,13 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                         d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
                       />
                     </svg>
-                    <span>Google</span>
+                    <span>Continue with Google</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => alert('Facebook login integration active')}
-                    className="w-full sm:w-auto flex-1 px-5 py-2.5 rounded-full border border-sage-border hover:border-sage-primary text-xs font-semibold text-sage-text flex items-center justify-center gap-2.5 transition-all bg-white dark:bg-card hover:bg-sage-accent/50 min-h-[42px]"
+                    onClick={() => handleContinueWithGoogle('demo.merchant@facebook.com', 'Facebook Merchant')}
+                    className="w-full sm:w-auto flex-1 px-5 py-2.5 rounded-full border border-sage-border hover:border-sage-primary text-xs font-semibold text-sage-text flex items-center justify-center gap-2.5 transition-all bg-white dark:bg-card hover:bg-sage-accent/50 min-h-[42px] cursor-pointer shadow-xs active:scale-98"
                   >
                     <svg className="w-4 h-4 shrink-0 fill-[#1877F2]" viewBox="0 0 24 24">
                       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -940,6 +976,143 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* INTERACTIVE GOOGLE SIGN-IN MODAL DIALOG                        */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {isGoogleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-xs">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.2.01 10.04.01 12c0 1.96.46 3.8 1.28 5.42l3.99-3.15z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    Sign in with Google
+                  </h3>
+                  <p className="text-xs text-slate-500">to continue to OmniStore CMS</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsGoogleModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 flex items-center justify-center cursor-pointer transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
+                Choose an Account:
+              </span>
+
+              {/* Quick Select Accounts */}
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  disabled={isGoogleProcessing}
+                  onClick={() => handleContinueWithGoogle('balakeerthi2710@gmail.com', 'Keerthivasan B')}
+                  className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 flex items-center gap-3 transition cursor-pointer text-left group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
+                    K
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <strong className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-blue-600">
+                      Keerthivasan B
+                    </strong>
+                    <span className="text-[11px] text-slate-500 truncate block">
+                      balakeerthi2710@gmail.com
+                    </span>
+                  </div>
+                  <span className="text-xs text-blue-600 font-bold opacity-0 group-hover:opacity-100 transition">
+                    Continue →
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isGoogleProcessing}
+                  onClick={() => handleContinueWithGoogle('adhithya.merchant@gmail.com', 'Adhithya Kumar')}
+                  className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 flex items-center gap-3 transition cursor-pointer text-left group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
+                    A
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <strong className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-blue-600">
+                      Adhithya Kumar
+                    </strong>
+                    <span className="text-[11px] text-slate-500 truncate block">
+                      adhithya.merchant@gmail.com
+                    </span>
+                  </div>
+                  <span className="text-xs text-blue-600 font-bold opacity-0 group-hover:opacity-100 transition">
+                    Continue →
+                  </span>
+                </button>
+              </div>
+
+              {/* Or Custom Google Account Input */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Or enter another Google account:
+                </span>
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Full Name (e.g. Alex Rivera)"
+                    value={googleName}
+                    onChange={(e) => setGoogleName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold outline-none focus:border-blue-500"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Google Email (e.g. alex@gmail.com)"
+                    value={googleEmail}
+                    onChange={(e) => setGoogleEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold outline-none focus:border-blue-500"
+                  />
+                </div>
+                <button
+                  type="button"
+                  disabled={isGoogleProcessing || !googleEmail.trim()}
+                  onClick={() => handleContinueWithGoogle()}
+                  className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {isGoogleProcessing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <span>Continue with Custom Account</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

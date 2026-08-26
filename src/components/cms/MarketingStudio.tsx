@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { CMSMarketingCampaign, CMSPixelConfig, AbandonedCartData, MarketingChannel } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import { usePlanAccess } from '@/src/hooks/usePlanAccess';
+import { LockedFeatureGuard } from '@/src/components/cms/LockedFeatureGuard';
 import {
   Megaphone,
   Mail,
@@ -36,6 +38,7 @@ import {
 } from 'lucide-react';
 
 export const MarketingStudio: React.FC = () => {
+  const { isStarter } = usePlanAccess();
   const [campaigns, setCampaigns] = useState<CMSMarketingCampaign[]>([]);
   const [pixelConfig, setPixelConfig] = useState<CMSPixelConfig>({});
   const [abandonedCarts, setAbandonedCarts] = useState<AbandonedCartData[]>([]);
@@ -397,6 +400,19 @@ export const MarketingStudio: React.FC = () => {
 
       {/* 2. ABANDONED CART RECOVERY TAB */}
       {activeTab === 'ABANDONED_CART' && (
+        isStarter ? (
+          <LockedFeatureGuard
+            title="Automated Abandoned Cart Recovery"
+            description="Recover up to 25% of lost revenue automatically by sending smart 1-click cart recovery emails with discount vouchers to shoppers who dropped off."
+            requiredPlan="GROWTH"
+            features={[
+              'Automated 1-hour & 24-hour Cart Recovery Triggers',
+              'Dynamic Auto-Generated Discount Vouchers (e.g. 10% OFF)',
+              '1-Click Direct Pre-filled Checkout Links',
+              'Real-Time Cart Value & Drop-off Analytics',
+            ]}
+          />
+        ) : (
         <div className="p-6 rounded-3xl border border-slate-200/80 dark:border-border bg-white dark:bg-card shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
@@ -460,6 +476,7 @@ export const MarketingStudio: React.FC = () => {
             </table>
           </div>
         </div>
+        )
       )}
 
       {/* 3. TRACKING PIXELS & GA4 TAB */}

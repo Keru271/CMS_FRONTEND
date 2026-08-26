@@ -54,6 +54,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
   const currentStoreName = activeStore?.name || merchantData?.store?.storeName || 'STATAMIC STORE';
   const currentCurrency = activeStore?.currency || merchantData?.store?.currency || 'INR';
+  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -355,6 +356,18 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             </div>
           )}
         </div>
+
+        {/* Live Storefront Quick Link */}
+        <a
+          href={STOREFRONT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ffffff] border border-[#cbd5e0] text-[#191a1b] font-sans font-medium text-xs shadow-xs hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50/50 transition-all cursor-pointer group"
+          title="Open Hosted Live Storefront"
+        >
+          <ExternalLink className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
+          <span>{t('header.view_storefront', 'Live Store')}</span>
+        </a>
 
         {/* AI Copilot Quick Trigger Pill */}
         <button

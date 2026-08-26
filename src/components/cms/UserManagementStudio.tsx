@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { CMSStoreMember, CreateStoreMemberPayload, StoreMemberRole } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import { usePlanAccess } from '@/src/hooks/usePlanAccess';
 import {
   Users,
   UserPlus,
@@ -164,6 +165,7 @@ const ROLE_PRESETS: {
 ];
 
 export const UserManagementStudio: React.FC = () => {
+  const { planName, maxStaff } = usePlanAccess();
   const [members, setMembers] = useState<CMSStoreMember[]>([]);
   const [owner, setOwner] = useState<CMSStoreMember | null>(null);
   const [storeName, setStoreName] = useState('OmniStore');
@@ -262,6 +264,10 @@ export const UserManagementStudio: React.FC = () => {
 
   // Open Add Member Modal
   const handleOpenAddModal = () => {
+    if (members.length >= maxStaff) {
+      showToast(`Team member quota reached (${maxStaff} seats) for ${planName}. Please upgrade your plan to add more staff.`, 'error');
+      return;
+    }
     const defaultPreset = ROLE_PRESETS[1]; // Stock Checker default
     setAddForm({
       name: '',
@@ -428,10 +434,17 @@ export const UserManagementStudio: React.FC = () => {
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/30 flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5" />
                 <span>Store Team & Access Control</span>
+              </span>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                members.length >= maxStaff
+                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+              }`}>
+                👥 {members.length} / {maxStaff >= 999 ? 'Unlimited' : maxStaff} Seats ({planName})
               </span>
               {owner && (
                 <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30 flex items-center gap-1">

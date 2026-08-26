@@ -25,6 +25,9 @@ import {
   FileCheck,
   Code2,
   LayoutTemplate,
+  Monitor,
+  Tablet as TabletIcon,
+  Smartphone,
 } from 'lucide-react';
 
 export const PageManager: React.FC = () => {
@@ -34,6 +37,8 @@ export const PageManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ALL' | 'SYSTEM' | 'BRAND' | 'POLICY' | 'CUSTOM' | 'DRAFT'>('ALL');
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
+  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
+
   // Page Builder States
   const [isPageBuilderOpen, setIsPageBuilderOpen] = useState(false);
   const [builderEditingPage, setBuilderEditingPage] = useState<CMSPageData | null>(null);
@@ -42,6 +47,8 @@ export const PageManager: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<CMSPageData | null>(null);
   const [previewPage, setPreviewPage] = useState<CMSPageData | null>(null);
+  const [previewMode, setPreviewMode] = useState<'live' | 'mock'>('live');
+  const [previewViewport, setPreviewViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [isSaving, setIsSaving] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
@@ -384,10 +391,11 @@ export const PageManager: React.FC = () => {
                       <div className="flex items-center gap-1">
                         <span>{page.slug}</span>
                         <a
-                          href={`https://omnistore.com${page.slug}`}
+                          href={`${STOREFRONT_URL}${page.slug.startsWith('/') ? page.slug : '/' + page.slug}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-slate-400 hover:text-indigo-600"
+                          className="text-slate-400 hover:text-indigo-600 transition"
+                          title="Open on Live Storefront"
                         >
                           <ExternalLink className="w-3 h-3" />
                         </a>
@@ -679,7 +687,7 @@ export const PageManager: React.FC = () => {
                       {formData.metaTitle || formData.title || 'Page Title'}
                     </span>
                     <span className="text-[11px] font-mono text-emerald-700 block">
-                      https://omnistore.com{formData.slug}
+                      {STOREFRONT_URL}{formData.slug.startsWith('/') ? formData.slug : '/' + formData.slug}
                     </span>
                     <p className="text-[11px] text-slate-600 line-clamp-2">
                       {formData.metaDescription || 'No meta description configured yet.'}
@@ -720,61 +728,400 @@ export const PageManager: React.FC = () => {
         </div>
       )}
 
-      {/* LIVE PAGE PREVIEW MODAL */}
-      {previewPage && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col animate-in fade-in">
-          {/* Modal Top Bar */}
-          <div className="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
-            <div className="flex items-center gap-3">
-              <span className="px-3 py-1 rounded-full bg-indigo-600 font-black text-xs uppercase">
-                {previewPage.pageType} Page
-              </span>
-              <h3 className="font-black text-base">{previewPage.title}</h3>
-              <span className="text-xs font-mono text-indigo-300">https://omnistore.com{previewPage.slug}</span>
-            </div>
+      {/* LIVE / MOCK PAGE PREVIEW MODAL */}
+      {previewPage && (() => {
+        const rawSlug = previewPage.slug || '';
+        const pageRoute = rawSlug.startsWith('/') ? rawSlug : `/${rawSlug}`;
+        const liveUrl = `${STOREFRONT_URL}${pageRoute}`;
 
-            <button
-              type="button"
-              onClick={() => setPreviewPage(null)}
-              className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+        const renderMockContent = (content: string) => {
+          if (!content) return <p className="text-slate-400 italic">No content available for this page.</p>;
+          const trimmed = content.trim();
+          if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            try {
+              const parsed = JSON.parse(trimmed);
+              if (Array.isArray(parsed)) {
+                return (
+                  <div className="space-y-6">
+                    {parsed.map((block: any, idx: number) => {
+                      if (block.isVisible === false) return null;
+                      return (
+                        <div key={block.id || idx} className="p-6 rounded-2xl border border-slate-200 bg-slate-50 space-y-2">
+                          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                              {block.type?.replace(/_/g, ' ')}
+                            </span>
+                            {block.data?.title || block.data?.headline || block.data?.heading ? (
+                              <span className="text-xs font-bold text-slate-700">
+                                {block.data?.title || block.data?.headline || block.data?.heading}
+                              </span>
+                            ) : null}
+                          </div>
+                          {block.data?.subtitle && <p className="text-xs text-slate-600">{block.data.subtitle}</p>}
+                          {block.data?.description && <p className="text-xs text-slate-600">{block.data.description}</p>}
+                          {block.data?.html && <div className="prose prose-slate max-w-none text-xs" dangerouslySetInnerHTML={{ __html: block.data.html }} />}
+                          {block.data?.buttonText && (
+                            <span className="inline-block px-3 py-1 bg-indigo-600 text-white rounded-lg text-xs font-bold mt-2">
+                              {block.data.buttonText}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+            } catch {
+              // fallback below
+            }
+          }
+          return <div className="prose prose-slate max-w-none text-sm space-y-4" dangerouslySetInnerHTML={{ __html: content }} />;
+        };
 
-          {/* Page Preview Body */}
-          <div className="flex-1 overflow-y-auto p-6 flex justify-center bg-slate-950">
-            <div className="bg-white rounded-3xl border border-slate-800 shadow-2xl w-full max-w-4xl min-h-[600px] flex flex-col justify-between overflow-hidden">
-              {/* Header Mock */}
-              <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-                <span className="font-black text-lg text-indigo-600">OmniStore Flagship</span>
-                <span className="text-xs font-bold text-slate-500">Live Storefront Route: {previewPage.slug}</span>
+        return (
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-lg flex flex-col animate-in fade-in">
+            {/* Modal Top Bar */}
+            <div className="h-14 px-4 bg-slate-900 text-white flex items-center justify-between gap-4 border-b border-slate-800 shrink-0">
+              <div className="flex items-center gap-3">
+                <span className="px-2.5 py-1 rounded-full bg-indigo-600 font-black text-[10px] uppercase tracking-wider">
+                  {previewPage.pageType} Page
+                </span>
+                <div>
+                  <h3 className="font-black text-sm leading-tight">{previewPage.title}</h3>
+                  <p className="text-[10px] text-indigo-300 font-mono truncate max-w-xs">{pageRoute}</p>
+                </div>
               </div>
 
-              {/* Rendered HTML Content */}
-              <div className="p-8 sm:p-12 space-y-6 flex-1 text-slate-800">
-                <div className="border-b border-slate-200 pb-4">
-                  <h1 className="text-3xl font-black text-slate-900">{previewPage.title}</h1>
-                  {previewPage.metaDescription && (
-                    <p className="text-xs text-slate-500 mt-1">{previewPage.metaDescription}</p>
-                  )}
+              {/* Mode Switcher: Live Storefront vs Visual Mock */}
+              <div className="flex items-center gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('live')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    previewMode === 'live' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>Live Hosted Store</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('mock')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    previewMode === 'mock' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Visual Canvas</span>
+                </button>
+              </div>
+
+              {/* Viewport Switcher */}
+              <div className="flex items-center gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700">
+                {[
+                  { id: 'desktop', icon: Monitor, label: 'Desktop' },
+                  { id: 'tablet', icon: TabletIcon, label: 'Tablet' },
+                  { id: 'mobile', icon: Smartphone, label: 'Mobile' },
+                ].map((vp) => {
+                  const Icon = vp.icon;
+                  return (
+                    <button
+                      key={vp.id}
+                      type="button"
+                      onClick={() => setPreviewViewport(vp.id as any)}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                        previewViewport === vp.id ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      <span className="hidden md:inline">{vp.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Open in new tab */}
+                <a
+                  href={liveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold border border-slate-700 transition"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden sm:block">Open Live Tab</span>
+                </a>
+
+                {/* Quick Edit in Visual Page Builder */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = previewPage;
+                    setPreviewPage(null);
+                    setBuilderEditingPage(target);
+                    setIsPageBuilderOpen(true);
+                  }}
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition"
+                >
+                  <LayoutTemplate className="w-3.5 h-3.5" />
+                  <span>Page Builder</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPreviewPage(null)}
+                  className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Preview Body with simulated browser chrome */}
+            <div className="flex-1 overflow-hidden bg-slate-950 flex justify-center items-start p-4 sm:p-8">
+              <div
+                className={`bg-white overflow-hidden shadow-2xl rounded-2xl border border-slate-800 transition-all duration-300 h-full flex flex-col ${
+                  previewViewport === 'desktop'
+                    ? 'w-full'
+                    : previewViewport === 'tablet'
+                    ? 'w-[768px]'
+                    : 'w-[390px]'
+                }`}
+              >
+                {/* Simulated browser address bar */}
+                <div className="h-9 bg-slate-100 border-b border-slate-200 flex items-center px-3 gap-2 shrink-0">
+                  <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                  </div>
+                  <div className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-0.5 text-[10px] font-mono text-slate-500 truncate flex items-center gap-1.5">
+                    <span className="text-emerald-500">🔒</span>
+                    <span className="truncate">{STOREFRONT_URL.replace(/^https?:\/\//, '')}{pageRoute}</span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-600 uppercase">
+                    {previewMode === 'live' ? 'Live Storefront' : 'Mock Preview'}
+                  </span>
                 </div>
 
-                <div
-                  className="prose prose-slate max-w-none text-sm space-y-4"
-                  dangerouslySetInnerHTML={{ __html: previewPage.content }}
-                />
-              </div>
+                {/* Iframe or Mock Canvas */}
+                {previewMode === 'live' ? (
+                  <iframe
+                    key={`${previewPage.id}-${pageRoute}`}
+                    src={liveUrl}
+                    className="w-full flex-1 border-0"
+                    title={`${previewPage.title} Live Preview`}
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex-1 overflow-y-auto bg-white text-slate-900 flex flex-col justify-between font-sans">
+                    {/* Top utility announcement bar */}
+                    <div className="w-full bg-[#1e2022] text-[#9ca3af] text-[11px] py-1.5 px-4 border-b border-[#2d3135] shrink-0">
+                      <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          <span className="text-amber-400 font-bold">⚡ 🚀 Free shipping on orders over $50!</span>
+                          <span className="hidden md:inline text-slate-400">📞 +1 (800) 555-0199</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-slate-400">
+                          <span className="cursor-pointer hover:text-white">❤️ Wishlist</span>
+                          <span>|</span>
+                          <span className="cursor-pointer hover:text-white">Sign In / Register</span>
+                          <span>|</span>
+                          <span className="text-white font-bold">USD</span>
+                        </div>
+                      </div>
+                    </div>
 
-              {/* Footer Mock */}
-              <div className="p-6 bg-slate-900 text-slate-400 text-xs flex items-center justify-between border-t border-slate-800">
-                <span>© {new Date().getFullYear()} OmniStore. All rights reserved.</span>
-                <span>Powered by Next.js CMS Platform</span>
+                    {/* Storefront Main Header */}
+                    <header className="w-full bg-[#23272a] text-white py-3 px-4 shadow-md sticky top-0 z-20 shrink-0">
+                      <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-base shadow">
+                            O
+                          </div>
+                          <div className="flex flex-col leading-none">
+                            <span className="text-base sm:text-lg font-black tracking-tight uppercase">OmniStore Retail</span>
+                            <span className="text-[8px] tracking-[0.2em] font-bold text-indigo-400 uppercase mt-0.5">FURNITURE & LIVING</span>
+                          </div>
+                        </div>
+
+                        <div className="hidden md:flex flex-1 max-w-md mx-4">
+                          <div className="flex items-center bg-white rounded-full p-1 w-full border border-slate-300">
+                            <select className="bg-transparent text-slate-700 text-[11px] font-semibold px-2 py-1 outline-none border-r border-slate-200">
+                              <option>All Categories</option>
+                              <option>Living Room</option>
+                              <option>Bedroom</option>
+                              <option>Dining & Kitchen</option>
+                            </select>
+                            <input
+                              type="text"
+                              placeholder="Search products, sofa, decor..."
+                              className="flex-1 px-3 py-1 text-xs text-slate-900 placeholder:text-slate-400 bg-transparent outline-none"
+                              readOnly
+                            />
+                            <button type="button" className="bg-amber-400 text-slate-950 px-3 py-1 rounded-full font-bold text-xs">
+                              Search
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-xs font-bold">
+                          <div className="hidden lg:flex items-center gap-1.5 text-slate-300">
+                            <span className="text-sm">👤</span>
+                            <span>Account</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+                            <span>🛒 Bag</span>
+                            <span className="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+                          </div>
+                        </div>
+                      </div>
+                    </header>
+
+                    {/* Navigation Bar */}
+                    <nav className="w-full bg-[#2a2f34] text-white border-b border-[#373e45] hidden sm:block shrink-0">
+                      <div className="max-w-6xl mx-auto px-4 flex items-center justify-between text-xs font-semibold">
+                        <div className="flex items-center">
+                          <span className="bg-indigo-600 text-white font-bold px-4 py-2.5 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                            ☰ All Departments
+                          </span>
+                          <span className="px-3 py-2.5 text-slate-200 hover:text-amber-400 transition cursor-pointer">Home</span>
+                          <span className="px-3 py-2.5 text-slate-200 hover:text-amber-400 transition cursor-pointer">Living Room</span>
+                          <span className="px-3 py-2.5 text-slate-200 hover:text-amber-400 transition cursor-pointer">Bedroom</span>
+                          <span className="px-3 py-2.5 text-slate-200 hover:text-amber-400 transition cursor-pointer">Dining & Kitchen</span>
+                          <span className="px-3 py-2.5 text-slate-200 hover:text-amber-400 transition cursor-pointer">Office & Study</span>
+                          <span className="px-3 py-2.5 text-slate-200 hover:text-amber-400 transition cursor-pointer">Collections</span>
+                        </div>
+                        <span className="text-[11px] font-bold text-amber-400">Special Deals 🔥</span>
+                      </div>
+                    </nav>
+
+                    {/* Main Page Article Container */}
+                    <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-8 py-10 sm:py-14 w-full">
+                      {/* Breadcrumbs */}
+                      <nav className="flex items-center gap-2 text-xs text-slate-500 mb-6 font-medium">
+                        <span>Home</span>
+                        <span>/</span>
+                        <span className="text-slate-600">{previewPage.pageType === 'POLICY' ? 'Policies' : 'Pages'}</span>
+                        <span>/</span>
+                        <span className="text-indigo-600 font-bold">{previewPage.title}</span>
+                      </nav>
+
+                      {/* Header */}
+                      <header className="mb-8 pb-6 border-b border-slate-200">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full text-white bg-indigo-600">
+                            {previewPage.pageType}
+                          </span>
+                          <span className="text-xs text-slate-400">Published on Live Storefront</span>
+                        </div>
+                        <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900">{previewPage.title}</h1>
+                        {previewPage.metaDescription && (
+                          <p className="text-sm sm:text-base text-slate-600 mt-2 leading-relaxed">{previewPage.metaDescription}</p>
+                        )}
+                      </header>
+
+                      {/* Content */}
+                      <article className="p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs bg-white">
+                        {renderMockContent(previewPage.content)}
+                      </article>
+
+                      {/* Support Help Banner */}
+                      <div className="mt-10 p-6 sm:p-8 rounded-3xl border border-slate-200 bg-indigo-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="space-y-1 text-center sm:text-left">
+                          <h4 className="font-bold text-sm text-slate-900">Have questions or need assistance?</h4>
+                          <p className="text-xs text-slate-600">Our customer support concierge is always available to help.</p>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          <button type="button" className="px-4 py-2 text-white text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-500 transition shadow">
+                            Contact Support
+                          </button>
+                          <button type="button" className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition">
+                            Continue Shopping
+                          </button>
+                        </div>
+                      </div>
+                    </main>
+
+                    {/* Storefront Footer */}
+                    <footer className="w-full bg-[#181a1c] text-[#9ca3af] text-xs pt-12 pb-6 border-t border-[#26292d] mt-12 shrink-0">
+                      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                        {/* Newsletter box */}
+                        <div className="bg-[#23272a] rounded-2xl p-6 sm:p-8 mb-10 border border-[#2e3338] grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                          <div className="md:col-span-7 space-y-1">
+                            <span className="text-amber-400 font-bold uppercase tracking-widest text-[10px]">✉️ NEWSLETTER</span>
+                            <h3 className="text-lg font-black text-white">Get 20% Off Your First Order</h3>
+                            <p className="text-slate-400 text-xs">Subscribe to get special offers, design tips, and member drops.</p>
+                          </div>
+                          <div className="md:col-span-5 flex gap-2">
+                            <input
+                              type="email"
+                              placeholder="Enter your email..."
+                              className="flex-1 px-3 py-2 rounded-xl bg-white text-slate-900 text-xs placeholder:text-slate-400 outline-none"
+                              readOnly
+                            />
+                            <button type="button" className="px-4 py-2 bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shrink-0">
+                              Subscribe
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* 4-column footer links */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pb-8 border-b border-[#26292d]">
+                          <div className="space-y-2">
+                            <h4 className="text-white font-bold text-xs uppercase tracking-wider">Departments</h4>
+                            <ul className="space-y-1 text-slate-400 text-[11px]">
+                              <li>Living Room</li>
+                              <li>Bedroom Suites</li>
+                              <li>Kitchen & Dining</li>
+                              <li>Lighting & Decor</li>
+                            </ul>
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="text-white font-bold text-xs uppercase tracking-wider">Customer Care</h4>
+                            <ul className="space-y-1 text-slate-400 text-[11px]">
+                              <li>Track My Order</li>
+                              <li>Shipping & Delivery</li>
+                              <li>30-Day Returns</li>
+                              <li>Contact Concierge</li>
+                            </ul>
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="text-white font-bold text-xs uppercase tracking-wider">Company</h4>
+                            <ul className="space-y-1 text-slate-400 text-[11px]">
+                              <li>About Our Store</li>
+                              <li>Design Journal</li>
+                              <li>Privacy Policy</li>
+                              <li>Terms & Conditions</li>
+                            </ul>
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="text-white font-bold text-xs uppercase tracking-wider">Store Information</h4>
+                            <p className="text-slate-400 text-[11px] leading-relaxed">
+                              Official OmniStore Flagship. Crafted for modern mindful living.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Copyright & Badges */}
+                        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
+                          <p>© {new Date().getFullYear()} OmniStore Retail. All rights reserved.</p>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 bg-[#23272a] rounded text-[10px] font-bold text-white border border-[#373e45]">VISA</span>
+                            <span className="px-2 py-0.5 bg-[#23272a] rounded text-[10px] font-bold text-white border border-[#373e45]">MASTERCARD</span>
+                            <span className="px-2 py-0.5 bg-[#23272a] rounded text-[10px] font-bold text-white border border-[#373e45]">AMEX</span>
+                            <span className="px-2 py-0.5 bg-[#23272a] rounded text-[10px] font-bold text-white border border-[#373e45]">STRIPE</span>
+                          </div>
+                        </div>
+                      </div>
+                    </footer>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Visual Block Page Builder Studio */}
       <PageBuilderStudio

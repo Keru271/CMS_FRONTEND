@@ -7,7 +7,7 @@ import {
   GripVertical, ChevronDown, ChevronRight, Grid3X3, Palette, Type,
   Image as ImageIcon, Video, Star, HelpCircle, Mail, ArrowRight, Zap,
   Quote, BarChart3, Columns, GalleryHorizontal, Package, Hash, AlignLeft,
-  Search, Sparkles, AlertCircle,
+  Search, Sparkles, AlertCircle, ExternalLink, Globe,
 } from 'lucide-react';
 import { CMSPageData, PageFormData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
@@ -960,6 +960,8 @@ function BlockPreview({ block }: { block: PageBlock }) {
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
+const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
+
 export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPage, isOpen, onClose, onSaved }) => {
   const [pageTitle, setPageTitle] = useState(initialPage?.title || 'New Page');
   const [pageSlug, setPageSlug] = useState(initialPage?.slug || '/pages/new-page');
@@ -967,6 +969,8 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
   const [metaTitle, setMetaTitle] = useState(initialPage?.metaTitle || '');
   const [metaDescription, setMetaDescription] = useState(initialPage?.metaDescription || '');
   const [pageStatus, setPageStatus] = useState(initialPage?.status || 'PUBLISHED');
+
+  const pageRoute = (pageSlug || '').startsWith('/') ? pageSlug : `/${pageSlug}`;
 
   const [historyState, dispatch] = useReducer(historyReducer, {
     past: [],
@@ -1163,8 +1167,18 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
           </div>
         </div>
 
-        {/* Right: Settings + Save + Close */}
+        {/* Right: Live Preview + Settings + Save + Close */}
         <div className="flex items-center gap-2">
+          <a
+            href={`${STOREFRONT_URL}${pageRoute}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 text-xs font-bold border border-slate-700 transition"
+            title="Open Live Page on Storefront"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>Live Site</span>
+          </a>
           <button type="button" onClick={() => setShowPageSettings(s => !s)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition ${showPageSettings ? 'bg-slate-800 border-slate-700 text-white' : 'text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}>
             <Settings className="w-3.5 h-3.5" />
             <span className="hidden sm:block">Settings</span>
@@ -1328,7 +1342,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
               <div className="flex-1 flex items-center justify-center">
                 <div className="bg-white border border-slate-300 rounded-lg px-3 py-1 text-[10px] font-mono text-slate-500 flex items-center gap-1 max-w-sm w-full">
                   <span className="text-emerald-500">🔒</span>
-                  <span className="truncate">yourdomain.com{pageSlug}</span>
+                  <span className="truncate">{STOREFRONT_URL.replace(/^https?:\/\//, '')}{pageRoute}</span>
                 </div>
               </div>
             </div>

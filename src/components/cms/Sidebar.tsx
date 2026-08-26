@@ -31,6 +31,7 @@ import {
   Crown,
   Search,
   FolderTree,
+  BookOpen,
 } from 'lucide-react';
 import { MerchantOnboardingData } from '@/src/types';
 import { usePlanAccess } from '@/src/hooks/usePlanAccess';
@@ -46,6 +47,7 @@ export type CMSView =
   | 'store-setup'
   | 'themes'
   | 'pages'
+  | 'blog'
   | 'navigation'
   | 'discounts'
   | 'payments'
@@ -95,6 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'themes' as CMSView, path: '/themes', label: t('nav.themes', 'Theme Studio'), icon: Palette },
     { id: 'domains' as CMSView, path: '/domains', label: t('nav.domains', 'Domains & DNS'), icon: Globe },
     { id: 'pages' as CMSView, path: '/pages', label: t('nav.pages', 'Pages'), icon: FileText },
+    { id: 'blog' as CMSView, path: '/blog', label: t('nav.blog', 'Blog & Editorial'), icon: BookOpen },
     { id: 'navigation' as CMSView, path: '/navigation', label: t('nav.navigation', 'Navigation'), icon: Compass },
     { id: 'products' as CMSView, path: '/products', label: t('nav.products', 'Products Studio'), icon: Package, badge: productsCount },
     { id: 'categories' as CMSView, path: '/categories', label: t('nav.categories', 'Store Categories'), icon: FolderTree },
@@ -158,7 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
 
     if (userRole === 'EDITOR') {
-      return navId === 'themes' || navId === 'pages' || navId === 'navigation' || navId === 'dashboard';
+      return navId === 'themes' || navId === 'pages' || navId === 'blog' || navId === 'navigation' || navId === 'dashboard';
     }
 
     if (userRole === 'MANAGER') {
@@ -171,7 +174,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         navId === 'discounts' ||
         navId === 'payments' ||
         navId === 'shipping' ||
-        navId === 'marketing'
+        navId === 'marketing' ||
+        navId === 'blog'
       );
     }
 
@@ -183,7 +187,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }
       if (navId === 'orders') return !!userPermissions.canManageOrders;
       if (navId === 'customers') return !!userPermissions.canManageCustomers;
-      if (navId === 'themes' || navId === 'pages' || navId === 'navigation') {
+      if (navId === 'themes' || navId === 'pages' || navId === 'blog' || navId === 'navigation') {
         return !!userPermissions.canManageThemes;
       }
       if (navId === 'shipping') return !!userPermissions.canManageLogistics;

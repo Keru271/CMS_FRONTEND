@@ -2318,6 +2318,136 @@ export const cmsService = {
     return { requiresVerification: false, user: merchantUser, backendUser };
   },
 
+  async continueWithGoogle(payload: {
+    credential?: string;
+    token?: string;
+    email?: string;
+    name?: string;
+    picture?: string;
+  }): Promise<{
+    requiresVerification: boolean;
+    isNewUser?: boolean;
+    user?: MerchantUser;
+    backendUser?: BackendUserResponse;
+  }> {
+    const response = await apiClient.post<{
+      accessToken: string;
+      isNewUser?: boolean;
+      requiresVerification?: boolean;
+      message?: string;
+      user: {
+        id: string;
+        email: string;
+        name: string;
+        role: string;
+        emailVerified: boolean;
+      };
+    }>('/users/google-auth', payload);
+
+    const accessToken = response.data.accessToken || '';
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', accessToken);
+    }
+
+    // Fetch full profile details
+    const backendUser = await this.getCurrentUser();
+
+    const nameParts = (backendUser.name || response.data.user?.name || 'Merchant Owner').split(' ');
+    const firstName = nameParts[0] || 'Merchant';
+    const lastName = nameParts.slice(1).join(' ') || 'User';
+
+    let userRole = backendUser.role || 'MERCHANT';
+    let customRoleTitle = backendUser.customRoleTitle || 'Store Owner';
+    let permissions = {
+      canManageProducts: true,
+      canManageInventory: true,
+      canManageOrders: true,
+      canManageCustomers: true,
+      canManageThemes: true,
+      canManageSettings: true,
+      canManagePayments: true,
+      canManageLogistics: true,
+      canManageAnalytics: true,
+    };
+
+    if (backendUser.storeMemberships && backendUser.storeMemberships.length > 0) {
+      const activeMembership = backendUser.storeMemberships[0];
+      userRole = activeMembership.role;
+      customRoleTitle = activeMembership.customRoleTitle || userRole;
+      permissions = {
+        canManageProducts: activeMembership.canManageProducts,
+        canManageInventory: activeMembership.canManageInventory,
+        canManageOrders: activeMembership.canManageOrders,
+        canManageCustomers: activeMembership.canManageCustomers,
+        canManageThemes: activeMembership.canManageThemes,
+        canManageSettings: activeMembership.canManageSettings,
+        canManagePayments: activeMembership.canManagePayments,
+        canManageLogistics: activeMembership.canManageLogistics,
+        canManageAnalytics: activeMembership.canManageAnalytics,
+      };
+    }
+
+    const merchantUser: MerchantUser = {
+      firstName,
+      lastName,
+      mobileNumber: '+1 555-0199',
+      email: backendUser.email || response.data.user?.email,
+      role: userRole,
+      customRoleTitle,
+      permissions,
+    };
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user_role', userRole);
+      localStorage.setItem('user_permissions', JSON.stringify(permissions));
+    }
+
+    const resolvedStoreId =
+      (backendUser.stores && backendUser.stores.length > 0 ? backendUser.stores[0].id : null) ||
+      (backendUser.storeMemberships && backendUser.storeMemberships.length > 0 && backendUser.storeMemberships[0].store
+        ? backendUser.storeMemberships[0].store.id
+        : null) ||
+      null;
+
+    if (resolvedStoreId && typeof window !== 'undefined') {
+      localStorage.setItem('current_store_id', resolvedStoreId);
+    }
+
+    const existingSession = this.getMerchantSession();
+
+    const storeInfo =
+      existingSession?.store ||
+      (backendUser.stores && backendUser.stores.length > 0
+        ? {
+            id: backendUser.stores[0].id,
+            storeName: backendUser.stores[0].name,
+            currency: backendUser.stores[0].currency || 'USD',
+          }
+        : backendUser.storeMemberships && backendUser.storeMemberships.length > 0 && backendUser.storeMemberships[0].store
+        ? {
+            id: backendUser.storeMemberships[0].store.id,
+            storeName: backendUser.storeMemberships[0].store.name,
+            currency: backendUser.storeMemberships[0].store.currency || 'USD',
+          }
+        : {
+            storeName: 'OmniStore Flagship',
+            currency: 'USD',
+          });
+
+    this.saveMerchantSession({
+      ...(existingSession || {}),
+      merchant: merchantUser,
+      store: storeInfo as any,
+    });
+
+    return {
+      requiresVerification: false,
+      isNewUser: response.data.isNewUser,
+      user: merchantUser,
+      backendUser,
+    };
+  },
+
   async getCurrentUser(): Promise<BackendUserResponse> {
     const response = await apiClient.get<BackendUserResponse>('/users/me');
     return response.data;
@@ -4416,6 +4546,87 @@ export const cmsService = {
     paymentMethodDetails: string;
   }): Promise<{ success: boolean; message: string; planPaymentMethod: string; planPaymentMethodDetails: string }> {
     const response = await apiClient.post('/billing/payment-method', payload);
+    return response.data;
+  },
+
+  // ─── RAZORPAY (FOR INDIAN MERCHANTS - INR) ──────────────────────────────
+  async createBillingRazorpayOrder(payload: {
+    plan: 'GROWTH' | 'ENTERPRISE';
+    billingCycle: 'MONTHLY' | 'ANNUAL';
+  }): Promise<{
+    success: boolean;
+    orderId: string;
+    amount: number;
+    amountPaise: number;
+    currency: string;
+    keyId: string;
+    plan: string;
+    planName: string;
+    billingCycle: string;
+    storeName: string;
+    contactEmail: string;
+    contactPhone: string;
+  }> {
+    const response = await apiClient.post('/billing/razorpay/create-order', payload);
+    return response.data;
+  },
+
+  async verifyBillingRazorpayPayment(payload: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature?: string;
+    plan: 'GROWTH' | 'ENTERPRISE';
+    billingCycle: 'MONTHLY' | 'ANNUAL';
+    paymentMethodDetails?: string;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    plan: string;
+    billingCycle: string;
+    invoice: StoreBillingInvoiceData;
+  }> {
+    const response = await apiClient.post('/billing/razorpay/verify-payment', payload);
+    return response.data;
+  },
+
+  // ─── STRIPE (FOR INTERNATIONAL MERCHANTS - USD) ──────────────────────────
+  async createBillingStripeSession(payload: {
+    plan: 'GROWTH' | 'ENTERPRISE';
+    billingCycle: 'MONTHLY' | 'ANNUAL';
+    currency?: 'USD' | 'EUR' | 'GBP';
+  }): Promise<{
+    success: boolean;
+    sessionId: string;
+    clientSecret: string;
+    amount: number;
+    amountCents: number;
+    currency: string;
+    publishableKey: string;
+    plan: string;
+    planName: string;
+    billingCycle: string;
+    storeName: string;
+    contactEmail: string;
+  }> {
+    const response = await apiClient.post('/billing/stripe/create-session', payload);
+    return response.data;
+  },
+
+  async confirmBillingStripePayment(payload: {
+    sessionId?: string;
+    paymentIntentId?: string;
+    plan: 'GROWTH' | 'ENTERPRISE';
+    billingCycle: 'MONTHLY' | 'ANNUAL';
+    paymentMethodDetails?: string;
+    currency?: string;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    plan: string;
+    billingCycle: string;
+    invoice: StoreBillingInvoiceData;
+  }> {
+    const response = await apiClient.post('/billing/stripe/confirm-payment', payload);
     return response.data;
   },
 

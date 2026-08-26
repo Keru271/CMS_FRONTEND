@@ -236,7 +236,7 @@ export const ThemeManager: React.FC = () => {
   const [livePreviewPage, setLivePreviewPage] = useState<'/' | '/products' | '/cart'>('/');
   const [liveViewport, setLiveViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
-  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3000';
+  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
 
   useEffect(() => {
     loadData();
@@ -1503,7 +1503,7 @@ export const ThemeManager: React.FC = () => {
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                 </div>
                 <div className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-0.5 text-[10px] font-mono text-slate-500 truncate">
-                  🔒 localhost:3000{livePreviewPage}?previewTemplate={livePreviewTemplate.slug || livePreviewTemplate.id}
+                  🔒 {STOREFRONT_URL.replace(/^https?:\/\//, '')}{livePreviewPage}?previewTemplate={livePreviewTemplate.slug || livePreviewTemplate.id}
                 </div>
               </div>
               <iframe
