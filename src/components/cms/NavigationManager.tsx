@@ -16,7 +16,6 @@ import {
   AlertCircle,
   ExternalLink,
   ChevronDown,
-  Layers,
   LayoutGrid,
   Monitor,
   Menu as MenuIcon,
@@ -26,19 +25,63 @@ import {
   Check,
   RefreshCw,
   FolderTree,
+  Smartphone,
 } from 'lucide-react';
+
+interface NavigationSlot {
+  key: 'header' | 'footer' | 'mobile';
+  title: string;
+  handle: string;
+  location: 'HEADER' | 'FOOTER' | 'MOBILE';
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+const NAVIGATION_SLOTS: NavigationSlot[] = [
+  {
+    key: 'header',
+    title: 'Header Navigation',
+    handle: 'header-menu',
+    location: 'HEADER',
+    description: 'Main navigation bar displayed across the top of your storefront header.',
+    icon: Monitor,
+  },
+  {
+    key: 'footer',
+    title: 'Footer Navigation',
+    handle: 'footer-menu',
+    location: 'FOOTER',
+    description: 'Quick links, customer service, and policy links displayed in your storefront footer.',
+    icon: LayoutGrid,
+  },
+  {
+    key: 'mobile',
+    title: 'Mobile Drawer Navigation',
+    handle: 'mobile-drawer-menu',
+    location: 'MOBILE',
+    description: 'Slide-out mobile navigation drawer menu for smartphone shoppers.',
+    icon: Smartphone,
+  },
+];
+
+const COMMON_ROUTE_SUGGESTIONS = [
+  { label: 'Home', url: '/' },
+  { label: 'Shop All', url: '/products' },
+  { label: 'Categories', url: '/categories' },
+  { label: 'Blog & News', url: '/blog' },
+  { label: 'About Us', url: '/pages/about' },
+  { label: 'Contact', url: '/pages/contact' },
+  { label: 'Track Orders', url: '/account/orders' },
+];
 
 export const NavigationManager: React.FC = () => {
   const [menus, setMenus] = useState<CMSMenuData[]>([]);
-  const [activeMenuId, setActiveMenuId] = useState<string>('');
+  const [activeSlotKey, setActiveSlotKey] = useState<'header' | 'footer' | 'mobile'>('header');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  // Active Selected Menu
-  const activeMenu = menus.find((m) => m.id === activeMenuId || m.handle === activeMenuId) || menus[0];
-
-  // Item Modal State
+  // Item Modal State (Add / Edit)
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [editingParentId, setEditingParentId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<CMSMenuItem | null>(null);
@@ -58,21 +101,12 @@ export const NavigationManager: React.FC = () => {
     target: '_self',
     isMegaMenu: false,
     bannerImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
-    headline: 'New Season Capsule 2026',
+    headline: 'Featured Collection 2026',
     buttonLabel: 'Explore Collection',
-    buttonUrl: '/collections/summer-essentials',
+    buttonUrl: '/collections/all',
   });
 
-  // Create New Menu Modal
-  const [isCreateMenuModalOpen, setIsCreateMenuModalOpen] = useState(false);
-  const [menuModalError, setMenuModalError] = useState<string | null>(null);
-  const [newMenuFormData, setNewMenuFormData] = useState({
-    title: '',
-    handle: '',
-    location: 'HEADER',
-  });
-
-  // Live Mega Menu Hover Preview in Navbar
+  // Hover Mega Menu in live preview
   const [activeHoverMegaMenu, setActiveHoverMegaMenu] = useState<CMSMenuItem | null>(null);
 
   useEffect(() => {
@@ -82,13 +116,11 @@ export const NavigationManager: React.FC = () => {
   const loadMenus = async () => {
     setIsLoading(true);
     try {
-      const data = await cmsService.getMenus();
-      setMenus(data);
-      if (data.length > 0 && !activeMenuId) {
-        setActiveMenuId(data[0].id);
-      }
+      const data = await cmsService.getMenus(true);
+      setMenus(data || []);
     } catch (err) {
-      console.error('Failed to load menus:', err);
+      console.error('Failed to load navigation menus:', err);
+      setMenus([]);
     } finally {
       setIsLoading(false);
     }
@@ -99,18 +131,38 @@ export const NavigationManager: React.FC = () => {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const handleOpenAddItemModal = (parentId: string | null = null) => {
+  // Find active slot config
+  const activeSlot = NAVIGATION_SLOTS.find((s) => s.key === activeSlotKey) || NAVIGATION_SLOTS[0];
+
+  // Resolve menu from backend for current slot
+  const resolvedBackendMenu = menus.find(
+    (m) =>
+      m.location === activeSlot.location ||
+      m.handle === activeSlot.handle ||
+      m.handle === activeSlot.key
+  );
+
+  // Active Menu Representation (Empty items array if not created on backend yet)
+  const activeMenu: CMSMenuData = resolvedBackendMenu || {
+    id: '',
+    title: activeSlot.title,
+    handle: activeSlot.handle,
+    location: activeSlot.location,
+    items: [],
+  };
+
+  const handleOpenAddItemModal = (parentId: string | null = null, defaultValues?: { label: string; url: string }) => {
     setEditingParentId(parentId);
     setEditingItem(null);
     setItemFormData({
-      label: '',
-      url: '/',
+      label: defaultValues?.label || '',
+      url: defaultValues?.url || '/',
       target: '_self',
       isMegaMenu: false,
       bannerImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
-      headline: 'New Season Capsule 2026',
+      headline: 'Featured Collection 2026',
       buttonLabel: 'Explore Collection',
-      buttonUrl: '/collections/summer-essentials',
+      buttonUrl: '/collections/all',
     });
     setIsItemModalOpen(true);
   };
@@ -124,16 +176,41 @@ export const NavigationManager: React.FC = () => {
       target: (item.target as any) || '_self',
       isMegaMenu: !!item.isMegaMenu,
       bannerImage: item.megaMenuConfig?.bannerImage || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
-      headline: item.megaMenuConfig?.headline || 'New Season Capsule 2026',
+      headline: item.megaMenuConfig?.headline || 'Featured Collection 2026',
       buttonLabel: item.megaMenuConfig?.buttonLabel || 'Explore Collection',
-      buttonUrl: item.megaMenuConfig?.buttonUrl || '/collections/summer-essentials',
+      buttonUrl: item.megaMenuConfig?.buttonUrl || '/collections/all',
     });
     setIsItemModalOpen(true);
   };
 
+  // Helper to persist items list to the backend (updating existing or creating new menu)
+  const saveItemsToBackend = async (updatedItems: CMSMenuItem[]) => {
+    setIsSaving(true);
+    try {
+      if (activeMenu.id) {
+        // Update existing menu
+        await cmsService.updateMenu(activeMenu.id, { items: updatedItems });
+      } else {
+        // Create menu in backend for this slot
+        await cmsService.createMenu({
+          title: activeSlot.title,
+          handle: activeSlot.handle,
+          location: activeSlot.location,
+          items: updatedItems,
+        });
+      }
+      await loadMenus();
+      return true;
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save menu changes.', 'error');
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleSaveItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeMenu) return;
 
     const newItem: CMSMenuItem = {
       id: editingItem ? editingItem.id : `item-${Date.now()}`,
@@ -152,10 +229,9 @@ export const NavigationManager: React.FC = () => {
       children: editingItem ? editingItem.children || [] : [],
     };
 
-    let updatedItems = [...activeMenu.items];
+    let updatedItems = [...(activeMenu.items || [])];
 
     if (editingItem) {
-      // Helper function to update item in tree
       const updateInTree = (list: CMSMenuItem[]): CMSMenuItem[] => {
         return list.map((node) => {
           if (node.id === editingItem.id) {
@@ -169,7 +245,6 @@ export const NavigationManager: React.FC = () => {
       };
       updatedItems = updateInTree(updatedItems);
     } else if (editingParentId) {
-      // Add child under parentId
       const addChildToTree = (list: CMSMenuItem[]): CMSMenuItem[] => {
         return list.map((node) => {
           if (node.id === editingParentId) {
@@ -186,26 +261,17 @@ export const NavigationManager: React.FC = () => {
       };
       updatedItems = addChildToTree(updatedItems);
     } else {
-      // Add top level item
       updatedItems.push(newItem);
     }
 
-    try {
-      setIsSaving(true);
-      await cmsService.updateMenu(activeMenu.id, { items: updatedItems });
-      showToast(`Menu item "${itemFormData.label}" saved!`, 'success');
+    const success = await saveItemsToBackend(updatedItems);
+    if (success) {
+      showToast(`Link "${itemFormData.label}" saved successfully!`, 'success');
       setIsItemModalOpen(false);
-      await loadMenus();
-    } catch (err: any) {
-      showToast(err.message || 'Failed to save menu item.', 'error');
-    } finally {
-      setIsSaving(false);
     }
   };
 
   const handleDeleteItem = async (itemId: string) => {
-    if (!activeMenu) return;
-
     const deleteFromTree = (list: CMSMenuItem[]): CMSMenuItem[] => {
       return list
         .filter((node) => node.id !== itemId)
@@ -217,24 +283,15 @@ export const NavigationManager: React.FC = () => {
         });
     };
 
-    const updatedItems = deleteFromTree(activeMenu.items);
-
-    try {
-      setIsSaving(true);
-      await cmsService.updateMenu(activeMenu.id, { items: updatedItems });
-      showToast('Menu item removed!', 'success');
-      await loadMenus();
-    } catch (err: any) {
-      showToast(err.message || 'Failed to remove menu item.', 'error');
-    } finally {
-      setIsSaving(false);
+    const updatedItems = deleteFromTree(activeMenu.items || []);
+    const success = await saveItemsToBackend(updatedItems);
+    if (success) {
+      showToast('Link removed from navigation.', 'success');
     }
   };
 
   const handleMoveItem = async (index: number, direction: 'UP' | 'DOWN') => {
-    if (!activeMenu) return;
-
-    const newItems = [...activeMenu.items];
+    const newItems = [...(activeMenu.items || [])];
     const targetIndex = direction === 'UP' ? index - 1 : index + 1;
 
     if (targetIndex < 0 || targetIndex >= newItems.length) return;
@@ -243,60 +300,21 @@ export const NavigationManager: React.FC = () => {
     newItems[index] = newItems[targetIndex];
     newItems[targetIndex] = temp;
 
-    try {
-      setIsSaving(true);
-      await cmsService.updateMenu(activeMenu.id, { items: newItems });
-      await loadMenus();
-    } catch (err: any) {
-      showToast(err.message || 'Failed to reorder items.', 'error');
-    } finally {
-      setIsSaving(false);
+    const success = await saveItemsToBackend(newItems);
+    if (success) {
+      showToast('Navigation order updated!', 'success');
     }
   };
-
-  const handleCreateNewMenu = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMenuModalError(null);
-    try {
-      setIsSaving(true);
-      const created = await cmsService.createMenu({
-        title: newMenuFormData.title,
-        handle: (newMenuFormData.handle || `menu-${Date.now()}`).toLowerCase().trim(),
-        location: newMenuFormData.location,
-        items: [{ id: `item-${Date.now()}`, label: 'Home', url: '/', target: '_self' }],
-      });
-
-      showToast(`Menu "${created.title}" created!`, 'success');
-      setIsCreateMenuModalOpen(false);
-      await loadMenus();
-      setActiveMenuId(created.id);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || 'Failed to create menu.';
-      setMenuModalError(msg);
-      showToast(msg, 'error');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[350px] gap-3">
-        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-slate-500 animate-pulse">Loading Navigation Studio...</span>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+    <div className="space-y-6 font-sans">
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 ${
+          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border transition-all animate-in slide-in-from-bottom-5 ${
             toastMessage.type === 'success'
-              ? 'bg-emerald-900/90 text-white border-emerald-700'
-              : 'bg-rose-900/90 text-white border-rose-700'
+              ? 'bg-slate-900 text-white border-emerald-500/50'
+              : 'bg-rose-950 text-rose-100 border-rose-500/50'
           }`}
         >
           {toastMessage.type === 'success' ? (
@@ -315,10 +333,7 @@ export const NavigationManager: React.FC = () => {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/30">
-                Navbar & Footer Builder
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
-                {menus.length} Menus Configured
+                Storefront Navigation Manager
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
@@ -326,188 +341,283 @@ export const NavigationManager: React.FC = () => {
               <span>Navigation Studio</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              Control Header Menus, Footer Quick Links, Nested Dropdowns, Mega Menus with featured images, destination routes, and drag/reorder hierarchy.
+              Configure Header Navigation, Footer Navigation, and Mobile Drawer Navigation links. Add nested dropdowns, mega menu promotional cards, and internal or external links.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setNewMenuFormData({ title: '', handle: '', location: 'HEADER' });
-              setIsCreateMenuModalOpen(true);
-            }}
-            className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New Navigation Menu</span>
-          </button>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={loadMenus}
+              disabled={isLoading}
+              className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+              title="Refresh Menus"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenAddItemModal(null)}
+              className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Link to {activeSlot.title}</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* MENU SELECTOR & LOCATION TABS */}
-      <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-2 overflow-x-auto">
-          {menus.map((m) => {
-            const isActive = m.id === activeMenu?.id;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setActiveMenuId(m.id)}
-                className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 shrink-0 ${
-                  isActive
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md'
-                    : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-                }`}
-              >
-                <FolderTree className="w-3.5 h-3.5" />
-                <span>{m.title}</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider bg-white/20">
-                  {m.location}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+      {/* ─── DIRECT NAVIGATION SLOTS: HEADER, FOOTER, MOBILE DRAWER ─── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {NAVIGATION_SLOTS.map((slot) => {
+          const isSelected = slot.key === activeSlotKey;
+          const slotMenu = menus.find(
+            (m) =>
+              m.location === slot.location ||
+              m.handle === slot.handle ||
+              m.handle === slot.key
+          );
+          const itemCount = slotMenu?.items?.length || 0;
+          const SlotIcon = slot.icon;
 
-        <button
-          type="button"
-          onClick={() => handleOpenAddItemModal(null)}
-          className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center gap-2 shadow-sm shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Link to {activeMenu?.title}</span>
-        </button>
-      </div>
+          return (
+            <button
+              key={slot.key}
+              type="button"
+              onClick={() => setActiveSlotKey(slot.key)}
+              className={`p-5 rounded-3xl text-left transition-all border flex flex-col justify-between gap-4 cursor-pointer ${
+                isSelected
+                  ? 'bg-white dark:bg-card border-indigo-600 dark:border-indigo-500 shadow-md ring-2 ring-indigo-500/20'
+                  : 'bg-white/80 dark:bg-card/70 hover:bg-white dark:hover:bg-card border-slate-200/80 dark:border-border hover:border-slate-300 shadow-xs'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 w-full">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                        : 'bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    <SlotIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">
+                      {slot.title}
+                    </h3>
+                    <p className="text-[11px] font-mono text-slate-400">
+                      handle: {slot.handle}
+                    </p>
+                  </div>
+                </div>
 
-      {/* MAIN LAYOUT: MENU TREE EDITOR + LIVE STOREFRONT PREVIEW */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* LEFT COLUMN: MENU TREE EDITOR */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-4">
-              <div>
-                <h3 className="font-black text-base text-slate-900 dark:text-foreground">{activeMenu?.title}</h3>
-                <span className="text-[11px] font-mono font-bold text-indigo-600">
-                  handle: {activeMenu?.handle} | slot: {activeMenu?.location}
+                <span
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                    itemCount > 0
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                      : 'bg-slate-100 dark:bg-accent text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  {itemCount} {itemCount === 1 ? 'link' : 'links'}
                 </span>
               </div>
+
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                {slot.description}
+              </p>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-border text-xs font-bold">
+                <span className={isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}>
+                  {isSelected ? 'Active Selection' : 'Click to Configure'}
+                </span>
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300 font-semibold">
+                  Slot: {slot.location}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ─── ACTIVE NAVIGATION EDITOR & LIVE PREVIEW ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* LEFT: TREE BUILDER */}
+        <div className="lg:col-span-7 space-y-4">
+          <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-border pb-4">
+              <div>
+                <h2 className="font-extrabold text-lg text-slate-900 dark:text-foreground flex items-center gap-2">
+                  <span>{activeSlot.title} Links</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                    {activeMenu.items?.length || 0} items
+                  </span>
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Organize top-level links and sub-menus by reordering or adding nested children.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleOpenAddItemModal(null)}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs shrink-0 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Navigation Item</span>
+              </button>
             </div>
 
-            {/* Menu Items List Tree */}
+            {/* Menu Items Tree */}
             <div className="space-y-3">
-              {activeMenu?.items.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-3xl space-y-2">
-                  <Compass className="w-8 h-8 text-slate-300 mx-auto" />
-                  <p className="text-xs font-bold text-slate-500">No navigation items added yet.</p>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenAddItemModal(null)}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold"
-                  >
-                    Add First Link
-                  </button>
+              {(!activeMenu.items || activeMenu.items.length === 0) ? (
+                /* Clean Empty Fallback — No Dummy Data! */
+                <div className="text-center py-12 px-4 border-2 border-dashed border-slate-200 dark:border-border rounded-3xl space-y-4">
+                  <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 mx-auto flex items-center justify-center">
+                    <Compass className="w-7 h-7" />
+                  </div>
+                  <div className="space-y-1 max-w-md mx-auto">
+                    <h4 className="text-sm font-extrabold text-slate-900 dark:text-foreground">
+                      No navigation items in {activeSlot.title} yet
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      This navigation menu is currently empty. Start building your storefront menu by adding links, or pick a common destination below.
+                    </p>
+                  </div>
+
+                  {/* Common Quick Suggestions */}
+                  <div className="flex flex-wrap items-center justify-center gap-2 max-w-md mx-auto pt-2">
+                    {COMMON_ROUTE_SUGGESTIONS.slice(0, 5).map((sug) => (
+                      <button
+                        key={sug.url}
+                        type="button"
+                        onClick={() => handleOpenAddItemModal(null, sug)}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 dark:bg-accent dark:hover:bg-indigo-950/40 text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-300 rounded-xl text-xs font-bold border border-slate-200 dark:border-border transition-colors cursor-pointer"
+                      >
+                        + {sug.label} ({sug.url})
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAddItemModal(null)}
+                      className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md inline-flex items-center gap-2 cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add First Navigation Item</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
-                activeMenu?.items.map((item, idx) => (
+                activeMenu.items.map((item, idx) => (
                   <div key={item.id} className="space-y-2">
                     {/* Top Level Item Card */}
-                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent border border-slate-200/80 dark:border-border flex items-center justify-between gap-3 group hover:border-indigo-300 transition-all">
-                      <div className="flex items-center gap-3">
-                        <div className="flex flex-col gap-1">
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/60 border border-slate-200/80 dark:border-border flex items-center justify-between gap-3 group hover:border-indigo-300 transition-all">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Reorder Buttons */}
+                        <div className="flex flex-col gap-1 shrink-0">
                           <button
                             type="button"
-                            disabled={idx === 0}
+                            disabled={idx === 0 || isSaving}
                             onClick={() => handleMoveItem(idx, 'UP')}
-                            className="p-1 hover:bg-slate-200 rounded text-slate-500 disabled:opacity-30"
+                            className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-500 disabled:opacity-20 cursor-pointer"
+                            title="Move Up"
                           >
-                            <ArrowUp className="w-3 h-3" />
+                            <ArrowUp className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
-                            disabled={idx === activeMenu.items.length - 1}
+                            disabled={idx === (activeMenu.items?.length || 0) - 1 || isSaving}
                             onClick={() => handleMoveItem(idx, 'DOWN')}
-                            className="p-1 hover:bg-slate-200 rounded text-slate-500 disabled:opacity-30"
+                            className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-500 disabled:opacity-20 cursor-pointer"
+                            title="Move Down"
                           >
-                            <ArrowDown className="w-3 h-3" />
+                            <ArrowDown className="w-3.5 h-3.5" />
                           </button>
                         </div>
 
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-sm text-slate-900 dark:text-foreground">
+                            <span className="font-extrabold text-sm text-slate-900 dark:text-foreground truncate">
                               {item.label}
                             </span>
                             {item.isMegaMenu && (
-                              <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white font-black text-[9px] uppercase tracking-wider flex items-center gap-1">
+                              <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white font-black text-[9px] uppercase tracking-wider flex items-center gap-1 shrink-0">
                                 <Sparkles className="w-2.5 h-2.5" />
                                 Mega Menu
                               </span>
                             )}
                           </div>
-                          <span className="text-xs font-mono text-slate-500 dark:text-slate-400 font-semibold block">
+                          <span className="text-xs font-mono text-slate-500 dark:text-slate-400 font-semibold truncate block">
                             {item.url} {item.target === '_blank' && '(Opens in new tab)'}
                           </span>
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
-                      <div className="flex items-center gap-2">
+                      {/* Actions */}
+                      <div className="flex items-center gap-1 shrink-0">
                         <button
                           type="button"
                           onClick={() => handleOpenAddItemModal(item.id)}
-                          className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-[11px] font-extrabold flex items-center gap-1 hover:border-indigo-400"
+                          className="px-2.5 py-1.5 text-xs font-bold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Add Sub-item"
                         >
-                          <Plus className="w-3 h-3 text-indigo-600" />
-                          <span>Add Sub-Item</span>
+                          <CornerDownRight className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Add Sub-link</span>
                         </button>
-
                         <button
                           type="button"
                           onClick={() => handleOpenEditItemModal(item)}
-                          className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-300"
+                          className="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
+                          title="Edit"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-
                         <button
                           type="button"
+                          disabled={isSaving}
                           onClick={() => handleDeleteItem(item.id)}
-                          className="p-2 rounded-xl bg-white border border-slate-200 text-rose-500 hover:bg-rose-50 hover:border-rose-300"
+                          className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
+                          title="Delete"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
-                    {/* NESTED CHILD DROPDOWN ITEMS */}
+                    {/* Nested Children (Sub-items) */}
                     {item.children && item.children.length > 0 && (
-                      <div className="pl-6 space-y-2 border-l-2 border-indigo-200 ml-4">
+                      <div className="pl-6 space-y-2 border-l-2 border-indigo-200 dark:border-indigo-900 ml-4">
                         {item.children.map((child) => (
                           <div
                             key={child.id}
-                            className="p-3 rounded-2xl bg-white dark:bg-card border border-slate-200 dark:border-border flex items-center justify-between gap-3"
+                            className="p-3 rounded-xl bg-white dark:bg-card border border-slate-200/80 dark:border-border flex items-center justify-between gap-3 hover:border-slate-300"
                           >
-                            <div className="flex items-center gap-2">
-                              <CornerDownRight className="w-4 h-4 text-indigo-500 shrink-0" />
-                              <div>
-                                <span className="font-bold text-xs text-slate-800 dark:text-slate-200">{child.label}</span>
-                                <span className="text-[11px] font-mono text-slate-400 block">{child.url}</span>
-                              </div>
+                            <div className="min-w-0">
+                              <span className="font-bold text-xs text-slate-900 dark:text-foreground block truncate">
+                                {child.label}
+                              </span>
+                              <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block truncate">
+                                {child.url}
+                              </span>
                             </div>
-
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1 shrink-0">
                               <button
                                 type="button"
                                 onClick={() => handleOpenEditItemModal(child)}
-                                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600"
+                                className="p-1.5 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 cursor-pointer"
                               >
                                 <Edit2 className="w-3 h-3" />
                               </button>
                               <button
                                 type="button"
+                                disabled={isSaving}
                                 onClick={() => handleDeleteItem(child.id)}
-                                className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50"
+                                className="p-1.5 text-rose-500 hover:text-rose-700 rounded-lg hover:bg-rose-50 cursor-pointer"
                               >
                                 <Trash2 className="w-3 h-3" />
                               </button>
@@ -523,362 +633,333 @@ export const NavigationManager: React.FC = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: STOREFRONT NAVBAR LIVE PREVIEW */}
+        {/* RIGHT: LIVE PREVIEW OF CURRENT SLOT */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-xl space-y-5 sticky top-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <span className="text-xs font-black uppercase tracking-wider text-indigo-400 flex items-center gap-2">
-                <Monitor className="w-4 h-4" />
-                <span>Live Storefront Navbar Preview</span>
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
-                Interactive Canvas
+          <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4 sticky top-24">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-3">
+              <div className="flex items-center gap-2">
+                <activeSlot.icon className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">
+                  Live {activeSlot.title} Preview
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                Interactive Mockup
               </span>
             </div>
 
-            {/* SIMULATED STORE NAVBAR */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4 space-y-4">
-              {/* Top Bar */}
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                <span className="font-black text-base text-white tracking-tight flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-indigo-500" />
-                  OmniStore
-                </span>
-
-                {/* Simulated Desktop Nav Items */}
-                <div className="hidden sm:flex items-center gap-4">
-                  {activeMenu?.items.map((nav) => (
-                    <div
-                      key={nav.id}
-                      className="relative group"
-                      onMouseEnter={() => nav.isMegaMenu && setActiveHoverMegaMenu(nav)}
-                      onMouseLeave={() => nav.isMegaMenu && setActiveHoverMegaMenu(null)}
-                    >
-                      <button
-                        type="button"
-                        className="text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1 py-1"
-                      >
-                        <span>{nav.label}</span>
-                        {((nav.children && nav.children.length > 0) || nav.isMegaMenu) && (
-                          <ChevronDown className="w-3 h-3 text-slate-400" />
-                        )}
-                      </button>
-
-                      {/* Dropdown Menu Preview */}
-                      {nav.children && nav.children.length > 0 && !nav.isMegaMenu && (
-                        <div className="absolute top-full left-0 hidden group-hover:block w-40 p-2 rounded-xl bg-slate-900 border border-slate-800 shadow-xl z-20 space-y-1">
-                          {nav.children.map((c) => (
-                            <span key={c.id} className="block px-3 py-1.5 rounded-lg text-[11px] font-bold text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer">
-                              {c.label}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+            {/* Preview Box */}
+            <div className="bg-slate-900 rounded-2xl p-5 text-white shadow-inner space-y-4">
+              <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-3">
+                <span className="font-extrabold text-white">STOREFRONT</span>
+                <span className="text-[11px] font-mono">{activeSlot.location} SLOT</span>
               </div>
 
-              {/* MEGA MENU INTERACTIVE PREVIEW */}
-              {activeHoverMegaMenu && activeHoverMegaMenu.isMegaMenu && (
-                <div className="p-4 rounded-2xl bg-slate-900 border border-indigo-500/40 shadow-2xl animate-in fade-in space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <span className="text-xs font-black text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>{activeHoverMegaMenu.label} Mega Menu Dropdown</span>
-                    </span>
-                  </div>
+              {/* Header slot preview */}
+              {activeSlot.key === 'header' && (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {(!activeMenu.items || activeMenu.items.length === 0) ? (
+                      <span className="text-xs text-slate-500 italic">
+                        (No links added to Header Navigation)
+                      </span>
+                    ) : (
+                      activeMenu.items.map((item) => (
+                        <div
+                          key={item.id}
+                          onMouseEnter={() => item.isMegaMenu && setActiveHoverMegaMenu(item)}
+                          onMouseLeave={() => setActiveHoverMegaMenu(null)}
+                          className="relative group"
+                        >
+                          <span className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1 cursor-pointer transition-colors">
+                            {item.label}
+                            {item.children && item.children.length > 0 && (
+                              <ChevronDown className="w-3 h-3 text-slate-400" />
+                            )}
+                          </span>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Columns of sub-items */}
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Sub-Categories</span>
-                      {activeHoverMegaMenu.children?.map((c) => (
-                        <span key={c.id} className="block text-xs font-bold text-slate-200 hover:text-indigo-400 cursor-pointer">
-                          • {c.label}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Promo Banner Box */}
-                    {activeHoverMegaMenu.megaMenuConfig && (
-                      <div className="rounded-xl overflow-hidden border border-slate-800 bg-slate-950 p-2 space-y-2">
-                        <img
-                          src={activeHoverMegaMenu.megaMenuConfig.bannerImage || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80'}
-                          alt="Mega Promo"
-                          className="h-20 w-full object-cover rounded-lg"
-                        />
-                        <span className="font-extrabold text-xs text-white block">
-                          {activeHoverMegaMenu.megaMenuConfig.headline}
-                        </span>
-                        <span className="inline-block px-3 py-1 rounded-lg bg-indigo-600 text-white text-[10px] font-extrabold">
-                          {activeHoverMegaMenu.megaMenuConfig.buttonLabel}
-                        </span>
-                      </div>
+                          {/* Hover Dropdown / Mega Menu Preview */}
+                          {item.isMegaMenu && activeHoverMegaMenu?.id === item.id && (
+                            <div className="absolute top-full left-0 mt-2 w-80 bg-white text-slate-900 rounded-2xl p-4 shadow-2xl border border-slate-200 z-50 animate-in fade-in zoom-in-95">
+                              {item.megaMenuConfig?.bannerImage && (
+                                <div className="h-28 rounded-xl overflow-hidden mb-3 relative">
+                                  <img
+                                    src={item.megaMenuConfig.bannerImage}
+                                    alt="Mega Banner"
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent" />
+                                  <span className="absolute bottom-2 left-2 text-[11px] font-bold text-white">
+                                    {item.megaMenuConfig.headline}
+                                  </span>
+                                </div>
+                              )}
+                              {item.children && item.children.length > 0 && (
+                                <div className="space-y-1">
+                                  {item.children.map((c) => (
+                                    <div
+                                      key={c.id}
+                                      className="p-1.5 rounded-lg hover:bg-slate-100 text-xs font-semibold text-slate-700"
+                                    >
+                                      {c.label}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))
                     )}
                   </div>
                 </div>
               )}
 
-              <p className="text-[11px] text-slate-400 font-medium">
-                💡 Hover over <span className="text-indigo-400 font-bold">Shop</span> in the preview above to trigger the live Mega Menu banner preview!
-              </p>
+              {/* Footer slot preview */}
+              {activeSlot.key === 'footer' && (
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    Footer Column
+                  </span>
+                  {(!activeMenu.items || activeMenu.items.length === 0) ? (
+                    <p className="text-xs text-slate-500 italic">
+                      (No links added to Footer Navigation)
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      {activeMenu.items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="text-xs text-slate-300 hover:text-white flex items-center gap-1"
+                        >
+                          <span>•</span>
+                          <span>{item.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Mobile slot preview */}
+              {activeSlot.key === 'mobile' && (
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 max-w-[240px]">
+                  <div className="text-[11px] font-bold text-slate-400 border-b border-slate-800 pb-1">
+                    📱 Mobile Drawer
+                  </div>
+                  {(!activeMenu.items || activeMenu.items.length === 0) ? (
+                    <p className="text-xs text-slate-500 italic">
+                      (No links in Mobile Drawer)
+                    </p>
+                  ) : (
+                    <div className="space-y-1">
+                      {activeMenu.items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="px-2 py-1.5 rounded bg-slate-900 text-xs font-bold text-slate-200"
+                        >
+                          {item.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ADD / EDIT ITEM MODAL */}
+      {/* ─── ADD / EDIT LINK MODAL ─── */}
       {isItemModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden my-8">
-            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white">
-                  <LinkIcon className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-lg">
-                    {editingItem ? `Edit Menu Item: ${editingItem.label}` : 'Add Menu Link'}
-                  </h3>
-                  <p className="text-xs text-slate-400">Configure title, destination URL route, and mega menu settings.</p>
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-card rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-border">
+            <div className="p-6 bg-gradient-to-r from-slate-900 to-indigo-950 text-white flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-base">
+                  {editingItem ? 'Edit Navigation Link' : 'Add Navigation Link'}
+                </h3>
+                <p className="text-xs text-slate-300">
+                  Target: {activeSlot.title}
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsItemModalOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white"
+                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveItem} className="p-6 space-y-5">
-              {/* Item Label */}
+            <form onSubmit={handleSaveItem} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                  Navigation Label Title <span className="text-rose-500">*</span>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Link Label Title <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={itemFormData.label}
                   onChange={(e) => setItemFormData({ ...itemFormData, label: e.target.value })}
-                  placeholder="e.g. Shop, About Us, New Drops"
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                  placeholder="e.g. Products, Summer Sale, About Us"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
                 />
               </div>
 
-              {/* Destination URL */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                  Destination URL Route <span className="text-rose-500">*</span>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Destination URL / Route <span className="text-rose-500">*</span>
                 </label>
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    required
-                    value={itemFormData.url}
-                    onChange={(e) => setItemFormData({ ...itemFormData, url: e.target.value })}
-                    placeholder="/products or https://..."
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-bold text-indigo-600"
-                  />
-
-                  {/* Route Shortcuts */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      { name: 'Home (/)', url: '/' },
-                      { name: 'Products (/products)', url: '/products' },
-                      { name: 'Collections (/collections)', url: '/collections' },
-                      { name: 'About (/pages/about)', url: '/pages/about' },
-                      { name: 'Contact (/pages/contact)', url: '/pages/contact' },
-                    ].map((route) => (
-                      <button
-                        key={route.url}
-                        type="button"
-                        onClick={() => setItemFormData({ ...itemFormData, url: route.url })}
-                        className="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-bold hover:bg-indigo-50 hover:text-indigo-600"
-                      >
-                        {route.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* MEGA MENU CONFIGURATION TOGGLE */}
-              <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200/80 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-indigo-600" />
-                    <span>Enable Multi-Column Mega Menu</span>
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={itemFormData.isMegaMenu}
-                    onChange={(e) => setItemFormData({ ...itemFormData, isMegaMenu: e.target.checked })}
-                    className="w-4 h-4 text-indigo-600 rounded"
-                  />
-                </div>
-
-                {itemFormData.isMegaMenu && (
-                  <div className="space-y-3 pt-2 border-t border-indigo-200/60">
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-bold text-slate-700">Promo Banner Image URL</label>
-                      <input
-                        type="text"
-                        value={itemFormData.bannerImage}
-                        onChange={(e) => setItemFormData({ ...itemFormData, bannerImage: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono font-semibold"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="block text-[11px] font-bold text-slate-700">Headline Text</label>
-                        <input
-                          type="text"
-                          value={itemFormData.headline}
-                          onChange={(e) => setItemFormData({ ...itemFormData, headline: e.target.value })}
-                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="block text-[11px] font-bold text-slate-700">Button Label</label>
-                        <input
-                          type="text"
-                          value={itemFormData.buttonLabel}
-                          onChange={(e) => setItemFormData({ ...itemFormData, buttonLabel: e.target.value })}
-                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setIsItemModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md flex items-center gap-2"
-                >
-                  {isSaving ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Saving Item...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Save Item</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* CREATE NEW MENU MODAL */}
-      {isCreateMenuModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-              <h3 className="font-black text-lg">Create New Navigation Menu</h3>
-              <button
-                type="button"
-                onClick={() => setIsCreateMenuModalOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateNewMenu} className="p-6 space-y-4">
-              {menuModalError && (
-                <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center justify-between animate-in fade-in">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-                    <span>{menuModalError}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setMenuModalError(null)}
-                    className="p-1 text-rose-400 hover:text-rose-600 font-bold"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Menu Title</label>
                 <input
                   type="text"
                   required
-                  value={newMenuFormData.title}
-                  onChange={(e) => {
-                    const titleVal = e.target.value;
-                    setNewMenuFormData({
-                      ...newMenuFormData,
-                      title: titleVal,
-                      handle: titleVal.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-                    });
-                  }}
-                  placeholder="e.g. Mobile Sidebar Menu"
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                  value={itemFormData.url}
+                  onChange={(e) => setItemFormData({ ...itemFormData, url: e.target.value })}
+                  placeholder="e.g. /products, /categories/tech, https://..."
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400"
                 />
+
+                {/* Quick suggestions pills */}
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {COMMON_ROUTE_SUGGESTIONS.map((sug) => (
+                    <button
+                      key={sug.url}
+                      type="button"
+                      onClick={() =>
+                        setItemFormData({
+                          ...itemFormData,
+                          label: itemFormData.label || sug.label,
+                          url: sug.url,
+                        })
+                      }
+                      className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-accent text-[10px] font-bold text-slate-600 dark:text-slate-400 transition-colors cursor-pointer"
+                    >
+                      {sug.url}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Menu Handle ID</label>
-                <input
-                  type="text"
-                  required
-                  value={newMenuFormData.handle}
-                  onChange={(e) => setNewMenuFormData({ ...newMenuFormData, handle: e.target.value })}
-                  placeholder="mobile-sidebar-menu"
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-bold text-indigo-600"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Menu Location Slot</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Target Window
+                </label>
                 <select
-                  value={newMenuFormData.location}
-                  onChange={(e) => setNewMenuFormData({ ...newMenuFormData, location: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                  value={itemFormData.target}
+                  onChange={(e) =>
+                    setItemFormData({
+                      ...itemFormData,
+                      target: e.target.value as '_self' | '_blank',
+                    })
+                  }
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
                 >
-                  <option value="HEADER">Header Navigation Slot</option>
-                  <option value="FOOTER">Footer Links Slot</option>
-                  <option value="MOBILE">Mobile Navigation Drawer</option>
+                  <option value="_self">Same Browser Tab (_self)</option>
+                  <option value="_blank">New Tab / Window (_blank)</option>
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              {/* Mega Menu Toggle (for Header) */}
+              {activeSlot.key === 'header' && (
+                <div className="pt-2 border-t border-slate-100 dark:border-border space-y-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={itemFormData.isMegaMenu}
+                      onChange={(e) =>
+                        setItemFormData({ ...itemFormData, isMegaMenu: e.target.checked })
+                      }
+                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                      Enable Visual Mega Menu Dropdown
+                    </span>
+                  </label>
+
+                  {itemFormData.isMegaMenu && (
+                    <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900 space-y-3">
+                      <div className="space-y-1">
+                        <label className="block text-[11px] font-bold text-indigo-900 dark:text-indigo-200">
+                          Banner Promotional Headline
+                        </label>
+                        <input
+                          type="text"
+                          value={itemFormData.headline}
+                          onChange={(e) =>
+                            setItemFormData({ ...itemFormData, headline: e.target.value })
+                          }
+                          className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-card text-xs font-bold"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-[11px] font-bold text-indigo-900 dark:text-indigo-200">
+                          Banner Image URL
+                        </label>
+                        <input
+                          type="text"
+                          value={itemFormData.bannerImage}
+                          onChange={(e) =>
+                            setItemFormData({ ...itemFormData, bannerImage: e.target.value })
+                          }
+                          className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-card text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="block text-[11px] font-bold text-indigo-900 dark:text-indigo-200">
+                            CTA Button Label
+                          </label>
+                          <input
+                            type="text"
+                            value={itemFormData.buttonLabel}
+                            onChange={(e) =>
+                              setItemFormData({ ...itemFormData, buttonLabel: e.target.value })
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-card text-xs font-bold"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block text-[11px] font-bold text-indigo-900 dark:text-indigo-200">
+                            CTA Destination URL
+                          </label>
+                          <input
+                            type="text"
+                            value={itemFormData.buttonUrl}
+                            onChange={(e) =>
+                              setItemFormData({ ...itemFormData, buttonUrl: e.target.value })
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-card text-xs font-mono font-bold"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-border">
                 <button
                   type="button"
-                  onClick={() => setIsCreateMenuModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold"
+                  onClick={() => setIsItemModalOpen(false)}
+                  className="px-5 py-2.5 rounded-2xl bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 text-xs font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md"
+                  className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  Create Menu
+                  {isSaving ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Check className="w-3.5 h-3.5" />
+                  )}
+                  <span>Save Link</span>
                 </button>
               </div>
             </form>

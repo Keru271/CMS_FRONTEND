@@ -993,6 +993,31 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
   const [showPageSettings, setShowPageSettings] = useState(false);
   const [showAddPanel, setShowAddPanel] = useState(false);
 
+  // Sync state whenever initialPage changes or modal opens
+  useEffect(() => {
+    if (initialPage) {
+      setPageTitle(initialPage.title || 'Untitled Page');
+      setPageSlug(initialPage.slug || '/pages/custom-page');
+      setPageType(initialPage.pageType || 'CUSTOM');
+      setMetaTitle(initialPage.metaTitle || '');
+      setMetaDescription(initialPage.metaDescription || '');
+      setPageStatus(initialPage.status || 'PUBLISHED');
+      const parsed = parseContentToBlocks(initialPage.content);
+      dispatch({ type: 'SET', blocks: parsed });
+      setActiveBlockId(parsed[0]?.id || null);
+    } else {
+      setPageTitle('New Page');
+      setPageSlug('/pages/new-page');
+      setPageType('CUSTOM');
+      setMetaTitle('');
+      setMetaDescription('');
+      setPageStatus('PUBLISHED');
+      const defaultBlocks = parseContentToBlocks(undefined);
+      dispatch({ type: 'SET', blocks: defaultBlocks });
+      setActiveBlockId(defaultBlocks[0]?.id || null);
+    }
+  }, [initialPage, isOpen]);
+
   // Drag-and-drop state
   const dragIndexRef = useRef<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
@@ -1128,11 +1153,20 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
             <LayoutTemplate className="w-4 h-4 text-white" />
           </div>
           <div className="min-w-0">
-            <div className="text-[9px] font-black uppercase text-indigo-400 tracking-wider leading-none mb-0.5">Page Builder</div>
+            <div className="text-[9px] font-black uppercase text-indigo-400 tracking-wider leading-none mb-0.5">
+              {initialPage?.id ? 'Edit Page Builder' : 'New Page Builder'}
+            </div>
             <input
               type="text"
               value={pageTitle}
-              onChange={e => setPageTitle(e.target.value)}
+              onChange={e => {
+                const val = e.target.value;
+                setPageTitle(val);
+                if (!initialPage?.id && (!pageSlug || pageSlug === '/pages/new-page')) {
+                  const slugified = `/pages/${val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+                  setPageSlug(slugified);
+                }
+              }}
               className="font-black text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 -ml-1 text-white hover:bg-slate-800/60 truncate max-w-[200px]"
             />
           </div>
@@ -1325,15 +1359,19 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
         </aside>
 
         {/* CENTER: CANVAS */}
-        <main className="flex-1 bg-slate-950 overflow-y-auto flex flex-col items-center p-6">
+        <main className="flex-1 bg-slate-950 overflow-hidden flex flex-col items-center justify-center p-4 sm:p-6 min-h-0">
           {/* Viewport wrapper */}
           <div
-            className={`transition-all duration-300 bg-white text-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-800 w-full ${
-              viewport === 'desktop' ? 'max-w-5xl' : viewport === 'tablet' ? 'max-w-[768px]' : 'max-w-[390px]'
+            className={`transition-all duration-300 bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-800 w-full flex flex-col overflow-hidden ${
+              viewport === 'desktop'
+                ? 'max-w-5xl h-full'
+                : viewport === 'tablet'
+                ? 'max-w-[768px] h-full max-h-[860px]'
+                : 'max-w-[390px] h-full max-h-[800px]'
             }`}
           >
             {/* Mock browser chrome */}
-            <div className="h-10 bg-slate-100 border-b border-slate-200 flex items-center px-4 gap-2 shrink-0">
+            <div className="h-10 bg-slate-100 border-b border-slate-200 flex items-center px-4 gap-2 shrink-0 z-20 select-none">
               <div className="flex gap-1.5">
                 <div className="w-3 h-3 rounded-full bg-rose-400" />
                 <div className="w-3 h-3 rounded-full bg-amber-400" />
@@ -1347,21 +1385,22 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
               </div>
             </div>
 
-            {/* Empty state */}
-            {blocks.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-24 space-y-4 text-slate-400">
-                <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-slate-300 flex items-center justify-center">
-                  <Plus className="w-8 h-8 text-slate-300" />
+            {/* Scrollable Preview Canvas Content */}
+            <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-slate-100/50 scroll-smooth [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
+              {/* Empty state */}
+              {blocks.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-24 space-y-4 text-slate-400">
+                  <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-slate-300 flex items-center justify-center">
+                    <Plus className="w-8 h-8 text-slate-300" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-bold text-slate-700 mb-1">Start building your page</p>
+                    <p className="text-xs text-slate-400">Click any block in the library to add it here</p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="font-bold text-slate-700 mb-1">Start building your page</p>
-                  <p className="text-xs text-slate-400">Click any block in the library to add it here</p>
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Blocks */}
-            <div className="divide-y divide-slate-100/50">
+              {/* Blocks */}
               {blocks.map((block, idx) => {
                 const isActive = block.id === activeBlockId;
                 return (
@@ -1402,17 +1441,17 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
                   </div>
                 );
               })}
-            </div>
 
-            {/* Add block button at bottom */}
-            <div className="p-4 border-t border-slate-100 flex justify-center">
-              <button
-                type="button"
-                onClick={() => { setLeftPanel('library'); }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-slate-300 text-slate-400 hover:text-indigo-600 hover:border-indigo-300 text-xs font-bold transition"
-              >
-                <Plus className="w-4 h-4" /> Add Block
-              </button>
+              {/* Add block button at bottom */}
+              <div className="p-6 border-t border-slate-100 flex justify-center bg-slate-50/50">
+                <button
+                  type="button"
+                  onClick={() => { setLeftPanel('library'); }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-dashed border-slate-300 text-slate-500 hover:text-indigo-600 hover:border-indigo-400 bg-white shadow-xs text-xs font-bold transition cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" /> Add Next Block
+                </button>
+              </div>
             </div>
           </div>
         </main>

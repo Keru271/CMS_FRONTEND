@@ -59,12 +59,17 @@ export interface CMSOrder {
 
 export interface CMSProductVariant {
   id: string;
+  name: string;
   sku: string;
+  price: number;
+  compareAtPrice?: number | null;
+  costPrice?: number | null;
+  inventory: number;
+  image?: string;
+  options?: Record<string, string>;
   size?: string;
   color?: string;
   material?: string;
-  price: number;
-  inventory: number;
 }
 
 export interface CMSProduct {
@@ -86,6 +91,7 @@ export interface CMSProduct {
   weight?: number | null;
   dimensions?: string | null;
   variants?: CMSProductVariant[];
+  variantsJson?: string | null;
   sizeOptions?: string[];
   colorOptions?: string[];
   material?: string | null;
@@ -118,6 +124,8 @@ export interface ProductFormData {
   stockQuantity?: number | string;
   weight?: number | string;
   dimensions?: string;
+  variants?: CMSProductVariant[];
+  variantsJson?: string | null;
   sizeOptions?: string[];
   colorOptions?: string[];
   material?: string;
@@ -717,6 +725,73 @@ export interface CMSShippingProvider {
   apiKey?: string;
 }
 
+export interface RateShoppingPolicy {
+  id?: string;
+  priority: 'CHEAPEST' | 'FASTEST' | 'PREFERRED';
+  preferredCarrierCode: string;
+  fallbackEnabled: boolean;
+  codEnabled: boolean;
+  codMarkupAmount: number;
+  freeShippingThreshold: number;
+  maxTransitDays: number;
+}
+
+export interface CarrierCredential {
+  id?: string;
+  carrierCode: string;
+  carrierName: string;
+  apiKey?: string;
+  apiSecret?: string;
+  accountNumber?: string;
+  endpointUrl?: string;
+  sandboxMode: boolean;
+  isActive: boolean;
+  settingsJson?: string;
+}
+
+export interface CMSShipment {
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  providerId: string;
+  carrierCode: string;
+  carrierName: string;
+  serviceType: string;
+  serviceName?: string;
+  awbNumber: string;
+  trackingStatus: 'MANIFESTED' | 'PICKED_UP' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'RTO' | 'CANCELLED' | string;
+  shippingLabelUrl?: string;
+  shippingCost: number;
+  codAmount: number;
+  isCod: boolean;
+  packageWeightKg: number;
+  originPincode?: string;
+  destinationPincode?: string;
+  destinationCity?: string;
+  destinationState?: string;
+  estimatedDelivery?: string;
+  timelineJson?: string;
+  createdAt: string;
+}
+
+export interface CMSNdrRecord {
+  id: string;
+  shipmentId: string;
+  orderId: string;
+  orderNumber: string;
+  awbNumber: string;
+  carrierCode: string;
+  carrierName: string;
+  attemptCount: number;
+  failureReason: string;
+  ndrStatus: 'PENDING' | 'REATTEMPT_REQUESTED' | 'RESOLVED' | 'RTO_REQUESTED' | string;
+  customerPhone?: string;
+  customerAddressJson?: string;
+  actionHistoryJson?: string;
+  lastAttemptAt: string;
+  createdAt: string;
+}
+
 export interface HsnSacCode {
   id: string;
   code: string;
@@ -1205,6 +1280,47 @@ export interface ProductSeoData {
   ogImage?: string | null;
   canonicalUrl?: string | null;
   structuredDataJson?: string | null;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt?: string | null;
+  author?: string | null;
+  featuredImage?: string | null;
+  category?: string | null;
+  tags?: string | null;
+  status: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED';
+  publishedAt?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  ogImage?: string | null;
+  canonicalUrl?: string | null;
+  relatedProductIds?: string | null;
+  storeId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BlogPostInput {
+  title: string;
+  slug?: string;
+  content: string;
+  excerpt?: string | null;
+  author?: string | null;
+  featuredImage?: string | null;
+  category?: string | null;
+  tags?: string | null;
+  status?: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED';
+  publishedAt?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  ogImage?: string | null;
+  canonicalUrl?: string | null;
+  relatedProductIds?: string | null;
+  storeId?: string | null;
 }
 
 

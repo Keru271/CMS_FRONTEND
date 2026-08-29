@@ -7,6 +7,7 @@ import { ProductImportModal } from '@/src/components/cms/ProductImportModal';
 import { ProductExportModal } from '@/src/components/cms/ProductExportModal';
 import {
   CMSProduct,
+  CMSProductVariant,
   ProductFormData,
   CMSCategory,
   BrandData,
@@ -48,6 +49,10 @@ import {
   Code2,
   FileSpreadsheet,
   Download,
+  Copy,
+  Wand2,
+  Split,
+  ArrowUpDown,
 } from 'lucide-react';
 
 export const ProductStudio: React.FC = () => {
@@ -90,6 +95,7 @@ export const ProductStudio: React.FC = () => {
     inventory: 50,
     weight: 0.5,
     dimensions: '10x10x10 cm',
+    variants: [],
     sizeOptions: [],
     colorOptions: [],
     material: '',
@@ -100,6 +106,13 @@ export const ProductStudio: React.FC = () => {
     metaTitle: '',
     metaDescription: '',
   });
+
+  // Variant Matrix Generator State
+  const [showMatrixBuilder, setShowMatrixBuilder] = useState(false);
+  const [option1Name, setOption1Name] = useState('Size');
+  const [option1Values, setOption1Values] = useState('S, M, L, XL');
+  const [option2Name, setOption2Name] = useState('Color');
+  const [option2Values, setOption2Values] = useState('Black, Navy, Silver');
 
   useEffect(() => {
     loadData();
@@ -151,6 +164,7 @@ export const ProductStudio: React.FC = () => {
       inventory: 50,
       weight: 0.8,
       dimensions: '25 x 15 x 10 cm',
+      variants: [],
       sizeOptions: ['S', 'M', 'L', 'XL'],
       colorOptions: ['#3B82F6', '#18181B', '#EC4899'],
       material: 'Titanium & Memory Foam',
@@ -167,6 +181,19 @@ export const ProductStudio: React.FC = () => {
 
   const handleOpenEditProduct = (prod: CMSProduct) => {
     setEditingProduct(prod);
+    const parsedVariants: CMSProductVariant[] =
+      prod.variants && Array.isArray(prod.variants) && prod.variants.length > 0
+        ? prod.variants
+        : prod.variantsJson
+          ? (() => {
+              try {
+                return JSON.parse(prod.variantsJson);
+              } catch {
+                return [];
+              }
+            })()
+          : [];
+
     setFormData({
       name: prod.name,
       description: prod.description,
@@ -180,6 +207,7 @@ export const ProductStudio: React.FC = () => {
       inventory: prod.inventory || prod.stockQuantity || 0,
       weight: prod.weight || 0,
       dimensions: prod.dimensions || '',
+      variants: parsedVariants,
       sizeOptions: prod.sizeOptions || ['S', 'M', 'L'],
       colorOptions: prod.colorOptions || ['#3B82F6', '#000000'],
       material: prod.material || '',
@@ -224,6 +252,157 @@ export const ProductStudio: React.FC = () => {
         showToast('Failed to delete product.', 'error');
       }
     }
+  };
+
+  // ── Variant Management Handlers ─────────────────────────────────────
+  const handleGenerateVariantMatrix = () => {
+    const list1 = option1Values.split(',').map((v) => v.trim()).filter(Boolean);
+    const list2 = option2Values.split(',').map((v) => v.trim()).filter(Boolean);
+
+    const generated: CMSProductVariant[] = [];
+    const basePrice = Number(formData.price) || 199.99;
+    const baseSku = formData.sku || 'SKU-PROD';
+
+    if (list1.length > 0 && list2.length > 0) {
+      list1.forEach((v1) => {
+        list2.forEach((v2) => {
+          generated.push({
+            id: 'var_' + Math.random().toString(36).substring(2, 9),
+            name: `${v1} / ${v2}`,
+            sku: `${baseSku}-${v1}-${v2}`.toUpperCase().replace(/[^A-Z0-9-]/g, ''),
+            price: basePrice,
+            compareAtPrice: formData.compareAtPrice ? Number(formData.compareAtPrice) : null,
+            costPrice: formData.costPrice ? Number(formData.costPrice) : null,
+            inventory: 20,
+            options: { [option1Name]: v1, [option2Name]: v2 },
+            size: option1Name.toLowerCase() === 'size' ? v1 : undefined,
+            color: option2Name.toLowerCase() === 'color' ? v2 : undefined,
+          });
+        });
+      });
+    } else if (list1.length > 0) {
+      list1.forEach((v1) => {
+        generated.push({
+          id: 'var_' + Math.random().toString(36).substring(2, 9),
+          name: v1,
+          sku: `${baseSku}-${v1}`.toUpperCase().replace(/[^A-Z0-9-]/g, ''),
+          price: basePrice,
+          compareAtPrice: formData.compareAtPrice ? Number(formData.compareAtPrice) : null,
+          costPrice: formData.costPrice ? Number(formData.costPrice) : null,
+          inventory: 20,
+          options: { [option1Name]: v1 },
+          size: option1Name.toLowerCase() === 'size' ? v1 : undefined,
+        });
+      });
+    }
+
+    if (generated.length > 0) {
+      const sumStock = generated.reduce((acc, curr) => acc + (Number(curr.inventory) || 0), 0);
+      setFormData((prev) => ({
+        ...prev,
+        variants: generated,
+        inventory: sumStock,
+      }));
+      setShowMatrixBuilder(false);
+      showToast(`Generated ${generated.length} product variants matrix!`, 'success');
+    }
+  };
+
+  const handleAddSingleVariant = () => {
+    const basePrice = Number(formData.price) || 99.99;
+    const count = (formData.variants?.length || 0) + 1;
+    const newVariant: CMSProductVariant = {
+      id: 'var_' + Math.random().toString(36).substring(2, 9),
+      name: `Variant ${count}`,
+      sku: `${formData.sku || 'SKU'}-V${count}`.toUpperCase(),
+      price: basePrice,
+      compareAtPrice: formData.compareAtPrice ? Number(formData.compareAtPrice) : null,
+      costPrice: formData.costPrice ? Number(formData.costPrice) : null,
+      inventory: 15,
+      image: (formData.images && formData.images[0]) || '',
+    };
+    setFormData((prev) => {
+      const updated = [...(prev.variants || []), newVariant];
+      const sumStock = updated.reduce((acc, curr) => acc + (Number(curr.inventory) || 0), 0);
+      return {
+        ...prev,
+        variants: updated,
+        inventory: sumStock,
+      };
+    });
+  };
+
+  const handleUpdateVariantField = (id: string, field: keyof CMSProductVariant, value: any) => {
+    setFormData((prev) => {
+      const updated = (prev.variants || []).map((v) => {
+        if (v.id === id) {
+          return { ...v, [field]: value };
+        }
+        return v;
+      });
+      const sumStock = updated.reduce((acc, curr) => acc + (Number(curr.inventory) || 0), 0);
+      return {
+        ...prev,
+        variants: updated,
+        inventory: sumStock,
+      };
+    });
+  };
+
+  const handleDuplicateVariant = (v: CMSProductVariant) => {
+    const copy: CMSProductVariant = {
+      ...v,
+      id: 'var_' + Math.random().toString(36).substring(2, 9),
+      name: `${v.name} (Copy)`,
+      sku: `${v.sku}-COPY`.toUpperCase(),
+    };
+    setFormData((prev) => {
+      const updated = [...(prev.variants || []), copy];
+      const sumStock = updated.reduce((acc, curr) => acc + (Number(curr.inventory) || 0), 0);
+      return {
+        ...prev,
+        variants: updated,
+        inventory: sumStock,
+      };
+    });
+  };
+
+  const handleDeleteVariant = (id: string) => {
+    setFormData((prev) => {
+      const updated = (prev.variants || []).filter((v) => v.id !== id);
+      const sumStock = updated.reduce((acc, curr) => acc + (Number(curr.inventory) || 0), 0);
+      return {
+        ...prev,
+        variants: updated,
+        inventory: sumStock,
+      };
+    });
+  };
+
+  const handleApplyPriceToAllVariants = () => {
+    const basePrice = Number(formData.price) || 0;
+    if (basePrice <= 0) return;
+    setFormData((prev) => ({
+      ...prev,
+      variants: (prev.variants || []).map((v) => ({ ...v, price: basePrice })),
+    }));
+    showToast(`Updated price to $${basePrice.toFixed(2)} across all variants`, 'success');
+  };
+
+  const handleApplyStockToAllVariants = () => {
+    const baseStock = Number(formData.inventory) || 0;
+    if (baseStock < 0) return;
+    setFormData((prev) => {
+      const count = Math.max(1, (prev.variants || []).length);
+      const perVariant = Math.max(1, Math.floor(baseStock / count));
+      const updated = (prev.variants || []).map((v) => ({ ...v, inventory: perVariant }));
+      return {
+        ...prev,
+        variants: updated,
+        inventory: updated.reduce((acc, curr) => acc + (Number(curr.inventory) || 0), 0),
+      };
+    });
+    showToast(`Distributed stock evenly across all variants`, 'success');
   };
 
   const handleToggleReviewStatus = async (id: string, newStatus: 'APPROVED' | 'PENDING' | 'REJECTED') => {
@@ -474,9 +653,16 @@ export const ProductStudio: React.FC = () => {
                               <img src={imgUrl} alt={prod.name} className="w-full h-full object-cover" />
                             </div>
                             <div>
-                              <span className="font-extrabold text-slate-900 dark:text-foreground block text-sm">
-                                {prod.name}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-extrabold text-slate-900 dark:text-foreground block text-sm">
+                                  {prod.name}
+                                </span>
+                                {prod.variants && prod.variants.length > 0 && (
+                                  <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-bold">
+                                    {prod.variants.length} variants
+                                  </span>
+                                )}
+                              </div>
                               <span className="text-[10px] text-slate-400 block truncate max-w-xs">
                                 {prod.material ? `${prod.material} • ` : ''}
                                 {Array.isArray(prod.tags) ? prod.tags.join(', ') : prod.tags || ''}
@@ -500,12 +686,35 @@ export const ProductStudio: React.FC = () => {
 
                         {/* Price */}
                         <td className="py-4 px-4 font-black text-slate-900 dark:text-foreground text-sm">
-                          ${typeof prod.price === 'number' ? prod.price.toFixed(2) : prod.price}
-                          {prod.compareAtPrice && (
-                            <span className="text-[10px] text-slate-400 line-through block font-normal">
-                              ${prod.compareAtPrice}
-                            </span>
-                          )}
+                          {(() => {
+                            if (prod.variants && prod.variants.length > 0) {
+                              const prices = prod.variants.map((v) => Number(v.price) || 0).filter((p) => p > 0);
+                              if (prices.length > 0) {
+                                const min = Math.min(...prices);
+                                const max = Math.max(...prices);
+                                if (min !== max) {
+                                  return (
+                                    <>
+                                      <span>${min.toFixed(2)} – ${max.toFixed(2)}</span>
+                                      <span className="text-[10px] text-indigo-600 block font-bold">
+                                        Multi-price
+                                      </span>
+                                    </>
+                                  );
+                                }
+                              }
+                            }
+                            return (
+                              <>
+                                ${typeof prod.price === 'number' ? prod.price.toFixed(2) : prod.price}
+                                {prod.compareAtPrice && (
+                                  <span className="text-[10px] text-slate-400 line-through block font-normal">
+                                    ${prod.compareAtPrice}
+                                  </span>
+                                )}
+                              </>
+                            );
+                          })()}
                         </td>
 
                         {/* Inventory */}
@@ -521,6 +730,11 @@ export const ProductStudio: React.FC = () => {
                           >
                             {stock > 0 ? `${stock} in stock` : 'Out of Stock'}
                           </span>
+                          {prod.variants && prod.variants.length > 0 && (
+                            <span className="text-[10px] text-slate-400 block mt-0.5 font-semibold">
+                              Across {prod.variants.length} variants
+                            </span>
+                          )}
                         </td>
 
                         {/* Status */}
@@ -776,6 +990,364 @@ export const ProductStudio: React.FC = () => {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* 4. Product Variants & Multi-SKU Flow (N-Variants with distinct Price and Quantity) */}
+              <div className="p-6 rounded-3xl bg-white dark:bg-card border border-indigo-200/80 dark:border-border shadow-sm space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
+                      <Layers className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-black text-slate-900 dark:text-foreground uppercase tracking-wider">
+                          Product Variants & Multi-SKU Manager
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-black">
+                          {formData.variants?.length || 0} Variants
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Configure n number of variants with individual prices, compare prices, cost prices, SKUs, and stock quantities.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowMatrixBuilder(!showMatrixBuilder)}
+                      className="px-3.5 py-2 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/70 text-indigo-700 text-xs font-bold flex items-center gap-1.5 transition"
+                    >
+                      <Wand2 className="w-3.5 h-3.5" />
+                      <span>{showMatrixBuilder ? 'Hide Generator' : 'Matrix Generator'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddSingleVariant}
+                      className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Variant</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Matrix Generator Drawer / Panel */}
+                {showMatrixBuilder && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50/40 border border-indigo-100 space-y-4 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
+                        <Wand2 className="w-4 h-4 text-indigo-600" />
+                        Quick Combinations Matrix Generator
+                      </span>
+                      <span className="text-[11px] text-indigo-600 font-medium">Auto-crosses Option 1 × Option 2</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-700">Option 1 Name (e.g. Size)</label>
+                        <input
+                          type="text"
+                          value={option1Name}
+                          onChange={(e) => setOption1Name(e.target.value)}
+                          placeholder="Size"
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold"
+                        />
+                        <input
+                          type="text"
+                          value={option1Values}
+                          onChange={(e) => setOption1Values(e.target.value)}
+                          placeholder="S, M, L, XL"
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium"
+                        />
+                        <span className="text-[10px] text-slate-400">Comma-separated values</span>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-700">Option 2 Name (e.g. Color)</label>
+                        <input
+                          type="text"
+                          value={option2Name}
+                          onChange={(e) => setOption2Name(e.target.value)}
+                          placeholder="Color"
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold"
+                        />
+                        <input
+                          type="text"
+                          value={option2Values}
+                          onChange={(e) => setOption2Values(e.target.value)}
+                          placeholder="Black, Navy, Silver"
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium"
+                        />
+                        <span className="text-[10px] text-slate-400">Comma-separated values</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowMatrixBuilder(false)}
+                        className="px-3.5 py-1.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 text-xs font-bold"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleGenerateVariantMatrix}
+                        className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Generate Combinations
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Variants List or Empty State */}
+                {formData.variants && formData.variants.length > 0 ? (
+                  <div className="space-y-4">
+                    {/* Summary Bar & Batch Helpers */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <span className="text-slate-500 font-medium">Total Stock:</span>{' '}
+                          <span className="font-black text-slate-900">
+                            {formData.variants.reduce((acc, curr) => acc + (Number(curr.inventory) || 0), 0)} units
+                          </span>
+                        </div>
+                        <div className="hidden sm:block text-slate-300">|</div>
+                        <div>
+                          <span className="text-slate-500 font-medium">Price Span:</span>{' '}
+                          <span className="font-black text-slate-900">
+                            {(() => {
+                              const prices = formData.variants.map((v) => Number(v.price) || 0);
+                              const min = Math.min(...prices);
+                              const max = Math.max(...prices);
+                              return min === max ? `$${min.toFixed(2)}` : `$${min.toFixed(2)} – $${max.toFixed(2)}`;
+                            })()}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleApplyPriceToAllVariants}
+                          title="Copy main selling price to all variants"
+                          className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-bold transition"
+                        >
+                          Apply Base Price to All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleApplyStockToAllVariants}
+                          title="Distribute main stock evenly"
+                          className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-bold transition"
+                        >
+                          Distribute Stock
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Table of Variants */}
+                    <div className="border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
+                      <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead className="bg-slate-100/80 text-slate-600 uppercase text-[10px] font-black tracking-wider sticky top-0 z-10 border-b border-slate-200">
+                            <tr>
+                              <th className="p-3 w-44">Variant Name</th>
+                              <th className="p-3 w-36">SKU</th>
+                              <th className="p-3 w-28">Price ($)</th>
+                              <th className="p-3 w-28">Compare ($)</th>
+                              <th className="p-3 w-28">Cost ($)</th>
+                              <th className="p-3 w-36">Stock (Qty)</th>
+                              <th className="p-3 w-36">Image URL</th>
+                              <th className="p-3 w-20 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 bg-white">
+                            {formData.variants.map((variant, idx) => {
+                              const qty = Number(variant.inventory) || 0;
+                              return (
+                                <tr key={variant.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                                  {/* Variant Name */}
+                                  <td className="p-2.5">
+                                    <input
+                                      type="text"
+                                      required
+                                      value={variant.name}
+                                      onChange={(e) => handleUpdateVariantField(variant.id, 'name', e.target.value)}
+                                      placeholder="e.g. Small / Red"
+                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-bold text-slate-900 focus:bg-white"
+                                    />
+                                  </td>
+
+                                  {/* SKU */}
+                                  <td className="p-2.5">
+                                    <input
+                                      type="text"
+                                      required
+                                      value={variant.sku}
+                                      onChange={(e) => handleUpdateVariantField(variant.id, 'sku', e.target.value)}
+                                      placeholder="SKU"
+                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-mono font-bold text-slate-700 focus:bg-white"
+                                    />
+                                  </td>
+
+                                  {/* Price */}
+                                  <td className="p-2.5">
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      required
+                                      value={variant.price}
+                                      onChange={(e) => handleUpdateVariantField(variant.id, 'price', parseFloat(e.target.value) || 0)}
+                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-black text-slate-900 focus:bg-white"
+                                    />
+                                  </td>
+
+                                  {/* Compare At Price */}
+                                  <td className="p-2.5">
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      value={variant.compareAtPrice ?? ''}
+                                      onChange={(e) =>
+                                        handleUpdateVariantField(
+                                          variant.id,
+                                          'compareAtPrice',
+                                          e.target.value ? parseFloat(e.target.value) : null
+                                        )
+                                      }
+                                      placeholder="Optional"
+                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-medium text-slate-600 focus:bg-white"
+                                    />
+                                  </td>
+
+                                  {/* Cost Price */}
+                                  <td className="p-2.5">
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      value={variant.costPrice ?? ''}
+                                      onChange={(e) =>
+                                        handleUpdateVariantField(
+                                          variant.id,
+                                          'costPrice',
+                                          e.target.value ? parseFloat(e.target.value) : null
+                                        )
+                                      }
+                                      placeholder="Cost"
+                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-medium text-slate-600 focus:bg-white"
+                                    />
+                                  </td>
+
+                                  {/* Inventory Qty & Live Status Badge */}
+                                  <td className="p-2.5">
+                                    <div className="space-y-1">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        required
+                                        value={variant.inventory}
+                                        onChange={(e) =>
+                                          handleUpdateVariantField(variant.id, 'inventory', parseInt(e.target.value, 10) || 0)
+                                        }
+                                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-bold text-slate-900 focus:bg-white"
+                                      />
+                                      <div>
+                                        {qty <= 0 ? (
+                                          <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 text-[9px] font-bold">
+                                            Out of stock
+                                          </span>
+                                        ) : qty <= 5 ? (
+                                          <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[9px] font-bold">
+                                            Low stock ({qty})
+                                          </span>
+                                        ) : (
+                                          <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[9px] font-bold">
+                                            In stock ({qty})
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </td>
+
+                                  {/* Image URL */}
+                                  <td className="p-2.5">
+                                    <input
+                                      type="text"
+                                      value={variant.image || ''}
+                                      onChange={(e) => handleUpdateVariantField(variant.id, 'image', e.target.value)}
+                                      placeholder="https://..."
+                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-[11px] font-mono text-slate-500 focus:bg-white"
+                                    />
+                                  </td>
+
+                                  {/* Actions */}
+                                  <td className="p-2.5 text-right">
+                                    <div className="flex items-center justify-end gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDuplicateVariant(variant)}
+                                        title="Duplicate variant"
+                                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                      >
+                                        <Copy className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteVariant(variant.id)}
+                                        title="Delete variant"
+                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-8 px-4 rounded-2xl border-2 border-dashed border-slate-200 text-center space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+                      <Layers className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground">
+                        Single SKU Product (No Variants Defined)
+                      </h4>
+                      <p className="text-xs text-slate-400 max-w-md mx-auto mt-0.5">
+                        This product currently has one flat price (${formData.price || 0}) and stock quantity ({formData.inventory || 0} units).
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-center gap-3 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowMatrixBuilder(true)}
+                        className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center gap-1.5 transition"
+                      >
+                        <Wand2 className="w-3.5 h-3.5" />
+                        <span>Generate Options Matrix (Size / Color)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddSingleVariant}
+                        className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Custom Variant</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

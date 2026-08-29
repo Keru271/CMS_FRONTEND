@@ -25,41 +25,14 @@ import {
   Layers,
   ShoppingBag,
 } from 'lucide-react';
-import axios from 'axios';
+import { BlogPost, BlogPostInput, CMSProduct } from '@/src/types';
+import { cmsService } from '@/src/services/cmsService';
 
-interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  excerpt?: string | null;
-  author?: string | null;
-  featuredImage?: string | null;
-  category?: string | null;
-  tags?: string | null;
-  status: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED';
-  publishedAt?: string | null;
-  metaTitle?: string | null;
-  metaDescription?: string | null;
-  ogImage?: string | null;
-  canonicalUrl?: string | null;
-  relatedProductIds?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  images?: string | null;
-}
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
 
 export default function BlogManagementPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<CMSProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
@@ -91,13 +64,11 @@ export default function BlogManagementPage() {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-      const res = await axios.get(`${API_BASE}/api/blogs`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      setPosts(Array.isArray(res.data) ? res.data : []);
+      const data = await cmsService.getBlogPosts();
+      setPosts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch blog posts:', err);
+      setPosts([]);
     } finally {
       setLoading(false);
     }
@@ -105,13 +76,11 @@ export default function BlogManagementPage() {
 
   const fetchProducts = async () => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-      const res = await axios.get(`${API_BASE}/api/products`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      setProducts(Array.isArray(res.data) ? res.data : []);
+      const data = await cmsService.getProducts();
+      setProducts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch products:', err);
+      setProducts([]);
     }
   };
 
@@ -199,10 +168,8 @@ export default function BlogManagementPage() {
     try {
       setSaving(true);
       setFormError('');
-      const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const payload = {
+      const payload: BlogPostInput = {
         title,
         slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         content,
@@ -220,16 +187,16 @@ export default function BlogManagementPage() {
       };
 
       if (editingPost) {
-        await axios.put(`${API_BASE}/api/blogs/${editingPost.id}`, payload, { headers });
+        await cmsService.updateBlogPost(editingPost.id, payload);
       } else {
-        await axios.post(`${API_BASE}/api/blogs`, payload, { headers });
+        await cmsService.createBlogPost(payload);
       }
 
       setEditorOpen(false);
       await fetchPosts();
     } catch (err: any) {
       console.error('Failed to save post:', err);
-      setFormError(err.response?.data?.message || 'Failed to save blog post.');
+      setFormError(err.response?.data?.message || err.message || 'Failed to save blog post.');
     } finally {
       setSaving(false);
     }
@@ -238,10 +205,7 @@ export default function BlogManagementPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to permanently delete this blog post?')) return;
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-      await axios.delete(`${API_BASE}/api/blogs/${id}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      await cmsService.deleteBlogPost(id);
       await fetchPosts();
     } catch (err) {
       console.error('Failed to delete post:', err);
@@ -252,12 +216,7 @@ export default function BlogManagementPage() {
     if (!selectedIds.length) return;
     if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected articles?`)) return;
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-      await axios.post(
-        `${API_BASE}/api/blogs/bulk-delete`,
-        { ids: selectedIds },
-        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
-      );
+      await cmsService.bulkDeleteBlogPosts(selectedIds);
       setSelectedIds([]);
       await fetchPosts();
     } catch (err) {
@@ -522,7 +481,7 @@ export default function BlogManagementPage() {
               {/* Actions Footer */}
               <div className="px-5 py-3.5 bg-slate-50/70 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <a
-                  href={`/blog/${post.slug}`}
+                  href={`${STOREFRONT_URL}/blog/${post.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1"

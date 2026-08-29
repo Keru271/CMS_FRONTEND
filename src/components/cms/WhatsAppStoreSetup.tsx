@@ -680,6 +680,18 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
 
       if (onSaved) onSaved(storePayload);
 
+      if (typeof window !== 'undefined') {
+        const userEmail = (merchantData?.merchant?.email || '').toLowerCase().trim();
+        if (userEmail) {
+          localStorage.setItem(`whatsapp_setup_completed_${userEmail}`, 'true');
+          localStorage.setItem(`whatsapp_setup_opened_${userEmail}`, 'true');
+        }
+        localStorage.setItem('whatsapp_setup_completed', 'true');
+        localStorage.setItem('whatsapp_setup_opened', 'true');
+        sessionStorage.removeItem('open_whatsapp_setup_once');
+        sessionStorage.removeItem('just_registered');
+      }
+
       setCurrentStage('completed');
       playAudioCue('success');
 
@@ -1171,7 +1183,20 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-[#cbd5e0]/60">
                     <button
-                      onClick={() => router.push('/dashboard')}
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          const userEmail = (merchantData?.merchant?.email || '').toLowerCase().trim();
+                          if (userEmail) {
+                            localStorage.setItem(`whatsapp_setup_completed_${userEmail}`, 'true');
+                            localStorage.setItem(`whatsapp_setup_opened_${userEmail}`, 'true');
+                          }
+                          localStorage.setItem('whatsapp_setup_completed', 'true');
+                          localStorage.setItem('whatsapp_setup_opened', 'true');
+                          sessionStorage.removeItem('open_whatsapp_setup_once');
+                          sessionStorage.removeItem('just_registered');
+                        }
+                        router.push('/dashboard');
+                      }}
                       className="px-4 py-2.5 bg-[#075e54] hover:bg-[#128c7e] text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
                     >
                       <Store className="w-3.5 h-3.5" />
@@ -1179,7 +1204,20 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                     </button>
 
                     <button
-                      onClick={() => router.push('/themes')}
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          const userEmail = (merchantData?.merchant?.email || '').toLowerCase().trim();
+                          if (userEmail) {
+                            localStorage.setItem(`whatsapp_setup_completed_${userEmail}`, 'true');
+                            localStorage.setItem(`whatsapp_setup_opened_${userEmail}`, 'true');
+                          }
+                          localStorage.setItem('whatsapp_setup_completed', 'true');
+                          localStorage.setItem('whatsapp_setup_opened', 'true');
+                          sessionStorage.removeItem('open_whatsapp_setup_once');
+                          sessionStorage.removeItem('just_registered');
+                        }
+                        router.push('/themes');
+                      }}
                       className="px-4 py-2.5 bg-[#f0f2f5] hover:bg-[#e4e6eb] text-[#111b21] text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all border border-[#cbd5e0] cursor-pointer"
                     >
                       <Palette className="w-3.5 h-3.5 text-[#128c7e]" />

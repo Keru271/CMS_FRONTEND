@@ -26,7 +26,6 @@ import {
   ChevronDown,
   ArrowRight,
   ShieldCheck,
-  SlidersHorizontal,
   Mail,
   Share2,
   Star,
@@ -230,7 +229,7 @@ export const ThemeManager: React.FC = () => {
   const [previewTemplate, setPreviewTemplate] = useState<StoreTemplate | null>(null);
   const [previewViewport, setPreviewViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [previewPage, setPreviewPage] = useState<'home' | 'plp' | 'pdp' | 'cart'>('home');
-  const [activeTab, setActiveTab] = useState<'templates' | 'colors' | 'typography' | 'layout' | 'headerFooter'>('templates');
+  const [activeTab, setActiveTab] = useState<'templates' | 'colors' | 'typography' | 'headerFooter'>('templates');
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [livePreviewTemplate, setLivePreviewTemplate] = useState<StoreTemplate | null>(null);
   const [livePreviewPage, setLivePreviewPage] = useState<'/' | '/products' | '/cart'>('/');
@@ -860,7 +859,7 @@ export const ThemeManager: React.FC = () => {
               <span>Theme Studio & Template Publisher</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              Preview all storefront layout templates, test responsive viewports (Desktop, Tablet, Mobile), and customize color palettes, typography, border radius, and header/footer configurations in real-time.
+              Preview all storefront layout templates, test responsive viewports (Desktop, Tablet, Mobile), and customize color palettes, typography, and header/footer configurations in real-time.
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
@@ -898,8 +897,7 @@ export const ThemeManager: React.FC = () => {
             { id: 'templates', label: '1. Select & Preview All Templates', icon: Layout },
             { id: 'colors', label: '2. Color Scheme', icon: Palette },
             { id: 'typography', label: '3. Typography & Fonts', icon: Type },
-            { id: 'layout', label: '4. Layout, Radius & Buttons', icon: SlidersHorizontal },
-            { id: 'headerFooter', label: '5. Header & Footer Config', icon: Sliders },
+            { id: 'headerFooter', label: '4. Header & Footer Config', icon: Sliders },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1163,86 +1161,6 @@ export const ThemeManager: React.FC = () => {
                 </div>
               </div>
             )}
-            {activeTab === 'layout' && (
-              <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
-                <div className="border-b border-slate-100 dark:border-border pb-3">
-                  <h2 className="text-base font-black text-slate-900 dark:text-foreground flex items-center gap-2">
-                    <SlidersHorizontal className="w-5 h-5 text-indigo-600" />
-                    <span>Layout Width, Radius & Buttons</span>
-                  </h2>
-                  <p className="text-xs text-slate-500">Configure global border radius, button styling, and layout container width.</p>
-                </div>
-                <div className="space-y-5">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                      Component Border Radius
-                    </label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {[
-                        { id: 'none', label: 'Sharp (0px)' },
-                        { id: 'sm', label: 'Compact (6px)' },
-                        { id: 'md', label: 'Rounded (14px)' },
-                        { id: 'full', label: 'Pill (24px)' },
-                      ].map((rad) => (
-                        <button
-                          key={rad.id}
-                          type="button"
-                          onClick={() => handleConfigChange('themeBorderRadius', rad.id)}
-                          className={`p-2.5 rounded-2xl border text-center text-[11px] font-bold transition-all ${
-                            themeConfig.themeBorderRadius === rad.id
-                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                              : 'bg-slate-50 dark:bg-card text-slate-700 dark:text-slate-300 border-slate-200/80'
-                          }`}
-                        >
-                          {rad.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                      Primary Button Style
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { id: 'solid', label: 'Solid Filled' },
-                        { id: 'outline', label: 'Outline Bordered' },
-                        { id: 'soft', label: 'Soft Glass' },
-                        { id: 'gradient', label: 'Gradient Glow' },
-                      ].map((btn) => (
-                        <button
-                          key={btn.id}
-                          type="button"
-                          onClick={() => handleConfigChange('themeButtonStyle', btn.id)}
-                          className={`p-2.5 rounded-2xl border text-center text-xs font-extrabold transition-all ${
-                            themeConfig.themeButtonStyle === btn.id
-                              ? 'bg-slate-900 text-white border-slate-900 shadow-md'
-                              : 'bg-slate-50 dark:bg-card text-slate-700 dark:text-slate-300 border-slate-200/80'
-                          }`}
-                        >
-                          {btn.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                      Max Container Width
-                    </label>
-                    <select
-                      value={themeConfig.themeLayoutWidth}
-                      onChange={(e) => handleConfigChange('themeLayoutWidth', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="boxed">Boxed (1200px)</option>
-                      <option value="standard">Standard (1400px)</option>
-                      <option value="wide">Wide (1600px)</option>
-                      <option value="full">Full Width (100%)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
             {activeTab === 'headerFooter' && (
               <div className="space-y-6">
                 <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
@@ -1251,18 +1169,6 @@ export const ThemeManager: React.FC = () => {
                     <span>Header Navigation Configuration</span>
                   </h3>
                   <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-bold text-slate-700">Header Layout Style</label>
-                      <select
-                        value={themeConfig.headerStyle}
-                        onChange={(e) => handleConfigChange('headerStyle', e.target.value)}
-                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold"
-                      >
-                        <option value="left-aligned">Left Aligned Brand Logo</option>
-                        <option value="centered">Centered Logo with Split Menu</option>
-                        <option value="minimal">Minimal Inline Navigation</option>
-                      </select>
-                    </div>
                     <div className="space-y-1">
                       <label className="block text-xs font-bold text-slate-700">Announcement Bar Text</label>
                       <input
@@ -1308,18 +1214,6 @@ export const ThemeManager: React.FC = () => {
                     <span>Footer Section Configuration</span>
                   </h3>
                   <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-bold text-slate-700">Footer Layout Style</label>
-                      <select
-                        value={themeConfig.footerStyle}
-                        onChange={(e) => handleConfigChange('footerStyle', e.target.value)}
-                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold"
-                      >
-                        <option value="multi-column">Multi-Column Mega Footer</option>
-                        <option value="minimal">Minimal 2-Column Footer</option>
-                        <option value="centered">Centered Clean Footer</option>
-                      </select>
-                    </div>
                     <div className="space-y-1">
                       <label className="block text-xs font-bold text-slate-700">Copyright Text</label>
                       <input

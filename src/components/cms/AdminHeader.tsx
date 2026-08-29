@@ -17,6 +17,7 @@ import {
   MessageSquareCode,
   ShieldCheck,
   CreditCard,
+  Sliders,
 } from 'lucide-react';
 import { MerchantOnboardingData } from '@/src/types';
 import { useCMS } from '@/src/context/CMSContext';
@@ -234,8 +235,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                   }}
                   className="w-full py-1.5 px-3 hover:bg-[#fdf1ef] text-[#191a1b] rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
                 >
-                  <MessageSquareCode className="w-3.5 h-3.5 text-[#075E54]" />
-                  <span className="text-[#075E54]">Launch WhatsApp Store Setup</span>
+                  <Sliders className="w-3.5 h-3.5 text-[#5e5a5a]" />
+                  <span className="text-[#191a1b]">Store Configuration Settings</span>
                 </button>
               </div>
             </div>

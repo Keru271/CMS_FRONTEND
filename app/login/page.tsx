@@ -27,16 +27,32 @@ function LoginContent() {
     };
     cmsService.saveMerchantSession(updatedSession as any);
 
+    const userKey = (user.email || 'user').toLowerCase().trim();
+    const alreadyOpened =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem(`whatsapp_setup_opened_${userKey}`) === 'true' ||
+        localStorage.getItem(`whatsapp_setup_completed_${userKey}`) === 'true' ||
+        localStorage.getItem('whatsapp_setup_completed') === 'true');
+
     const isJustRegistered =
-      isRegisteredParam || (typeof window !== 'undefined' && sessionStorage.getItem('just_registered') === 'true');
+      !alreadyOpened &&
+      (isRegisteredParam || (typeof window !== 'undefined' && sessionStorage.getItem('just_registered') === 'true'));
 
     if (isJustRegistered) {
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('just_registered');
+        sessionStorage.setItem('open_whatsapp_setup_once', 'true');
+        // Mark that WhatsApp setup chat has been opened for this user so it NEVER opens again!
+        localStorage.setItem(`whatsapp_setup_opened_${userKey}`, 'true');
+        localStorage.setItem('whatsapp_setup_opened', 'true');
       }
-      // Route newly registered merchants straight into the WhatsApp Store Setup Webchat
-      router.push('/store-setup');
+      // Route newly registered merchants straight into the WhatsApp Store Setup Webchat (first time only)
+      router.push('/store-setup?first_time=true');
     } else {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('just_registered');
+        sessionStorage.removeItem('open_whatsapp_setup_once');
+      }
       router.push('/dashboard');
     }
   };

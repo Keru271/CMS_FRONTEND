@@ -23,7 +23,6 @@ import {
   Layers,
   HelpCircle,
   FileCheck,
-  Code2,
   LayoutTemplate,
   Monitor,
   Tablet as TabletIcon,
@@ -593,47 +592,33 @@ export const PageManager: React.FC = () => {
                 </div>
               </div>
 
-              {/* Rich Body Content Editor */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
-                    <Code2 className="w-4 h-4 text-indigo-500" />
-                    <span>Formatted HTML & Text Content</span>
-                  </label>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setFormData({
-                          ...formData,
-                          content: formData.content + '\n<h2>Subheading Title</h2>',
-                        })
-                      }
-                      className="px-2.5 py-1 rounded-lg bg-slate-100 text-[10px] font-bold"
-                    >
-                      + H2 Heading
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setFormData({
-                          ...formData,
-                          content: formData.content + '\n<p>Paragraph description text goes here...</p>',
-                        })
-                      }
-                      className="px-2.5 py-1 rounded-lg bg-slate-100 text-[10px] font-bold"
-                    >
-                      + Paragraph
-                    </button>
-                  </div>
+              {/* Visual Page Builder Callout */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/80 dark:border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <LayoutTemplate className="w-4 h-4 text-purple-600" />
+                    <span>Visual Page Content & Design</span>
+                  </span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Design and edit page sections, heroes, products, banners, and layouts visually.
+                  </p>
                 </div>
-                <textarea
-                  rows={8}
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="<h1>Page Title</h1><p>Write your page content here...</p>"
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-card text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetPage = editingPage || ({
+                      ...formData,
+                      id: '',
+                    } as any);
+                    setIsEditModalOpen(false);
+                    setBuilderEditingPage(targetPage);
+                    setIsPageBuilderOpen(true);
+                  }}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-xs shrink-0 cursor-pointer self-start sm:self-auto"
+                >
+                  <LayoutTemplate className="w-3.5 h-3.5" />
+                  <span>Open Visual Page Builder</span>
+                </button>
               </div>
 
               {/* SEO METADATA SETTINGS CARD */}
@@ -1124,18 +1109,21 @@ export const PageManager: React.FC = () => {
       })()}
 
       {/* Visual Block Page Builder Studio */}
-      <PageBuilderStudio
-        initialPage={builderEditingPage}
-        isOpen={isPageBuilderOpen}
-        onClose={() => {
-          setIsPageBuilderOpen(false);
-          setBuilderEditingPage(null);
-        }}
-        onSaved={() => {
-          loadPages();
-          showToast('Storefront page updated with Visual Page Builder!', 'success');
-        }}
-      />
+      {isPageBuilderOpen && (
+        <PageBuilderStudio
+          key={builderEditingPage?.id ? `edit-page-${builderEditingPage.id}` : `new-page-${Date.now()}`}
+          initialPage={builderEditingPage}
+          isOpen={isPageBuilderOpen}
+          onClose={() => {
+            setIsPageBuilderOpen(false);
+            setBuilderEditingPage(null);
+          }}
+          onSaved={() => {
+            loadPages();
+            showToast('Storefront page updated with Visual Page Builder!', 'success');
+          }}
+        />
+      )}
     </div>
   );
 };

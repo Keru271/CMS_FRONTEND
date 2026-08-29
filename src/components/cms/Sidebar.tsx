@@ -26,7 +26,6 @@ import {
   Zap,
   Globe,
   Bell,
-  BarChart2,
   Code2,
   Crown,
   Search,
@@ -60,7 +59,6 @@ export type CMSView =
   | 'marketing'
   | 'notifications'
   | 'seo'
-  | 'analytics'
   | 'loyalty'
   | 'developer';
 
@@ -111,7 +109,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'discounts' as CMSView, path: '/discounts', label: t('nav.discounts', 'Discounts'), icon: Tag },
     { id: 'tax' as CMSView, path: '/tax', label: t('nav.tax', 'Taxation'), icon: Receipt },
     { id: 'shipping' as CMSView, path: '/shipping', label: t('nav.shipping', 'Logistics'), icon: Truck },
-    { id: 'analytics' as CMSView, path: '/analytics', label: t('nav.analytics', 'Revenue Analytics'), icon: BarChart2 },
     { id: 'marketing' as CMSView, path: '/marketing', label: t('nav.marketing', 'Marketing & Pixels'), icon: Megaphone },
     { id: 'notifications' as CMSView, path: '/notifications', label: t('nav.notifications', 'Notifications'), icon: Bell },
     { id: 'loyalty' as CMSView, path: '/loyalty', label: t('nav.loyalty', 'Loyalty & Rewards'), icon: Crown },

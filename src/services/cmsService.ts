@@ -37,6 +37,10 @@ import {
   CMSShippingZone,
   ShippingRate,
   CMSShippingProvider,
+  RateShoppingPolicy,
+  CarrierCredential,
+  CMSShipment,
+  CMSNdrRecord,
   CMSTaxRegion,
   HsnSacCode,
   CMSMarketingCampaign,
@@ -67,6 +71,8 @@ import {
   LoyaltyMemberData,
   GlobalSeoData,
   ProductSeoData,
+  BlogPost,
+  BlogPostInput,
 } from '@/src/types';
 
 let inFlightPagesPromise: Promise<CMSPageData[]> | null = null;
@@ -679,6 +685,8 @@ export const cmsService = {
             image: p.images ? p.images.split(',')[0] : '',
             images: p.images ? p.images.split(',') : [],
             tags: p.tags ? p.tags.split(',').map((t: string) => t.trim()) : [],
+            variants: p.variantsJson ? (() => { try { return JSON.parse(p.variantsJson); } catch { return []; } })() : [],
+            variantsJson: p.variantsJson || null,
             metaTitle: p.metaTitle || '',
             metaDescription: p.metaDescription || '',
             createdAt: p.createdAt ? String(p.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
@@ -731,6 +739,7 @@ export const cmsService = {
       metaTitle: formData.metaTitle || '',
       metaDescription: formData.metaDescription || '',
       status: formData.status || 'ACTIVE',
+      variantsJson: formData.variants && formData.variants.length > 0 ? JSON.stringify(formData.variants) : (formData.variantsJson || null),
     };
 
     try {
@@ -755,6 +764,8 @@ export const cmsService = {
           image: p.images ? p.images.split(',')[0] : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
           images: p.images ? p.images.split(',') : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'],
           tags: p.tags ? p.tags.split(',').map((t: string) => t.trim()) : [],
+          variants: p.variantsJson ? (() => { try { return JSON.parse(p.variantsJson); } catch { return []; } })() : (formData.variants || []),
+          variantsJson: p.variantsJson || (formData.variants ? JSON.stringify(formData.variants) : null),
           createdAt: p.createdAt ? String(p.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
         };
         productsMemoryState.unshift(created);
@@ -822,6 +833,7 @@ export const cmsService = {
       metaTitle: formData.metaTitle || '',
       metaDescription: formData.metaDescription || '',
       status: formData.status || 'ACTIVE',
+      variantsJson: formData.variants && formData.variants.length > 0 ? JSON.stringify(formData.variants) : (formData.variantsJson || null),
     };
 
     try {
@@ -846,6 +858,8 @@ export const cmsService = {
           image: p.images ? p.images.split(',')[0] : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
           images: p.images ? p.images.split(',') : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'],
           tags: p.tags ? p.tags.split(',').map((t: string) => t.trim()) : [],
+          variants: p.variantsJson ? (() => { try { return JSON.parse(p.variantsJson); } catch { return []; } })() : (formData.variants || []),
+          variantsJson: p.variantsJson || (formData.variants ? JSON.stringify(formData.variants) : null),
           createdAt: p.createdAt ? String(p.createdAt).split('T')[0] : new Date().toISOString().split('T')[0],
         };
         const index = productsMemoryState.findIndex((item) => item.id === id);
@@ -3000,75 +3014,21 @@ export const cmsService = {
     inFlightMenusPromise = (async () => {
       try {
         const response = await apiClient.get<any[]>('/menus');
-        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+        if (response.data && Array.isArray(response.data)) {
           return response.data.map((m) => ({
             ...m,
-            items: m.itemsJson ? JSON.parse(m.itemsJson) : [],
+            items: m.itemsJson
+              ? typeof m.itemsJson === 'string'
+                ? JSON.parse(m.itemsJson)
+                : m.itemsJson
+              : m.items || [],
           }));
         }
       } catch (err) {
-        console.warn('Backend menus API notice, using memory fallback:', err);
+        console.warn('Backend menus API error:', err);
       }
 
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('merchant_cms_menus');
-        if (saved) {
-          try {
-            return JSON.parse(saved);
-          } catch {
-            // fallback below
-          }
-        }
-      }
-
-      const defaultMenus: CMSMenuData[] = [
-        {
-          id: 'm-1',
-          title: 'Header Navigation Menu',
-          handle: 'header-menu',
-          location: 'HEADER',
-          items: [
-            { id: 'item-1', label: 'Home', url: '/', target: '_self' },
-            {
-              id: 'item-2',
-              label: 'Shop',
-              url: '/products',
-              target: '_self',
-              isMegaMenu: true,
-              megaMenuConfig: {
-                bannerImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
-                headline: 'New Summer Drop 2026',
-                buttonLabel: 'Shop All Apparel',
-                buttonUrl: '/collections/summer-essentials',
-              },
-              children: [
-                { id: 'item-2-1', label: 'Men', url: '/collections/men', target: '_self' },
-                { id: 'item-2-2', label: 'Women', url: '/collections/women', target: '_self' },
-                { id: 'item-2-3', label: 'Kids', url: '/collections/kids', target: '_self' },
-              ],
-            },
-            { id: 'item-3', label: 'About', url: '/pages/about', target: '_self' },
-            { id: 'item-4', label: 'Contact', url: '/pages/contact', target: '_self' },
-          ],
-        },
-        {
-          id: 'm-2',
-          title: 'Footer Quick Links Menu',
-          handle: 'footer-menu',
-          location: 'FOOTER',
-          items: [
-            { id: 'f-1', label: 'About Us', url: '/pages/about', target: '_self' },
-            { id: 'f-2', label: 'Customer Support', url: '/pages/contact', target: '_self' },
-            { id: 'f-3', label: 'FAQ', url: '/pages/faq', target: '_self' },
-            { id: 'f-4', label: 'Privacy Policy', url: '/policies/privacy-policy', target: '_self' },
-            { id: 'f-5', label: 'Terms & Conditions', url: '/policies/terms-and-conditions', target: '_self' },
-            { id: 'f-6', label: 'Shipping Policy', url: '/policies/shipping-policy', target: '_self' },
-            { id: 'f-7', label: 'Refund Policy', url: '/policies/refund-policy', target: '_self' },
-          ],
-        },
-      ];
-
-      return defaultMenus;
+      return [];
     })();
 
     try {
@@ -3495,6 +3455,85 @@ export const cmsService = {
         courierPartners: ['Shiprocket', 'Delhivery', 'Blue Dart', 'Xpressbees', 'India Post'],
       };
     }
+  },
+
+  // ─── NEXUS COMMERCE SHIPPING INTEGRATION MODULE ───────────────────────────
+  async getRateShoppingPolicy(): Promise<RateShoppingPolicy> {
+    try {
+      const response = await apiClient.get<RateShoppingPolicy>('/shipping/policy');
+      return response.data;
+    } catch {
+      return {
+        priority: 'CHEAPEST',
+        preferredCarrierCode: 'SHIPROCKET',
+        fallbackEnabled: true,
+        codEnabled: true,
+        codMarkupAmount: 0,
+        freeShippingThreshold: 999.0,
+        maxTransitDays: 7,
+      };
+    }
+  },
+
+  async updateRateShoppingPolicy(policy: Partial<RateShoppingPolicy>): Promise<RateShoppingPolicy> {
+    const response = await apiClient.put<any>('/shipping/policy', policy);
+    return response.data.policy || response.data;
+  },
+
+  async getCarrierCredentials(): Promise<CarrierCredential[]> {
+    try {
+      const response = await apiClient.get<CarrierCredential[]>('/shipping/credentials');
+      return response.data;
+    } catch {
+      return [];
+    }
+  },
+
+  async upsertCarrierCredential(cred: Partial<CarrierCredential>): Promise<any> {
+    const response = await apiClient.post<any>('/shipping/credentials', cred);
+    return response.data;
+  },
+
+  async testCarrierConnection(carrierCode: string): Promise<{ success: boolean; latencyMs: number; message: string }> {
+    try {
+      const response = await apiClient.post<any>('/shipping/credentials/test', { carrierCode });
+      return response.data;
+    } catch (e: any) {
+      return { success: false, latencyMs: 0, message: e.message || 'Connection failed' };
+    }
+  },
+
+  async getShipments(): Promise<CMSShipment[]> {
+    try {
+      const response = await apiClient.get<CMSShipment[]>('/shipping/shipments');
+      return response.data;
+    } catch {
+      return [];
+    }
+  },
+
+  async createShipment(payload: { orderId: string; carrierCode?: string; serviceType?: string; packageWeightKg?: number }): Promise<any> {
+    const response = await apiClient.post<any>('/shipping/shipments/create', payload);
+    return response.data;
+  },
+
+  async cancelShipment(id: string): Promise<any> {
+    const response = await apiClient.post<any>(`/shipping/shipments/${id}/cancel`);
+    return response.data;
+  },
+
+  async getNdrRecords(): Promise<CMSNdrRecord[]> {
+    try {
+      const response = await apiClient.get<CMSNdrRecord[]>('/shipping/ndr');
+      return response.data;
+    } catch {
+      return [];
+    }
+  },
+
+  async triggerNdrAction(id: string, payload: { action: 'REATTEMPT' | 'UPDATE_ADDRESS' | 'RTO'; remarks?: string; customerPhone?: string; updatedAddress?: string }): Promise<any> {
+    const response = await apiClient.post<any>(`/shipping/ndr/${id}/action`, payload);
+    return response.data;
   },
 
   // Marketing & Campaigns Management
@@ -4982,6 +5021,50 @@ export const cmsService = {
 
   async updateProductSeo(productId: string, payload: Partial<ProductSeoData>): Promise<ProductSeoData> {
     const response = await apiClient.put<ProductSeoData>(`/seo/product/${productId}`, payload);
+    return response.data;
+  },
+
+  // ── Blog & Editorial Articles ───────────────────────────────────────
+  async getBlogPosts(query?: { category?: string; tag?: string; status?: string; search?: string }): Promise<BlogPost[]> {
+    const params = new URLSearchParams();
+    if (query?.category && query.category !== 'ALL') params.append('category', query.category);
+    if (query?.tag) params.append('tag', query.tag);
+    if (query?.status && query.status !== 'ALL') params.append('status', query.status);
+    if (query?.search) params.append('search', query.search);
+
+    const queryString = params.toString();
+    const url = queryString ? `/blogs?${queryString}` : '/blogs';
+    const response = await apiClient.get<BlogPost[]>(url);
+    return Array.isArray(response.data) ? response.data : [];
+  },
+
+  async getBlogPostById(id: string): Promise<BlogPost> {
+    const response = await apiClient.get<BlogPost>(`/blogs/${id}`);
+    return response.data;
+  },
+
+  async getBlogPostBySlug(slug: string): Promise<BlogPost> {
+    const response = await apiClient.get<BlogPost>(`/blogs/slug/${encodeURIComponent(slug)}`);
+    return response.data;
+  },
+
+  async createBlogPost(payload: BlogPostInput): Promise<BlogPost> {
+    const response = await apiClient.post<BlogPost>('/blogs', payload);
+    return response.data;
+  },
+
+  async updateBlogPost(id: string, payload: Partial<BlogPostInput>): Promise<BlogPost> {
+    const response = await apiClient.put<BlogPost>(`/blogs/${id}`, payload);
+    return response.data;
+  },
+
+  async deleteBlogPost(id: string): Promise<{ message: string }> {
+    const response = await apiClient.delete<{ message: string }>(`/blogs/${id}`);
+    return response.data;
+  },
+
+  async bulkDeleteBlogPosts(ids: string[]): Promise<{ message: string; count?: number }> {
+    const response = await apiClient.post<{ message: string; count?: number }>('/blogs/bulk-delete', { ids });
     return response.data;
   },
 };
