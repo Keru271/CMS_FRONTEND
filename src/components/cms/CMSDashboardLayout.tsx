@@ -63,13 +63,29 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
       ? JSON.parse(localStorage.getItem('user_permissions') || '{}')
       : null);
 
-  const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN' || userRole === 'MERCHANT';
+  const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN';
 
   // Check if current path is authorized
   const checkRouteAuthorization = (path: string): boolean => {
+    // True Owner & Store Admin have universal access
     if (isOwnerOrAdmin) return true;
-    if (path === '/dashboard' || path === '/') return true;
 
+    // Pages open to any authenticated team member:
+    if (path === '/dashboard' || path === '/' || path.startsWith('/docs') || path.startsWith('/settings')) {
+      return true;
+    }
+
+    // High-privilege owner/admin only routes:
+    if (
+      path.startsWith('/team') ||
+      path.startsWith('/billing') ||
+      path.startsWith('/domains') ||
+      path.startsWith('/developer')
+    ) {
+      return false;
+    }
+
+    // Role-specific shortcut allowances:
     if (userRole === 'STOCK_CHECKER') {
       return path.startsWith('/products') || path.startsWith('/categories');
     }
@@ -79,11 +95,17 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     if (userRole === 'SUPPORT') {
-      return path.startsWith('/customers') || path.startsWith('/orders');
+      return path.startsWith('/customers') || path.startsWith('/orders') || path.startsWith('/reviews');
     }
 
     if (userRole === 'EDITOR') {
-      return path.startsWith('/themes') || path.startsWith('/pages') || path.startsWith('/navigation') || path.startsWith('/seo');
+      return (
+        path.startsWith('/themes') ||
+        path.startsWith('/pages') ||
+        path.startsWith('/blog') ||
+        path.startsWith('/navigation') ||
+        path.startsWith('/seo')
+      );
     }
 
     if (userRole === 'MANAGER') {
@@ -92,31 +114,38 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
         path.startsWith('/categories') ||
         path.startsWith('/orders') ||
         path.startsWith('/customers') ||
+        path.startsWith('/reviews') ||
         path.startsWith('/discounts') ||
         path.startsWith('/shipping') ||
         path.startsWith('/marketing') ||
-        path.startsWith('/seo')
+        path.startsWith('/seo') ||
+        path.startsWith('/blog')
       );
     }
 
+    // Granular permission checks:
     if (userPermissions) {
-      if (path.startsWith('/products') || path.startsWith('/categories')) {
-        return !!userPermissions.canManageProducts || !!userPermissions.canManageInventory;
-      }
+      if (path.startsWith('/products')) return !!userPermissions.canManageProducts;
+      if (path.startsWith('/categories')) return !!userPermissions.canManageProducts || !!userPermissions.canManageInventory;
       if (path.startsWith('/orders')) return !!userPermissions.canManageOrders;
       if (path.startsWith('/customers')) return !!userPermissions.canManageCustomers;
-      if (path.startsWith('/themes') || path.startsWith('/pages') || path.startsWith('/navigation')) {
+      if (path.startsWith('/reviews')) return !!userPermissions.canManageCustomers || !!userPermissions.canManageProducts;
+      if (
+        path.startsWith('/themes') ||
+        path.startsWith('/pages') ||
+        path.startsWith('/blog') ||
+        path.startsWith('/navigation')
+      ) {
         return !!userPermissions.canManageThemes;
       }
+      if (path.startsWith('/seo')) return !!userPermissions.canManageThemes || !!userPermissions.canManageSettings;
       if (path.startsWith('/shipping')) return !!userPermissions.canManageLogistics;
       if (path.startsWith('/discounts') || path.startsWith('/marketing')) {
-        return !!userPermissions.canManageAnalytics;
+        return !!userPermissions.canManageAnalytics || !!userPermissions.canManageProducts;
       }
-      if (path.startsWith('/store-setup') || path.startsWith('/settings')) {
-        return !!userPermissions.canManageSettings;
-      }
-      if (path.startsWith('/tax')) return !!userPermissions.canManagePayments;
-      if (path.startsWith('/team')) return false;
+      if (path.startsWith('/store-setup')) return !!userPermissions.canManageSettings;
+      if (path.startsWith('/tax') || path.startsWith('/payments')) return !!userPermissions.canManagePayments;
+      if (path.startsWith('/loyalty')) return !!userPermissions.canManageCustomers;
     }
 
     return false;

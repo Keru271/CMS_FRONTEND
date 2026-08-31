@@ -60,7 +60,8 @@ export type CMSView =
   | 'notifications'
   | 'seo'
   | 'loyalty'
-  | 'developer';
+  | 'developer'
+  | 'docs';
 
 interface SidebarProps {
   currentView?: CMSView;
@@ -113,6 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'notifications' as CMSView, path: '/notifications', label: t('nav.notifications', 'Notifications'), icon: Bell },
     { id: 'loyalty' as CMSView, path: '/loyalty', label: t('nav.loyalty', 'Loyalty & Rewards'), icon: Crown },
     { id: 'developer' as CMSView, path: '/developer', label: t('nav.developer', 'Developer Studio'), icon: Code2 },
+    { id: 'docs' as CMSView, path: '/docs', label: t('nav.docs', 'API Documentation'), icon: BookOpen },
   ];
 
   const secondaryNavItems = [
@@ -134,17 +136,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
       : null);
 
   const { isStarter, isEnterprise, canUseCustomDomain, canUseLoyalty, canUseDeveloperApi } = usePlanAccess();
-  const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN' || userRole === 'MERCHANT';
+  const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN';
 
   // Plan and Role-based authorization checker
   const isNavAuthorized = (navId: CMSView) => {
+    // Universal access
+    if (navId === 'docs') return true;
+    if (navId === 'settings') return true;
+
     // Hide plan-locked features from sidebar
     if (navId === 'domains' && !canUseCustomDomain) return false;
     if (navId === 'loyalty' && !canUseLoyalty) return false;
     if (navId === 'developer' && !canUseDeveloperApi) return false;
 
+    // True Owner and Store Admin have full access across all modules
     if (isOwnerOrAdmin) return true;
 
+    // Role preset shortcuts for specific job functions:
     if (userRole === 'STOCK_CHECKER') {
       return navId === 'products' || navId === 'categories' || navId === 'dashboard';
     }
@@ -154,11 +162,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
 
     if (userRole === 'SUPPORT') {
-      return navId === 'customers' || navId === 'orders' || navId === 'dashboard';
+      return navId === 'customers' || navId === 'orders' || navId === 'reviews' || navId === 'dashboard';
     }
 
     if (userRole === 'EDITOR') {
-      return navId === 'themes' || navId === 'pages' || navId === 'blog' || navId === 'navigation' || navId === 'dashboard';
+      return navId === 'themes' || navId === 'pages' || navId === 'blog' || navId === 'navigation' || navId === 'seo' || navId === 'dashboard';
     }
 
     if (userRole === 'MANAGER') {
@@ -169,29 +177,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
         navId === 'orders' ||
         navId === 'customers' ||
         navId === 'discounts' ||
-        navId === 'payments' ||
         navId === 'shipping' ||
         navId === 'marketing' ||
-        navId === 'blog'
+        navId === 'blog' ||
+        navId === 'reviews'
       );
     }
 
-    // Dynamic Permission Checks for CUSTOM / STAFF roles:
+    // Dynamic Permission Checks for CUSTOM / STAFF roles or granularly defined permissions:
     if (userPermissions) {
       if (navId === 'dashboard') return true;
-      if (navId === 'products' || navId === 'categories') {
-        return !!userPermissions.canManageProducts || !!userPermissions.canManageInventory;
-      }
+      if (navId === 'products') return !!userPermissions.canManageProducts;
+      if (navId === 'categories') return !!userPermissions.canManageProducts || !!userPermissions.canManageInventory;
       if (navId === 'orders') return !!userPermissions.canManageOrders;
       if (navId === 'customers') return !!userPermissions.canManageCustomers;
+      if (navId === 'reviews') return !!userPermissions.canManageCustomers || !!userPermissions.canManageProducts;
       if (navId === 'themes' || navId === 'pages' || navId === 'blog' || navId === 'navigation') {
         return !!userPermissions.canManageThemes;
       }
+      if (navId === 'seo') return !!userPermissions.canManageThemes || !!userPermissions.canManageSettings;
       if (navId === 'shipping') return !!userPermissions.canManageLogistics;
       if (navId === 'discounts' || navId === 'marketing') return !!userPermissions.canManageAnalytics || !!userPermissions.canManageProducts;
-      if (navId === 'store-setup' || navId === 'settings') return !!userPermissions.canManageSettings;
+      if (navId === 'store-setup') return !!userPermissions.canManageSettings;
       if (navId === 'tax' || navId === 'payments') return !!userPermissions.canManagePayments;
-      if (navId === 'team') return false; // Only admin/owner can manage team
+      if (navId === 'loyalty') return !!userPermissions.canManageCustomers && canUseLoyalty;
+      // Sensitive owner-only sections:
+      if (navId === 'team' || navId === 'billing' || navId === 'domains' || navId === 'developer') return false;
     }
 
     return false;

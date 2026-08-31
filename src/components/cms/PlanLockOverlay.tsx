@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Lock, Sparkles, Zap, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 interface PlanLockOverlayProps {
-  requiredPlan: 'GROWTH' | 'ENTERPRISE';
+  requiredPlan: 'GROWTH' | 'ENTERPRISE' | 'API';
   featureTitle: string;
   featureDescription: string;
   perks?: string[];
@@ -21,8 +21,18 @@ export const PlanLockOverlay: React.FC<PlanLockOverlayProps> = ({
 }) => {
   const router = useRouter();
 
-  const planName = requiredPlan === 'ENTERPRISE' ? 'Scale Enterprise' : 'Growth Pro';
-  const planPrice = requiredPlan === 'ENTERPRISE' ? '₹5,999/mo ($79)' : '₹1,999/mo ($29)';
+  const planName =
+    requiredPlan === 'API'
+      ? 'API Tier'
+      : requiredPlan === 'ENTERPRISE'
+      ? 'Scale Enterprise'
+      : 'Growth Pro';
+  const planPrice =
+    requiredPlan === 'API'
+      ? '₹1,000/mo ($1,000)'
+      : requiredPlan === 'ENTERPRISE'
+      ? '₹5,999/mo ($79)'
+      : '₹1,999/mo ($29)';
 
   if (inline) {
     return (

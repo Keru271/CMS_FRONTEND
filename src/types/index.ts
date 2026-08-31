@@ -374,14 +374,31 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+export interface UserPreferences {
+  language?: string;
+  timezone?: string;
+  currency?: string;
+  defaultLandingView?: string;
+  interfaceDensity?: 'comfortable' | 'compact';
+  soundAlerts?: boolean;
+  themeMode?: 'light' | 'dark' | 'system';
+  emailOnNewOrder?: boolean;
+  emailOnLowStock?: boolean;
+  emailDailyDigest?: boolean;
+  emailOnCustomerReview?: boolean;
+}
+
 export interface MerchantUser {
   firstName: string;
   lastName: string;
   mobileNumber: string;
   email: string;
+  phone?: string;
   password?: string;
   role?: StoreMemberRole | string;
   customRoleTitle?: string | null;
+  preferences?: UserPreferences;
+  preferencesJson?: string | null;
   permissions?: {
     canManageProducts?: boolean;
     canManageInventory?: boolean;
@@ -1085,7 +1102,7 @@ export interface PaymentTransactionsSummary {
 
 // ── Price Tiers & Store Billing Types ──────────────────────────────────────
 export interface PriceTierData {
-  id: 'STARTER' | 'GROWTH' | 'ENTERPRISE';
+  id: 'STARTER' | 'GROWTH' | 'ENTERPRISE' | 'AGENCY' | 'API' | string;
   name: string;
   badge: string;
   description: string;
@@ -1127,6 +1144,19 @@ export interface StoreSubscriptionData {
   planPaymentMethodDetails: string;
   planStatus: 'ACTIVE' | 'TRIAL' | 'PAST_DUE' | 'CANCELLED' | string;
   planTransactionFeePercent: number;
+  apiPlanActive?: boolean;
+  apiPlanStatus?: string;
+  apiPlanRenewsAt?: string | null;
+  apiPlanStartedAt?: string | null;
+  apiTier?: {
+    active: boolean;
+    status: string;
+    name?: string;
+    priceMonthly?: number;
+    currency?: string;
+    startedAt?: string | null;
+    renewsAt?: string | null;
+  };
   usage: {
     products: {
       current: number;

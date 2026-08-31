@@ -152,12 +152,70 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setStoreStatus(currentStatus);
         setIsSuspended(currentStatus === 'SUSPENDED');
 
+        // Determine the user's role and permissions for currentActiveStore
+        const isOwner = ownedStores.some((s) => s.id === currentActiveStore.id);
+        const activeMembership = (backendUser.storeMemberships || []).find(
+          (m) => m.storeId === currentActiveStore.id || m.store?.id === currentActiveStore.id
+        ) || (backendUser.storeMemberships && backendUser.storeMemberships[0]);
+
+        let effectiveRole = isOwner
+          ? 'OWNER'
+          : activeMembership
+          ? (activeMembership.role || 'STAFF').toUpperCase()
+          : (backendUser.role || 'STAFF').toUpperCase();
+
+        let effectiveTitle = isOwner
+          ? 'Store Owner'
+          : activeMembership?.customRoleTitle || backendUser.customRoleTitle || effectiveRole;
+
+        let effectivePermissions = isOwner || effectiveRole === 'ADMIN'
+          ? {
+              canManageProducts: true,
+              canManageInventory: true,
+              canManageOrders: true,
+              canManageCustomers: true,
+              canManageThemes: true,
+              canManageSettings: true,
+              canManagePayments: true,
+              canManageLogistics: true,
+              canManageAnalytics: true,
+            }
+          : activeMembership
+          ? {
+              canManageProducts: !!activeMembership.canManageProducts,
+              canManageInventory: !!activeMembership.canManageInventory,
+              canManageOrders: !!activeMembership.canManageOrders,
+              canManageCustomers: !!activeMembership.canManageCustomers,
+              canManageThemes: !!activeMembership.canManageThemes,
+              canManageSettings: !!activeMembership.canManageSettings,
+              canManagePayments: !!activeMembership.canManagePayments,
+              canManageLogistics: !!activeMembership.canManageLogistics,
+              canManageAnalytics: !!activeMembership.canManageAnalytics,
+            }
+          : {
+              canManageProducts: !!(backendUser as any).permissionsProducts,
+              canManageInventory: !!(backendUser as any).permissionsProducts,
+              canManageOrders: !!(backendUser as any).permissionsOrders,
+              canManageCustomers: !!(backendUser as any).permissionsCustomers,
+              canManageThemes: !!(backendUser as any).permissionsThemes,
+              canManageSettings: !!(backendUser as any).permissionsSettings,
+              canManagePayments: !!(backendUser as any).permissionsPayments,
+              canManageLogistics: false,
+              canManageAnalytics: !!(backendUser as any).permissionsAnalytics,
+            };
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user_role', effectiveRole);
+          localStorage.setItem('user_permissions', JSON.stringify(effectivePermissions));
+        }
+
         const session = cmsService.getMerchantSession();
         const updatedSession: MerchantOnboardingData = {
           merchant: {
             ...user,
-            ...(session?.merchant || {}),
-            role: backendUser.role,
+            role: effectiveRole,
+            customRoleTitle: effectiveTitle,
+            permissions: effectivePermissions,
           },
           store: {
             id: currentActiveStore.id,

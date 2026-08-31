@@ -449,6 +449,18 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                   type="button"
                   onClick={() => {
                     setIsUserMenuOpen(false);
+                    router.push('/settings?tab=preferences');
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-xs text-[#191a1b] hover:bg-[#fdf1ef] rounded-lg transition-colors flex items-center gap-2 cursor-pointer font-medium"
+                >
+                  <Sliders className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{t('nav.user_preferences', 'User Preferences & Profile')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
                     setIsCreateStoreModalOpen(true);
                   }}
                   className="w-full px-3 py-1.5 text-left text-xs text-[#191a1b] hover:bg-[#fdf1ef] rounded-lg transition-colors flex items-center gap-2 cursor-pointer font-medium"

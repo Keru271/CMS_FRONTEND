@@ -23,6 +23,7 @@ import {
   HelpCircle,
   ExternalLink,
   Lock,
+  Code2,
   QrCode,
   Smartphone,
   Globe,
@@ -93,6 +94,8 @@ export const BillingStudio: React.FC = () => {
     loadBillingData();
   }, []);
 
+  const [isProcessingApiTier, setIsProcessingApiTier] = useState(false);
+
   const loadBillingData = async () => {
     setIsLoading(true);
     try {
@@ -100,7 +103,7 @@ export const BillingStudio: React.FC = () => {
         cmsService.getPriceTiers(),
         cmsService.getStoreSubscription(),
       ]);
-      setTiers(tiersRes.tiers || []);
+      setTiers((tiersRes.tiers || []).filter((t: any) => t.id !== 'API'));
       setSubscription(subRes);
       if (subRes.billingCycle) {
         setBillingCycle(subRes.billingCycle as any);
@@ -121,6 +124,35 @@ export const BillingStudio: React.FC = () => {
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleSubscribeApiTier = async () => {
+    setIsProcessingApiTier(true);
+    try {
+      const res = await cmsService.subscribeApiTier({
+        paymentMethod: customerRegion === 'INDIA' ? 'RAZORPAY_UPI' : 'STRIPE_CARD',
+      });
+      showToast(`🎉 ${res.message}`, 'success');
+      await loadBillingData();
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to activate API Tier', 'error');
+    } finally {
+      setIsProcessingApiTier(false);
+    }
+  };
+
+  const handleCancelApiTier = async () => {
+    if (!confirm('Are you sure you want to cancel the API Tier? Developer API access will be deactivated, but your base store plan remains unaffected.')) return;
+    setIsProcessingApiTier(true);
+    try {
+      const res = await cmsService.cancelApiTier();
+      showToast(`ℹ️ ${res.message}`, 'success');
+      await loadBillingData();
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to cancel API Tier', 'error');
+    } finally {
+      setIsProcessingApiTier(false);
+    }
   };
 
   // Open Checkout or Directly Activate Free Tier
@@ -765,6 +797,105 @@ export const BillingStudio: React.FC = () => {
             </div>
           );
         })}
+      </div>
+
+      {/* ── DEVELOPER API TIER ADD-ON (1,000/mo) ────────────────────────── */}
+      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/40 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-3 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/40 flex items-center gap-1.5">
+                <Code2 className="w-3.5 h-3.5" />
+                Developer API Add-on Tier
+              </span>
+              {subscription?.apiPlanActive ? (
+                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[11px] flex items-center gap-1.5 border border-emerald-500/40">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Active • API Access Unlocked
+                </span>
+              ) : (
+                <span className="px-3 py-1 rounded-full bg-slate-800 text-slate-400 font-bold text-[11px] border border-slate-700">
+                  Not Subscribed
+                </span>
+              )}
+            </div>
+
+            <div>
+              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
+                <span>API Tier (1,000 / month)</span>
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed">
+                The API Tier is a dedicated add-on exclusively for Developer API access. Purchasing it unlocks the entire <code className="text-indigo-400 font-mono bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-800/60">/api/v1/*</code> REST engine, API keys, and Webhooks <strong>without altering your current base plan</strong> (your store remains on {subscription?.planConfig?.name || subscription?.plan || 'Starter'}).
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs text-slate-200">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Full /api/v1 Storefront REST Catalog</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Public Storefront Keys (pk_live_...)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Real-Time Webhooks & HMAC Signatures</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Preserves Current Base Store Quotas</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full lg:w-auto flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-4 p-5 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 shrink-0">
+            <div>
+              <div className="text-xs text-indigo-300 font-bold uppercase tracking-wider">Add-on Price</div>
+              <div className="text-3xl font-black text-white mt-0.5">
+                {customerRegion === 'INDIA' ? '₹1,000' : '$1,000'}
+                <span className="text-xs font-normal text-slate-400"> / month</span>
+              </div>
+              {subscription?.apiPlanActive && subscription.apiPlanRenewsAt && (
+                <div className="text-[11px] text-emerald-300 mt-1">
+                  Renews: {new Date(subscription.apiPlanRenewsAt).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+
+            <div className="w-full sm:w-auto">
+              {subscription?.apiPlanActive ? (
+                <button
+                  type="button"
+                  disabled={isProcessingApiTier}
+                  onClick={handleCancelApiTier}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {isProcessingApiTier ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Cancel API Add-on</span>}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isProcessingApiTier}
+                  onClick={handleSubscribeApiTier}
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-500/30 transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                >
+                  {isProcessingApiTier ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4 fill-current text-amber-300" />
+                      <span>Activate API Tier (1,000/mo)</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* BILLING & INVOICES HISTORY */}
