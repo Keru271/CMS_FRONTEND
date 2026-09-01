@@ -199,7 +199,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       if (navId === 'shipping') return !!userPermissions.canManageLogistics;
       if (navId === 'discounts' || navId === 'marketing') return !!userPermissions.canManageAnalytics || !!userPermissions.canManageProducts;
       if (navId === 'store-setup') return !!userPermissions.canManageSettings;
-      if (navId === 'tax' || navId === 'payments') return !!userPermissions.canManagePayments;
+      if (navId === 'tax' || navId === 'payments' || (navId as string) === 'payment') return !!userPermissions.canManagePayments;
       if (navId === 'loyalty') return !!userPermissions.canManageCustomers && canUseLoyalty;
       // Sensitive owner-only sections:
       if (navId === 'team' || navId === 'billing' || navId === 'domains' || navId === 'developer') return false;

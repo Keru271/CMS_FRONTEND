@@ -36,7 +36,7 @@ export const PageManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ALL' | 'SYSTEM' | 'BRAND' | 'POLICY' | 'CUSTOM' | 'DRAFT'>('ALL');
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
+  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
 
   // Page Builder States
   const [isPageBuilderOpen, setIsPageBuilderOpen] = useState(false);

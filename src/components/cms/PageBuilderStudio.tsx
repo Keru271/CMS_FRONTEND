@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { CMSPageData, PageFormData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import DragDropUpload from '@/src/components/ui/DragDropUpload';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -437,7 +438,22 @@ function BlockInspector({
         <>
           <Field label="Headline"><input className={inputCls} value={data.headline || ''} onChange={e => set('headline', e.target.value)} /></Field>
           <Field label="Subtitle"><textarea className={inputCls} rows={3} value={data.subtitle || ''} onChange={e => set('subtitle', e.target.value)} /></Field>
-          <Field label="Background Image URL"><input className={`${inputCls} font-mono`} value={data.backgroundImage || ''} onChange={e => set('backgroundImage', e.target.value)} /></Field>
+          <div className="space-y-1.5 pt-1 pb-1">
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">Hero Background Image</label>
+            <DragDropUpload
+              folder="hero"
+              fileType="IMAGE"
+              currentUrl={data.backgroundImage || undefined}
+              onUploadComplete={(url) => set('backgroundImage', url)}
+              hint="Drag & drop JPG, PNG, or WebP (max 10MB)"
+              previewShape="rect"
+              maxSizeMB={10}
+            />
+            <div className="pt-1">
+              <label className="block text-[10px] text-slate-500 font-medium mb-1">Or direct image URL</label>
+              <input className={`${inputCls} font-mono`} value={data.backgroundImage || ''} onChange={e => set('backgroundImage', e.target.value)} placeholder="https://images.unsplash.com/..." />
+            </div>
+          </div>
           <Field label="Dark Overlay (0–100%)">
             <div className="flex items-center gap-2">
               <input type="range" min={0} max={100} value={data.overlayOpacity ?? 50} onChange={e => set('overlayOpacity', Number(e.target.value))} className="flex-1 accent-indigo-500" />
@@ -494,8 +510,22 @@ function BlockInspector({
           <Field label="Tagline (optional)"><input className={inputCls} value={data.tagline || ''} onChange={e => set('tagline', e.target.value)} /></Field>
           <Field label="Heading"><input className={inputCls} value={data.title || ''} onChange={e => set('title', e.target.value)} /></Field>
           <Field label="Description"><textarea className={inputCls} rows={4} value={data.description || ''} onChange={e => set('description', e.target.value)} /></Field>
-          <Field label="Image URL"><input className={`${inputCls} font-mono`} value={data.imageUrl || ''} onChange={e => set('imageUrl', e.target.value)} /></Field>
-          {data.imageUrl && <img src={data.imageUrl} alt="preview" className="rounded-xl w-full h-24 object-cover border border-slate-800" />}
+          <div className="space-y-1.5 pt-1 pb-1">
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">Section Image</label>
+            <DragDropUpload
+              folder="pages"
+              fileType="IMAGE"
+              currentUrl={data.imageUrl || undefined}
+              onUploadComplete={(url) => set('imageUrl', url)}
+              hint="Drag & drop JPG, PNG, or WebP (max 10MB)"
+              previewShape="rect"
+              maxSizeMB={10}
+            />
+            <div className="pt-1">
+              <label className="block text-[10px] text-slate-500 font-medium mb-1">Or direct image URL</label>
+              <input className={`${inputCls} font-mono`} value={data.imageUrl || ''} onChange={e => set('imageUrl', e.target.value)} placeholder="https://images.unsplash.com/..." />
+            </div>
+          </div>
           <Field label="Image Position">
             <div className="flex gap-2">
               <button type="button" onClick={() => set('imagePosition', 'left')} className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.imagePosition === 'left' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>Left</button>
@@ -585,6 +615,22 @@ function BlockInspector({
           <Field label="Primary Button URL"><input className={`${inputCls} font-mono`} value={data.primaryButtonUrl || ''} onChange={e => set('primaryButtonUrl', e.target.value)} /></Field>
           <Field label="Secondary Button Text"><input className={inputCls} value={data.secondaryButtonText || ''} onChange={e => set('secondaryButtonText', e.target.value)} /></Field>
           <Field label="Secondary Button URL"><input className={`${inputCls} font-mono`} value={data.secondaryButtonUrl || ''} onChange={e => set('secondaryButtonUrl', e.target.value)} /></Field>
+          <div className="space-y-1.5 pt-1 pb-1">
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">Banner Background Image (optional)</label>
+            <DragDropUpload
+              folder="banners"
+              fileType="IMAGE"
+              currentUrl={data.backgroundImage || undefined}
+              onUploadComplete={(url) => set('backgroundImage', url)}
+              hint="Drag & drop JPG, PNG, or WebP (max 10MB)"
+              previewShape="rect"
+              maxSizeMB={10}
+            />
+            <div className="pt-1">
+              <label className="block text-[10px] text-slate-500 font-medium mb-1">Or direct image URL</label>
+              <input className={`${inputCls} font-mono`} value={data.backgroundImage || ''} onChange={e => set('backgroundImage', e.target.value)} placeholder="https://images.unsplash.com/..." />
+            </div>
+          </div>
           <Field label="Background Color">
             <div className="flex items-center gap-2">
               <input type="color" value={data.bgColor || '#0F172A'} onChange={e => set('bgColor', e.target.value)} className="w-8 h-8 rounded-lg border-0 bg-transparent cursor-pointer" />
@@ -842,10 +888,18 @@ function BlockPreview({ block }: { block: PageBlock }) {
   );
 
   if (type === 'cta_banner') return (
-    <div className="p-8 rounded-2xl text-white text-center space-y-4" style={{ backgroundColor: data.bgColor || '#0F172A' }}>
-      <h3 className="text-xl font-black">{data.headline}</h3>
-      <p className="text-xs opacity-70 max-w-md mx-auto">{data.subtitle}</p>
-      <div className="flex flex-wrap items-center justify-center gap-3">
+    <div
+      className="p-8 rounded-2xl text-white text-center space-y-4 relative overflow-hidden"
+      style={{
+        backgroundColor: data.bgColor || '#0F172A',
+        backgroundImage: data.backgroundImage ? `linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.65)), url(${data.backgroundImage})` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      <h3 className="text-xl font-black relative z-10">{data.headline}</h3>
+      <p className="text-xs opacity-80 max-w-md mx-auto relative z-10">{data.subtitle}</p>
+      <div className="flex flex-wrap items-center justify-center gap-3 relative z-10">
         {data.primaryButtonText && <span className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold shadow-lg">{data.primaryButtonText}</span>}
         {data.secondaryButtonText && <span className="px-5 py-2.5 rounded-xl bg-white/10 text-white text-xs font-bold">{data.secondaryButtonText}</span>}
       </div>
@@ -960,7 +1014,7 @@ function BlockPreview({ block }: { block: PageBlock }) {
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
+const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
 
 export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPage, isOpen, onClose, onSaved }) => {
   const [pageTitle, setPageTitle] = useState(initialPage?.title || 'New Page');

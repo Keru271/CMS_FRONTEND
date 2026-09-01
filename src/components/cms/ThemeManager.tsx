@@ -36,9 +36,11 @@ import {
   Layers,
   Heart,
   Truck,
-  RotateCcw,
   ShoppingBag,
+  Image as ImageIcon,
+  Trash2,
 } from 'lucide-react';
+import DragDropUpload from '@/src/components/ui/DragDropUpload';
 
 const PRESET_PALETTES = [
   { name: 'Royal Indigo', primary: '#4F46E5', secondary: '#64748B', background: '#FFFFFF', text: '#0F172A', accent: '#EC4899' },
@@ -219,6 +221,12 @@ const TEMPLATE_MOCK_DATA: Record<string, TemplateMockData> = {
   },
 };
 
+const normalizeFontValue = (val: string | undefined | null, defaultVal: string) => {
+  if (!val) return defaultVal;
+  const clean = val.split(',')[0].trim().replace(/^['"]+|['"]+$/g, '');
+  return clean || defaultVal;
+};
+
 export const ThemeManager: React.FC = () => {
   const [templates, setTemplates] = useState<StoreTemplate[]>([]);
   const [themeConfig, setThemeConfig] = useState<ThemeConfigData | null>(null);
@@ -235,10 +243,32 @@ export const ThemeManager: React.FC = () => {
   const [livePreviewPage, setLivePreviewPage] = useState<'/' | '/products' | '/cart'>('/');
   const [liveViewport, setLiveViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
-  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
+  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
 
   useEffect(() => {
     loadData();
+
+    // Dynamically preload Google fonts for Theme Studio live preview
+    const fontFamilies = [
+      'Inter:wght@300;400;600;700;900',
+      'Outfit:wght@300;400;600;700;900',
+      'Playfair+Display:wght@400;600;700;900',
+      'Plus+Jakarta+Sans:wght@300;400;600;700;800',
+      'Space+Grotesk:wght@400;600;700',
+      'Cinzel:wght@400;600;700;900',
+      'Roboto:wght@300;400;500;700',
+      'DM+Sans:wght@400;500;700',
+      'Lora:wght@400;600;700',
+    ].join('&family=');
+
+    const linkId = 'theme-studio-google-fonts';
+    if (!document.getElementById(linkId)) {
+      const link = document.createElement('link');
+      link.id = linkId;
+      link.rel = 'stylesheet';
+      link.href = `https://fonts.googleapis.com/css2?family=${fontFamilies}&display=swap`;
+      document.head.appendChild(link);
+    }
   }, []);
 
   const loadData = async () => {
@@ -338,6 +368,9 @@ export const ThemeManager: React.FC = () => {
         className="min-h-full flex flex-col justify-between text-slate-900 transition-colors duration-200"
         style={{
           backgroundColor: config.themeBackgroundColor || '#FAFAFA',
+          backgroundImage: config.themeBackgroundImage ? `url('${config.themeBackgroundImage}')` : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           color: config.themeTextColor || '#0F172A',
           fontFamily: config.themeBodyFont || 'Inter, sans-serif',
         }}
@@ -1088,6 +1121,56 @@ export const ThemeManager: React.FC = () => {
                     </div>
                   ))}
                 </div>
+
+                {/* Store Background Image Drag & Drop */}
+                <div className="pt-4 border-t border-slate-100 dark:border-border space-y-3">
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-indigo-600" />
+                      <span>Store Background Image</span>
+                    </h3>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      Upload an optional canvas background texture, wallpaper, or brand hero pattern.
+                    </p>
+                  </div>
+
+                  <DragDropUpload
+                    folder="backgrounds"
+                    fileType="IMAGE"
+                    currentUrl={themeConfig.themeBackgroundImage || undefined}
+                    onUploadComplete={(url) => {
+                      handleConfigChange('themeBackgroundImage', url || null);
+                      if (url) showToast('Background image uploaded successfully!', 'success');
+                    }}
+                    hint="Drag & drop JPG, PNG, or WebP (max 10MB)"
+                    previewShape="rect"
+                    maxSizeMB={10}
+                  />
+
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                      Or paste a direct image URL
+                    </label>
+                    <input
+                      type="url"
+                      value={themeConfig.themeBackgroundImage || ''}
+                      onChange={(e) => handleConfigChange('themeBackgroundImage', e.target.value)}
+                      placeholder="https://images.unsplash.com/... or /uploads/bg.webp"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {themeConfig.themeBackgroundImage && (
+                    <button
+                      type="button"
+                      onClick={() => handleConfigChange('themeBackgroundImage', null)}
+                      className="text-xs font-bold text-rose-500 hover:text-rose-600 transition flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove background image</span>
+                    </button>
+                  )}
+                </div>
               </div>
             )}
             {activeTab === 'typography' && (
@@ -1105,16 +1188,16 @@ export const ThemeManager: React.FC = () => {
                       Heading Font Family
                     </label>
                     <select
-                      value={themeConfig.themeHeadingFont}
+                      value={normalizeFontValue(themeConfig.themeHeadingFont, 'Inter')}
                       onChange={(e) => handleConfigChange('themeHeadingFont', e.target.value)}
                       className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="Inter, sans-serif">Inter (Modern & Clean)</option>
-                      <option value="Outfit, sans-serif">Outfit (Geometric & Tech)</option>
-                      <option value="Playfair Display, serif">Playfair Display (Editorial Luxury)</option>
-                      <option value="Plus Jakarta Sans, sans-serif">Plus Jakarta Sans (High-End SaaS)</option>
-                      <option value="Space Grotesk, sans-serif">Space Grotesk (Brutalist Streetwear)</option>
-                      <option value="Cinzel, serif">Cinzel (Regal & Classical)</option>
+                      <option value="Inter">Inter (Modern & Clean)</option>
+                      <option value="Outfit">Outfit (Geometric & Tech)</option>
+                      <option value="Playfair Display">Playfair Display (Editorial Luxury)</option>
+                      <option value="Plus Jakarta Sans">Plus Jakarta Sans (High-End SaaS)</option>
+                      <option value="Space Grotesk">Space Grotesk (Brutalist Streetwear)</option>
+                      <option value="Cinzel">Cinzel (Regal & Classical)</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
@@ -1122,14 +1205,16 @@ export const ThemeManager: React.FC = () => {
                       Body Copy Font Family
                     </label>
                     <select
-                      value={themeConfig.themeBodyFont}
+                      value={normalizeFontValue(themeConfig.themeBodyFont, 'Inter')}
                       onChange={(e) => handleConfigChange('themeBodyFont', e.target.value)}
                       className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="Inter, sans-serif">Inter (Highly Readable)</option>
-                      <option value="Roboto, sans-serif">Roboto (Neutral & Balanced)</option>
-                      <option value="DM Sans, sans-serif">DM Sans (Friendly & Minimal)</option>
-                      <option value="Lora, serif">Lora (Warm & Editorial)</option>
+                      <option value="Inter">Inter (Highly Readable)</option>
+                      <option value="Roboto">Roboto (Neutral & Balanced)</option>
+                      <option value="DM Sans">DM Sans (Friendly & Minimal)</option>
+                      <option value="Lora">Lora (Warm & Editorial)</option>
+                      <option value="Plus Jakarta Sans">Plus Jakarta Sans (High-End Modern)</option>
+                      <option value="Outfit">Outfit (Clean & Geometric)</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">

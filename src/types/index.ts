@@ -459,6 +459,7 @@ export interface ThemeConfigData {
   themeBackgroundColor: string;
   themeTextColor: string;
   themeAccentColor: string;
+  themeBackgroundImage?: string | null;
   themeHeadingFont: string;
   themeBodyFont: string;
   themeFontSize: string;

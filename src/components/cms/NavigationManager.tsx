@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { CMSMenuData, CMSMenuItem, MegaMenuConfig } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import DragDropUpload from '@/src/components/ui/DragDropUpload';
 import {
   Compass,
   Plus,
@@ -894,18 +895,30 @@ export const NavigationManager: React.FC = () => {
                         />
                       </div>
 
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <label className="block text-[11px] font-bold text-indigo-900 dark:text-indigo-200">
-                          Banner Image URL
+                          Banner Promotional Image
                         </label>
-                        <input
-                          type="text"
-                          value={itemFormData.bannerImage}
-                          onChange={(e) =>
-                            setItemFormData({ ...itemFormData, bannerImage: e.target.value })
+                        <DragDropUpload
+                          currentUrl={itemFormData.bannerImage}
+                          onUploadComplete={(url) =>
+                            setItemFormData({ ...itemFormData, bannerImage: url })
                           }
-                          className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-card text-xs font-mono"
+                          folder="navigation"
+                          previewShape="rectangle"
+                          helperText="Drag & drop promotion card banner (JPEG, PNG, WebP)"
                         />
+                        <div className="pt-1">
+                          <input
+                            type="text"
+                            placeholder="Or paste banner image URL..."
+                            value={itemFormData.bannerImage}
+                            onChange={(e) =>
+                              setItemFormData({ ...itemFormData, bannerImage: e.target.value })
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-card text-xs font-mono"
+                          />
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">

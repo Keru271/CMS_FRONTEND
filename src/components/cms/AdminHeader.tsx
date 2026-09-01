@@ -55,7 +55,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
   const currentStoreName = activeStore?.name || merchantData?.store?.storeName || 'STATAMIC STORE';
   const currentCurrency = activeStore?.currency || merchantData?.store?.currency || 'INR';
-  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
+  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
 
   // Close menus when clicking outside
   useEffect(() => {

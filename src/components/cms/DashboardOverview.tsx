@@ -164,12 +164,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const onboarding = stats.onboardingProgress || {
     percentage: stats.totalProducts > 0 ? 80 : 50,
     items: [
-      { id: '1', label: 'Store information', completed: true },
-      { id: '2', label: 'Add products', completed: (stats.totalProducts || 0) > 0 },
-      { id: '3', label: 'Choose template', completed: true },
-      { id: '4', label: 'Configure payment', completed: true },
-      { id: '5', label: 'Configure shipping', completed: true },
-      { id: '6', label: 'Connect domain', completed: false, actionUrl: '/settings' },
+      { id: '1', label: 'Store information', completed: true, actionUrl: '/store-setup' },
+      { id: '2', label: 'Add products', completed: (stats.totalProducts || 0) > 0, actionUrl: '/products' },
+      { id: '3', label: 'Choose template', completed: true, actionUrl: '/themes' },
+      { id: '4', label: 'Configure payment', completed: true, actionUrl: '/payments' },
+      { id: '5', label: 'Configure shipping', completed: true, actionUrl: '/shipping' },
+      { id: '6', label: 'Connect domain', completed: false, actionUrl: '/domains' },
       { id: '7', label: 'Launch store', completed: false, actionUrl: '/store-setup' },
     ],
   };

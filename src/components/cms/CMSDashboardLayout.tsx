@@ -144,7 +144,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
         return !!userPermissions.canManageAnalytics || !!userPermissions.canManageProducts;
       }
       if (path.startsWith('/store-setup')) return !!userPermissions.canManageSettings;
-      if (path.startsWith('/tax') || path.startsWith('/payments')) return !!userPermissions.canManagePayments;
+      if (path.startsWith('/tax') || path.startsWith('/payments') || path.startsWith('/payment')) return !!userPermissions.canManagePayments;
       if (path.startsWith('/loyalty')) return !!userPermissions.canManageCustomers;
     }
 
