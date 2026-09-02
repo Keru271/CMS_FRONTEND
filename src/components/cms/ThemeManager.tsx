@@ -39,6 +39,7 @@ import {
   ShoppingBag,
   Image as ImageIcon,
   Trash2,
+  RotateCcw,
 } from 'lucide-react';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
 

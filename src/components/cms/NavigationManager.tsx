@@ -905,8 +905,8 @@ export const NavigationManager: React.FC = () => {
                             setItemFormData({ ...itemFormData, bannerImage: url })
                           }
                           folder="navigation"
-                          previewShape="rectangle"
-                          helperText="Drag & drop promotion card banner (JPEG, PNG, WebP)"
+                          previewShape="rect"
+                          hint="Drag & drop promotion card banner (JPEG, PNG, WebP)"
                         />
                         <div className="pt-1">
                           <input

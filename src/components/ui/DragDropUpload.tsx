@@ -17,12 +17,13 @@ interface DragDropUploadProps {
   label?: string;
   /** Helper text shown below the zone */
   hint?: string;
+  helperText?: string;
   /** Max file size in MB (default 5) */
   maxSizeMB?: number;
   /** Accepted MIME types string for the file input */
   accept?: string;
-  /** Shape of the preview: 'rect' | 'square' */
-  previewShape?: 'rect' | 'square' | 'favicon';
+  /** Shape of the preview: 'rect' | 'rectangle' | 'square' | 'favicon' */
+  previewShape?: 'rect' | 'rectangle' | 'square' | 'favicon';
   /** Optional className override for the outer container */
   className?: string;
 }
@@ -34,6 +35,7 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({
   fileType = 'IMAGE',
   label,
   hint,
+  helperText,
   maxSizeMB = 5,
   accept = 'image/png,image/jpeg,image/webp,image/gif,image/svg+xml',
   previewShape = 'rect',
@@ -235,8 +237,8 @@ const DragDropUpload: React.FC<DragDropUploadProps> = ({
 
       {/* Hint + Clear button row */}
       <div className="flex items-center justify-between">
-        {hint && (
-          <p className="text-[10px] text-slate-400">{hint}</p>
+        {(hint || helperText) && (
+          <p className="text-[10px] text-slate-400">{hint || helperText}</p>
         )}
         {previewSrc && !isUploading && (
           <button
