@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -235,19 +235,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return false;
   };
 
+  // Prevent background scrolling on mobile when drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
+
   return (
     <>
       {/* Mobile Drawer Overlay Backdrop */}
       {mobileOpen && (
         <div
           onClick={onCloseMobile}
-          className="fixed inset-0 bg-[#191a1b]/40 backdrop-blur-xs z-30 md:hidden animate-in fade-in"
+          className="fixed inset-0 bg-[#191a1b]/50 backdrop-blur-xs z-40 md:hidden animate-in fade-in duration-200"
         />
       )}
 
       <aside
-        className={`bg-[#fdf1ef] border-r border-[#cbd5e0]/70 h-screen max-h-screen flex flex-col transition-all duration-300 z-40 p-3 sm:p-4 ${
-          mobileOpen ? 'fixed inset-y-0 left-0 w-64 shadow-2xl bg-[#ffffff]' : 'hidden md:flex sticky top-0'
+        className={`bg-[#fdf1ef] border-r border-[#cbd5e0]/70 h-screen max-h-screen flex flex-col transition-all duration-300 p-3 sm:p-4 pb-safe pb-4 ${
+          mobileOpen
+            ? 'fixed inset-y-0 left-0 w-72 sm:w-80 max-w-[85vw] shadow-2xl bg-[#ffffff] z-50 animate-in slide-in-from-left duration-200'
+            : 'hidden md:flex sticky top-0 z-20'
         } ${collapsed ? 'md:w-20' : 'md:w-60'}`}
       >
         {/* Top Brand Header (Pinned) */}

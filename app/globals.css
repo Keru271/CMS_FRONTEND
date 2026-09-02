@@ -146,3 +146,21 @@ body {
   background-color: rgba(94, 90, 90, 0.4);
 }
 
+/* Hide Scrollbar for Horizontal Navigation Pill Bars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Safe area padding for mobile notches / home bars */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+

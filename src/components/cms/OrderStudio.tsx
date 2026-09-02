@@ -356,7 +356,7 @@ export const OrderStudio: React.FC = () => {
       {/* ORDERS DATA TABLE */}
       <div className="rounded-3xl border border-slate-200/80 dark:border-border bg-white dark:bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse min-w-[750px]">
             <thead>
               <tr className="bg-slate-50 dark:bg-accent border-b border-slate-200/80 dark:border-border text-slate-500 font-extrabold uppercase text-[10px] tracking-wider">
                 <th className="py-4 px-6">Order ID</th>
@@ -454,18 +454,18 @@ export const OrderStudio: React.FC = () => {
 
       {/* ORDER DETAILS DRAWER / MODAL */}
       {isDetailsOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden my-8">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden my-4 sm:my-8 max-h-[92vh] flex flex-col">
             {/* Header */}
-            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-black text-lg">
+            <div className="p-4 sm:p-6 bg-slate-900 text-white flex items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-black text-lg shrink-0">
                   #
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-black text-lg text-white">Order #{selectedOrder.orderNumber}</h3>
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-black text-base sm:text-lg text-white truncate">Order #{selectedOrder.orderNumber}</h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase shrink-0">
                       {selectedOrder.orderStatus}
                     </span>
                   </div>
@@ -475,14 +475,14 @@ export const OrderStudio: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsDetailsOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white"
+                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Content Drawer */}
-            <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto">
               {/* STATUS CHANGE ACTION BAR */}
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-700">

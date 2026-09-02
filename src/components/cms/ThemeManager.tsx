@@ -243,6 +243,7 @@ export const ThemeManager: React.FC = () => {
   const [livePreviewTemplate, setLivePreviewTemplate] = useState<StoreTemplate | null>(null);
   const [livePreviewPage, setLivePreviewPage] = useState<'/' | '/products' | '/cart'>('/');
   const [liveViewport, setLiveViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [mobileEditorView, setMobileEditorView] = useState<'editor' | 'preview'>('editor');
 
   const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
 
@@ -1007,14 +1008,14 @@ export const ThemeManager: React.FC = () => {
                       <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{tmpl.description}</p>
                     </div>
                   </div>
-                  <div className="p-4 pt-0 flex items-center gap-2 border-t border-slate-100 dark:border-border mt-3">
+                  <div className="p-4 pt-0 flex flex-wrap sm:flex-nowrap items-center gap-2 border-t border-slate-100 dark:border-border mt-3">
                      <button
                       type="button"
                       onClick={() => {
                         setPreviewTemplate(tmpl);
                         setPreviewPage('home');
                       }}
-                      className="flex-1 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black flex items-center justify-center gap-1.5 transition-all"
+                      className="flex-1 min-w-[95px] py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black flex items-center justify-center gap-1.5 transition-all"
                     >
                       <Eye className="w-3.5 h-3.5" />
                       <span>Mock Preview</span>
@@ -1055,8 +1056,37 @@ export const ThemeManager: React.FC = () => {
         </div>
       )}
       {activeTab !== 'templates' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-5 space-y-6">
+        <div className="space-y-4">
+          {/* Mobile/Tablet View Switcher (< lg) */}
+          <div className="flex lg:hidden items-center justify-center p-1 bg-slate-100 dark:bg-accent rounded-2xl max-w-sm mx-auto shadow-xs">
+            <button
+              type="button"
+              onClick={() => setMobileEditorView('editor')}
+              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                mobileEditorView === 'editor'
+                  ? 'bg-white dark:bg-card text-indigo-600 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
+            >
+              <Palette className="w-3.5 h-3.5" />
+              <span>Theme Controls</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileEditorView('preview')}
+              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                mobileEditorView === 'preview'
+                  ? 'bg-white dark:bg-card text-indigo-600 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Live Canvas</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className={`lg:col-span-5 space-y-6 ${mobileEditorView === 'preview' ? 'hidden lg:block' : 'block'}`}>
             {activeTab === 'colors' && (
               <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
                 <div className="border-b border-slate-100 dark:border-border pb-3">
@@ -1342,7 +1372,7 @@ export const ThemeManager: React.FC = () => {
               </div>
             )}
           </div>
-          <div className="lg:col-span-7 sticky top-6 space-y-3">
+          <div className={`lg:col-span-7 static lg:sticky lg:top-6 space-y-3 ${mobileEditorView === 'editor' ? 'hidden lg:block' : 'block'}`}>
             <div className="flex items-center justify-between px-2">
               <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                 <Eye className="w-4 h-4 text-indigo-600" />
@@ -1373,6 +1403,7 @@ export const ThemeManager: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
       )}
       {/* ── LIVE HOSTED SITE PREVIEW MODAL ─────────────────────────────── */}
       {livePreviewTemplate && (

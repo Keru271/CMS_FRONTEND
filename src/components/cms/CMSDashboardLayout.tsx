@@ -186,7 +186,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
         />
 
         {/* Dynamic Section Page Content */}
-        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto space-y-6">
+        <main className="flex-1 p-3 sm:p-5 md:p-6 lg:p-8 max-w-[1400px] w-full mx-auto space-y-4 sm:space-y-6 pb-safe">
           {isLoading ? (
             <div className="flex items-center justify-center py-32">
               <div className="flex flex-col items-center gap-3">

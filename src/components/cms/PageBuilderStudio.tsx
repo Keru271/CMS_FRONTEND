@@ -1046,6 +1046,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
   const [leftPanel, setLeftPanel] = useState<'library' | 'layers'>('library');
   const [showPageSettings, setShowPageSettings] = useState(false);
   const [showAddPanel, setShowAddPanel] = useState(false);
+  const [mobileWorkspaceView, setMobileWorkspaceView] = useState<'blocks' | 'canvas' | 'inspector'>('canvas');
 
   // Sync state whenever initialPage changes or modal opens
   useEffect(() => {
@@ -1281,6 +1282,48 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
         </div>
       </header>
 
+      {/* Mobile/Tablet Workspace View Switcher (< xl) */}
+      <div className="xl:hidden bg-slate-900/95 border-b border-slate-800 px-3 py-2 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 max-w-sm w-full">
+          <button
+            type="button"
+            onClick={() => setMobileWorkspaceView('blocks')}
+            className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+              mobileWorkspaceView === 'blocks'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Grid3X3 className="w-3.5 h-3.5" />
+            <span>Blocks</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileWorkspaceView('canvas')}
+            className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+              mobileWorkspaceView === 'canvas'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>Canvas</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileWorkspaceView('inspector')}
+            className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+              mobileWorkspaceView === 'inspector'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span>Inspector</span>
+          </button>
+        </div>
+      </div>
+
       {/* ── PAGE SETTINGS BAR ─────────────────────────────────────────── */}
       {showPageSettings && (
         <div className="bg-slate-900/95 border-b border-slate-800 px-6 py-4 flex flex-wrap items-start gap-4 shrink-0">
@@ -1315,7 +1358,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
       <div className="flex-1 flex overflow-hidden">
 
         {/* LEFT PANEL: Library + Layers */}
-        <aside className="w-72 border-r border-slate-800 bg-slate-900/90 flex flex-col shrink-0 overflow-hidden">
+        <aside className={`w-full xl:w-72 border-r border-slate-800 bg-slate-900/90 flex flex-col shrink-0 overflow-hidden ${mobileWorkspaceView === 'blocks' ? 'flex' : 'hidden xl:flex'}`}>
           {/* Panel tabs */}
           <div className="flex border-b border-slate-800 shrink-0">
             <button type="button" onClick={() => setLeftPanel('library')} className={`flex-1 py-3 text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition ${leftPanel === 'library' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-slate-800/50' : 'text-slate-500 hover:text-slate-300'}`}>
@@ -1350,7 +1393,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
                     <button
                       key={def.type}
                       type="button"
-                      onClick={() => addBlock(def)}
+                      onClick={() => { addBlock(def); setMobileWorkspaceView('canvas'); }}
                       title={def.desc}
                       className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-indigo-500 hover:bg-indigo-950/30 text-left transition-all group space-y-1.5"
                     >
@@ -1387,7 +1430,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
                     onDragOver={e => onDragOver(e, idx)}
                     onDrop={e => onDrop(e, idx)}
                     onDragEnd={onDragEnd}
-                    onClick={() => setActiveBlockId(block.id)}
+                    onClick={() => { setActiveBlockId(block.id); setMobileWorkspaceView('inspector'); }}
                     className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500' : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'} ${dropIndex === idx ? 'border-t-2 border-t-indigo-400' : ''}`}
                   >
                     <GripVertical className="w-3 h-3 text-slate-600 shrink-0 cursor-grab" />
@@ -1413,7 +1456,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
         </aside>
 
         {/* CENTER: CANVAS */}
-        <main className="flex-1 bg-slate-950 overflow-hidden flex flex-col items-center justify-center p-4 sm:p-6 min-h-0">
+        <main className={`flex-1 bg-slate-950 overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4 md:p-6 min-h-0 ${mobileWorkspaceView === 'canvas' ? 'flex' : 'hidden xl:flex'}`}>
           {/* Viewport wrapper */}
           <div
             className={`transition-all duration-300 bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-800 w-full flex flex-col overflow-hidden ${
@@ -1476,6 +1519,13 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
                     {isActive && (
                       <div className="absolute top-0 right-0 z-20 flex items-center gap-1 bg-indigo-600 text-white rounded-bl-xl px-2 py-1">
                         <span className="text-[9px] font-black uppercase tracking-wider mr-1">{block.type.replace(/_/g, ' ')}</span>
+                        <button
+                          type="button"
+                          onClick={e => { e.stopPropagation(); setMobileWorkspaceView('inspector'); }}
+                          className="xl:hidden p-0.5 hover:bg-indigo-500 rounded text-[10px] font-bold px-1.5 bg-white/20 mr-1"
+                        >
+                          Edit
+                        </button>
                         <button type="button" onClick={e => { e.stopPropagation(); toggleVisible(block.id); }} className="p-0.5 hover:bg-indigo-500 rounded">
                           {block.isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                         </button>
@@ -1500,7 +1550,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
               <div className="p-6 border-t border-slate-100 flex justify-center bg-slate-50/50">
                 <button
                   type="button"
-                  onClick={() => { setLeftPanel('library'); }}
+                  onClick={() => { setLeftPanel('library'); setMobileWorkspaceView('blocks'); }}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-dashed border-slate-300 text-slate-500 hover:text-indigo-600 hover:border-indigo-400 bg-white shadow-xs text-xs font-bold transition cursor-pointer"
                 >
                   <Plus className="w-4 h-4" /> Add Next Block
@@ -1511,7 +1561,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
         </main>
 
         {/* RIGHT: INSPECTOR */}
-        <aside className="w-80 border-l border-slate-800 bg-slate-900/90 flex flex-col shrink-0 overflow-hidden">
+        <aside className={`w-full xl:w-80 border-l border-slate-800 bg-slate-900/90 flex flex-col shrink-0 overflow-hidden ${mobileWorkspaceView === 'inspector' ? 'flex' : 'hidden xl:flex'}`}>
           <div className="p-3.5 border-b border-slate-800 shrink-0">
             <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-2">
               <Settings className="w-4 h-4 text-indigo-400" />

@@ -53,8 +53,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   const userMenuRef = useRef<HTMLDivElement>(null);
   const langMenuRef = useRef<HTMLDivElement>(null);
 
-  const currentStoreName = activeStore?.name || merchantData?.store?.storeName || 'STATAMIC STORE';
-  const currentCurrency = activeStore?.currency || merchantData?.store?.currency || 'INR';
+  const currentStoreName = activeStore?.name || merchantData?.store?.storeName || 'No Store Setup';
+  const currentCurrency = activeStore?.currency || merchantData?.store?.currency || 'USD';
   const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
 
   // Close menus when clicking outside
@@ -94,9 +94,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   );
 
   return (
-    <header className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3 bg-[#fdf1ef]/80 backdrop-blur-md sticky top-0 z-30 border-b border-[#cbd5e0]/60">
+    <header className="px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3 bg-[#fdf1ef]/80 backdrop-blur-md sticky top-0 z-30 border-b border-[#cbd5e0]/60">
       {/* Left Store Selector Dropdown Pill */}
-      <div className="flex items-center gap-3 min-w-0" ref={storeMenuRef}>
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0" ref={storeMenuRef}>
         {onToggleMobileSidebar && (
           <button
             onClick={onToggleMobileSidebar}
@@ -108,17 +108,17 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         )}
 
         {/* Store Selector Pill & Dropdown */}
-        <div className="relative">
+        <div className="relative min-w-0">
           <button
             type="button"
             onClick={() => setIsStoreMenuOpen(!isStoreMenuOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#ffffff] border border-[#cbd5e0] shadow-xs hover:border-[#191a1b] transition-all cursor-pointer group"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#ffffff] border border-[#cbd5e0] shadow-xs hover:border-[#191a1b] transition-all cursor-pointer group max-w-full"
           >
             <span className="w-2 h-2 rounded-full bg-[#10b981] shrink-0 animate-pulse" />
-            <span className="text-xs font-sans font-bold text-[#191a1b] truncate max-w-[150px] sm:max-w-[200px]">
+            <span className="text-xs font-sans font-bold text-[#191a1b] truncate max-w-[90px] min-[400px]:max-w-[130px] sm:max-w-[200px]">
               {currentStoreName}
             </span>
-            <span className="px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-mono font-bold text-[#5e5a5a]">
+            <span className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-mono font-bold text-[#5e5a5a]">
               {currentCurrency}
             </span>
             <ChevronDown
@@ -130,7 +130,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
           {/* Multi-Store Dropdown Menu */}
           {isStoreMenuOpen && (
-            <div className="absolute left-0 mt-2 w-80 sm:w-96 bg-white border border-[#cbd5e0] rounded-2xl shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 space-y-2">
+            <div className="absolute left-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm bg-white border border-[#cbd5e0] rounded-2xl shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 space-y-2">
               {/* Dropdown Header */}
               <div className="flex items-center justify-between px-2 pb-2 border-b border-[#cbd5e0]/60">
                 <div className="flex items-center gap-1.5">
@@ -158,6 +158,13 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
               {/* Store List */}
               <div className="max-h-60 overflow-y-auto space-y-1 px-1">
+                {filteredStores.length === 0 && (
+                  <div className="py-6 text-center text-xs text-gray-500">
+                    <Store className="w-8 h-8 text-gray-400 mx-auto mb-2 opacity-50" />
+                    <p className="font-semibold text-gray-700">No stores created yet</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">Click below to setup and launch your store.</p>
+                  </div>
+                )}
                 {filteredStores.map((st) => {
                   const isActive = activeStore?.id === st.id;
                   const isSwitching = switchingStoreId === st.id;
@@ -245,15 +252,15 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       </div>
 
       {/* Header Actions Right */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Search Bar */}
-        <div className="relative w-32 sm:w-52">
-          <Search className="w-3.5 h-3.5 text-[#5e5a5a] absolute left-3 top-2.5" />
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        {/* Search Bar - expands on focus for mobile */}
+        <div className="relative w-24 min-[420px]:w-32 sm:w-52 focus-within:w-36 min-[420px]:focus-within:w-44 sm:focus-within:w-60 transition-all duration-300">
+          <Search className="w-3.5 h-3.5 text-[#5e5a5a] absolute left-2.5 sm:left-3 top-2.5" />
           <input
             type="text"
             placeholder={t('header.search_placeholder', 'Search CMS...')}
             onChange={(e) => onSearch && onSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#ffffff] border border-[#cbd5e0] text-xs font-sans text-[#191a1b] placeholder:text-[#beb9b3] outline-none focus:border-[#cbc2ea] focus:ring-2 focus:ring-[#cbc2ea]/40 transition-all"
+            className="w-full pl-7 sm:pl-8 pr-2 sm:pr-3 py-1.5 rounded-lg bg-[#ffffff] border border-[#cbd5e0] text-xs font-sans text-[#191a1b] placeholder:text-[#beb9b3] outline-none focus:border-[#cbc2ea] focus:ring-2 focus:ring-[#cbc2ea]/40 transition-all"
           />
         </div>
 
@@ -262,14 +269,14 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           <button
             type="button"
             onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#ffffff] border border-[#cbd5e0] text-[#191a1b] hover:border-[#191a1b] hover:bg-[#fdf1ef] transition-all cursor-pointer shadow-xs group"
+            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-[#ffffff] border border-[#cbd5e0] text-[#191a1b] hover:border-[#191a1b] hover:bg-[#fdf1ef] transition-all cursor-pointer shadow-xs group"
             title="Change CMS Regional Language / भाषा बदलें / மொழி மாற்றுக"
           >
-            <Globe className="w-3.5 h-3.5 text-emerald-600 group-hover:rotate-45 transition-transform" />
-            <span className="text-xs font-sans font-bold text-[#191a1b]">
+            <Globe className="w-3.5 h-3.5 text-emerald-600 group-hover:rotate-45 transition-transform shrink-0" />
+            <span className="text-xs font-sans font-bold text-[#191a1b] hidden min-[480px]:inline">
               {currentLanguageOption.nativeName}
             </span>
-            <span className="hidden lg:inline-block px-1 py-0.2 rounded bg-emerald-50 text-[10px] font-mono font-bold text-emerald-700">
+            <span className="px-1 py-0.2 rounded bg-emerald-50 text-[10px] font-mono font-bold text-emerald-700">
               {currentLanguageOption.badge}
             </span>
             <ChevronDown
@@ -281,7 +288,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
           {/* Language Menu Dropdown */}
           {isLangMenuOpen && (
-            <div className="absolute right-0 mt-2 w-72 bg-white border border-[#cbd5e0] rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 space-y-1">
+            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-72 max-w-xs bg-white border border-[#cbd5e0] rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 space-y-1">
               <div className="px-3 py-2 border-b border-[#cbd5e0]/60">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-[#191a1b] flex items-center gap-1.5">
@@ -415,7 +422,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
           {/* Dropdown Menu */}
           {isUserMenuOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-[#ffffff] border border-[#cbd5e0] rounded-2xl shadow-2xl p-2 z-50 space-y-1 animate-in fade-in zoom-in-95">
+            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-[#ffffff] border border-[#cbd5e0] rounded-2xl shadow-2xl p-2 z-50 space-y-1 animate-in fade-in zoom-in-95">
               <div className="px-3 py-2 border-b border-[#cbd5e0]/60">
                 <span className="text-xs font-sans font-bold text-[#191a1b] block">
                   {merchantData?.merchant?.firstName || 'Admin'} {merchantData?.merchant?.lastName || 'Owner'}

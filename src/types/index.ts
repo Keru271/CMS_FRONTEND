@@ -553,7 +553,7 @@ export interface CreateStorePayload {
 
 export interface MerchantOnboardingData {
   merchant: MerchantUser;
-  store?: StoreDetails;
+  store?: StoreDetails | null;
   selectedTemplate?: StoreTemplate;
   firstProduct?: ProductFormData;
 }
@@ -562,6 +562,9 @@ export interface BackendUserResponse {
   id: string;
   email: string;
   name: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
   role: string;
   customRoleTitle?: string | null;
   emailVerified: boolean;
@@ -596,7 +599,11 @@ export interface RegisterResponse {
   id: string;
   email: string;
   name: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
   role: string;
+  storeId?: string | null;
   emailVerified: boolean;
   verificationToken?: string | null;
 }

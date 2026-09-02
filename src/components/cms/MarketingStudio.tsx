@@ -63,12 +63,12 @@ export const MarketingStudio: React.FC = () => {
   });
 
   // UTM Builder State
-  const [utmUrl, setUtmUrl] = useState('https://omnistore.com/products/headphones');
-  const [utmSource, setUtmSource] = useState('google');
-  const [utmMedium, setUtmMedium] = useState('cpc');
-  const [utmCampaign, setUtmCampaign] = useState('summer_sale_2026');
-  const [utmTerm, setUtmTerm] = useState('wireless_headphones');
-  const [utmContent, setUtmContent] = useState('banner_ad_top');
+  const [utmUrl, setUtmUrl] = useState('');
+  const [utmSource, setUtmSource] = useState('');
+  const [utmMedium, setUtmMedium] = useState('');
+  const [utmCampaign, setUtmCampaign] = useState('');
+  const [utmTerm, setUtmTerm] = useState('');
+  const [utmContent, setUtmContent] = useState('');
   const [copiedUtm, setCopiedUtm] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -178,7 +178,9 @@ export const MarketingStudio: React.FC = () => {
   };
 
   // UTM GENERATOR COMPUTED
-  const generatedUtmUrl = `${utmUrl}?utm_source=${encodeURIComponent(utmSource)}&utm_medium=${encodeURIComponent(utmMedium)}&utm_campaign=${encodeURIComponent(utmCampaign)}${utmTerm ? `&utm_term=${encodeURIComponent(utmTerm)}` : ''}${utmContent ? `&utm_content=${encodeURIComponent(utmContent)}` : ''}`;
+  const generatedUtmUrl = utmUrl
+    ? `${utmUrl}${utmUrl.includes('?') ? '&' : '?'}utm_source=${encodeURIComponent(utmSource || 'source')}&utm_medium=${encodeURIComponent(utmMedium || 'medium')}&utm_campaign=${encodeURIComponent(utmCampaign || 'campaign')}${utmTerm ? `&utm_term=${encodeURIComponent(utmTerm)}` : ''}${utmContent ? `&utm_content=${encodeURIComponent(utmContent)}` : ''}`
+    : '';
 
   const handleCopyUtm = () => {
     navigator.clipboard.writeText(generatedUtmUrl);
@@ -283,7 +285,12 @@ export const MarketingStudio: React.FC = () => {
         <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Cart Recovery Revenue</span>
-            <span className="text-2xl font-black text-amber-500 block">$620.00</span>
+            <span className="text-2xl font-black text-amber-500 block">
+              ${abandonedCarts
+                .filter((c) => c.status === 'RECOVERED')
+                .reduce((acc, c) => acc + (c.cartSubtotal || 0), 0)
+                .toFixed(2)}
+            </span>
           </div>
           <ShoppingCart className="w-8 h-8 text-amber-400" />
         </div>
@@ -357,9 +364,20 @@ export const MarketingStudio: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-border font-medium text-slate-800 dark:text-slate-200">
-                {campaigns
-                  .filter((c) => (activeTab === 'CAMPAIGNS' ? true : c.channel === activeTab))
-                  .map((c) => (
+                {(() => {
+                  const filtered = campaigns.filter((c) => (activeTab === 'CAMPAIGNS' ? true : c.channel === activeTab));
+                  if (filtered.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={7} className="text-center py-16 text-slate-400">
+                          <Megaphone className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                          <span className="block text-slate-600 dark:text-slate-300 font-bold text-sm">No campaigns found</span>
+                          <span className="text-xs text-slate-400 font-normal">Create your first broadcast to start engaging your audience.</span>
+                        </td>
+                      </tr>
+                    );
+                  }
+                  return filtered.map((c) => (
                     <tr key={c.id} className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors">
                       <td className="py-4 px-6">
                         <div className="font-extrabold text-sm text-slate-900 dark:text-foreground">{c.title}</div>
@@ -391,7 +409,8 @@ export const MarketingStudio: React.FC = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  ));
+                })()}
               </tbody>
             </table>
           </div>
@@ -437,41 +456,51 @@ export const MarketingStudio: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-border font-medium text-slate-800 dark:text-slate-200">
-                {abandonedCarts.map((ac) => (
-                  <tr key={ac.id} className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="font-extrabold text-slate-900 dark:text-foreground">{ac.customerName}</div>
-                      <div className="text-[11px] font-mono text-indigo-600">{ac.customerEmail}</div>
-                    </td>
-                    <td className="py-4 px-6 font-bold">{ac.itemsCount} Items</td>
-                    <td className="py-4 px-6 font-black text-sm text-slate-900 dark:text-foreground">
-                      ${ac.cartSubtotal.toFixed(2)}
-                    </td>
-                    <td className="py-4 px-6 text-slate-500 font-semibold">{ac.abandonedAt}</td>
-                    <td className="py-4 px-6">
-                      <span className="px-2.5 py-1 rounded-xl bg-amber-100 font-mono font-black text-[10px] text-amber-800">
-                        {ac.recoveryDiscountCode || 'RECOVER10'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      {ac.status === 'EMAIL_SENT' ? (
-                        <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-[11px] font-extrabold inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Recovery Email Sent</span>
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleSendRecovery(ac.id)}
-                          className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[11px] inline-flex items-center gap-1 shadow-sm"
-                        >
-                          <Send className="w-3.5 h-3.5" />
-                          <span>Send Recovery Email</span>
-                        </button>
-                      )}
+                {abandonedCarts.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-16 text-slate-400">
+                      <ShoppingCart className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                      <span className="block text-slate-600 dark:text-slate-300 font-bold text-sm">No abandoned checkouts</span>
+                      <span className="text-xs text-slate-400 font-normal">Abandoned customer carts will automatically appear here once shoppers leave checkout.</span>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  abandonedCarts.map((ac) => (
+                    <tr key={ac.id} className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="font-extrabold text-slate-900 dark:text-foreground">{ac.customerName}</div>
+                        <div className="text-[11px] font-mono text-indigo-600">{ac.customerEmail}</div>
+                      </td>
+                      <td className="py-4 px-6 font-bold">{ac.itemsCount} Items</td>
+                      <td className="py-4 px-6 font-black text-sm text-slate-900 dark:text-foreground">
+                        ${ac.cartSubtotal.toFixed(2)}
+                      </td>
+                      <td className="py-4 px-6 text-slate-500 font-semibold">{ac.abandonedAt}</td>
+                      <td className="py-4 px-6">
+                        <span className="px-2.5 py-1 rounded-xl bg-amber-100 font-mono font-black text-[10px] text-amber-800">
+                          {ac.recoveryDiscountCode || 'RECOVER10'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        {ac.status === 'EMAIL_SENT' ? (
+                          <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-[11px] font-extrabold inline-flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Recovery Email Sent</span>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSendRecovery(ac.id)}
+                            className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[11px] inline-flex items-center gap-1 shadow-sm"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Send Recovery Email</span>
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -611,6 +640,7 @@ export const MarketingStudio: React.FC = () => {
                 type="url"
                 value={utmUrl}
                 onChange={(e) => setUtmUrl(e.target.value)}
+                placeholder="https://yourstore.com/products/example"
                 className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-bold"
               />
             </div>
@@ -664,7 +694,7 @@ export const MarketingStudio: React.FC = () => {
           <div className="p-5 rounded-2xl bg-slate-900 text-white space-y-3">
             <span className="text-[11px] font-black uppercase tracking-wider text-amber-400 block">Generated Campaign Tracking URL</span>
             <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-indigo-300 break-all">
-              {generatedUtmUrl}
+              {generatedUtmUrl || 'Enter your target URL and campaign parameters above to generate a tracking link.'}
             </div>
             <div className="flex justify-end">
               <button

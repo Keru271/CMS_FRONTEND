@@ -296,7 +296,7 @@ export const CustomerStudio: React.FC = () => {
 
       {/* 5 CUSTOMER GROUP SEGMENTATION TABS */}
       <div className="p-4 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           {[
             { id: 'ALL', label: 'All Customers', count: groupCounts.ALL, icon: Users, color: 'bg-slate-900 text-white' },
             { id: 'NEW', label: 'New Customers', count: groupCounts.NEW, icon: UserPlus, color: 'bg-blue-600 text-white' },
@@ -349,7 +349,7 @@ export const CustomerStudio: React.FC = () => {
       {/* CUSTOMERS DATA TABLE */}
       <div className="rounded-3xl border border-slate-200/80 dark:border-border bg-white dark:bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse min-w-[750px]">
             <thead>
               <tr className="bg-slate-50 dark:bg-accent border-b border-slate-200/80 dark:border-border text-slate-500 font-extrabold uppercase text-[10px] tracking-wider">
                 <th className="py-4 px-6">Customer Profile</th>
@@ -399,50 +399,56 @@ export const CustomerStudio: React.FC = () => {
                         <span
                           className={`px-3 py-1 rounded-full font-black text-[10px] uppercase flex items-center gap-1 w-max ${
                             grpUpper === 'VIP'
-                              ? 'bg-amber-500 text-white'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
                               : grpUpper === 'WHOLESALE'
-                              ? 'bg-purple-600 text-white'
+                              ? 'bg-purple-100 text-purple-800 border border-purple-300'
                               : grpUpper === 'RETURNING'
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-blue-600 text-white'
+                              ? 'bg-indigo-100 text-indigo-800'
+                              : 'bg-blue-100 text-blue-800'
                           }`}
                         >
-                          {grpUpper === 'VIP' && <Crown className="w-3 h-3" />}
-                          {grpUpper === 'WHOLESALE' && <Building className="w-3 h-3" />}
-                          <span>{grpUpper}</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                          {grpUpper}
                         </span>
                       </td>
 
                       <td className="py-4 px-6">
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex items-center gap-1 flex-wrap max-w-xs">
                           {Array.isArray(cust.tags) ? (
-                            cust.tags.map((t, idx) => (
-                              <span key={idx} className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-accent text-slate-700 text-[10px] font-extrabold">
-                                #{t}
+                            cust.tags.map((tg, i) => (
+                              <span
+                                key={i}
+                                className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300 text-[10px] font-semibold"
+                              >
+                                {tg}
                               </span>
                             ))
                           ) : (
-                            <span className="text-slate-400 text-[10px]">No tags</span>
+                            <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300 text-[10px] font-semibold">
+                              {cust.tags || 'General'}
+                            </span>
                           )}
                         </div>
                       </td>
 
-                      <td className="py-4 px-6 font-bold">{cust.totalOrders} Orders</td>
+                      <td className="py-4 px-6 font-mono font-black text-sm text-slate-900 dark:text-foreground">
+                        {cust.totalOrders} Orders
+                      </td>
 
-                      <td className="py-4 px-6 font-black text-sm text-slate-900 dark:text-foreground">
+                      <td className="py-4 px-6 font-mono font-black text-sm text-emerald-600 dark:text-emerald-400">
                         ${cust.totalSpent.toFixed(2)}
                       </td>
 
                       <td className="py-4 px-6">
-                        <span
-                          className={`px-2.5 py-1 rounded-full font-bold text-[10px] ${
-                            cust.acceptsMarketing
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-slate-100 text-slate-500'
-                          }`}
-                        >
-                          {cust.acceptsMarketing ? '✓ Email Opt-in' : 'No Consent'}
-                        </span>
+                        {cust.acceptsMarketing ? (
+                          <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] uppercase flex items-center gap-1 w-max">
+                            <Check className="w-3 h-3" /> Subscribed
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 font-bold text-[10px] uppercase flex items-center gap-1 w-max">
+                            <X className="w-3 h-3" /> Opted Out
+                          </span>
+                        )}
                       </td>
 
                       <td className="py-4 px-6 text-right space-x-2">
@@ -477,40 +483,40 @@ export const CustomerStudio: React.FC = () => {
 
       {/* CUSTOMER PROFILE DRAWER / MODAL */}
       {isProfileOpen && selectedCustomer && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden my-8">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden my-4 sm:my-8 max-h-[92vh] flex flex-col">
             {/* Top Header */}
-            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="p-4 sm:p-6 bg-slate-900 text-white flex items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                 <img
                   src={
                     selectedCustomer.avatarUrl ||
                     `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedCustomer.email}`
                   }
                   alt={selectedCustomer.name}
-                  className="w-14 h-14 rounded-2xl object-cover border-2 border-indigo-500"
+                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-indigo-500 shrink-0"
                 />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-black text-xl text-white">{selectedCustomer.name}</h3>
-                    <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-black text-lg sm:text-xl text-white truncate">{selectedCustomer.name}</h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase shrink-0">
                       {selectedCustomer.group}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 font-mono">{selectedCustomer.email} • Joined {selectedCustomer.createdAt}</p>
+                  <p className="text-xs text-slate-400 font-mono truncate">{selectedCustomer.email} • Joined {selectedCustomer.createdAt}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsProfileOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white"
+                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Profile Drawer Content */}
-            <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto">
               {/* KPI STAT CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-between">

@@ -2131,9 +2131,13 @@ export const cmsService = {
   },
 
   async registerMerchant(merchant: MerchantUser): Promise<RegisterResponse> {
-    const fullName = `${merchant.firstName} ${merchant.lastName}`.trim();
+    const fullName = `${merchant.firstName || ''} ${merchant.lastName || ''}`.trim();
     const response = await apiClient.post<RegisterResponse>('/users/register', {
-      name: fullName || 'Merchant User',
+      name: fullName || merchant.email.split('@')[0],
+      firstName: merchant.firstName || undefined,
+      lastName: merchant.lastName || undefined,
+      phone: merchant.mobileNumber || merchant.phone || undefined,
+      mobileNumber: merchant.mobileNumber || merchant.phone || undefined,
       email: merchant.email,
       password: merchant.password,
     });
@@ -3573,73 +3577,21 @@ export const cmsService = {
       const saved = localStorage.getItem('merchant_cms_marketing_campaigns');
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const list = JSON.parse(saved);
+          if (Array.isArray(list)) {
+            const clean = list.filter((c: any) => !['camp-1', 'camp-2', 'camp-3', 'camp-4'].includes(c.id));
+            if (clean.length !== list.length) {
+              localStorage.setItem('merchant_cms_marketing_campaigns', JSON.stringify(clean));
+            }
+            return clean;
+          }
         } catch {
           // fallback below
         }
       }
     }
 
-    const defaultCampaigns: CMSMarketingCampaign[] = [
-      {
-        id: 'camp-1',
-        title: 'Summer Mega Sale Blast 2026',
-        channel: 'EMAIL',
-        status: 'SENT',
-        targetSegment: 'All Subscribers (1,240)',
-        subject: '☀️ Summer Sale Starts Today: Enjoy Up to 40% OFF!',
-        body: 'Explore summer apparel, headphones, and luxury accessories with exclusive promo code SUMMER2026.',
-        sentCount: 1240,
-        clickCount: 342,
-        conversionCount: 45,
-        revenueTotal: 3850.00,
-        createdAt: '2026-08-01',
-      },
-      {
-        id: 'camp-2',
-        title: 'VIP High Spenders Exclusive Pass',
-        channel: 'SMS',
-        status: 'SENT',
-        targetSegment: 'VIP Customers (280)',
-        subject: 'Exclusive VIP Reward',
-        body: 'Hi VIP Member! Claim your secret 25% reward voucher VIP25OFF on your next checkout.',
-        sentCount: 280,
-        clickCount: 112,
-        conversionCount: 28,
-        revenueTotal: 2450.00,
-        createdAt: '2026-08-03',
-      },
-      {
-        id: 'camp-3',
-        title: 'New Audio Drops & Headphone Collection',
-        channel: 'WHATSAPP',
-        status: 'SENT',
-        targetSegment: 'Tech Enthusiasts (450)',
-        subject: 'New Drop Alert',
-        body: 'Check out our newly restocked noise-cancelling wireless headphones with 1-click order support.',
-        sentCount: 450,
-        clickCount: 185,
-        conversionCount: 32,
-        revenueTotal: 1980.00,
-        createdAt: '2026-08-05',
-      },
-      {
-        id: 'camp-4',
-        title: 'Abandoned Checkout Web Push Notification',
-        channel: 'PUSH',
-        status: 'ACTIVE',
-        targetSegment: 'Cart Abandoners',
-        subject: 'You left something in your bag!',
-        body: 'Complete your purchase now and receive Free Express Shipping on your order.',
-        sentCount: 190,
-        clickCount: 64,
-        conversionCount: 14,
-        revenueTotal: 1120.00,
-        createdAt: '2026-08-07',
-      },
-    ];
-
-    return defaultCampaigns;
+    return [];
   },
 
   async createMarketingCampaign(campaign: Partial<CMSMarketingCampaign>): Promise<CMSMarketingCampaign> {
@@ -3734,7 +3686,10 @@ export const cmsService = {
       const saved = localStorage.getItem('merchant_cms_pixel_config');
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.ga4MeasurementId !== 'G-X987654321') {
+            return parsed;
+          }
         } catch {
           // fallback below
         }
@@ -3742,13 +3697,13 @@ export const cmsService = {
     }
 
     return {
-      ga4MeasurementId: 'G-X987654321',
-      metaPixelId: '123456789012345',
-      tikTokPixelId: 'C1234567890123456789',
-      pinterestTagId: '2612345678901',
-      isGa4Active: true,
-      isMetaActive: true,
-      isTikTokActive: true,
+      ga4MeasurementId: '',
+      metaPixelId: '',
+      tikTokPixelId: '',
+      pinterestTagId: '',
+      isGa4Active: false,
+      isMetaActive: false,
+      isTikTokActive: false,
       isPinterestActive: false,
     };
   },
@@ -3788,50 +3743,21 @@ export const cmsService = {
       const saved = localStorage.getItem('merchant_cms_abandoned_carts');
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const list = JSON.parse(saved);
+          if (Array.isArray(list)) {
+            const clean = list.filter((c: any) => !['ac-101', 'ac-102', 'ac-103'].includes(c.id));
+            if (clean.length !== list.length) {
+              localStorage.setItem('merchant_cms_abandoned_carts', JSON.stringify(clean));
+            }
+            return clean;
+          }
         } catch {
           // fallback below
         }
       }
     }
 
-    const defaultAbandoned: AbandonedCartData[] = [
-      {
-        id: 'ac-101',
-        customerName: 'Jessica Alba',
-        customerEmail: 'jessica.a@example.com',
-        customerPhone: '+1 (555) 345-6789',
-        itemsCount: 2,
-        cartSubtotal: 185.00,
-        abandonedAt: '2 hours ago',
-        status: 'ABANDONED',
-        recoveryDiscountCode: 'RECOVER10',
-      },
-      {
-        id: 'ac-102',
-        customerName: 'Robert Downey Jr',
-        customerEmail: 'rdj@example.com',
-        customerPhone: '+1 (555) 987-6543',
-        itemsCount: 4,
-        cartSubtotal: 340.00,
-        abandonedAt: '5 hours ago',
-        status: 'ABANDONED',
-        recoveryDiscountCode: 'RECOVER10',
-      },
-      {
-        id: 'ac-103',
-        customerName: 'Taylor Swift',
-        customerEmail: 'taylor.s@example.com',
-        customerPhone: '+1 (555) 123-4567',
-        itemsCount: 1,
-        cartSubtotal: 95.00,
-        abandonedAt: '1 day ago',
-        status: 'EMAIL_SENT',
-        recoveryDiscountCode: 'WELCOME10',
-      },
-    ];
-
-    return defaultAbandoned;
+    return [];
   },
 
   async sendCartRecoveryEmail(

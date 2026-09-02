@@ -58,12 +58,12 @@ export const ProductTable: React.FC<ProductTableProps> = ({
         </div>
 
         {/* Filter Dropdowns & Add Action */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
           {/* Category Filter */}
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
+            className="flex-1 sm:flex-none min-w-[130px] bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
           >
             <option value="all">All Categories</option>
             {categories.map((cat) => (
@@ -77,7 +77,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
+            className="flex-1 sm:flex-none min-w-[130px] bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
           >
             <option value="all">All Statuses</option>
             <option value="active">Active (Live)</option>
@@ -86,11 +86,11 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           </select>
 
           {/* Import / Export / Add Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto pt-1 sm:pt-0">
             <button
               type="button"
               onClick={() => setIsImportModalOpen(true)}
-              className="bg-[#fdf1ef] hover:bg-[#fae1dc] border border-[#cbd5e0] text-[#191a1b] font-sans font-medium text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="flex-1 sm:flex-none justify-center bg-[#fdf1ef] hover:bg-[#fae1dc] border border-[#cbd5e0] text-[#191a1b] font-sans font-medium text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <FileSpreadsheet className="w-4 h-4 text-[#10b981]" />
               <span>Import</span>
@@ -99,7 +99,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             <button
               type="button"
               onClick={() => setIsExportModalOpen(true)}
-              className="bg-[#fdf1ef] hover:bg-[#fae1dc] border border-[#cbd5e0] text-[#191a1b] font-sans font-medium text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="flex-1 sm:flex-none justify-center bg-[#fdf1ef] hover:bg-[#fae1dc] border border-[#cbd5e0] text-[#191a1b] font-sans font-medium text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Download className="w-4 h-4 text-[#6366f1]" />
               <span>Export</span>
@@ -107,7 +107,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
 
             <button
               onClick={onAddProduct}
-              className="bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] font-sans font-medium text-xs px-4 py-2 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="flex-1 sm:flex-none justify-center bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] font-sans font-medium text-xs px-4 py-2 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4 text-[#d4ff4c]" />
               <span>Add Product</span>
@@ -119,7 +119,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
       {/* Products Data Table */}
       <div className="rounded-2xl bg-[#ffffff] border border-[#cbd5e0] overflow-hidden shadow-statamic">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-sans">
+          <table className="w-full text-left text-xs font-sans min-w-[680px]">
             <thead className="border-b border-[#cbd5e0] bg-[#fdf1ef] text-[#5e5a5a] uppercase font-medium text-[10px] tracking-wider">
               <tr>
                 <th className="py-3.5 px-4 sm:px-5">Product Details</th>

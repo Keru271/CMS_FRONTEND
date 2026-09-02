@@ -192,11 +192,14 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
               sessionStorage.setItem('cms_latest_verification_token', res.verificationToken);
             }
           }
+          const nameParts = ((res as any).name || '').trim().split(' ');
+          const derivedFirstName = nameParts[0] || '';
+          const derivedLastName = nameParts.slice(1).join(' ') || '';
           onSuccess(
             {
-              firstName: 'Merchant',
-              lastName: 'Owner',
-              mobileNumber: '+1 555-0199',
+              firstName: derivedFirstName,
+              lastName: derivedLastName,
+              mobileNumber: (res as any).phone || '',
               email: res.email || values.email,
             },
             'verify'
@@ -333,19 +336,19 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 {authMode === 'verify'
                   ? 'Verify Your Email'
                   : authMode === 'forgot'
-                  ? 'Forgot Password'
-                  : authMode === 'signup'
-                  ? 'Create Merchant Account'
-                  : 'Welcome back Adhithya'}
+                    ? 'Forgot Password'
+                    : authMode === 'signup'
+                      ? 'Create Merchant Account'
+                      : 'Welcome back'}
               </h1>
               <p className="text-xs text-sage-muted mt-1">
                 {authMode === 'verify'
                   ? `We've sent a 6-digit verification code to ${emailForVerification}. Enter the code below to activate your account.`
                   : authMode === 'forgot'
-                  ? "Enter your email address and we'll send a password reset link."
-                  : authMode === 'signup'
-                  ? 'Enter your merchant details to register your account.'
-                  : 'Enter your email & password'}
+                    ? "Enter your email address and we'll send a password reset link."
+                    : authMode === 'signup'
+                      ? 'Enter your merchant details to register your account.'
+                      : 'Enter your email & password'}
               </p>
             </div>
 
@@ -399,11 +402,10 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
               <form onSubmit={verifyFormik.handleSubmit} className="space-y-4">
                 <div>
                   <div
-                    className={`border rounded-xl px-4 py-3 min-h-[48px] bg-sage-input-bg flex items-center gap-3.5 transition-all ${
-                      verifyFormik.touched.otp && verifyFormik.errors.otp
+                    className={`border rounded-xl px-4 py-3 min-h-[48px] bg-sage-input-bg flex items-center gap-3.5 transition-all ${verifyFormik.touched.otp && verifyFormik.errors.otp
                         ? 'border-sage-danger focus-within:border-sage-danger'
                         : 'border-sage-border focus-within:border-sage-primary'
-                    }`}
+                      }`}
                   >
                     <KeyRound className="w-5 h-5 text-sage-primary shrink-0" />
                     <div className="flex-1">
@@ -542,11 +544,10 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <div
-                      className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
-                        registerFormik.touched.firstName && registerFormik.errors.firstName
+                      className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${registerFormik.touched.firstName && registerFormik.errors.firstName
                           ? 'border-sage-danger focus-within:border-sage-danger'
                           : 'border-sage-border focus-within:border-sage-primary'
-                      }`}
+                        }`}
                     >
                       <User className="w-4 h-4 text-sage-primary shrink-0" />
                       <div className="flex-1">
@@ -572,11 +573,10 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
 
                   <div>
                     <div
-                      className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
-                        registerFormik.touched.lastName && registerFormik.errors.lastName
+                      className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${registerFormik.touched.lastName && registerFormik.errors.lastName
                           ? 'border-sage-danger focus-within:border-sage-danger'
                           : 'border-sage-border focus-within:border-sage-primary'
-                      }`}
+                        }`}
                     >
                       <User className="w-4 h-4 text-sage-primary shrink-0" />
                       <div className="flex-1">
@@ -603,11 +603,10 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
 
                 <div>
                   <div
-                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
-                      registerFormik.touched.mobileNumber && registerFormik.errors.mobileNumber
+                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${registerFormik.touched.mobileNumber && registerFormik.errors.mobileNumber
                         ? 'border-sage-danger focus-within:border-sage-danger'
                         : 'border-sage-border focus-within:border-sage-primary'
-                    }`}
+                      }`}
                   >
                     <Phone className="w-4 h-4 text-sage-primary shrink-0" />
                     <div className="flex-1">
@@ -634,11 +633,10 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
 
                 <div>
                   <div
-                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
-                      registerFormik.touched.email && registerFormik.errors.email
+                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${registerFormik.touched.email && registerFormik.errors.email
                         ? 'border-sage-danger focus-within:border-sage-danger'
                         : 'border-sage-border focus-within:border-sage-primary'
-                    }`}
+                      }`}
                   >
                     <Mail className="w-4 h-4 text-sage-primary shrink-0" />
                     <div className="flex-1">
@@ -665,11 +663,10 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
 
                 <div>
                   <div
-                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
-                      registerFormik.touched.password && registerFormik.errors.password
+                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${registerFormik.touched.password && registerFormik.errors.password
                         ? 'border-sage-danger focus-within:border-sage-danger'
                         : 'border-sage-border focus-within:border-sage-primary'
-                    }`}
+                      }`}
                   >
                     <Lock className="w-4 h-4 text-sage-primary shrink-0" />
                     <div className="flex-1">
@@ -717,36 +714,35 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                               pwdStrength.score <= 1
                                 ? 'text-red-500 font-bold'
                                 : pwdStrength.score === 2
-                                ? 'text-orange-500 font-bold'
-                                : pwdStrength.score <= 4
-                                ? 'text-amber-500 font-bold'
-                                : 'text-emerald-500 font-bold'
+                                  ? 'text-orange-500 font-bold'
+                                  : pwdStrength.score <= 4
+                                    ? 'text-amber-500 font-bold'
+                                    : 'text-emerald-500 font-bold'
                             }
                           >
                             {pwdStrength.score <= 1
                               ? 'Weak'
                               : pwdStrength.score === 2
-                              ? 'Fair'
-                              : pwdStrength.score <= 4
-                              ? 'Good'
-                              : 'Strong'}
+                                ? 'Fair'
+                                : pwdStrength.score <= 4
+                                  ? 'Good'
+                                  : 'Strong'}
                           </span>
                         </span>
                         <div className="flex-1 flex gap-1 h-1.5 max-w-[140px]">
                           {[1, 2, 3, 4, 5].map((lvl) => (
                             <div
                               key={lvl}
-                              className={`flex-1 h-full rounded-full transition-all duration-300 ${
-                                lvl <= pwdStrength.score
+                              className={`flex-1 h-full rounded-full transition-all duration-300 ${lvl <= pwdStrength.score
                                   ? pwdStrength.score <= 1
                                     ? 'bg-red-500'
                                     : pwdStrength.score === 2
-                                    ? 'bg-orange-500'
-                                    : pwdStrength.score <= 4
-                                    ? 'bg-amber-500'
-                                    : 'bg-emerald-500'
+                                      ? 'bg-orange-500'
+                                      : pwdStrength.score <= 4
+                                        ? 'bg-amber-500'
+                                        : 'bg-emerald-500'
                                   : 'bg-gray-200 dark:bg-gray-700'
-                              }`}
+                                }`}
                             />
                           ))}
                         </div>
@@ -754,41 +750,37 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
 
                       <div className="grid grid-cols-2 gap-1.5 pt-0.5 text-[10px]">
                         <div
-                          className={`flex items-center gap-1.5 font-medium ${
-                            pwdStrength.checks.uppercase
+                          className={`flex items-center gap-1.5 font-medium ${pwdStrength.checks.uppercase
                               ? 'text-emerald-600 dark:text-emerald-400'
                               : 'text-sage-muted'
-                          }`}
+                            }`}
                         >
                           <span>{pwdStrength.checks.uppercase ? '✓' : '○'}</span>
                           <span>1 Uppercase (A-Z)</span>
                         </div>
                         <div
-                          className={`flex items-center gap-1.5 font-medium ${
-                            pwdStrength.checks.lowercase
+                          className={`flex items-center gap-1.5 font-medium ${pwdStrength.checks.lowercase
                               ? 'text-emerald-600 dark:text-emerald-400'
                               : 'text-sage-muted'
-                          }`}
+                            }`}
                         >
                           <span>{pwdStrength.checks.lowercase ? '✓' : '○'}</span>
                           <span>1 Lowercase (a-z)</span>
                         </div>
                         <div
-                          className={`flex items-center gap-1.5 font-medium ${
-                            pwdStrength.checks.number
+                          className={`flex items-center gap-1.5 font-medium ${pwdStrength.checks.number
                               ? 'text-emerald-600 dark:text-emerald-400'
                               : 'text-sage-muted'
-                          }`}
+                            }`}
                         >
                           <span>{pwdStrength.checks.number ? '✓' : '○'}</span>
                           <span>1 Number (0-9)</span>
                         </div>
                         <div
-                          className={`flex items-center gap-1.5 font-medium ${
-                            pwdStrength.checks.special
+                          className={`flex items-center gap-1.5 font-medium ${pwdStrength.checks.special
                               ? 'text-emerald-600 dark:text-emerald-400'
                               : 'text-sage-muted'
-                          }`}
+                            }`}
                         >
                           <span>{pwdStrength.checks.special ? '✓' : '○'}</span>
                           <span>1 Special Char (!@#$)</span>
@@ -884,14 +876,12 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                     className="flex items-center gap-2 cursor-pointer select-none"
                   >
                     <div
-                      className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 flex items-center ${
-                        rememberMe ? 'bg-sage-primary' : 'bg-sage-border'
-                      }`}
+                      className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 flex items-center ${rememberMe ? 'bg-sage-primary' : 'bg-sage-border'
+                        }`}
                     >
                       <div
-                        className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
-                          rememberMe ? 'translate-x-4' : 'translate-x-0'
-                        }`}
+                        className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200 ${rememberMe ? 'translate-x-4' : 'translate-x-0'
+                          }`}
                       />
                     </div>
                     <span className="text-xs font-medium text-sage-text">Remember me</span>

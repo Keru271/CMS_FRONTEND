@@ -235,16 +235,9 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setMerchantData(updatedSession);
         return updatedSession;
       } else {
-        // Fallback default store
-        const fallbackStore: CMSStore = {
-          id: 'store-default',
-          slug: 'store',
-          name: `${user.firstName}'s Store`,
-          currency: 'USD',
-          status: 'ACTIVE',
-        };
-        setActiveStore(fallbackStore);
-        setStores([fallbackStore]);
+        // No store created yet. Keep store as null in state and session until user creates a store.
+        setActiveStore(null);
+        setStores([]);
 
         const session = cmsService.getMerchantSession();
         const updatedSession: MerchantOnboardingData = {
@@ -253,17 +246,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             ...(session?.merchant || {}),
             role: backendUser.role,
           },
-          store: {
-            id: fallbackStore.id,
-            slug: fallbackStore.slug,
-            storeName: fallbackStore.name,
-            tagline: 'Official Store',
-            category: 'Tech & Electronics',
-            currency: 'USD',
-            status: 'ACTIVE',
-            supportEmail: user.email,
-            supportPhone: user.mobileNumber,
-          },
+          store: null,
           selectedTemplate: session?.selectedTemplate || STORE_TEMPLATES[0],
         };
         cmsService.saveMerchantSession(updatedSession);

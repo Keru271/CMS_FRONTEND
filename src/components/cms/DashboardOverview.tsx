@@ -214,7 +214,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 text-xs font-sans">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 text-xs font-sans">
           <div
             onClick={onNavigateOrders}
             className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 cursor-pointer hover:bg-rose-100 transition-colors flex items-center gap-2.5"
@@ -397,7 +397,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         {/* 8 Top-Level KPI Cards Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Card 1: Total Sales */}
           <div className="p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic space-y-2">
             <div className="flex items-center justify-between text-xs text-[#5e5a5a] font-sans">
@@ -525,10 +525,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
 
           {/* Metric Toggle Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#fdf1ef] rounded-xl border border-[#cbd5e0] text-xs font-sans font-medium">
+          <div className="flex items-center gap-1.5 p-1 bg-[#fdf1ef] rounded-xl border border-[#cbd5e0] text-xs font-sans font-medium overflow-x-auto no-scrollbar max-w-full">
             <button
               onClick={() => setChartMetric('revenue')}
-              className={`px-3.5 py-1.5 rounded-lg transition-colors ${
+              className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 ${
                 chartMetric === 'revenue' ? 'bg-[#191a1b] text-[#ffffff]' : 'text-[#5e5a5a] hover:text-[#191a1b]'
               }`}
             >
@@ -536,7 +536,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </button>
             <button
               onClick={() => setChartMetric('orders')}
-              className={`px-3.5 py-1.5 rounded-lg transition-colors ${
+              className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 ${
                 chartMetric === 'orders' ? 'bg-[#191a1b] text-[#ffffff]' : 'text-[#5e5a5a] hover:text-[#191a1b]'
               }`}
             >
@@ -544,7 +544,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </button>
             <button
               onClick={() => setChartMetric('items')}
-              className={`px-3.5 py-1.5 rounded-lg transition-colors ${
+              className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 ${
                 chartMetric === 'items' ? 'bg-[#191a1b] text-[#ffffff]' : 'text-[#5e5a5a] hover:text-[#191a1b]'
               }`}
             >
@@ -552,7 +552,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </button>
             <button
               onClick={() => setChartMetric('aov')}
-              className={`px-3.5 py-1.5 rounded-lg transition-colors ${
+              className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 ${
                 chartMetric === 'aov' ? 'bg-[#191a1b] text-[#ffffff]' : 'text-[#5e5a5a] hover:text-[#191a1b]'
               }`}
             >
@@ -654,7 +654,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-sans">
+            <table className="w-full text-left text-xs font-sans min-w-[620px]">
               <thead className="border-b border-[#cbd5e0] text-[#5e5a5a] font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="py-3 px-3">Order #</th>

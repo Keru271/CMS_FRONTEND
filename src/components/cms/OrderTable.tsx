@@ -37,11 +37,11 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
           />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
+            className="w-full sm:w-auto bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
           >
             <option value="all">All Order Statuses</option>
             <option value="processing">Processing</option>
@@ -55,7 +55,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
       {/* Orders Data Table */}
       <div className="rounded-2xl bg-[#ffffff] border border-[#cbd5e0] overflow-hidden shadow-statamic">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-sans">
+          <table className="w-full text-left text-xs font-sans min-w-[650px]">
             <thead className="border-b border-[#cbd5e0] bg-[#fdf1ef] text-[#5e5a5a] uppercase font-medium text-[10px] tracking-wider">
               <tr>
                 <th className="py-3.5 px-4 sm:px-5">Order Code</th>
