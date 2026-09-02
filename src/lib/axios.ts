@@ -49,20 +49,19 @@ apiClient.interceptors.request.use(
           return null;
         })();
 
-      const finalStoreId = resolvedStoreId || 'default-store-id';
+      if (resolvedStoreId && resolvedStoreId !== 'default-store-id') {
+        if (config.headers) {
+          config.headers['x-store-id'] = resolvedStoreId;
+          config.headers['store-id'] = resolvedStoreId;
+          config.headers['x-tenant-id'] = resolvedStoreId;
+        }
 
-      if (config.headers) {
-        config.headers['x-store-id'] = finalStoreId;
-        config.headers['store-id'] = finalStoreId;
-        config.headers['x-tenant-id'] = finalStoreId;
-      }
-
-      // Also append storeId query param for full compatibility if not already present
-      if (!config.params) {
-        config.params = {};
-      }
-      if (!config.params.storeId && finalStoreId !== 'default-store-id') {
-        config.params.storeId = finalStoreId;
+        if (!config.params) {
+          config.params = {};
+        }
+        if (!config.params.storeId) {
+          config.params.storeId = resolvedStoreId;
+        }
       }
     }
     return config;

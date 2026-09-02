@@ -136,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       : null);
 
   const { isStarter, isEnterprise, canUseCustomDomain, canUseLoyalty, canUseDeveloperApi } = usePlanAccess();
-  const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN';
+  const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN' || userRole === 'MERCHANT';
 
   // Plan and Role-based authorization checker
   const isNavAuthorized = (navId: CMSView) => {
@@ -226,6 +226,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (itemPath) {
       if (itemPath === '/dashboard') {
         return pathname === '/dashboard' || pathname === '/';
+      }
+      if (itemPath === '/payments') {
+        return pathname === '/payment' || pathname.startsWith('/payments');
       }
       return pathname.startsWith(itemPath);
     }

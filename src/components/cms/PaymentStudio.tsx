@@ -114,33 +114,34 @@ export const PaymentStudio: React.FC = () => {
     setIsLoading(true);
     try {
       const [settingsData, txData, rzpConnectData, stripeConnectData] = await Promise.all([
-        cmsService.getPaymentSettings(),
-        cmsService.getPaymentTransactions(),
-        cmsService.getRazorpayConnectStatus(),
-        cmsService.getStripeConnectStatus(),
+        cmsService.getPaymentSettings().catch(() => null),
+        cmsService.getPaymentTransactions().catch(() => null),
+        cmsService.getRazorpayConnectStatus().catch(() => null),
+        cmsService.getStripeConnectStatus().catch(() => null),
       ]);
       setSettings(settingsData);
       setRzpConnect(rzpConnectData);
       setStripeConnect(stripeConnectData);
       setFormData({
-        paymentRazorpayActive: settingsData.paymentRazorpayActive,
-        paymentStripeActive: settingsData.paymentStripeActive,
-        paymentCodActive: settingsData.paymentCodActive,
-        paymentTestMode: settingsData.paymentTestMode,
-        razorpayKeyId: settingsData.razorpayKeyId || '',
+        paymentRazorpayActive: settingsData?.paymentRazorpayActive ?? false,
+        paymentStripeActive: settingsData?.paymentStripeActive ?? false,
+        paymentCodActive: settingsData?.paymentCodActive ?? true,
+        paymentTestMode: settingsData?.paymentTestMode ?? true,
+        razorpayKeyId: settingsData?.razorpayKeyId || '',
         razorpayKeySecret: '',
         razorpayWebhookSecret: '',
-        razorpayAutoCapture: settingsData.razorpayAutoCapture ?? true,
-        stripePublishableKey: settingsData.stripePublishableKey || '',
+        razorpayAutoCapture: settingsData?.razorpayAutoCapture ?? true,
+        stripePublishableKey: settingsData?.stripePublishableKey || '',
         stripeSecretKey: '',
         stripeWebhookSecret: '',
-        codFee: settingsData.codFee ?? 0,
-        codMinLimit: settingsData.codMinLimit ?? 0,
-        codMaxLimit: settingsData.codMaxLimit ?? 50000,
-        currencyRoutingRulesJson: settingsData.currencyRoutingRulesJson,
+        codFee: settingsData?.codFee ?? 0,
+        codMinLimit: settingsData?.codMinLimit ?? 0,
+        codMaxLimit: settingsData?.codMaxLimit ?? 50000,
+        currencyRoutingRulesJson: settingsData?.currencyRoutingRulesJson || '',
       });
-      setTransactions(txData.transactions);
-      setSummary(txData.summary);
+      const txList = Array.isArray(txData?.transactions) ? txData.transactions : [];
+      setTransactions(txList);
+      setSummary(txData?.summary || null);
     } catch (err) {
       console.error('Failed to load payment studio data', err);
       showToast('Failed to load payment configuration', 'error');
@@ -408,9 +409,9 @@ export const PaymentStudio: React.FC = () => {
     }
   };
 
-  const filteredTransactions = transactions.filter((t) => {
+  const filteredTransactions = (transactions || []).filter((t) => {
     if (filterGateway === 'ALL') return true;
-    return t.gateway.toUpperCase() === filterGateway;
+    return (t?.gateway || '').toUpperCase() === filterGateway;
   });
 
   if (isLoading) {

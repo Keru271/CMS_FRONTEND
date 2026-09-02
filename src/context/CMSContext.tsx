@@ -236,6 +236,10 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return updatedSession;
       } else {
         // No store created yet. Keep store as null in state and session until user creates a store.
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('selected_store_id');
+          localStorage.removeItem('current_store_id');
+        }
         setActiveStore(null);
         setStores([]);
 
@@ -359,9 +363,15 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('selected_store_id');
+      localStorage.removeItem('current_store_id');
+      localStorage.removeItem('active_store_id');
     }
     cmsService.clearMerchantSession();
     setMerchantData(null);
+    setActiveStore(null);
+    setStores([]);
+    setStoreStatus('ACTIVE');
+    setIsSuspended(false);
     router.push('/login');
   };
 

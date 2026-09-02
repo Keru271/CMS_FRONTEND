@@ -63,7 +63,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
       ? JSON.parse(localStorage.getItem('user_permissions') || '{}')
       : null);
 
-  const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN';
+  const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN' || userRole === 'MERCHANT';
 
   // Check if current path is authorized
   const checkRouteAuthorization = (path: string): boolean => {

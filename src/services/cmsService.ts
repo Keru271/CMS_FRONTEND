@@ -2114,14 +2114,37 @@ export const cmsService = {
 
   clearMerchantSession(): void {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('merchant_cms_session');
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('current_store_id');
-      localStorage.removeItem('active_store_id');
-      localStorage.removeItem('user_role');
-      localStorage.removeItem('user_permissions');
-      sessionStorage.removeItem('cms_pending_verification_email');
-      sessionStorage.removeItem('cms_latest_verification_token');
+      const keysToRemove = [
+        'merchant_cms_session',
+        'auth_token',
+        'current_store_id',
+        'active_store_id',
+        'selected_store_id',
+        'user_role',
+        'user_permissions',
+        'merchant_cms_store_setup',
+        'merchant_cms_store_theme',
+        'merchant_cms_store_pages',
+        'merchant_cms_product_reviews',
+        'merchant_cms_menus',
+        'merchant_cms_customers',
+        'merchant_cms_shipping_zones',
+        'merchant_cms_shipping_providers',
+        'merchant_cms_marketing_campaigns',
+        'merchant_cms_pixel_config',
+        'merchant_cms_abandoned_carts',
+        'whatsapp_setup_completed',
+        'whatsapp_setup_opened',
+      ];
+      keysToRemove.forEach((k) => {
+        try {
+          localStorage.removeItem(k);
+        } catch {}
+      });
+      try {
+        sessionStorage.removeItem('cms_pending_verification_email');
+        sessionStorage.removeItem('cms_latest_verification_token');
+      } catch {}
     }
   },
 
