@@ -49,7 +49,11 @@ apiClient.interceptors.request.use(
           return null;
         })();
 
-      if (resolvedStoreId && resolvedStoreId !== 'default-store-id') {
+      // Placeholder IDs that should never be sent to the backend
+      const INVALID_STORE_IDS = new Set(['default-store-id', 'store-active', 'store-placeholder', 'null', 'undefined']);
+      const isValidStoreId = resolvedStoreId && !INVALID_STORE_IDS.has(resolvedStoreId);
+
+      if (isValidStoreId) {
         if (config.headers) {
           config.headers['x-store-id'] = resolvedStoreId;
           config.headers['store-id'] = resolvedStoreId;
@@ -83,13 +87,15 @@ apiClient.interceptors.response.use(
         console.warn('Unauthorized (401) response received. Clearing auth token and redirecting to login...');
         if (typeof window !== 'undefined') {
           const currentPath = window.location.pathname;
-          // Avoid redirect loops on public auth routes
+          // Avoid redirect loops on public auth routes and onboarding pages
           if (
             !currentPath.includes('/login') &&
             !currentPath.includes('/register') &&
             !currentPath.includes('/verify-email') &&
             !currentPath.includes('/forgot-password') &&
-            !currentPath.includes('/reset-password')
+            !currentPath.includes('/reset-password') &&
+            !currentPath.includes('/store-setup') &&
+            !currentPath.includes('/setup')
           ) {
             localStorage.removeItem('auth_token');
             localStorage.removeItem('merchant_cms_session');
@@ -98,6 +104,7 @@ apiClient.interceptors.response.use(
             window.location.href = '/login';
           }
         }
+
       } else if (error.response.status === 404) {
         // If /users/me returns 404, the stored JWT belongs to a deleted/reset user account
         if (error.config?.url?.includes('/users/me') && typeof window !== 'undefined') {

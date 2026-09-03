@@ -160,7 +160,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
         if (response.verificationToken) {
           setLatestToken(response.verificationToken);
         }
-        onSuccess(values, 'register');
+        onSuccess({ ...values, storeId: response.storeId || undefined }, 'register');
       } catch (err: any) {
         const msg =
           err.response?.data?.message || err.message || 'Registration failed. Please try again.';
@@ -245,15 +245,17 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
       setIsSubmitting(true);
       setServerError(null);
       try {
-        await cmsService.verifyMerchantEmail(emailForVerification, values.otp);
+        const verifyRes = await cmsService.verifyMerchantEmail(emailForVerification, values.otp);
+        const nameParts = (verifyRes.user?.name || 'Merchant Owner').split(' ');
         onSuccess(
           {
-            firstName: 'Merchant',
-            lastName: 'Owner',
-            mobileNumber: '+1 555-0199',
+            firstName: nameParts[0] || 'Merchant',
+            lastName: nameParts.slice(1).join(' ') || 'Owner',
+            mobileNumber: verifyRes.user?.phone || '+1 555-0199',
             email: emailForVerification,
+            storeId: verifyRes.storeId || verifyRes.user?.storeId || undefined,
           },
-          'register'
+          'verify'
         );
       } catch (err: any) {
         const msg = err.response?.data?.message || err.message || 'Invalid verification code.';

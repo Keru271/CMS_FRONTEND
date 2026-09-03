@@ -8,8 +8,8 @@ import { MerchantUser } from '@/src/types';
 export default function RegisterPage() {
   const router = useRouter();
 
-  const handleAuthSuccess = (user: MerchantUser) => {
-    // Store pending email and navigate to /verify-email with email query parameter
+  const handleAuthSuccess = (user: MerchantUser, mode?: 'register' | 'login' | 'verify') => {
+    // After successful registration, always go to email verification step
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('cms_pending_verification_email', user.email);
     }

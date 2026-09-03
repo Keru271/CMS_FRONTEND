@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { StoreSetup } from '@/src/components/cms/StoreSetup';
 import { WhatsAppStoreSetup } from '@/src/components/cms/WhatsAppStoreSetup';
@@ -9,42 +9,25 @@ import { MessageSquare, Sliders, Store, CheckCircle } from 'lucide-react';
 import { StoreSetupData } from '@/src/types';
 
 function StoreSetupContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { merchantData, setMerchantData } = useCMSContext();
 
   const userKey = (merchantData?.merchant?.email || '').toLowerCase().trim();
 
-  // Mode state: defaults to 'form' so WhatsApp chat NEVER opens automatically on regular visits
-  const [setupMode, setSetupMode] = useState<'chat' | 'form'>('form');
-  const [isChatAllowed, setIsChatAllowed] = useState(false);
+  // Mode state: defaults to 'chat' for the conversational WhatsApp setup experience
+  const [setupMode, setSetupMode] = useState<'chat' | 'form'>('chat');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const isFirstTimeParam = searchParams.get('first_time') === 'true';
-    const isOneTimeSession = sessionStorage.getItem('open_whatsapp_setup_once') === 'true';
-    const isAlreadyCompleted = userKey
-      ? localStorage.getItem(`whatsapp_setup_completed_${userKey}`) === 'true'
-      : localStorage.getItem('whatsapp_setup_completed') === 'true';
-
-    // WhatsApp setup chat is ONLY allowed to open ONCE immediately following registration
-    if ((isFirstTimeParam || isOneTimeSession) && !isAlreadyCompleted) {
-      setSetupMode('chat');
-      setIsChatAllowed(true);
-      // Consume the single-use token immediately so it cannot be triggered again
-      sessionStorage.removeItem('open_whatsapp_setup_once');
-      if (userKey) {
-        localStorage.setItem(`whatsapp_setup_opened_${userKey}`, 'true');
-      }
-      localStorage.setItem('whatsapp_setup_opened', 'true');
-      // Clean query parameter from URL without page reload
-      window.history.replaceState({}, '', '/store-setup');
-    } else {
-      // For all regular visits, subsequent visits, and returning users: always 'form'
+    const modeParam = searchParams.get('mode');
+    if (modeParam === 'form') {
       setSetupMode('form');
-      setIsChatAllowed(false);
+    } else {
+      setSetupMode('chat');
     }
-  }, [searchParams, userKey]);
+  }, [searchParams]);
 
   const markSetupCompleted = () => {
     if (typeof window !== 'undefined') {
@@ -57,7 +40,6 @@ function StoreSetupContent() {
       sessionStorage.removeItem('open_whatsapp_setup_once');
       sessionStorage.removeItem('just_registered');
     }
-    setIsChatAllowed(false);
   };
 
   const handleSaved = (updated: StoreSetupData) => {
@@ -66,7 +48,7 @@ function StoreSetupContent() {
       setMerchantData({
         ...merchantData,
         store: {
-          id: merchantData.store?.id || 'store-active',
+          id: merchantData.store?.id || undefined,
           slug: updated.slug || merchantData.store?.slug || 'store',
           storeName: updated.name,
           currency: updated.currency,
@@ -78,11 +60,18 @@ function StoreSetupContent() {
         },
       });
     }
+    // Navigate straight to dashboard once setup is completed
+    setTimeout(() => {
+      router.push('/dashboard');
+    }, 1500);
   };
 
   const handleSwitchToForm = () => {
-    markSetupCompleted();
     setSetupMode('form');
+  };
+
+  const handleSwitchToChat = () => {
+    setSetupMode('chat');
   };
 
   return (
@@ -95,44 +84,49 @@ function StoreSetupContent() {
           </div>
           <div>
             <h2 className="text-base font-serif font-bold text-[#191a1b] flex items-center gap-2">
-              <span>Store Configuration Center</span>
-              <span className="text-[10px] bg-[#d9fdd3] text-[#075e54] border border-[#b2dfdb] px-2 py-0.5 rounded-full font-sans font-semibold">
-                Live Studio
+              <span>Store Setup Center</span>
+              <span className="text-[10px] bg-[#d9fdd3] text-[#075e54] border border-[#b2dfdb] px-2 py-0.5 rounded-full font-sans font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#25d366] animate-ping" />
+                WhatsApp Assistant Active
               </span>
             </h2>
             <p className="text-xs text-[#5e5a5a]">
-              Configure your store brand identity, storefront theme layout, and merchant parameters.
+              Set up your storefront brand, contact channels, themes, and regional currency in minutes.
             </p>
           </div>
         </div>
 
-        {/* View Switcher: WhatsApp Chat is only switchable if currently active during post-registration */}
-        {isChatAllowed && setupMode === 'chat' ? (
-          <div className="flex items-center p-1 bg-[#f0f2f5] rounded-xl border border-[#cbd5e0] shrink-0 self-stretch sm:self-auto">
-            <div className="px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 bg-[#075e54] text-white shadow-xs">
-              <MessageSquare className="w-4 h-4" />
-              <span>WhatsApp Setup Chat</span>
-              <span className="w-2 h-2 rounded-full bg-[#25d366] animate-ping hidden sm:inline-block" />
-            </div>
+        {/* View Switcher: Toggle between WhatsApp Chat and Form */}
+        <div className="flex items-center p-1 bg-[#f0f2f5] rounded-xl border border-[#cbd5e0] shrink-0 self-stretch sm:self-auto">
+          <button
+            type="button"
+            onClick={handleSwitchToChat}
+            className={`px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${setupMode === 'chat'
+                ? 'bg-[#075e54] text-white shadow-xs'
+                : 'text-[#54656f] hover:text-[#111b21]'
+              }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>WhatsApp Setup Chat</span>
+            {setupMode === 'chat' && <span className="w-2 h-2 rounded-full bg-[#25d366] animate-ping hidden sm:inline-block" />}
+          </button>
 
-            <button
-              onClick={handleSwitchToForm}
-              className="px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 text-[#54656f] hover:text-[#111b21] transition-all cursor-pointer"
-            >
-              <Sliders className="w-4 h-4" />
-              <span>Switch to Form</span>
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 px-3.5 py-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl text-xs text-[#166534] font-semibold">
-            <CheckCircle className="w-4 h-4 text-[#16a34a]" />
-            <span>Store Configuration Settings</span>
-          </div>
-        )}
+          <button
+            type="button"
+            onClick={handleSwitchToForm}
+            className={`px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${setupMode === 'form'
+                ? 'bg-[#191a1b] text-[#d4ff4c] shadow-xs'
+                : 'text-[#54656f] hover:text-[#111b21]'
+              }`}
+          >
+            <Sliders className="w-4 h-4" />
+            <span>Settings Form</span>
+          </button>
+        </div>
       </div>
 
       {/* ─── ACTIVE SETUP VIEW ──────────────────────────────────────── */}
-      {setupMode === 'chat' && isChatAllowed ? (
+      {setupMode === 'chat' ? (
         <WhatsAppStoreSetup
           onSaved={handleSaved}
           onSwitchToForm={handleSwitchToForm}

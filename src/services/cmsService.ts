@@ -2165,11 +2165,33 @@ export const cmsService = {
       password: merchant.password,
     });
 
+    // Save the verification token for OTP pre-fill (do NOT store auth_token yet — email unverified)
     if (response.data && response.data.verificationToken) {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('cms_latest_verification_token', response.data.verificationToken);
+        sessionStorage.setItem('cms_pending_verification_email', merchant.email);
       }
     }
+
+    const createdStoreId = response.data?.storeId;
+    if (createdStoreId && typeof window !== 'undefined') {
+      localStorage.setItem('selected_store_id', createdStoreId);
+      localStorage.setItem('current_store_id', createdStoreId);
+    }
+
+    // Save basic merchant info to session
+    cmsService.saveMerchantSession({
+      merchant: { ...merchant, email: merchant.email, storeId: createdStoreId },
+      store: createdStoreId
+        ? {
+            id: createdStoreId,
+            slug: merchant.email.split('@')[0],
+            storeName: `${fullName || 'My'}'s Store`,
+            currency: 'INR',
+            status: 'ACTIVE',
+          }
+        : undefined,
+    });
 
     return response.data;
   },
@@ -2179,6 +2201,16 @@ export const cmsService = {
       email,
       token,
     });
+    if (response.data && response.data.accessToken) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth_token', response.data.accessToken);
+      }
+    }
+    const storeId = response.data?.storeId || response.data?.user?.storeId;
+    if (storeId && typeof window !== 'undefined') {
+      localStorage.setItem('selected_store_id', storeId);
+      localStorage.setItem('current_store_id', storeId);
+    }
     return response.data;
   },
 

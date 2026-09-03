@@ -3,7 +3,7 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MerchantAuthModal } from '@/src/components/auth/MerchantAuthModal';
-import { cmsService, STORE_TEMPLATES } from '@/src/services/cmsService';
+import { cmsService } from '@/src/services/cmsService';
 import { MerchantUser } from '@/src/types';
 
 function VerifyEmailContent() {
@@ -21,23 +21,45 @@ function VerifyEmailContent() {
       }
     } else if (pendingEmail) {
       setUnverifiedEmail(pendingEmail);
-    } else {
-      setUnverifiedEmail('adhithya@gmail.com');
     }
   }, [emailParam]);
 
-  const handleVerificationSuccess = (merchant: MerchantUser) => {
+  const handleVerificationSuccess = async (merchant: MerchantUser) => {
     const activeEmail = unverifiedEmail || merchant.email;
-    // Save user session state
+    const storeId =
+      merchant.storeId ||
+      (typeof window !== 'undefined' ? localStorage.getItem('selected_store_id') : null) ||
+      undefined;
+
+    // auth_token is stored by verifyMerchantEmail in cmsService
+    // Save merchant session
     cmsService.saveMerchantSession({
-      merchant: { ...merchant, email: activeEmail },
+      merchant: { ...merchant, email: activeEmail, storeId },
+      store: storeId
+        ? {
+            id: storeId,
+            slug: activeEmail.split('@')[0],
+            storeName: `${merchant.firstName || 'My'}'s Store`,
+            tagline: 'My online store',
+            category: 'General',
+            currency: 'INR',
+            status: 'ACTIVE',
+          }
+        : undefined,
     });
 
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem('just_registered', 'true');
       sessionStorage.removeItem('cms_pending_verification_email');
+      sessionStorage.setItem('just_registered', 'true');
+      sessionStorage.setItem('open_whatsapp_setup_once', 'true');
+      if (storeId) {
+        localStorage.setItem('selected_store_id', storeId);
+        localStorage.setItem('current_store_id', storeId);
+      }
     }
-    router.push('/login?registered=true');
+
+    // After verification → go to store setup (WhatsApp flow)
+    router.push('/store-setup?first_time=true');
   };
 
   if (!unverifiedEmail) {

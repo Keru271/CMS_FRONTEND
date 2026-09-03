@@ -397,6 +397,7 @@ export interface MerchantUser {
   password?: string;
   role?: StoreMemberRole | string;
   customRoleTitle?: string | null;
+  storeId?: string | null;
   preferences?: UserPreferences;
   preferencesJson?: string | null;
   permissions?: {
@@ -605,12 +606,16 @@ export interface RegisterResponse {
   role: string;
   storeId?: string | null;
   emailVerified: boolean;
+  accessToken?: string;
   verificationToken?: string | null;
 }
 
 export interface VerifyEmailResponse {
   message: string;
   emailVerified: boolean;
+  accessToken?: string;
+  storeId?: string | null;
+  user?: any;
 }
 
 export interface MegaMenuConfig {

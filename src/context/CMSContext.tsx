@@ -108,7 +108,13 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncUserAndStoreStatus = useCallback(async () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     if (!token) {
-      router.push('/login');
+      // Don't redirect during the registration onboarding flow pages
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      const onboardingPaths = ['/store-setup', '/verify-email', '/register', '/setup'];
+      const isOnboarding = onboardingPaths.some((p) => currentPath.startsWith(p));
+      if (!isOnboarding) {
+        router.push('/login');
+      }
       return;
     }
 
@@ -259,12 +265,18 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (err) {
       console.warn('Failed to sync store status (stale token or reset DB):', err);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('selected_store_id');
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      const onboardingPaths = ['/store-setup', '/verify-email', '/register', '/setup'];
+      const isOnboarding = onboardingPaths.some((p) => currentPath.startsWith(p));
+      if (!isOnboarding) {
+        // Only clear credentials and redirect on non-onboarding pages
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('selected_store_id');
+        }
+        cmsService.clearMerchantSession();
+        router.push('/login');
       }
-      cmsService.clearMerchantSession();
-      router.push('/login');
     }
   }, [router]);
 
@@ -351,20 +363,36 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsSuspended(localStatus === 'SUSPENDED');
       }
 
-      // Then verify fresh live status and store list from backend
-      await syncUserAndStoreStatus();
-      await fetchDashboardDetails();
+      // Skip full backend sync during store-setup onboarding (user has no store yet)
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      const isOnboarding = ['/store-setup', '/setup'].some((p) => currentPath.startsWith(p));
+      if (!isOnboarding) {
+        await syncUserAndStoreStatus();
+        await fetchDashboardDetails();
+      }
       setIsLoading(false);
     };
+
 
     initCMS();
   }, [syncUserAndStoreStatus, fetchDashboardDetails]);
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('selected_store_id');
-      localStorage.removeItem('current_store_id');
-      localStorage.removeItem('active_store_id');
+      // Clear all localStorage
+      localStorage.clear();
+
+      // Clear all sessionStorage
+      sessionStorage.clear();
+
+      // Clear all cookies (for current domain and path)
+      document.cookie.split(';').forEach((cookie) => {
+        const name = cookie.split('=')[0].trim();
+        // Expire the cookie across common paths and domain variations
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.${window.location.hostname}`;
+      });
     }
     cmsService.clearMerchantSession();
     setMerchantData(null);
@@ -374,6 +402,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsSuspended(false);
     router.push('/login');
   };
+
 
   const openAddProductModal = () => {
     setEditingProduct(null);

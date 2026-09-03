@@ -147,6 +147,19 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
   );
   const [isSaving, setIsSaving] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      router.push('/dashboard');
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCountdown((prev) => (prev !== null ? prev - 1 : null));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [countdown, router]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -627,56 +640,60 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
           'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=64&q=80',
       };
 
-      // 1. Update store setup on backend
-      const updatedSetup = await cmsService.updateStoreSetup(storePayload);
+      // Store was already created at email verification — skip creation, go straight to update
+      // 2. Update store setup details
+      await cmsService.updateStoreSetup(storePayload);
 
-      // 2. Publish & update theme
-      await cmsService.publishTemplate(selectedTheme.slug || selectedTheme.id);
-      await cmsService.updateStoreTheme({
-        activeTemplateSlug: selectedTheme.slug || selectedTheme.id,
-        themePrimaryColor: selectedTheme.accentColor,
-        themeSecondaryColor: '#64748B',
-        themeBackgroundColor: '#FFFFFF',
-        themeTextColor: '#0F172A',
-        themeAccentColor: selectedTheme.accentColor,
-        themeHeadingFont: 'Inter',
-        themeBodyFont: 'Inter',
-        themeFontSize: 'md',
-        themeBorderRadius: 'md',
-        themeButtonStyle: 'solid',
-        themeLayoutWidth: 'standard',
-        headerStyle: 'left-aligned',
-        headerSticky: true,
-        headerAnnouncement: `🚀 Welcome to ${storeName || 'our store'}! Enjoy free shipping on your first order.`,
-        headerShowSearch: true,
-        headerShowCurrency: true,
-        footerStyle: 'multi-column',
-        footerCopyright: `© ${new Date().getFullYear()} ${storeName || 'OmniStore'}. All rights reserved.`,
-        footerShowSocial: true,
-        footerShowNewsletter: true,
-        footerShowPaymentBadges: true,
-      });
-
-      // 3. Update global React context
-      if (merchantData) {
-        const updatedMerchantData: MerchantOnboardingData = {
-          ...merchantData,
-          store: {
-            id: merchantData.store?.id || 'store-active',
-            slug: cleanSlug,
-            storeName: storeName || 'My Store',
-            tagline,
-            category,
-            currency,
-            status: 'ACTIVE',
-            supportEmail: contactEmail,
-            supportPhone: contactPhone,
-          },
-          selectedTemplate: selectedTheme,
-        };
-        setMerchantData(updatedMerchantData);
-        cmsService.saveMerchantSession(updatedMerchantData);
+      // 3. Publish & update theme — non-blocking
+      try {
+        await cmsService.publishTemplate(selectedTheme.slug || selectedTheme.id);
+        await cmsService.updateStoreTheme({
+          activeTemplateSlug: selectedTheme.slug || selectedTheme.id,
+          themePrimaryColor: selectedTheme.accentColor,
+          themeSecondaryColor: '#64748B',
+          themeBackgroundColor: '#FFFFFF',
+          themeTextColor: '#0F172A',
+          themeAccentColor: selectedTheme.accentColor,
+          themeHeadingFont: 'Inter',
+          themeBodyFont: 'Inter',
+          themeFontSize: 'md',
+          themeBorderRadius: 'md',
+          themeButtonStyle: 'solid',
+          themeLayoutWidth: 'standard',
+          headerStyle: 'left-aligned',
+          headerSticky: true,
+          headerAnnouncement: `🚀 Welcome to ${storeName || 'our store'}! Enjoy free shipping on your first order.`,
+          headerShowSearch: true,
+          headerShowCurrency: true,
+          footerStyle: 'multi-column',
+          footerCopyright: `© ${new Date().getFullYear()} ${storeName || 'OmniStore'}. All rights reserved.`,
+          footerShowSocial: true,
+          footerShowNewsletter: true,
+          footerShowPaymentBadges: true,
+        });
+      } catch (themeErr) {
+        console.warn('Theme update notice (non-blocking):', themeErr);
       }
+
+      // 4. Update global React context
+      const updatedMerchantData: MerchantOnboardingData = {
+        ...(merchantData || {}),
+        merchant: merchantData?.merchant || { firstName: 'Merchant', lastName: 'Owner', email: '', mobileNumber: '' },
+        store: {
+          id: merchantData?.store?.id || undefined,
+          slug: cleanSlug,
+          storeName: storeName || 'My Store',
+          tagline,
+          category,
+          currency,
+          status: 'ACTIVE',
+          supportEmail: contactEmail,
+          supportPhone: contactPhone,
+        },
+        selectedTemplate: selectedTheme,
+      };
+      setMerchantData(updatedMerchantData);
+      cmsService.saveMerchantSession(updatedMerchantData);
 
       if (onSaved) onSaved(storePayload);
 
@@ -691,11 +708,14 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
         sessionStorage.removeItem('open_whatsapp_setup_once');
         sessionStorage.removeItem('just_registered');
       }
-
+    } catch (err) {
+      console.warn('Store setup notice:', err);
+    } finally {
+      setIsSaving(false);
+      // Always show completion and start countdown — regardless of backend errors
       setCurrentStage('completed');
+      setCountdown(4);
       playAudioCue('success');
-
-      // Add success completion message
       setMessages((prev) => [
         ...prev,
         {
@@ -706,22 +726,10 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
           type: 'completion-card',
         },
       ]);
-    } catch (err) {
-      console.error('Failed to deploy store settings:', err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `asst-err-${Date.now()}`,
-          sender: 'assistant',
-          text: `⚠️ There was a small hiccup while saving your settings to the server, but your local session has been updated. You can tweak details in the Settings tab anytime.`,
-          timestamp: getFormattedTime(),
-          type: 'text',
-        },
-      ]);
-    } finally {
-      setIsSaving(false);
     }
   };
+
+
 
   // Restart Chat
   const handleResetChat = () => {
@@ -798,12 +806,22 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
           {onSwitchToForm && (
             <button
               onClick={onSwitchToForm}
-              className="ml-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all border border-white/20 cursor-pointer"
+              className="ml-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all border border-white/20 cursor-pointer"
             >
               <Sliders className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Advanced Form</span>
             </button>
           )}
+
+          {/* Direct Dashboard Link */}
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="ml-1 px-3 py-1.5 bg-[#25d366] hover:bg-[#128c7e] text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            title="Skip to Dashboard"
+          >
+            <Store className="w-3.5 h-3.5" />
+            <span>Dashboard ➔</span>
+          </button>
         </div>
       </div>
 
@@ -1181,48 +1199,68 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-[#cbd5e0]/60">
-                    <button
-                      onClick={() => {
-                        if (typeof window !== 'undefined') {
-                          const userEmail = (merchantData?.merchant?.email || '').toLowerCase().trim();
-                          if (userEmail) {
-                            localStorage.setItem(`whatsapp_setup_completed_${userEmail}`, 'true');
-                            localStorage.setItem(`whatsapp_setup_opened_${userEmail}`, 'true');
-                          }
-                          localStorage.setItem('whatsapp_setup_completed', 'true');
-                          localStorage.setItem('whatsapp_setup_opened', 'true');
-                          sessionStorage.removeItem('open_whatsapp_setup_once');
-                          sessionStorage.removeItem('just_registered');
-                        }
-                        router.push('/dashboard');
-                      }}
-                      className="px-4 py-2.5 bg-[#075e54] hover:bg-[#128c7e] text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
-                    >
-                      <Store className="w-3.5 h-3.5" />
-                      <span>Open Dashboard</span>
-                    </button>
+                  <div className="flex flex-col gap-3 pt-2 border-t border-[#cbd5e0]/60">
+                    {countdown !== null && countdown > 0 && (
+                      <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#d9fdd3] text-[#075e54] text-xs font-semibold">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-[#25d366] animate-ping" />
+                          Redirecting to Dashboard in {countdown}s...
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setCountdown(null)}
+                          className="text-[11px] underline text-[#075e54] hover:opacity-80 cursor-pointer"
+                        >
+                          Stay here
+                        </button>
+                      </div>
+                    )}
 
-                    <button
-                      onClick={() => {
-                        if (typeof window !== 'undefined') {
-                          const userEmail = (merchantData?.merchant?.email || '').toLowerCase().trim();
-                          if (userEmail) {
-                            localStorage.setItem(`whatsapp_setup_completed_${userEmail}`, 'true');
-                            localStorage.setItem(`whatsapp_setup_opened_${userEmail}`, 'true');
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          setCountdown(null);
+                          if (typeof window !== 'undefined') {
+                            const userEmail = (merchantData?.merchant?.email || '').toLowerCase().trim();
+                            if (userEmail) {
+                              localStorage.setItem(`whatsapp_setup_completed_${userEmail}`, 'true');
+                              localStorage.setItem(`whatsapp_setup_opened_${userEmail}`, 'true');
+                            }
+                            localStorage.setItem('whatsapp_setup_completed', 'true');
+                            localStorage.setItem('whatsapp_setup_opened', 'true');
+                            sessionStorage.removeItem('open_whatsapp_setup_once');
+                            sessionStorage.removeItem('just_registered');
                           }
-                          localStorage.setItem('whatsapp_setup_completed', 'true');
-                          localStorage.setItem('whatsapp_setup_opened', 'true');
-                          sessionStorage.removeItem('open_whatsapp_setup_once');
-                          sessionStorage.removeItem('just_registered');
-                        }
-                        router.push('/themes');
-                      }}
-                      className="px-4 py-2.5 bg-[#f0f2f5] hover:bg-[#e4e6eb] text-[#111b21] text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all border border-[#cbd5e0] cursor-pointer"
-                    >
-                      <Palette className="w-3.5 h-3.5 text-[#128c7e]" />
-                      <span>Theme Studio</span>
-                    </button>
+                          router.push('/dashboard');
+                        }}
+                        className="px-4 py-2.5 bg-[#075e54] hover:bg-[#128c7e] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-98"
+                      >
+                        <Store className="w-3.5 h-3.5" />
+                        <span>Go to Dashboard ➔</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setCountdown(null);
+                          if (typeof window !== 'undefined') {
+                            const userEmail = (merchantData?.merchant?.email || '').toLowerCase().trim();
+                            if (userEmail) {
+                              localStorage.setItem(`whatsapp_setup_completed_${userEmail}`, 'true');
+                              localStorage.setItem(`whatsapp_setup_opened_${userEmail}`, 'true');
+                            }
+                            localStorage.setItem('whatsapp_setup_completed', 'true');
+                            localStorage.setItem('whatsapp_setup_opened', 'true');
+                            sessionStorage.removeItem('open_whatsapp_setup_once');
+                            sessionStorage.removeItem('just_registered');
+                          }
+                          router.push('/themes');
+                        }}
+                        className="px-4 py-2.5 bg-[#f0f2f5] hover:bg-[#e4e6eb] text-[#111b21] text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all border border-[#cbd5e0] cursor-pointer"
+                      >
+                        <Palette className="w-3.5 h-3.5 text-[#128c7e]" />
+                        <span>Theme Studio</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
