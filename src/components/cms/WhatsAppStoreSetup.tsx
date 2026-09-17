@@ -53,13 +53,48 @@ interface ChatStepMessage {
 
 // Category options for quick chips
 const CATEGORY_CHIPS = [
-  { id: 'tech', label: 'Tech & Electronics', icon: '⚡', taglineDefault: 'Next-generation tech for modern living.' },
-  { id: 'fashion', label: 'Fashion & Apparel', icon: '👗', taglineDefault: 'Curated luxury fashion & modern aesthetics.' },
-  { id: 'beauty', label: 'Beauty & Skincare', icon: '🌿', taglineDefault: 'Clean, radiant beauty formulated with love.' },
-  { id: 'artisan', label: 'Artisan & Handcrafted', icon: '🎨', taglineDefault: 'Thoughtfully crafted goods by studio artisans.' },
-  { id: 'streetwear', label: 'Urban Streetwear', icon: '🔥', taglineDefault: 'Bold culture, limited drops & raw style.' },
-  { id: 'fitness', label: 'Fitness & Sports', icon: '🏋️', taglineDefault: 'High performance gear for athletes & dreamers.' },
-  { id: 'home', label: 'Home & Living', icon: '🏡', taglineDefault: 'Elevated lifestyle goods designed for comfort.' },
+  {
+    id: 'tech',
+    label: 'Tech & Electronics',
+    icon: '⚡',
+    taglineDefault: 'Next-generation tech for modern living.',
+  },
+  {
+    id: 'fashion',
+    label: 'Fashion & Apparel',
+    icon: '👗',
+    taglineDefault: 'Curated luxury fashion & modern aesthetics.',
+  },
+  {
+    id: 'beauty',
+    label: 'Beauty & Skincare',
+    icon: '🌿',
+    taglineDefault: 'Clean, radiant beauty formulated with love.',
+  },
+  {
+    id: 'artisan',
+    label: 'Artisan & Handcrafted',
+    icon: '🎨',
+    taglineDefault: 'Thoughtfully crafted goods by studio artisans.',
+  },
+  {
+    id: 'streetwear',
+    label: 'Urban Streetwear',
+    icon: '🔥',
+    taglineDefault: 'Bold culture, limited drops & raw style.',
+  },
+  {
+    id: 'fitness',
+    label: 'Fitness & Sports',
+    icon: '🏋️',
+    taglineDefault: 'High performance gear for athletes & dreamers.',
+  },
+  {
+    id: 'home',
+    label: 'Home & Living',
+    icon: '🏡',
+    taglineDefault: 'Elevated lifestyle goods designed for comfort.',
+  },
 ];
 
 // Currency options
@@ -73,7 +108,10 @@ const CURRENCY_CHIPS = [
   { code: 'AED', symbol: 'د.إ', label: 'AED (د.إ) - UAE Dirham' },
 ];
 
-export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved, onSwitchToForm }) => {
+export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
+  onSaved,
+  onSwitchToForm,
+}) => {
   const router = useRouter();
   const { merchantData, setMerchantData } = useCMSContext();
 
@@ -94,30 +132,24 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
   >('store-name');
 
   // Setup Draft State
-  const [storeName, setStoreName] = useState(
-    merchantData?.store?.storeName || ''
-  );
-  const [category, setCategory] = useState(
-    merchantData?.store?.category || 'Tech & Electronics'
-  );
+  const [storeName, setStoreName] = useState(merchantData?.store?.storeName || '');
+  const [category, setCategory] = useState(merchantData?.store?.category || 'Tech & Electronics');
   const [tagline, setTagline] = useState(
-    merchantData?.store?.tagline || 'Next-generation tech for modern living.'
+    merchantData?.store?.tagline || 'Next-generation tech for modern living.',
   );
   const [contactEmail, setContactEmail] = useState(
-    merchantData?.store?.supportEmail || merchantData?.merchant?.email || 'support@omnistore.com'
+    merchantData?.store?.supportEmail || merchantData?.merchant?.email || 'support@omnistore.com',
   );
   const [contactPhone, setContactPhone] = useState(
-    merchantData?.store?.supportPhone || merchantData?.merchant?.mobileNumber || '+91 98765 43210'
+    merchantData?.store?.supportPhone || merchantData?.merchant?.mobileNumber || '+91 98765 43210',
   );
   const [address, setAddress] = useState(
-    '100 Innovation Way, Indiranagar, Bengaluru, Karnataka 560038, India'
+    '100 Innovation Way, Indiranagar, Bengaluru, Karnataka 560038, India',
   );
   const [selectedTheme, setSelectedTheme] = useState<StoreTemplate>(
-    merchantData?.selectedTemplate || STORE_TEMPLATES[0]
+    merchantData?.selectedTemplate || STORE_TEMPLATES[0],
   );
-  const [currency, setCurrency] = useState(
-    merchantData?.store?.currency || 'INR'
-  );
+  const [currency, setCurrency] = useState(merchantData?.store?.currency || 'INR');
   const [isSaving, setIsSaving] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -273,7 +305,9 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
         },
       ]);
     } else if (currentStage === 'category') {
-      const matched = CATEGORY_CHIPS.find((c) => c.label.toLowerCase().includes(userInput.toLowerCase())) || {
+      const matched = CATEGORY_CHIPS.find((c) =>
+        c.label.toLowerCase().includes(userInput.toLowerCase()),
+      ) || {
         label: userInput,
         taglineDefault: `The official destination for ${userInput}.`,
       };
@@ -421,7 +455,11 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
     } else if (currentStage === 'theme') {
       // Handled via theme card select button
     } else if (currentStage === 'currency') {
-      const curr = userInput.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3) || 'INR';
+      const curr =
+        userInput
+          .toUpperCase()
+          .replace(/[^A-Z]/g, '')
+          .slice(0, 3) || 'INR';
       setCurrency(curr);
       setCurrentStage('summary');
 
@@ -595,7 +633,12 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
       // 4. Update global React context
       const updatedMerchantData: MerchantOnboardingData = {
         ...(merchantData || {}),
-        merchant: merchantData?.merchant || { firstName: 'Merchant', lastName: 'Owner', email: '', mobileNumber: '' },
+        merchant: merchantData?.merchant || {
+          firstName: 'Merchant',
+          lastName: 'Owner',
+          email: '',
+          mobileNumber: '',
+        },
         store: {
           id: merchantData?.store?.id || undefined,
           slug: cleanSlug,
@@ -767,7 +810,7 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                           </strong>
                         ) : (
                           chunk
-                        )
+                        ),
                       )}
                     </p>
                   ))}
@@ -788,7 +831,13 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                     Quick Brand Inspirations:
                   </span>
                   <div className="flex flex-wrap gap-2">
-                    {['Apex Luxe Studio', 'Nova Horizon Goods', 'Verdant Organic Lab', 'Urban Pulse Retail', 'Zenith Crafts'].map((name) => (
+                    {[
+                      'Apex Luxe Studio',
+                      'Nova Horizon Goods',
+                      'Verdant Organic Lab',
+                      'Urban Pulse Retail',
+                      'Zenith Crafts',
+                    ].map((name) => (
                       <button
                         key={name}
                         onClick={() => handleSendMessage(name)}
@@ -814,7 +863,9 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                         onClick={() => handleSelectCategory(cat.label, cat.taglineDefault)}
                         className="p-2.5 rounded-xl bg-[#f0f2f5] hover:bg-[#128c7e] hover:text-white text-[#111b21] transition-all border border-[#cbd5e0]/60 text-left flex items-center gap-2 group active:scale-95 cursor-pointer"
                       >
-                        <span className="text-lg group-hover:scale-110 transition-transform">{cat.icon}</span>
+                        <span className="text-lg group-hover:scale-110 transition-transform">
+                          {cat.icon}
+                        </span>
                         <span className="text-xs font-medium leading-tight">{cat.label}</span>
                       </button>
                     ))}
@@ -836,7 +887,9 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                         className="w-full text-left px-3 py-2 rounded-xl bg-[#f0f2f5] hover:bg-[#128c7e] hover:text-white text-xs font-medium text-[#111b21] transition-all border border-[#cbd5e0]/60 flex items-center justify-between group active:scale-98 cursor-pointer"
                       >
                         <span className="italic">"{sugg}"</span>
-                        <span className="text-[10px] text-[#5e5a5a] group-hover:text-white">Select →</span>
+                        <span className="text-[10px] text-[#5e5a5a] group-hover:text-white">
+                          Select →
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -858,7 +911,9 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                         className="w-full text-left px-3.5 py-2 rounded-xl bg-[#f0f2f5] hover:bg-[#128c7e] hover:text-white text-xs font-medium text-[#111b21] transition-all border border-[#cbd5e0]/60 flex items-center justify-between group cursor-pointer"
                       >
                         <span className="font-mono">{emailOption}</span>
-                        <span className="text-[10px] text-[#5e5a5a] group-hover:text-white font-sans">Use Email →</span>
+                        <span className="text-[10px] text-[#5e5a5a] group-hover:text-white font-sans">
+                          Use Email →
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -880,7 +935,9 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                         className="w-full text-left px-3.5 py-2 rounded-xl bg-[#f0f2f5] hover:bg-[#128c7e] hover:text-white text-xs font-medium text-[#111b21] transition-all border border-[#cbd5e0]/60 flex items-center justify-between group cursor-pointer"
                       >
                         <span className="font-mono">{phoneOption}</span>
-                        <span className="text-[10px] text-[#5e5a5a] group-hover:text-white font-sans">Use Phone →</span>
+                        <span className="text-[10px] text-[#5e5a5a] group-hover:text-white font-sans">
+                          Use Phone →
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -902,7 +959,9 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                         className="w-full text-left px-3.5 py-2.5 rounded-xl bg-[#f0f2f5] hover:bg-[#128c7e] hover:text-white text-xs font-medium text-[#111b21] transition-all border border-[#cbd5e0]/60 flex items-start justify-between group cursor-pointer gap-2"
                       >
                         <span className="leading-snug">{addrOption}</span>
-                        <span className="text-[10px] text-[#5e5a5a] group-hover:text-white shrink-0 mt-0.5">Use →</span>
+                        <span className="text-[10px] text-[#5e5a5a] group-hover:text-white shrink-0 mt-0.5">
+                          Use →
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -944,10 +1003,14 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                           <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
                             <div>
                               <div className="flex items-center justify-between">
-                                <h4 className="font-serif font-bold text-sm text-[#191a1b]">{tmpl.name}</h4>
+                                <h4 className="font-serif font-bold text-sm text-[#191a1b]">
+                                  {tmpl.name}
+                                </h4>
                                 {isSelected && <Check className="w-4 h-4 text-[#075e54]" />}
                               </div>
-                              <p className="text-[11px] text-[#5e5a5a] line-clamp-2 mt-0.5">{tmpl.description}</p>
+                              <p className="text-[11px] text-[#5e5a5a] line-clamp-2 mt-0.5">
+                                {tmpl.description}
+                              </p>
                             </div>
 
                             <button
@@ -989,7 +1052,9 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                           </span>
                           <span className="text-xs font-bold">{curr.code}</span>
                         </div>
-                        <span className="text-[10px] text-[#5e5a5a] group-hover:text-white">Select →</span>
+                        <span className="text-[10px] text-[#5e5a5a] group-hover:text-white">
+                          Select →
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -1005,8 +1070,12 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                         🚀
                       </div>
                       <div>
-                        <h4 className="font-serif font-bold text-sm text-[#191a1b]">Store Configuration Passport</h4>
-                        <p className="text-[10px] text-[#5e5a5a]">Ready to publish live storefront</p>
+                        <h4 className="font-serif font-bold text-sm text-[#191a1b]">
+                          Store Configuration Passport
+                        </h4>
+                        <p className="text-[10px] text-[#5e5a5a]">
+                          Ready to publish live storefront
+                        </p>
                       </div>
                     </div>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#d9fdd3] text-[#075e54] border border-[#b2dfdb]">
@@ -1017,7 +1086,9 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center py-1 border-b border-[#f0f2f5]">
                       <span className="text-[#5e5a5a] font-medium">Store Brand:</span>
-                      <strong className="text-[#191a1b] font-bold font-serif text-sm">{storeName || 'My Store'}</strong>
+                      <strong className="text-[#191a1b] font-bold font-serif text-sm">
+                        {storeName || 'My Store'}
+                      </strong>
                     </div>
 
                     <div className="flex justify-between items-center py-1 border-b border-[#f0f2f5]">
@@ -1027,12 +1098,16 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
 
                     <div className="flex justify-between items-center py-1 border-b border-[#f0f2f5]">
                       <span className="text-[#5e5a5a] font-medium">Tagline:</span>
-                      <span className="text-[#191a1b] italic truncate max-w-[220px]">"{tagline}"</span>
+                      <span className="text-[#191a1b] italic truncate max-w-[220px]">
+                        "{tagline}"
+                      </span>
                     </div>
 
                     <div className="flex justify-between items-center py-1 border-b border-[#f0f2f5]">
                       <span className="text-[#5e5a5a] font-medium">Business Email:</span>
-                      <span className="text-[#191a1b] font-mono font-medium truncate max-w-[200px]">{contactEmail}</span>
+                      <span className="text-[#191a1b] font-mono font-medium truncate max-w-[200px]">
+                        {contactEmail}
+                      </span>
                     </div>
 
                     <div className="flex justify-between items-center py-1 border-b border-[#f0f2f5]">
@@ -1042,7 +1117,9 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
 
                     <div className="flex justify-between items-start py-1 border-b border-[#f0f2f5] gap-2">
                       <span className="text-[#5e5a5a] font-medium shrink-0">Store Address:</span>
-                      <span className="text-[#191a1b] text-right font-medium text-[11px] line-clamp-2">{address}</span>
+                      <span className="text-[#191a1b] text-right font-medium text-[11px] line-clamp-2">
+                        {address}
+                      </span>
                     </div>
 
                     <div className="flex justify-between items-center py-1 border-b border-[#f0f2f5]">
@@ -1088,8 +1165,12 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                       🎉
                     </div>
                     <div>
-                      <h4 className="font-serif font-bold text-base text-[#191a1b]">Store Setup Complete!</h4>
-                      <p className="text-xs text-[#5e5a5a]">Your storefront is configured and ready for business.</p>
+                      <h4 className="font-serif font-bold text-base text-[#191a1b]">
+                        Store Setup Complete!
+                      </h4>
+                      <p className="text-xs text-[#5e5a5a]">
+                        Your storefront is configured and ready for business.
+                      </p>
                     </div>
                   </div>
 
@@ -1158,7 +1239,24 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
       {/* ─── EMOJI QUICK BAR (POPUP) ─────────────────────────────────── */}
       {showEmojiPicker && (
         <div className="px-4 py-2 bg-[#f0f2f5] border-t border-[#cbd5e0] flex items-center gap-2 overflow-x-auto z-10">
-          {['👋', '🚀', '🔥', '✨', '⚡', '👗', '🌿', '🎨', '💎', '🎉', '🌟', '🏪', '🛍️', '📧', '📱', '📍'].map((emoji) => (
+          {[
+            '👋',
+            '🚀',
+            '🔥',
+            '✨',
+            '⚡',
+            '👗',
+            '🌿',
+            '🎨',
+            '💎',
+            '🎉',
+            '🌟',
+            '🏪',
+            '🛍️',
+            '📧',
+            '📱',
+            '📍',
+          ].map((emoji) => (
             <button
               key={emoji}
               onClick={() => {
@@ -1202,16 +1300,16 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
               currentStage === 'store-name'
                 ? "Type your store name (e.g. 'Aura Luxe Studio')..."
                 : currentStage === 'tagline'
-                ? 'Type your store tagline...'
-                : currentStage === 'business-email'
-                ? 'Enter official business email (e.g. support@store.com)...'
-                : currentStage === 'contact-phone'
-                ? 'Enter contact phone (e.g. +91 98765 43210)...'
-                : currentStage === 'address'
-                ? 'Enter physical business address...'
-                : currentStage === 'currency'
-                ? 'Enter currency (INR, USD, EUR, GBP)...'
-                : 'Type a message or select an option above...'
+                  ? 'Type your store tagline...'
+                  : currentStage === 'business-email'
+                    ? 'Enter official business email (e.g. support@store.com)...'
+                    : currentStage === 'contact-phone'
+                      ? 'Enter contact phone (e.g. +91 98765 43210)...'
+                      : currentStage === 'address'
+                        ? 'Enter physical business address...'
+                        : currentStage === 'currency'
+                          ? 'Enter currency (INR, USD, EUR, GBP)...'
+                          : 'Type a message or select an option above...'
             }
             className="w-full bg-white text-[#111b21] placeholder-[#8696a0] text-sm px-4 py-2.5 rounded-full border border-white focus:outline-none focus:ring-2 focus:ring-[#128c7e]/50 shadow-2xs"
           />

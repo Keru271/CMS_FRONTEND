@@ -38,15 +38,29 @@ interface ProductFormModalProps {
 }
 
 const productValidationSchema = Yup.object({
-  name: Yup.string().min(3, 'Product name must be at least 3 characters').required('Product name is required'),
+  name: Yup.string()
+    .min(3, 'Product name must be at least 3 characters')
+    .required('Product name is required'),
   sku: Yup.string().required('SKU code is required'),
   category: Yup.string().required('Category is required'),
-  price: Yup.number().typeError('Price must be a number').positive('Price must be positive').required('Price is required'),
-  originalPrice: Yup.number().typeError('Price must be a number').positive('Price must be positive').nullable(),
-  stockQuantity: Yup.number().typeError('Quantity must be a number').integer('Quantity must be an integer').min(0, 'Cannot be negative').required('Stock quantity is required'),
+  price: Yup.number()
+    .typeError('Price must be a number')
+    .positive('Price must be positive')
+    .required('Price is required'),
+  originalPrice: Yup.number()
+    .typeError('Price must be a number')
+    .positive('Price must be positive')
+    .nullable(),
+  stockQuantity: Yup.number()
+    .typeError('Quantity must be a number')
+    .integer('Quantity must be an integer')
+    .min(0, 'Cannot be negative')
+    .required('Stock quantity is required'),
   status: Yup.string().oneOf(['active', 'draft', 'archived']).required('Status is required'),
   image: Yup.string().url('Must be a valid image URL').required('Product image is required'),
-  description: Yup.string().min(10, 'Description must be at least 10 characters').required('Description is required'),
+  description: Yup.string()
+    .min(10, 'Description must be at least 10 characters')
+    .required('Description is required'),
 });
 
 export const ProductFormModal: React.FC<ProductFormModalProps> = ({
@@ -71,14 +85,19 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   // AI Copywriter Modal State
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-  const [aiTone, setAiTone] = useState<'LUXURY' | 'HIGH_CONVERTING' | 'CASUAL' | 'TECHNICAL'>('HIGH_CONVERTING');
+  const [aiTone, setAiTone] = useState<'LUXURY' | 'HIGH_CONVERTING' | 'CASUAL' | 'TECHNICAL'>(
+    'HIGH_CONVERTING',
+  );
   const [aiKeywords, setAiKeywords] = useState('');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
   const initialUrlSlug =
     initialProduct?.urlSlug ||
     (initialProduct?.name
-      ? initialProduct.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')
+      ? initialProduct.name
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
       : '');
 
   const formik = useFormik<ProductFormData>({
@@ -95,26 +114,46 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       stockQuantity: initialProduct?.stockQuantity ?? 10,
       isTaxInclusive: initialProduct?.isTaxInclusive || false,
       status: initialProduct?.status || 'active',
-      image: initialProduct?.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
+      image:
+        initialProduct?.image ||
+        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
       description: initialProduct?.description || '',
       tags: initialProduct?.tags ? initialProduct.tags.join(', ') : '',
       // SEO Governance Fields
       seoTitle: initialProduct?.seoTitle || initialProduct?.metaTitle || initialProduct?.name || '',
-      seoDescription: initialProduct?.seoDescription || initialProduct?.metaDescription || (initialProduct?.description ? initialProduct.description.slice(0, 160) : ''),
-      metaTitle: initialProduct?.metaTitle || initialProduct?.seoTitle || initialProduct?.name || '',
-      metaDescription: initialProduct?.metaDescription || initialProduct?.seoDescription || (initialProduct?.description ? initialProduct.description.slice(0, 160) : ''),
+      seoDescription:
+        initialProduct?.seoDescription ||
+        initialProduct?.metaDescription ||
+        (initialProduct?.description ? initialProduct.description.slice(0, 160) : ''),
+      metaTitle:
+        initialProduct?.metaTitle || initialProduct?.seoTitle || initialProduct?.name || '',
+      metaDescription:
+        initialProduct?.metaDescription ||
+        initialProduct?.seoDescription ||
+        (initialProduct?.description ? initialProduct.description.slice(0, 160) : ''),
       urlSlug: initialUrlSlug,
       ogImage: initialProduct?.ogImage || initialProduct?.image || '',
-      canonicalUrl: initialProduct?.canonicalUrl || (initialUrlSlug ? `https://${storeDomain}/products/${initialUrlSlug}` : ''),
+      canonicalUrl:
+        initialProduct?.canonicalUrl ||
+        (initialUrlSlug ? `https://${storeDomain}/products/${initialUrlSlug}` : ''),
     },
     validationSchema: productValidationSchema,
     onSubmit: async (values, helpers) => {
       try {
-        const resolvedSlug = values.urlSlug || values.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+        const resolvedSlug =
+          values.urlSlug ||
+          values.name
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, '-');
         const resolvedSeoTitle = values.seoTitle || values.metaTitle || values.name;
-        const resolvedSeoDesc = values.seoDescription || values.metaDescription || (values.description ? values.description.slice(0, 160) : '');
+        const resolvedSeoDesc =
+          values.seoDescription ||
+          values.metaDescription ||
+          (values.description ? values.description.slice(0, 160) : '');
         const resolvedOgImage = values.ogImage || values.image || '';
-        const resolvedCanonical = values.canonicalUrl || `https://${storeDomain}/products/${resolvedSlug}`;
+        const resolvedCanonical =
+          values.canonicalUrl || `https://${storeDomain}/products/${resolvedSlug}`;
 
         await onSubmit({
           ...values,
@@ -179,7 +218,10 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     }
     setIsGeneratingSeoAi(true);
     setTimeout(() => {
-      const cleanSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const cleanSlug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
       const category = formik.values.category || 'Quality';
       const autoTitle = `${title} | Buy Online at ${storeName}`;
       const plainDesc = formik.values.description
@@ -200,12 +242,25 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     }, 400);
   };
 
-  const effectiveSeoTitle = formik.values.seoTitle || formik.values.name || 'Product Title | OmniStore';
+  const effectiveSeoTitle =
+    formik.values.seoTitle || formik.values.name || 'Product Title | OmniStore';
   const effectiveSeoDesc =
     formik.values.seoDescription ||
-    (formik.values.description ? formik.values.description.slice(0, 160) : 'High quality product available with fast shipping.');
-  const effectiveSlug = formik.values.urlSlug || (formik.values.name ? formik.values.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-') : 'product-item');
-  const effectiveOgImage = formik.values.ogImage || formik.values.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80';
+    (formik.values.description
+      ? formik.values.description.slice(0, 160)
+      : 'High quality product available with fast shipping.');
+  const effectiveSlug =
+    formik.values.urlSlug ||
+    (formik.values.name
+      ? formik.values.name
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+      : 'product-item');
+  const effectiveOgImage =
+    formik.values.ogImage ||
+    formik.values.image ||
+    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80';
 
   if (!isOpen) return null;
 
@@ -222,7 +277,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               <h3 className="font-serif font-normal text-xl text-[#191a1b] leading-tight">
                 {isEditing ? 'Edit Item Specification' : 'Create New Catalog Item'}
               </h3>
-              <p className="text-xs font-sans text-[#5e5a5a]">Manage product details, pricing, and stock limits</p>
+              <p className="text-xs font-sans text-[#5e5a5a]">
+                Manage product details, pricing, and stock limits
+              </p>
             </div>
           </div>
           <button
@@ -265,7 +322,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5 w-full">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-sans font-medium text-[#191a1b]">Primary Category *</label>
+                <label className="text-xs font-sans font-medium text-[#191a1b]">
+                  Primary Category *
+                </label>
                 <span className="text-[10px] text-indigo-600 font-bold">
                   {(formik.values.categories || []).length} assigned
                 </span>
@@ -390,7 +449,10 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               onChange={formik.handleChange}
               className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer"
             />
-            <label htmlFor="isTaxInclusive" className="text-xs font-bold text-slate-800 cursor-pointer">
+            <label
+              htmlFor="isTaxInclusive"
+              className="text-xs font-bold text-slate-800 cursor-pointer"
+            >
               Product price is inclusive of tax (Tax is included in the listed price)
             </label>
           </div>
@@ -441,7 +503,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {/* Row 5: Description Textarea with AI Copywriter */}
           <div className="flex flex-col gap-1.5 w-full">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-sans font-medium text-[#191a1b]">Product Description *</label>
+              <label className="text-xs font-sans font-medium text-[#191a1b]">
+                Product Description *
+              </label>
               <button
                 type="button"
                 onClick={() => setIsAiModalOpen(true)}
@@ -465,7 +529,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               }`}
             />
             {formik.touched.description && formik.errors.description && (
-              <span className="text-[10px] text-[#ef4444] font-medium">{formik.errors.description}</span>
+              <span className="text-[10px] text-[#ef4444] font-medium">
+                {formik.errors.description}
+              </span>
             )}
           </div>
 
@@ -482,13 +548,16 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-bold text-slate-900">SEO Governance & Social Meta</h4>
+                    <h4 className="text-xs font-bold text-slate-900">
+                      SEO Governance & Social Meta
+                    </h4>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                       Auto-Synced with SEO Studio
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500">
-                    Customize search engine ranking title, snippet description, URL slug, and OpenGraph social share card
+                    Customize search engine ranking title, snippet description, URL slug, and
+                    OpenGraph social share card
                   </p>
                 </div>
               </div>
@@ -507,7 +576,11 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   <span>{isGeneratingSeoAi ? 'Generating…' : '✨ Auto-Generate SEO'}</span>
                 </button>
                 <div className="text-slate-400 p-1">
-                  {isSeoExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {isSeoExpanded ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
                 </div>
               </div>
             </div>
@@ -528,7 +601,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                           type="button"
                           onClick={() => setSeoPreviewDevice('desktop')}
                           className={`px-1.5 py-0.5 rounded font-medium flex items-center gap-1 ${
-                            seoPreviewDevice === 'desktop' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+                            seoPreviewDevice === 'desktop'
+                              ? 'bg-white text-slate-900 shadow-xs'
+                              : 'text-slate-500'
                           }`}
                         >
                           <Monitor className="w-2.5 h-2.5" /> Desktop
@@ -537,7 +612,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                           type="button"
                           onClick={() => setSeoPreviewDevice('mobile')}
                           className={`px-1.5 py-0.5 rounded font-medium flex items-center gap-1 ${
-                            seoPreviewDevice === 'mobile' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+                            seoPreviewDevice === 'mobile'
+                              ? 'bg-white text-slate-900 shadow-xs'
+                              : 'text-slate-500'
                           }`}
                         >
                           <Smartphone className="w-2.5 h-2.5" /> Mobile
@@ -552,7 +629,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         </div>
                         <span className="font-medium text-slate-800">{storeName}</span>
                         <span className="text-slate-400">›</span>
-                        <span className="text-slate-600 truncate text-[10px]">products › {effectiveSlug}</span>
+                        <span className="text-slate-600 truncate text-[10px]">
+                          products › {effectiveSlug}
+                        </span>
                       </div>
                       <h5 className="text-sm font-medium text-[#1a0dab] hover:underline leading-snug cursor-pointer line-clamp-1">
                         {effectiveSeoTitle}
@@ -570,7 +649,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         <Share2 className="w-3.5 h-3.5 text-indigo-600" />
                         <span>Social Share (OpenGraph) Preview</span>
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono">Facebook / Twitter / iMessage</span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Facebook / Twitter / iMessage
+                      </span>
                     </div>
 
                     <div className="rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
@@ -637,13 +718,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   {/* Product URL Slug */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-slate-800">URL Slug / Handle</label>
+                      <label className="text-xs font-semibold text-slate-800">
+                        URL Slug / Handle
+                      </label>
                       <button
                         type="button"
                         onClick={() => {
-                          const slug = formik.values.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+                          const slug = formik.values.name
+                            .toLowerCase()
+                            .trim()
+                            .replace(/[^a-z0-9]+/g, '-');
                           formik.setFieldValue('urlSlug', slug);
-                          formik.setFieldValue('canonicalUrl', `https://${storeDomain}/products/${slug}`);
+                          formik.setFieldValue(
+                            'canonicalUrl',
+                            `https://${storeDomain}/products/${slug}`,
+                          );
                         }}
                         className="text-[10px] font-bold text-indigo-600 hover:underline"
                       >
@@ -662,7 +751,10 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         onChange={(e) => {
                           const slugVal = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
                           formik.setFieldValue('urlSlug', slugVal);
-                          formik.setFieldValue('canonicalUrl', `https://${storeDomain}/products/${slugVal}`);
+                          formik.setFieldValue(
+                            'canonicalUrl',
+                            `https://${storeDomain}/products/${slugVal}`,
+                          );
                         }}
                         className="w-full px-2.5 py-2 text-xs font-mono text-slate-900 focus:outline-none"
                       />
@@ -673,7 +765,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 {/* SEO Meta Description */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-slate-800">SEO Meta Description</label>
+                    <label className="text-xs font-semibold text-slate-800">
+                      SEO Meta Description
+                    </label>
                     <span
                       className={`text-[10px] font-mono ${
                         (formik.values.seoDescription?.length || 0) > 160
@@ -701,7 +795,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-slate-800">Social Share Image (OpenGraph)</label>
+                      <label className="text-xs font-semibold text-slate-800">
+                        Social Share Image (OpenGraph)
+                      </label>
                       {formik.values.image && formik.values.ogImage !== formik.values.image && (
                         <button
                           type="button"
@@ -723,7 +819,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-800">Canonical URL (Optional)</label>
+                    <label className="text-xs font-semibold text-slate-800">
+                      Canonical URL (Optional)
+                    </label>
                     <input
                       type="url"
                       name="canonicalUrl"
@@ -758,7 +856,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
                 <div className="space-y-3 text-xs">
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Target Tone of Voice:</label>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Target Tone of Voice:
+                    </label>
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { id: 'HIGH_CONVERTING', label: '🔥 High-Conversion' },
@@ -783,7 +883,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Key Feature Keywords (Optional):</label>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Key Feature Keywords (Optional):
+                    </label>
                     <input
                       type="text"
                       placeholder="e.g. noise-cancelling, 40h battery, fast charge"
@@ -831,7 +933,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               className="px-5 py-2 rounded-lg bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] font-sans font-medium text-xs shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50"
             >
               <Save className="w-4 h-4 text-[#d4ff4c]" />
-              <span>{formik.isSubmitting ? 'Saving...' : isEditing ? 'Update Item' : 'Create Item'}</span>
+              <span>
+                {formik.isSubmitting ? 'Saving...' : isEditing ? 'Update Item' : 'Create Item'}
+              </span>
             </button>
           </div>
         </form>

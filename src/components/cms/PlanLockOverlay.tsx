@@ -25,14 +25,14 @@ export const PlanLockOverlay: React.FC<PlanLockOverlayProps> = ({
     requiredPlan === 'API'
       ? 'API Tier'
       : requiredPlan === 'ENTERPRISE'
-      ? 'Scale Enterprise'
-      : 'Growth Pro';
+        ? 'Scale Enterprise'
+        : 'Growth Pro';
   const planPrice =
     requiredPlan === 'API'
       ? '₹1,000/mo ($1,000)'
       : requiredPlan === 'ENTERPRISE'
-      ? '₹5,999/mo ($79)'
-      : '₹1,999/mo ($29)';
+        ? '₹5,999/mo ($79)'
+        : '₹1,999/mo ($29)';
 
   if (inline) {
     return (
@@ -108,7 +108,9 @@ export const PlanLockOverlay: React.FC<PlanLockOverlayProps> = ({
           className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs shadow-xl transition flex items-center justify-center gap-2 active:scale-95"
         >
           <Zap className="w-4 h-4" />
-          <span>Upgrade to {planName} ({planPrice})</span>
+          <span>
+            Upgrade to {planName} ({planPrice})
+          </span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>

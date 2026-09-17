@@ -35,10 +35,15 @@ export const ReviewStudio: React.FC = () => {
     ratingDistribution: { fiveStar: 0, fourStar: 0, threeStar: 0, twoStar: 0, oneStar: 0 },
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>(
+    'ALL',
+  );
   const [starFilter, setStarFilter] = useState<number | 0>(0);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -92,12 +97,13 @@ export const ReviewStudio: React.FC = () => {
   };
 
   // Status Change (Approve / Reject / Spam)
-  const handleUpdateStatus = async (id: string, newStatus: 'APPROVED' | 'PENDING' | 'REJECTED' | 'SPAM') => {
+  const handleUpdateStatus = async (
+    id: string,
+    newStatus: 'APPROVED' | 'PENDING' | 'REJECTED' | 'SPAM',
+  ) => {
     try {
       await cmsService.updateReviewStatus(id, newStatus);
-      setReviews((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r))
-      );
+      setReviews((prev) => prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r)));
       showToast(`Review status updated to ${newStatus}`);
       // Refresh metrics in background
       loadReviews();
@@ -127,7 +133,7 @@ export const ReviewStudio: React.FC = () => {
     try {
       const res = await cmsService.editReview(editingReview.id, editForm);
       setReviews((prev) =>
-        prev.map((r) => (r.id === editingReview.id ? { ...r, ...res.review } : r))
+        prev.map((r) => (r.id === editingReview.id ? { ...r, ...res.review } : r)),
       );
       setEditingReview(null);
       showToast('Review details updated successfully');
@@ -156,8 +162,8 @@ export const ReviewStudio: React.FC = () => {
         prev.map((r) =>
           r.id === replyingReview.id
             ? { ...r, adminReply: adminReplyInput.trim(), adminReplyAt: new Date().toISOString() }
-            : r
-        )
+            : r,
+        ),
       );
       setReplyingReview(null);
       showToast('Official merchant reply published!');
@@ -203,7 +209,11 @@ export const ReviewStudio: React.FC = () => {
             toastMessage.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
           }`}
         >
-          {toastMessage.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5" />
+          ) : (
+            <AlertCircle className="w-5 h-5" />
+          )}
           <span>{toastMessage.text}</span>
         </div>
       )}
@@ -216,7 +226,8 @@ export const ReviewStudio: React.FC = () => {
             <span>Product Reviews & Moderation</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Monitor customer feedback, approve ratings, edit reviews, and post official store replies across your catalog.
+            Monitor customer feedback, approve ratings, edit reviews, and post official store
+            replies across your catalog.
           </p>
         </div>
 
@@ -256,7 +267,9 @@ export const ReviewStudio: React.FC = () => {
         {/* Metric 2: Total Reviews */}
         <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-xs font-bold uppercase text-slate-400">Total Customer Reviews</span>
+            <span className="text-xs font-bold uppercase text-slate-400">
+              Total Customer Reviews
+            </span>
             <div className="text-3xl font-black text-slate-900 dark:text-foreground mt-1">
               {metrics.totalReviews}
             </div>
@@ -280,12 +293,8 @@ export const ReviewStudio: React.FC = () => {
         >
           <div>
             <span className="text-xs font-bold uppercase text-slate-400">Pending Moderation</span>
-            <div className="text-3xl font-black text-amber-600 mt-1">
-              {metrics.pendingReviews}
-            </div>
-            <span className="text-xs text-slate-500 font-semibold mt-1 block">
-              Requires Review
-            </span>
+            <div className="text-3xl font-black text-amber-600 mt-1">{metrics.pendingReviews}</div>
+            <span className="text-xs text-slate-500 font-semibold mt-1 block">Requires Review</span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-700 flex items-center justify-center text-xl font-bold">
             ⏳
@@ -296,9 +305,7 @@ export const ReviewStudio: React.FC = () => {
         <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-bold uppercase text-slate-400">Flagged / Rejected</span>
-            <div className="text-3xl font-black text-rose-600 mt-1">
-              {metrics.rejectedReviews}
-            </div>
+            <div className="text-3xl font-black text-rose-600 mt-1">{metrics.rejectedReviews}</div>
             <span className="text-xs text-slate-400 font-semibold mt-1 block">
               Spam or Declined
             </span>
@@ -384,7 +391,9 @@ export const ReviewStudio: React.FC = () => {
             <div className="w-16 h-16 bg-slate-100 dark:bg-accent rounded-full flex items-center justify-center mx-auto text-2xl">
               ⭐
             </div>
-            <h3 className="font-black text-sm text-slate-900 dark:text-foreground">No Reviews Found</h3>
+            <h3 className="font-black text-sm text-slate-900 dark:text-foreground">
+              No Reviews Found
+            </h3>
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
               No customer reviews match the selected filter or search criteria.
             </p>
@@ -402,9 +411,15 @@ export const ReviewStudio: React.FC = () => {
                     {/* Product Thumbnail */}
                     <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200 dark:border-border">
                       {rev.productImage ? (
-                        <img src={rev.productImage} alt={rev.productTitle} className="w-full h-full object-cover" />
+                        <img
+                          src={rev.productImage}
+                          alt={rev.productTitle}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400">📦</div>
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          📦
+                        </div>
                       )}
                     </div>
 
@@ -420,7 +435,9 @@ export const ReviewStudio: React.FC = () => {
                           </span>
                         )}
                         {rev.userEmail && (
-                          <span className="text-xs text-slate-400 font-mono">({rev.userEmail})</span>
+                          <span className="text-xs text-slate-400 font-mono">
+                            ({rev.userEmail})
+                          </span>
                         )}
                       </div>
 
@@ -429,7 +446,13 @@ export const ReviewStudio: React.FC = () => {
                           Product: {rev.productTitle || 'Store Product'}
                         </span>
                         <span>•</span>
-                        <span>{new Date(rev.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span>
+                          {new Date(rev.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -447,8 +470,8 @@ export const ReviewStudio: React.FC = () => {
                         rev.status === 'APPROVED'
                           ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
                           : rev.status === 'PENDING'
-                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 animate-pulse'
-                          : 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 animate-pulse'
+                            : 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
                       }`}
                     >
                       {rev.status}
@@ -587,7 +610,9 @@ export const ReviewStudio: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <select
                     value={editForm.rating}
-                    onChange={(e) => setEditForm({ ...editForm, rating: parseInt(e.target.value, 10) })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, rating: parseInt(e.target.value, 10) })
+                    }
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent font-bold"
                   >
                     <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>

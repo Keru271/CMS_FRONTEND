@@ -116,7 +116,9 @@ export const ProductExportModal: React.FC<ProductExportModalProps> = ({
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <FileSpreadsheet className={`w-4 h-4 ${exportFormat === 'standard' ? 'text-indigo-600' : 'text-slate-400'}`} />
+                  <FileSpreadsheet
+                    className={`w-4 h-4 ${exportFormat === 'standard' ? 'text-indigo-600' : 'text-slate-400'}`}
+                  />
                   <span className="text-xs font-black text-slate-900 dark:text-foreground">
                     Standard Excel (.xlsx)
                   </span>
@@ -135,7 +137,9 @@ export const ProductExportModal: React.FC<ProductExportModalProps> = ({
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <ShoppingBag className={`w-4 h-4 ${exportFormat === 'shopify' ? 'text-emerald-600' : 'text-slate-400'}`} />
+                  <ShoppingBag
+                    className={`w-4 h-4 ${exportFormat === 'shopify' ? 'text-emerald-600' : 'text-slate-400'}`}
+                  />
                   <span className="text-xs font-black text-slate-900 dark:text-foreground">
                     Shopify CSV Format
                   </span>

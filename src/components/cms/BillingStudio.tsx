@@ -48,7 +48,10 @@ export const BillingStudio: React.FC = () => {
   const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'ANNUAL'>('MONTHLY');
   const [customerRegion, setCustomerRegion] = useState<'INDIA' | 'INTERNATIONAL'>('INDIA');
   const [isLoading, setIsLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   // Pricing Swiper & View Mode State
   const [pricingViewMode, setPricingViewMode] = useState<'swiper' | 'grid'>('swiper');
@@ -67,7 +70,9 @@ export const BillingStudio: React.FC = () => {
   const [razorpayCardNumber, setRazorpayCardNumber] = useState('4532 •••• •••• 8821');
   const [razorpayBank, setRazorpayBank] = useState('HDFC');
   const [razorpayOrderId, setRazorpayOrderId] = useState<string | null>(null);
-  const [razorpayStep, setRazorpayStep] = useState<'DETAILS' | 'AUTHORIZING' | 'SUCCESS'>('DETAILS');
+  const [razorpayStep, setRazorpayStep] = useState<'DETAILS' | 'AUTHORIZING' | 'SUCCESS'>(
+    'DETAILS',
+  );
 
   // Stripe Checkout State (For International Customers)
   const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
@@ -79,7 +84,8 @@ export const BillingStudio: React.FC = () => {
   const [stripeStep, setStripeStep] = useState<'DETAILS' | 'AUTHORIZING' | 'SUCCESS'>('DETAILS');
 
   // Invoice Receipt Preview Modal
-  const [selectedInvoiceForReceipt, setSelectedInvoiceForReceipt] = useState<StoreBillingInvoiceData | null>(null);
+  const [selectedInvoiceForReceipt, setSelectedInvoiceForReceipt] =
+    useState<StoreBillingInvoiceData | null>(null);
 
   // Upgrade Prorated Details
   const [upgradeDetails, setUpgradeDetails] = useState<{
@@ -150,7 +156,12 @@ export const BillingStudio: React.FC = () => {
   };
 
   const handleCancelApiTier = async () => {
-    if (!confirm('Are you sure you want to cancel the API Tier? Developer API access will be deactivated, but your base store plan remains unaffected.')) return;
+    if (
+      !confirm(
+        'Are you sure you want to cancel the API Tier? Developer API access will be deactivated, but your base store plan remains unaffected.',
+      )
+    )
+      return;
     setIsProcessingApiTier(true);
     try {
       const res = await cmsService.cancelApiTier();
@@ -168,7 +179,10 @@ export const BillingStudio: React.FC = () => {
     setSelectedPlanForPayment(tier);
 
     // Free Tier (Starter): Skip payment gateways entirely and activate instantly
-    if (tier.id.toUpperCase() === 'STARTER' || (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0)) {
+    if (
+      tier.id.toUpperCase() === 'STARTER' ||
+      (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0)
+    ) {
       setIsProcessingPayment(true);
       try {
         const res = await cmsService.changeStorePlan({
@@ -177,7 +191,10 @@ export const BillingStudio: React.FC = () => {
           paymentMethod: 'FREE_TIER' as any,
           paymentMethodDetails: 'Free Starter Plan (No Payment Required)',
         });
-        showToast(`🎉 Switched to ${tier.name}! (Free Tier Activated - No payment needed)`, 'success');
+        showToast(
+          `🎉 Switched to ${tier.name}! (Free Tier Activated - No payment needed)`,
+          'success',
+        );
         await loadBillingData();
       } catch (err: any) {
         showToast(err?.message || 'Failed to activate Starter plan', 'error');
@@ -251,8 +268,8 @@ export const BillingStudio: React.FC = () => {
           razorpayMethod === 'UPI'
             ? `Razorpay UPI (${razorpayVpa})`
             : razorpayMethod === 'CARD'
-            ? `Razorpay Card (${razorpayCardNumber})`
-            : `Razorpay NetBanking (${razorpayBank})`;
+              ? `Razorpay Card (${razorpayCardNumber})`
+              : `Razorpay NetBanking (${razorpayBank})`;
 
         const res = await cmsService.verifyBillingRazorpayPayment({
           razorpay_order_id: razorpayOrderId || `order_rzp_${Date.now()}`,
@@ -339,7 +356,11 @@ export const BillingStudio: React.FC = () => {
             toastMessage.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
           }`}
         >
-          {toastMessage.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5" />
+          ) : (
+            <AlertCircle className="w-5 h-5" />
+          )}
           <span>{toastMessage.text}</span>
         </div>
       )}
@@ -360,7 +381,8 @@ export const BillingStudio: React.FC = () => {
             <span>Store Pricing Tiers & Billing</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Seamless payments for Indian merchants (via **Razorpay UPI & Cards**) and global international stores (via **Stripe**).
+            Seamless payments for Indian merchants (via **Razorpay UPI & Cards**) and global
+            international stores (via **Stripe**).
           </p>
         </div>
 
@@ -446,7 +468,9 @@ export const BillingStudio: React.FC = () => {
                 <span>•</span>
                 <div className="flex items-center gap-1.5">
                   <Wallet className="w-4 h-4 text-indigo-400" />
-                  <span>Platform Fee: {subscription.planTransactionFeePercent}% per transaction</span>
+                  <span>
+                    Platform Fee: {subscription.planTransactionFeePercent}% per transaction
+                  </span>
                 </div>
               </div>
             </div>
@@ -458,7 +482,9 @@ export const BillingStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setUpdatePaymentMethodType((subscription.planPaymentMethod as any) || 'RAZORPAY_UPI');
+                    setUpdatePaymentMethodType(
+                      (subscription.planPaymentMethod as any) || 'RAZORPAY_UPI',
+                    );
                     setUpdatePaymentMethodDetails(subscription.planPaymentMethodDetails || '');
                     setIsPaymentMethodModalOpen(true);
                   }}
@@ -474,7 +500,11 @@ export const BillingStudio: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-xs font-bold block flex items-center gap-1.5">
-                    <span>{subscription.planPaymentMethod?.includes('STRIPE') ? 'Stripe Gateway' : 'Razorpay Gateway'}</span>
+                    <span>
+                      {subscription.planPaymentMethod?.includes('STRIPE')
+                        ? 'Stripe Gateway'
+                        : 'Razorpay Gateway'}
+                    </span>
                     <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/20 text-emerald-300">
                       {subscription.planPaymentMethod?.includes('STRIPE') ? 'USD' : 'INR'}
                     </span>
@@ -490,7 +520,8 @@ export const BillingStudio: React.FC = () => {
                 <div className="flex justify-between text-slate-300 font-bold">
                   <span>Product Listing Capacity</span>
                   <span>
-                    {subscription.usage?.products?.current || 0} / {subscription.planConfig?.maxProducts}
+                    {subscription.usage?.products?.current || 0} /{' '}
+                    {subscription.planConfig?.maxProducts}
                   </span>
                 </div>
                 <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
@@ -511,7 +542,9 @@ export const BillingStudio: React.FC = () => {
           {customerRegion === 'INDIA' ? (
             <span className="text-xs font-bold px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-900 border border-blue-200 shadow-xs flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-              <span>Razorpay Active: UPI AutoPay, RuPay, Visa, NetBanking & Instant GST Invoicing</span>
+              <span>
+                Razorpay Active: UPI AutoPay, RuPay, Visa, NetBanking & Instant GST Invoicing
+              </span>
             </span>
           ) : (
             <span className="text-xs font-bold px-3.5 py-1.5 rounded-full bg-purple-50 text-purple-900 border border-purple-200 shadow-xs flex items-center gap-2">
@@ -526,7 +559,8 @@ export const BillingStudio: React.FC = () => {
             Transparent Pricing for Every Stage of Growth
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto mt-1">
-            Choose the plan that fits your business needs. Upgrade, downgrade, or cancel anytime with instant prorated calculation.
+            Choose the plan that fits your business needs. Upgrade, downgrade, or cancel anytime
+            with instant prorated calculation.
           </p>
         </div>
 
@@ -566,7 +600,8 @@ export const BillingStudio: React.FC = () => {
         <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl overflow-x-auto max-w-full">
           {tiers.map((t, idx) => {
             const isActive = pricingViewMode === 'swiper' ? activePricingSlide === idx : false;
-            const isGrowth = t.id.toUpperCase() === 'GROWTH' || t.id.toUpperCase() === 'PRO' || t.popular;
+            const isGrowth =
+              t.id.toUpperCase() === 'GROWTH' || t.id.toUpperCase() === 'PRO' || t.popular;
             return (
               <button
                 key={t.id}
@@ -625,7 +660,9 @@ export const BillingStudio: React.FC = () => {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setActivePricingSlide((prev) => (prev - 1 + tiers.length) % tiers.length)}
+                onClick={() =>
+                  setActivePricingSlide((prev) => (prev - 1 + tiers.length) % tiers.length)
+                }
                 className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs cursor-pointer"
                 title="Previous Plan"
               >
@@ -654,7 +691,8 @@ export const BillingStudio: React.FC = () => {
             if (!touchStartX || !touchEndX) return;
             const diff = touchStartX - touchEndX;
             if (diff > 50) setActivePricingSlide((prev) => (prev + 1) % tiers.length);
-            if (diff < -50) setActivePricingSlide((prev) => (prev - 1 + tiers.length) % tiers.length);
+            if (diff < -50)
+              setActivePricingSlide((prev) => (prev - 1 + tiers.length) % tiers.length);
             setTouchStartX(null);
             setTouchEndX(null);
           }}
@@ -674,17 +712,20 @@ export const BillingStudio: React.FC = () => {
                     ? tier.priceAnnualInr
                     : tier.priceMonthlyInr
                   : isAnnual
-                  ? tier.priceAnnualUsd
-                  : tier.priceMonthlyUsd;
+                    ? tier.priceAnnualUsd
+                    : tier.priceMonthlyUsd;
 
-                const currentTier = tiers.find((t) => (currentPlanId || 'STARTER').toUpperCase() === t.id.toUpperCase()) || tiers[0];
+                const currentTier =
+                  tiers.find(
+                    (t) => (currentPlanId || 'STARTER').toUpperCase() === t.id.toUpperCase(),
+                  ) || tiers[0];
                 const currentPrice = isIndian
                   ? isAnnual
                     ? currentTier.priceAnnualInr
                     : currentTier.priceMonthlyInr
                   : isAnnual
-                  ? currentTier.priceAnnualUsd
-                  : currentTier.priceMonthlyUsd;
+                    ? currentTier.priceAnnualUsd
+                    : currentTier.priceMonthlyUsd;
 
                 const isUpgradeTier = !isCurrent && price > currentPrice && currentPrice > 0;
                 const upgradeDiffPrice = isUpgradeTier ? Math.max(0, price - currentPrice) : price;
@@ -693,16 +734,17 @@ export const BillingStudio: React.FC = () => {
                 const isGrowth = id === 'GROWTH' || id === 'PRO' || tier.popular;
                 const isEnterprise = id === 'ENTERPRISE';
                 const isAgency = id === 'AGENCY';
-                const isStarter = id === 'STARTER' || (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0);
+                const isStarter =
+                  id === 'STARTER' || (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0);
 
                 // Background Gradients matching card themes
                 const bgGradient = isGrowth
                   ? 'bg-gradient-to-br from-[#1a0d18] via-[#240e1d] to-[#120815] border-rose-500/60 shadow-rose-500/15'
                   : isEnterprise
-                  ? 'bg-gradient-to-br from-[#120e24] via-[#1a1435] to-[#0c0818] border-purple-500/50 shadow-purple-500/15'
-                  : isAgency
-                  ? 'bg-gradient-to-br from-[#0c1a1a] via-[#112424] to-[#081212] border-emerald-500/50 shadow-emerald-500/15'
-                  : 'bg-gradient-to-br from-[#16181f] via-[#1c1f28] to-[#111318] border-slate-700/60 shadow-slate-900/20';
+                    ? 'bg-gradient-to-br from-[#120e24] via-[#1a1435] to-[#0c0818] border-purple-500/50 shadow-purple-500/15'
+                    : isAgency
+                      ? 'bg-gradient-to-br from-[#0c1a1a] via-[#112424] to-[#081212] border-emerald-500/50 shadow-emerald-500/15'
+                      : 'bg-gradient-to-br from-[#16181f] via-[#1c1f28] to-[#111318] border-slate-700/60 shadow-slate-900/20';
 
                 return (
                   <div
@@ -713,7 +755,11 @@ export const BillingStudio: React.FC = () => {
                     className={`relative rounded-[30px] border overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col justify-between ${
                       isExpanded
                         ? `flex-[4] sm:flex-[3.8] p-7 sm:p-8 cursor-default shadow-2xl ring-2 ${
-                            isGrowth ? 'ring-rose-500/40' : isCurrent ? 'ring-emerald-500/40' : 'ring-indigo-500/30'
+                            isGrowth
+                              ? 'ring-rose-500/40'
+                              : isCurrent
+                                ? 'ring-emerald-500/40'
+                                : 'ring-indigo-500/30'
                           } ${bgGradient}`
                         : `flex-[0.9] sm:flex-[1] min-w-[96px] sm:min-w-[120px] p-4 sm:p-5 cursor-pointer hover:opacity-100 opacity-75 hover:scale-[1.01] ${bgGradient}`
                     }`}
@@ -730,10 +776,10 @@ export const BillingStudio: React.FC = () => {
                                   isGrowth
                                     ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md'
                                     : isEnterprise
-                                    ? 'bg-purple-600 text-white'
-                                    : isAgency
-                                    ? 'bg-emerald-600 text-white'
-                                    : 'bg-slate-700 text-slate-200'
+                                      ? 'bg-purple-600 text-white'
+                                      : isAgency
+                                        ? 'bg-emerald-600 text-white'
+                                        : 'bg-slate-700 text-slate-200'
                                 }`}
                               >
                                 {tier.badge || tier.name}
@@ -769,7 +815,8 @@ export const BillingStudio: React.FC = () => {
                         <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
                           <div className="flex items-baseline gap-2">
                             <span className="text-3xl sm:text-4xl font-black text-white tracking-tight font-sans">
-                              {currencySymbol}{upgradeDiffPrice.toLocaleString()}
+                              {currencySymbol}
+                              {upgradeDiffPrice.toLocaleString()}
                             </span>
                             <span className="text-base sm:text-lg font-medium text-slate-300 font-normal">
                               /{isAnnual ? 'year' : 'month'}
@@ -784,8 +831,8 @@ export const BillingStudio: React.FC = () => {
                             {isStarter
                               ? 'Free tier for personal catalogs'
                               : isAnnual
-                              ? `${currencySymbol}${price.toLocaleString()} billed annually`
-                              : 'Billed monthly, cancel anytime'}
+                                ? `${currencySymbol}${price.toLocaleString()} billed annually`
+                                : 'Billed monthly, cancel anytime'}
                           </div>
                         </div>
 
@@ -802,10 +849,10 @@ export const BillingStudio: React.FC = () => {
                                     isGrowth
                                       ? 'bg-rose-500/20 text-rose-400'
                                       : isEnterprise
-                                      ? 'bg-purple-500/20 text-purple-400'
-                                      : isAgency
-                                      ? 'bg-emerald-500/20 text-emerald-400'
-                                      : 'bg-slate-700 text-slate-300'
+                                        ? 'bg-purple-500/20 text-purple-400'
+                                        : isAgency
+                                          ? 'bg-emerald-500/20 text-emerald-400'
+                                          : 'bg-slate-700 text-slate-300'
                                   }`}
                                 >
                                   <Check className="w-2.5 h-2.5 stroke-[3]" />
@@ -839,8 +886,8 @@ export const BillingStudio: React.FC = () => {
                                 isGrowth
                                   ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white shadow-rose-500/25'
                                   : isStarter
-                                  ? 'bg-slate-800 text-slate-200 hover:bg-slate-700'
-                                  : 'bg-white text-slate-900 hover:bg-slate-100'
+                                    ? 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                                    : 'bg-white text-slate-900 hover:bg-slate-100'
                               }`}
                             >
                               {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
@@ -852,7 +899,10 @@ export const BillingStudio: React.FC = () => {
                                 </>
                               ) : isUpgradeTier ? (
                                 <>
-                                  <span>Upgrade to {tier.badge || tier.name} for {currencySymbol}{upgradeDiffPrice.toLocaleString()}</span>
+                                  <span>
+                                    Upgrade to {tier.badge || tier.name} for {currencySymbol}
+                                    {upgradeDiffPrice.toLocaleString()}
+                                  </span>
                                   <ArrowRight className="w-4 h-4" />
                                 </>
                               ) : (
@@ -880,10 +930,10 @@ export const BillingStudio: React.FC = () => {
                               isGrowth
                                 ? 'bg-rose-500/20 text-rose-300'
                                 : isEnterprise
-                                ? 'bg-purple-500/20 text-purple-300'
-                                : isAgency
-                                ? 'bg-emerald-500/20 text-emerald-300'
-                                : 'bg-slate-800 text-slate-300'
+                                  ? 'bg-purple-500/20 text-purple-300'
+                                  : isAgency
+                                    ? 'bg-emerald-500/20 text-emerald-300'
+                                    : 'bg-slate-800 text-slate-300'
                             }`}
                           >
                             {isGrowth ? (
@@ -902,12 +952,16 @@ export const BillingStudio: React.FC = () => {
                               {tier.badge || tier.name}
                             </span>
                             <span className="text-[11px] font-extrabold text-slate-400 block font-sans">
-                              {currencySymbol}{price.toLocaleString()}
+                              {currencySymbol}
+                              {price.toLocaleString()}
                             </span>
                           </div>
 
                           {isCurrent && (
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Active Plan" />
+                            <span
+                              className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"
+                              title="Active Plan"
+                            />
                           )}
                         </div>
 
@@ -966,9 +1020,7 @@ export const BillingStudio: React.FC = () => {
                   }`}
                   title={`Go to ${t.badge || t.name}`}
                 >
-                  {activePricingSlide === idx ? (
-                    <span>{t.badge || t.name}</span>
-                  ) : null}
+                  {activePricingSlide === idx ? <span>{t.badge || t.name}</span> : null}
                 </button>
               ))}
             </div>
@@ -988,17 +1040,20 @@ export const BillingStudio: React.FC = () => {
                 ? tier.priceAnnualInr
                 : tier.priceMonthlyInr
               : isAnnual
-              ? tier.priceAnnualUsd
-              : tier.priceMonthlyUsd;
+                ? tier.priceAnnualUsd
+                : tier.priceMonthlyUsd;
 
-            const currentTier = tiers.find((t) => (currentPlanId || 'STARTER').toUpperCase() === t.id.toUpperCase()) || tiers[0];
+            const currentTier =
+              tiers.find(
+                (t) => (currentPlanId || 'STARTER').toUpperCase() === t.id.toUpperCase(),
+              ) || tiers[0];
             const currentPrice = isIndian
               ? isAnnual
                 ? currentTier.priceAnnualInr
                 : currentTier.priceMonthlyInr
               : isAnnual
-              ? currentTier.priceAnnualUsd
-              : currentTier.priceMonthlyUsd;
+                ? currentTier.priceAnnualUsd
+                : currentTier.priceMonthlyUsd;
 
             const isUpgradeTier = !isCurrent && price > currentPrice && currentPrice > 0;
             const upgradeDiffPrice = isUpgradeTier ? Math.max(0, price - currentPrice) : price;
@@ -1007,7 +1062,8 @@ export const BillingStudio: React.FC = () => {
             const isGrowth = id === 'GROWTH' || id === 'PRO' || tier.popular;
             const isEnterprise = id === 'ENTERPRISE';
             const isAgency = id === 'AGENCY';
-            const isStarter = id === 'STARTER' || (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0);
+            const isStarter =
+              id === 'STARTER' || (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0);
 
             return (
               <div
@@ -1016,8 +1072,8 @@ export const BillingStudio: React.FC = () => {
                   isGrowth
                     ? 'border-2 border-[#ff4893] bg-gradient-to-b from-[#fff9f6] via-[#fff1f6] to-[#fdf2f8] shadow-xl shadow-rose-500/10 hover:-translate-y-1'
                     : isCurrent
-                    ? 'bg-white border-2 border-emerald-500 shadow-xl shadow-emerald-500/10 ring-2 ring-emerald-500/20'
-                    : 'bg-white border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md hover:-translate-y-1'
+                      ? 'bg-white border-2 border-emerald-500 shadow-xl shadow-emerald-500/10 ring-2 ring-emerald-500/20'
+                      : 'bg-white border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md hover:-translate-y-1'
                 }`}
               >
                 {/* Top Floating Badge */}
@@ -1029,7 +1085,10 @@ export const BillingStudio: React.FC = () => {
                 ) : isUpgradeTier ? (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10">
                     <Flame className="w-3 h-3 text-amber-200 fill-amber-200" />
-                    <span>Upgrade & Save {currencySymbol}{currentPrice.toLocaleString()}</span>
+                    <span>
+                      Upgrade & Save {currencySymbol}
+                      {currentPrice.toLocaleString()}
+                    </span>
                   </div>
                 ) : null}
 
@@ -1037,15 +1096,17 @@ export const BillingStudio: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className={`text-sm font-black italic tracking-wider uppercase ${
-                        isGrowth
-                          ? 'bg-gradient-to-r from-[#ff5722] via-[#ff4081] to-[#d946ef] bg-clip-text text-transparent'
-                          : isEnterprise
-                          ? 'text-purple-700'
-                          : isAgency
-                          ? 'text-slate-900'
-                          : 'text-slate-500'
-                      }`}>
+                      <span
+                        className={`text-sm font-black italic tracking-wider uppercase ${
+                          isGrowth
+                            ? 'bg-gradient-to-r from-[#ff5722] via-[#ff4081] to-[#d946ef] bg-clip-text text-transparent'
+                            : isEnterprise
+                              ? 'text-purple-700'
+                              : isAgency
+                                ? 'text-slate-900'
+                                : 'text-slate-500'
+                        }`}
+                      >
                         {tier.badge || tier.name}
                       </span>
                       {isGrowth && !isCurrent && (
@@ -1072,7 +1133,8 @@ export const BillingStudio: React.FC = () => {
                   <div className="py-2">
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight font-sans">
-                        {currencySymbol}{upgradeDiffPrice.toLocaleString()}
+                        {currencySymbol}
+                        {upgradeDiffPrice.toLocaleString()}
                       </span>
                       <span className="text-xl sm:text-2xl font-serif italic text-slate-500 font-normal">
                         /{isAnnual ? 'year' : 'month'}
@@ -1082,8 +1144,8 @@ export const BillingStudio: React.FC = () => {
                       {isStarter
                         ? 'Free to use'
                         : isAnnual
-                        ? `${currencySymbol}${price.toLocaleString()} billed annually`
-                        : 'Billed monthly'}
+                          ? `${currencySymbol}${price.toLocaleString()} billed annually`
+                          : 'Billed monthly'}
                     </div>
                   </div>
 
@@ -1103,17 +1165,15 @@ export const BillingStudio: React.FC = () => {
                               isGrowth
                                 ? 'bg-rose-100 text-rose-600'
                                 : isEnterprise
-                                ? 'bg-purple-100 text-purple-700'
-                                : isAgency
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-slate-100 text-slate-600'
+                                  ? 'bg-purple-100 text-purple-700'
+                                  : isAgency
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-slate-100 text-slate-600'
                             }`}
                           >
                             <Check className="w-2.5 h-2.5 stroke-[3]" />
                           </div>
-                          <span className="text-slate-700 font-medium">
-                            {feat}
-                          </span>
+                          <span className="text-slate-700 font-medium">{feat}</span>
                         </li>
                       ))}
                     </ul>
@@ -1140,8 +1200,8 @@ export const BillingStudio: React.FC = () => {
                         isGrowth
                           ? 'bg-black text-white hover:bg-slate-800 shadow-md shadow-black/20'
                           : isStarter
-                          ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                          : 'bg-slate-900 text-white hover:bg-black'
+                            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            : 'bg-slate-900 text-white hover:bg-black'
                       }`}
                     >
                       {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
@@ -1153,7 +1213,10 @@ export const BillingStudio: React.FC = () => {
                         </>
                       ) : isUpgradeTier ? (
                         <>
-                          <span>Upgrade for {currencySymbol}{upgradeDiffPrice.toLocaleString()}</span>
+                          <span>
+                            Upgrade for {currencySymbol}
+                            {upgradeDiffPrice.toLocaleString()}
+                          </span>
                           <ArrowRight className="w-4 h-4" />
                         </>
                       ) : (
@@ -1199,7 +1262,14 @@ export const BillingStudio: React.FC = () => {
                 <span>API Tier (1,000 / month)</span>
               </h3>
               <p className="text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed">
-                The API Tier is a dedicated add-on exclusively for Developer API access. Purchasing it unlocks the entire <code className="text-indigo-400 font-mono bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-800/60">/api/v1/*</code> REST engine, API keys, and Webhooks <strong>without altering your current base plan</strong> (your store remains on {subscription?.planConfig?.name || subscription?.plan || 'Starter'}).
+                The API Tier is a dedicated add-on exclusively for Developer API access. Purchasing
+                it unlocks the entire{' '}
+                <code className="text-indigo-400 font-mono bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-800/60">
+                  /api/v1/*
+                </code>{' '}
+                REST engine, API keys, and Webhooks{' '}
+                <strong>without altering your current base plan</strong> (your store remains on{' '}
+                {subscription?.planConfig?.name || subscription?.plan || 'Starter'}).
               </p>
             </div>
 
@@ -1225,7 +1295,9 @@ export const BillingStudio: React.FC = () => {
 
           <div className="w-full lg:w-auto flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-4 p-5 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 shrink-0">
             <div>
-              <div className="text-xs text-indigo-300 font-bold uppercase tracking-wider">Add-on Price</div>
+              <div className="text-xs text-indigo-300 font-bold uppercase tracking-wider">
+                Add-on Price
+              </div>
               <div className="text-3xl font-black text-white mt-0.5">
                 {customerRegion === 'INDIA' ? '₹1,000' : '$1,000'}
                 <span className="text-xs font-normal text-slate-400"> / month</span>
@@ -1245,7 +1317,11 @@ export const BillingStudio: React.FC = () => {
                   onClick={handleCancelApiTier}
                   className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  {isProcessingApiTier ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>Cancel API Add-on</span>}
+                  {isProcessingApiTier ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <span>Cancel API Add-on</span>
+                  )}
                 </button>
               ) : (
                 <button
@@ -1351,7 +1427,8 @@ export const BillingStudio: React.FC = () => {
           </div>
         ) : (
           <div className="py-8 text-center text-xs text-slate-400">
-            No past invoices recorded yet. Once your plan upgrades or renews, tax invoices will appear here.
+            No past invoices recorded yet. Once your plan upgrades or renews, tax invoices will
+            appear here.
           </div>
         )}
       </div>
@@ -1398,7 +1475,9 @@ export const BillingStudio: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-[10px] uppercase font-bold text-blue-700 block">
-                          {upgradeDetails?.isUpgradeDifference ? 'Subscription Upgrade (Prorated)' : 'Subscription Upgrade'}
+                          {upgradeDetails?.isUpgradeDifference
+                            ? 'Subscription Upgrade (Prorated)'
+                            : 'Subscription Upgrade'}
                         </span>
                         <strong className="text-sm text-slate-900 font-bold">
                           {selectedPlanForPayment.name} ({billingCycle.toLowerCase()})
@@ -1432,7 +1511,9 @@ export const BillingStudio: React.FC = () => {
                     {upgradeDetails?.isUpgradeDifference && (
                       <div className="pt-2 border-t border-blue-200/80 flex items-center justify-between text-[11px] text-blue-950 font-bold">
                         <span>Active {upgradeDetails.currentPlanName || 'Plan'} Credit:</span>
-                        <span className="text-emerald-700">- ₹{(upgradeDetails.creditedAmount || 0).toLocaleString()}</span>
+                        <span className="text-emerald-700">
+                          - ₹{(upgradeDetails.creditedAmount || 0).toLocaleString()}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -1499,7 +1580,8 @@ export const BillingStudio: React.FC = () => {
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-mono font-bold text-xs"
                       />
                       <p className="text-[10px] text-slate-500">
-                        💡 Collect request will be sent to your UPI app for instant mandate authorization.
+                        💡 Collect request will be sent to your UPI app for instant mandate
+                        authorization.
                       </p>
                     </div>
                   )}
@@ -1537,9 +1619,7 @@ export const BillingStudio: React.FC = () => {
 
                   {razorpayMethod === 'NETBANKING' && (
                     <div className="space-y-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                      <label className="block font-bold text-slate-700">
-                        Select Your Bank:
-                      </label>
+                      <label className="block font-bold text-slate-700">Select Your Bank:</label>
                       <select
                         value={razorpayBank}
                         onChange={(e) => setRazorpayBank(e.target.value)}
@@ -1581,7 +1661,8 @@ export const BillingStudio: React.FC = () => {
                     Connecting to Razorpay Gateway...
                   </h4>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Please approve the mandate or complete the authorization in your UPI app. Do not refresh this window.
+                    Please approve the mandate or complete the authorization in your UPI app. Do not
+                    refresh this window.
                   </p>
                 </div>
               )}
@@ -1668,7 +1749,9 @@ export const BillingStudio: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-[10px] uppercase font-bold text-purple-700 block">
-                          {upgradeDetails?.isUpgradeDifference ? 'Subscription Plan Upgrade (Prorated)' : 'Subscription Plan'}
+                          {upgradeDetails?.isUpgradeDifference
+                            ? 'Subscription Plan Upgrade (Prorated)'
+                            : 'Subscription Plan'}
                         </span>
                         <strong className="text-sm text-slate-900 font-bold">
                           {selectedPlanForPayment.name} ({billingCycle.toLowerCase()})
@@ -1678,7 +1761,8 @@ export const BillingStudio: React.FC = () => {
                         {upgradeDetails?.isUpgradeDifference ? (
                           <>
                             <span className="text-[11px] text-slate-400 line-through block">
-                              Full Price: ${(upgradeDetails.originalAmount || 0).toLocaleString()} USD
+                              Full Price: ${(upgradeDetails.originalAmount || 0).toLocaleString()}{' '}
+                              USD
                             </span>
                             <strong className="text-lg font-black text-purple-900">
                               ${(upgradeDetails.upgradeDifference || 0).toLocaleString()} USD
@@ -1703,7 +1787,9 @@ export const BillingStudio: React.FC = () => {
                     {upgradeDetails?.isUpgradeDifference && (
                       <div className="pt-2 border-t border-purple-200/80 flex items-center justify-between text-[11px] text-purple-950 font-bold">
                         <span>Active {upgradeDetails.currentPlanName || 'Plan'} Credit:</span>
-                        <span className="text-emerald-700">- ${(upgradeDetails.creditedAmount || 0).toLocaleString()} USD</span>
+                        <span className="text-emerald-700">
+                          - ${(upgradeDetails.creditedAmount || 0).toLocaleString()} USD
+                        </span>
                       </div>
                     )}
                   </div>
@@ -1815,11 +1901,10 @@ export const BillingStudio: React.FC = () => {
                   <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-2xl font-bold">
                     ✓
                   </div>
-                  <h4 className="text-lg font-bold text-slate-900">
-                    Stripe Payment Successful!
-                  </h4>
+                  <h4 className="text-lg font-bold text-slate-900">Stripe Payment Successful!</h4>
                   <p className="text-xs text-slate-500">
-                    Your store subscription is now active on <strong>{selectedPlanForPayment.name}</strong>.
+                    Your store subscription is now active on{' '}
+                    <strong>{selectedPlanForPayment.name}</strong>.
                   </p>
                   <button
                     type="button"
@@ -1861,7 +1946,9 @@ export const BillingStudio: React.FC = () => {
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Store Name:</span>
-                  <strong className="text-slate-900">{subscription?.storeName || 'OmniStore India'}</strong>
+                  <strong className="text-slate-900">
+                    {subscription?.storeName || 'OmniStore India'}
+                  </strong>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Date Issued:</span>
@@ -1894,7 +1981,8 @@ export const BillingStudio: React.FC = () => {
                 <div className="p-4 space-y-2">
                   <div className="flex justify-between text-slate-900 font-medium">
                     <span>
-                      {selectedInvoiceForReceipt.tierName} Plan ({selectedInvoiceForReceipt.billingCycle.toLowerCase()})
+                      {selectedInvoiceForReceipt.tierName} Plan (
+                      {selectedInvoiceForReceipt.billingCycle.toLowerCase()})
                     </span>
                     <span>
                       {selectedInvoiceForReceipt.currency === 'INR' ? '₹' : '$'}
@@ -1903,9 +1991,7 @@ export const BillingStudio: React.FC = () => {
                   </div>
                   <div className="flex justify-between text-slate-500 text-[11px]">
                     <span>Taxes (GST / VAT Included)</span>
-                    <span>
-                      {selectedInvoiceForReceipt.currency === 'INR' ? '₹' : '$'}0.00
-                    </span>
+                    <span>{selectedInvoiceForReceipt.currency === 'INR' ? '₹' : '$'}0.00</span>
                   </div>
                   <div className="pt-2 border-t border-slate-200 flex justify-between font-bold text-sm text-slate-900">
                     <span>Total Paid</span>
@@ -1948,9 +2034,7 @@ export const BillingStudio: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">
-                Update Store Payment Method
-              </h3>
+              <h3 className="text-base font-bold text-slate-900">Update Store Payment Method</h3>
               <button
                 type="button"
                 onClick={() => setIsPaymentMethodModalOpen(false)}
@@ -1962,9 +2046,7 @@ export const BillingStudio: React.FC = () => {
 
             <form onSubmit={handleUpdatePaymentMethod} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Payment Method Type
-                </label>
+                <label className="block font-bold text-slate-700 mb-1">Payment Method Type</label>
                 <select
                   value={updatePaymentMethodType}
                   onChange={(e) => setUpdatePaymentMethodType(e.target.value as any)}

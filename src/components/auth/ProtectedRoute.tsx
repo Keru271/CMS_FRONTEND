@@ -3,7 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
-const PUBLIC_ROUTES = ['/login', '/register', '/verify-email', '/forgot-password', '/reset-password'];
+const PUBLIC_ROUTES = [
+  '/login',
+  '/register',
+  '/verify-email',
+  '/forgot-password',
+  '/reset-password',
+];
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -23,7 +29,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   useEffect(() => {
     const isPublic = PUBLIC_ROUTES.some(
-      (route) => pathname === route || pathname?.startsWith(`${route}?`)
+      (route) => pathname === route || pathname?.startsWith(`${route}?`),
     );
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
@@ -39,7 +45,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }, [pathname, router]);
 
   const isPublic = PUBLIC_ROUTES.some(
-    (route) => pathname === route || pathname?.startsWith(`${route}?`)
+    (route) => pathname === route || pathname?.startsWith(`${route}?`),
   );
 
   // Before client-side useEffect runs:

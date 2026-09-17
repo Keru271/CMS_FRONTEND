@@ -73,21 +73,35 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
                   <td colSpan={7} className="py-16 text-center text-[#5e5a5a]">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <ShoppingBag className="w-10 h-10 text-[#beb9b3]" />
-                      <span className="font-serif text-lg text-[#191a1b]">No Customer Orders Found</span>
+                      <span className="font-serif text-lg text-[#191a1b]">
+                        No Customer Orders Found
+                      </span>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filteredOrders.map((o) => (
                   <tr key={o.id} className="hover:bg-[#fdf1ef]/60 transition-colors">
-                    <td className="py-3.5 px-4 sm:px-5 font-mono font-bold text-[#191a1b]">{o.orderNumber}</td>
+                    <td className="py-3.5 px-4 sm:px-5 font-mono font-bold text-[#191a1b]">
+                      {o.orderNumber}
+                    </td>
                     <td className="py-3.5 px-4">
                       <div className="font-sans font-medium text-[#191a1b]">{o.customerName}</div>
                       <div className="text-[10px] font-sans text-[#5e5a5a]">{o.customerEmail}</div>
                     </td>
-                    <td className="py-3.5 px-4 text-[#5e5a5a] font-mono text-[10px]">{o.createdAt}</td>
+                    <td className="py-3.5 px-4 text-[#5e5a5a] font-mono text-[10px]">
+                      {o.createdAt}
+                    </td>
                     <td className="py-3.5 px-4 font-mono font-bold text-[#191a1b]">
-                      {o.currency === 'INR' ? '₹' : o.currency === 'EUR' ? '€' : o.currency === 'GBP' ? '£' : '$'}{o.totalAmount.toFixed(2)} <span className="text-[10px] text-[#5e5a5a]">{o.currency || ''}</span>
+                      {o.currency === 'INR'
+                        ? '₹'
+                        : o.currency === 'EUR'
+                          ? '€'
+                          : o.currency === 'GBP'
+                            ? '£'
+                            : '$'}
+                      {o.totalAmount.toFixed(2)}{' '}
+                      <span className="text-[10px] text-[#5e5a5a]">{o.currency || ''}</span>
                     </td>
                     <td className="py-3.5 px-4">
                       <span
@@ -95,8 +109,8 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
                           o.paymentStatus === 'paid'
                             ? 'bg-[#d4ff4c]/40 text-[#191a1b] border border-[#191a1b]'
                             : o.paymentStatus === 'pending'
-                            ? 'bg-[#d7e5fe] text-[#191a1b] border border-[#cbd5e0]'
-                            : 'bg-rose-50 text-rose-700 border border-rose-200'
+                              ? 'bg-[#d7e5fe] text-[#191a1b] border border-[#cbd5e0]'
+                              : 'bg-rose-50 text-rose-700 border border-rose-200'
                         }`}
                       >
                         {o.paymentStatus}

@@ -77,7 +77,8 @@ function StoreSetupContent() {
               </span>
             </h2>
             <p className="text-xs text-[#5e5a5a]">
-              Set up your storefront brand, contact channels, themes, and regional currency in minutes.
+              Set up your storefront brand, contact channels, themes, and regional currency in
+              minutes.
             </p>
           </div>
         </div>
@@ -87,23 +88,27 @@ function StoreSetupContent() {
           <button
             type="button"
             onClick={handleSwitchToChat}
-            className={`px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${setupMode === 'chat'
+            className={`px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              setupMode === 'chat'
                 ? 'bg-[#075e54] text-white shadow-xs'
                 : 'text-[#54656f] hover:text-[#111b21]'
-              }`}
+            }`}
           >
             <MessageSquare className="w-4 h-4" />
             <span>WhatsApp Setup Chat</span>
-            {setupMode === 'chat' && <span className="w-2 h-2 rounded-full bg-[#25d366] animate-ping hidden sm:inline-block" />}
+            {setupMode === 'chat' && (
+              <span className="w-2 h-2 rounded-full bg-[#25d366] animate-ping hidden sm:inline-block" />
+            )}
           </button>
 
           <button
             type="button"
             onClick={handleSwitchToForm}
-            className={`px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${setupMode === 'form'
+            className={`px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              setupMode === 'form'
                 ? 'bg-[#191a1b] text-[#d4ff4c] shadow-xs'
                 : 'text-[#54656f] hover:text-[#111b21]'
-              }`}
+            }`}
           >
             <Sliders className="w-4 h-4" />
             <span>Settings Form</span>
@@ -113,10 +118,7 @@ function StoreSetupContent() {
 
       {/* ─── ACTIVE SETUP VIEW ──────────────────────────────────────── */}
       {setupMode === 'chat' ? (
-        <WhatsAppStoreSetup
-          onSaved={handleSaved}
-          onSwitchToForm={handleSwitchToForm}
-        />
+        <WhatsAppStoreSetup onSaved={handleSaved} onSwitchToForm={handleSwitchToForm} />
       ) : (
         <StoreSetup onSaved={handleSaved} />
       )}

@@ -4,7 +4,8 @@ import { DomainStudio } from '@/src/components/cms/DomainStudio';
 
 export const metadata: Metadata = {
   title: 'Origin DNS & Custom Domains | Store Studio',
-  description: 'Manage origin DNS records, SSL certificates, and deploy your active store theme to edge CDN origins.',
+  description:
+    'Manage origin DNS records, SSL certificates, and deploy your active store theme to edge CDN origins.',
 };
 
 export default function DomainsPage() {

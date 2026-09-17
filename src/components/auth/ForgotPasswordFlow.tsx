@@ -92,7 +92,8 @@ export const ForgotPasswordFlow: React.FC = () => {
         setStep('verify');
         setResendCooldown(30);
       } catch (err: any) {
-        const msg = err.response?.data?.message || err.message || 'Failed to send password reset code.';
+        const msg =
+          err.response?.data?.message || err.message || 'Failed to send password reset code.';
         setServerError(msg);
       } finally {
         setIsSubmitting(false);
@@ -119,7 +120,8 @@ export const ForgotPasswordFlow: React.FC = () => {
         setResetToken(values.otp);
         setStep('reset');
       } catch (err: any) {
-        const msg = err.response?.data?.message || err.message || 'Invalid or expired verification code.';
+        const msg =
+          err.response?.data?.message || err.message || 'Invalid or expired verification code.';
         setServerError(msg);
       } finally {
         setIsSubmitting(false);
@@ -249,7 +251,8 @@ export const ForgotPasswordFlow: React.FC = () => {
                     Forgot Password?
                   </h1>
                   <p className="text-xs text-sage-muted mt-1">
-                    No worries! Enter your registered merchant email address and we’ll send you a 6-digit recovery code.
+                    No worries! Enter your registered merchant email address and we’ll send you a
+                    6-digit recovery code.
                   </p>
                 </div>
 
@@ -316,7 +319,8 @@ export const ForgotPasswordFlow: React.FC = () => {
                     Check Your Inbox
                   </h1>
                   <p className="text-xs text-sage-muted mt-1">
-                    We sent a 6-digit recovery code to <strong className="text-sage-text">{email}</strong>.
+                    We sent a 6-digit recovery code to{' '}
+                    <strong className="text-sage-text">{email}</strong>.
                   </p>
                 </div>
 
@@ -426,7 +430,8 @@ export const ForgotPasswordFlow: React.FC = () => {
                     Set New Password
                   </h1>
                   <p className="text-xs text-sage-muted mt-1">
-                    Create a strong, unique password for <strong className="text-sage-text">{email}</strong>.
+                    Create a strong, unique password for{' '}
+                    <strong className="text-sage-text">{email}</strong>.
                   </p>
                 </div>
 
@@ -455,7 +460,11 @@ export const ForgotPasswordFlow: React.FC = () => {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-3 text-sage-muted hover:text-sage-text"
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -478,7 +487,11 @@ export const ForgotPasswordFlow: React.FC = () => {
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="absolute right-3 top-3 text-sage-muted hover:text-sage-text"
                       >
-                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                     {resetFormik.touched.confirmPassword && resetFormik.errors.confirmPassword && (
@@ -497,36 +510,46 @@ export const ForgotPasswordFlow: React.FC = () => {
                           passwordStrength.score >= 5
                             ? 'text-emerald-600'
                             : passwordStrength.score >= 3
-                            ? 'text-amber-600'
-                            : 'text-slate-400'
+                              ? 'text-amber-600'
+                              : 'text-slate-400'
                         }
                       >
                         {passwordStrength.score >= 5
                           ? 'Strong'
                           : passwordStrength.score >= 3
-                          ? 'Medium'
-                          : 'Weak'}
+                            ? 'Medium'
+                            : 'Weak'}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-500">
-                      <div className={`flex items-center gap-1 ${passwordStrength.checks.length ? 'text-emerald-600 font-bold' : ''}`}>
+                      <div
+                        className={`flex items-center gap-1 ${passwordStrength.checks.length ? 'text-emerald-600 font-bold' : ''}`}
+                      >
                         <span>{passwordStrength.checks.length ? '✓' : '○'}</span>
                         <span>6+ Characters</span>
                       </div>
-                      <div className={`flex items-center gap-1 ${passwordStrength.checks.uppercase ? 'text-emerald-600 font-bold' : ''}`}>
+                      <div
+                        className={`flex items-center gap-1 ${passwordStrength.checks.uppercase ? 'text-emerald-600 font-bold' : ''}`}
+                      >
                         <span>{passwordStrength.checks.uppercase ? '✓' : '○'}</span>
                         <span>Uppercase Letter</span>
                       </div>
-                      <div className={`flex items-center gap-1 ${passwordStrength.checks.lowercase ? 'text-emerald-600 font-bold' : ''}`}>
+                      <div
+                        className={`flex items-center gap-1 ${passwordStrength.checks.lowercase ? 'text-emerald-600 font-bold' : ''}`}
+                      >
                         <span>{passwordStrength.checks.lowercase ? '✓' : '○'}</span>
                         <span>Lowercase Letter</span>
                       </div>
-                      <div className={`flex items-center gap-1 ${passwordStrength.checks.number ? 'text-emerald-600 font-bold' : ''}`}>
+                      <div
+                        className={`flex items-center gap-1 ${passwordStrength.checks.number ? 'text-emerald-600 font-bold' : ''}`}
+                      >
                         <span>{passwordStrength.checks.number ? '✓' : '○'}</span>
                         <span>Number (0-9)</span>
                       </div>
-                      <div className={`col-span-2 flex items-center gap-1 ${passwordStrength.checks.special ? 'text-emerald-600 font-bold' : ''}`}>
+                      <div
+                        className={`col-span-2 flex items-center gap-1 ${passwordStrength.checks.special ? 'text-emerald-600 font-bold' : ''}`}
+                      >
                         <span>{passwordStrength.checks.special ? '✓' : '○'}</span>
                         <span>Special Character (!@#$%)</span>
                       </div>
@@ -566,7 +589,8 @@ export const ForgotPasswordFlow: React.FC = () => {
                     Password Reset Complete!
                   </h1>
                   <p className="text-xs text-sage-muted max-w-xs mx-auto">
-                    Your password has been successfully updated. You can now log into your store using your new credentials.
+                    Your password has been successfully updated. You can now log into your store
+                    using your new credentials.
                   </p>
                 </div>
 

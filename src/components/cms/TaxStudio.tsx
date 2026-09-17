@@ -29,7 +29,10 @@ import {
 export const TaxStudio: React.FC = () => {
   const [taxRegions, setTaxRegions] = useState<CMSTaxRegion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   // Dynamic Merchant Store Currency
   const [currencySymbol, setCurrencySymbol] = useState<string>('₹');
@@ -298,7 +301,9 @@ export const TaxStudio: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[350px] gap-3">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-slate-500 animate-pulse">Loading Tax Studio...</span>
+        <span className="text-xs font-bold text-slate-500 animate-pulse">
+          Loading Tax Studio...
+        </span>
       </div>
     );
   }
@@ -341,7 +346,9 @@ export const TaxStudio: React.FC = () => {
               <span>Tax Management Studio</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              Configure regional Tax/GST rates, GSTIN registration numbers, HSN/SAC code classification, inclusive vs exclusive store pricing, and print compliant B2B tax invoices.
+              Configure regional Tax/GST rates, GSTIN registration numbers, HSN/SAC code
+              classification, inclusive vs exclusive store pricing, and print compliant B2B tax
+              invoices.
             </p>
           </div>
 
@@ -378,7 +385,8 @@ export const TaxStudio: React.FC = () => {
               No Tax Regions Configured
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-              Set up regional tax rates, GSTIN registration numbers, and HSN/SAC classification codes to automate store tax calculations and generate compliant B2B tax invoices.
+              Set up regional tax rates, GSTIN registration numbers, and HSN/SAC classification
+              codes to automate store tax calculations and generate compliant B2B tax invoices.
             </p>
           </div>
           <div className="pt-2 flex justify-center">
@@ -406,7 +414,9 @@ export const TaxStudio: React.FC = () => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <Globe className="w-5 h-5 text-indigo-600" />
-                      <h2 className="font-black text-lg text-slate-900 dark:text-foreground">{region.name}</h2>
+                      <h2 className="font-black text-lg text-slate-900 dark:text-foreground">
+                        {region.name}
+                      </h2>
                       <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-accent text-slate-800 dark:text-slate-200 text-[10px] font-black uppercase">
                         {region.taxName}
                       </span>
@@ -415,7 +425,9 @@ export const TaxStudio: React.FC = () => {
                     {region.taxNumber && (
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-slate-400">Registration ID:</span>
-                        <span className="font-mono font-black text-indigo-600 dark:text-indigo-400">{region.taxNumber}</span>
+                        <span className="font-mono font-black text-indigo-600 dark:text-indigo-400">
+                          {region.taxNumber}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -451,18 +463,30 @@ export const TaxStudio: React.FC = () => {
                 {/* Rates Breakdown Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-100 dark:border-border">
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Standard Tax Rate</span>
-                    <span className="text-lg font-black text-slate-900 dark:text-foreground">{region.standardRate}%</span>
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                      Standard Tax Rate
+                    </span>
+                    <span className="text-lg font-black text-slate-900 dark:text-foreground">
+                      {region.standardRate}%
+                    </span>
                   </div>
 
                   <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-100 dark:border-border">
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Reduced Rate</span>
-                    <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">{region.reducedRate || 5.0}%</span>
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                      Reduced Rate
+                    </span>
+                    <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">
+                      {region.reducedRate || 5.0}%
+                    </span>
                   </div>
 
                   <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-100 dark:border-border">
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Pricing Calculation</span>
-                    <span className={`text-xs font-black uppercase ${region.isTaxInclusive ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                      Pricing Calculation
+                    </span>
+                    <span
+                      className={`text-xs font-black uppercase ${region.isTaxInclusive ? 'text-emerald-600' : 'text-amber-600'}`}
+                    >
                       {region.isTaxInclusive ? 'Tax-Inclusive' : 'Tax-Exclusive'}
                     </span>
                   </div>
@@ -477,19 +501,28 @@ export const TaxStudio: React.FC = () => {
                   {region.hsnSacCodes && region.hsnSacCodes.length > 0 ? (
                     <div className="divide-y divide-slate-100 dark:divide-border border border-slate-100 dark:border-border rounded-2xl overflow-hidden text-xs">
                       {region.hsnSacCodes.map((code) => (
-                        <div key={code.id} className="p-3.5 bg-slate-50/50 dark:bg-accent/20 flex items-center justify-between gap-4">
+                        <div
+                          key={code.id}
+                          className="p-3.5 bg-slate-50/50 dark:bg-accent/20 flex items-center justify-between gap-4"
+                        >
                           <div className="flex items-center gap-3">
                             <span className="px-2 py-1 rounded-lg bg-slate-900 text-white font-mono font-black text-[10px]">
                               {code.code}
                             </span>
                             <div>
-                              <span className="font-extrabold text-slate-900 dark:text-foreground block">{code.description}</span>
-                              <span className="text-[10px] text-slate-400 block">{code.type} Classification</span>
+                              <span className="font-extrabold text-slate-900 dark:text-foreground block">
+                                {code.description}
+                              </span>
+                              <span className="text-[10px] text-slate-400 block">
+                                {code.type} Classification
+                              </span>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-4">
-                            <span className="font-black text-indigo-600 dark:text-indigo-400">{code.taxRate}% Tax</span>
+                            <span className="font-black text-indigo-600 dark:text-indigo-400">
+                              {code.taxRate}% Tax
+                            </span>
                             <button
                               type="button"
                               onClick={() => handleDeleteCode(region.id, code.id)}
@@ -502,7 +535,9 @@ export const TaxStudio: React.FC = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-400 italic">No HSN/SAC product classification codes mapped for this region.</p>
+                    <p className="text-xs text-slate-400 italic">
+                      No HSN/SAC product classification codes mapped for this region.
+                    </p>
                   )}
                 </div>
               </div>
@@ -525,7 +560,9 @@ export const TaxStudio: React.FC = () => {
               {/* SIMULATED INPUTS */}
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300">Target Tax Region</label>
+                  <label className="block text-xs font-bold text-slate-300">
+                    Target Tax Region
+                  </label>
                   <select
                     value={simRegionId}
                     onChange={(e) => setSimRegionId(e.target.value)}
@@ -540,7 +577,9 @@ export const TaxStudio: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-300">Item Price ({currencySymbol})</label>
+                  <label className="block text-xs font-bold text-slate-300">
+                    Item Price ({currencySymbol})
+                  </label>
                   <input
                     type="number"
                     step="10"
@@ -552,7 +591,9 @@ export const TaxStudio: React.FC = () => {
 
                 <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-slate-300">Tax Inclusive Pricing Mode</span>
+                    <span className="text-xs font-extrabold text-slate-300">
+                      Tax Inclusive Pricing Mode
+                    </span>
                     <button
                       type="button"
                       onClick={() => setSimIsInclusive(!simIsInclusive)}
@@ -575,28 +616,42 @@ export const TaxStudio: React.FC = () => {
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
                 <div className="flex justify-between text-slate-400">
                   <span>Standard Rate:</span>
-                  <span className="font-bold text-white">{selectedSimRegion?.standardRate || 0}%</span>
+                  <span className="font-bold text-white">
+                    {selectedSimRegion?.standardRate || 0}%
+                  </span>
                 </div>
 
                 {selectedSimRegion?.taxName === 'GST' ? (
                   <div className="space-y-1 pt-2 border-t border-slate-800">
                     <div className="flex justify-between text-slate-300">
                       <span>Intra-State CGST ({(selectedSimRegion?.standardRate || 0) / 2}%):</span>
-                      <span className="font-bold text-indigo-400">{currencySymbol}{simTax.cgst.toFixed(2)}</span>
+                      <span className="font-bold text-indigo-400">
+                        {currencySymbol}
+                        {simTax.cgst.toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex justify-between text-slate-300">
                       <span>Intra-State SGST ({(selectedSimRegion?.standardRate || 0) / 2}%):</span>
-                      <span className="font-bold text-indigo-400">{currencySymbol}{simTax.sgst.toFixed(2)}</span>
+                      <span className="font-bold text-indigo-400">
+                        {currencySymbol}
+                        {simTax.sgst.toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex justify-between text-slate-300 pt-1 border-t border-slate-800/60">
                       <span>Inter-State IGST ({selectedSimRegion?.standardRate || 0}%):</span>
-                      <span className="font-bold text-purple-400">{currencySymbol}{simTax.igst.toFixed(2)}</span>
+                      <span className="font-bold text-purple-400">
+                        {currencySymbol}
+                        {simTax.igst.toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 ) : (
                   <div className="flex justify-between text-indigo-400 font-bold border-t border-slate-800 pt-2">
                     <span>Calculated Tax:</span>
-                    <span>+{currencySymbol}{simTax.taxAmount.toFixed(2)}</span>
+                    <span>
+                      +{currencySymbol}
+                      {simTax.taxAmount.toFixed(2)}
+                    </span>
                   </div>
                 )}
               </div>
@@ -610,7 +665,9 @@ export const TaxStudio: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-              <h3 className="font-black text-lg">{editingRegion ? 'Edit Tax Region' : 'Create Tax Region'}</h3>
+              <h3 className="font-black text-lg">
+                {editingRegion ? 'Edit Tax Region' : 'Create Tax Region'}
+              </h3>
               <button
                 type="button"
                 onClick={() => setIsRegionModalOpen(false)}
@@ -648,36 +705,53 @@ export const TaxStudio: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Standard Rate (%)</label>
+                  <label className="block text-xs font-bold text-slate-700">
+                    Standard Rate (%)
+                  </label>
                   <input
                     type="number"
                     step="0.1"
                     required
                     value={regionForm.standardRate}
-                    onChange={(e) => setRegionForm({ ...regionForm, standardRate: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setRegionForm({
+                        ...regionForm,
+                        standardRate: parseFloat(e.target.value) || 0,
+                      })
+                    }
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-black text-indigo-600"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">GSTIN / VAT Registration ID</label>
+                <label className="block text-xs font-bold text-slate-700">
+                  GSTIN / VAT Registration ID
+                </label>
                 <input
                   type="text"
                   value={regionForm.taxNumber}
-                  onChange={(e) => setRegionForm({ ...regionForm, taxNumber: e.target.value.toUpperCase() })}
+                  onChange={(e) =>
+                    setRegionForm({ ...regionForm, taxNumber: e.target.value.toUpperCase() })
+                  }
                   placeholder="e.g. 27AABCU9603R1ZM"
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-bold text-indigo-600"
                 />
               </div>
 
               <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border">
-                <span className="text-xs font-extrabold text-slate-800">Prices Include Tax (Tax Inclusive)</span>
+                <span className="text-xs font-extrabold text-slate-800">
+                  Prices Include Tax (Tax Inclusive)
+                </span>
                 <button
                   type="button"
-                  onClick={() => setRegionForm({ ...regionForm, isTaxInclusive: !regionForm.isTaxInclusive })}
+                  onClick={() =>
+                    setRegionForm({ ...regionForm, isTaxInclusive: !regionForm.isTaxInclusive })
+                  }
                   className={`px-3 py-1 rounded-full text-xs font-black ${
-                    regionForm.isTaxInclusive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
+                    regionForm.isTaxInclusive
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-200 text-slate-600'
                   }`}
                 >
                   {regionForm.isTaxInclusive ? 'Inclusive' : 'Exclusive'}
@@ -741,14 +815,18 @@ export const TaxStudio: React.FC = () => {
                     step="0.5"
                     required
                     value={codeForm.taxRate}
-                    onChange={(e) => setCodeForm({ ...codeForm, taxRate: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setCodeForm({ ...codeForm, taxRate: parseFloat(e.target.value) || 0 })
+                    }
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-black text-indigo-600"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">HSN / SAC Code Number *</label>
+                <label className="block text-xs font-bold text-slate-700">
+                  HSN / SAC Code Number *
+                </label>
                 <input
                   type="text"
                   required
@@ -829,23 +907,39 @@ export const TaxStudio: React.FC = () => {
                   </span>
                 </div>
                 <div className="text-right text-xs">
-                  <span className="font-extrabold text-slate-900 block">OmniStore Merchant Platform</span>
+                  <span className="font-extrabold text-slate-900 block">
+                    OmniStore Merchant Platform
+                  </span>
                   <span className="font-mono text-slate-500 block">GSTIN: 27AABCU9603R1ZM</span>
-                  <span className="text-slate-400 block">Date: {new Date().toISOString().split('T')[0]}</span>
+                  <span className="text-slate-400 block">
+                    Date: {new Date().toISOString().split('T')[0]}
+                  </span>
                 </div>
               </div>
 
               {/* Customer GST Details */}
               <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 border text-xs">
                 <div>
-                  <span className="font-black text-slate-500 uppercase tracking-wider block mb-1">Billed To (Customer):</span>
-                  <span className="font-extrabold text-slate-900 block">Pacific Outfitter Corp</span>
-                  <span className="text-slate-600 block">742 Evergreen Terrace, Springfield, IL</span>
-                  <span className="font-mono text-indigo-600 block pt-1">Buyer GSTIN: {b2bBuyerGstin}</span>
+                  <span className="font-black text-slate-500 uppercase tracking-wider block mb-1">
+                    Billed To (Customer):
+                  </span>
+                  <span className="font-extrabold text-slate-900 block">
+                    Pacific Outfitter Corp
+                  </span>
+                  <span className="text-slate-600 block">
+                    742 Evergreen Terrace, Springfield, IL
+                  </span>
+                  <span className="font-mono text-indigo-600 block pt-1">
+                    Buyer GSTIN: {b2bBuyerGstin}
+                  </span>
                 </div>
                 <div className="text-right">
-                  <span className="font-black text-slate-500 uppercase tracking-wider block mb-1">Place of Supply:</span>
-                  <span className="font-extrabold text-slate-900 block">Inter-State Supply (IGST)</span>
+                  <span className="font-black text-slate-500 uppercase tracking-wider block mb-1">
+                    Place of Supply:
+                  </span>
+                  <span className="font-extrabold text-slate-900 block">
+                    Inter-State Supply (IGST)
+                  </span>
                   <span className="text-slate-600 block">Reverse Charge: Applicable (NO)</span>
                 </div>
               </div>
@@ -895,7 +989,9 @@ export const TaxStudio: React.FC = () => {
                   </div>
                   <div className="flex justify-between font-black text-sm text-slate-900 pt-2 border-t">
                     <span>Invoice Grand Total:</span>
-                    <span className="text-indigo-600">{currencySymbol}280.80 {currencyCode}</span>
+                    <span className="text-indigo-600">
+                      {currencySymbol}280.80 {currencyCode}
+                    </span>
                   </div>
                 </div>
               </div>

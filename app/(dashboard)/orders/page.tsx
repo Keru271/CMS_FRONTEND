@@ -48,10 +48,7 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       <OrderStudio />
-      <OrderTable
-        orders={orders}
-        onStatusChange={handleUpdateOrderStatus}
-      />
+      <OrderTable orders={orders} onStatusChange={handleUpdateOrderStatus} />
     </div>
   );
 }

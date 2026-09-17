@@ -52,7 +52,8 @@ const NAVIGATION_SLOTS: NavigationSlot[] = [
     title: 'Footer Navigation',
     handle: 'footer-menu',
     location: 'FOOTER',
-    description: 'Quick links, customer service, and policy links displayed in your storefront footer.',
+    description:
+      'Quick links, customer service, and policy links displayed in your storefront footer.',
     icon: LayoutGrid,
   },
   {
@@ -80,7 +81,10 @@ export const NavigationManager: React.FC = () => {
   const [activeSlotKey, setActiveSlotKey] = useState<'header' | 'footer' | 'mobile'>('header');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   // Item Modal State (Add / Edit)
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
@@ -101,7 +105,8 @@ export const NavigationManager: React.FC = () => {
     url: '/',
     target: '_self',
     isMegaMenu: false,
-    bannerImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
+    bannerImage:
+      'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
     headline: 'Featured Collection 2026',
     buttonLabel: 'Explore Collection',
     buttonUrl: '/collections/all',
@@ -140,7 +145,7 @@ export const NavigationManager: React.FC = () => {
     (m) =>
       m.location === activeSlot.location ||
       m.handle === activeSlot.handle ||
-      m.handle === activeSlot.key
+      m.handle === activeSlot.key,
   );
 
   // Active Menu Representation (Empty items array if not created on backend yet)
@@ -152,7 +157,10 @@ export const NavigationManager: React.FC = () => {
     items: [],
   };
 
-  const handleOpenAddItemModal = (parentId: string | null = null, defaultValues?: { label: string; url: string }) => {
+  const handleOpenAddItemModal = (
+    parentId: string | null = null,
+    defaultValues?: { label: string; url: string },
+  ) => {
     setEditingParentId(parentId);
     setEditingItem(null);
     setItemFormData({
@@ -160,7 +168,8 @@ export const NavigationManager: React.FC = () => {
       url: defaultValues?.url || '/',
       target: '_self',
       isMegaMenu: false,
-      bannerImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
+      bannerImage:
+        'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
       headline: 'Featured Collection 2026',
       buttonLabel: 'Explore Collection',
       buttonUrl: '/collections/all',
@@ -176,7 +185,9 @@ export const NavigationManager: React.FC = () => {
       url: item.url,
       target: (item.target as any) || '_self',
       isMegaMenu: !!item.isMegaMenu,
-      bannerImage: item.megaMenuConfig?.bannerImage || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
+      bannerImage:
+        item.megaMenuConfig?.bannerImage ||
+        'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
       headline: item.megaMenuConfig?.headline || 'Featured Collection 2026',
       buttonLabel: item.megaMenuConfig?.buttonLabel || 'Explore Collection',
       buttonUrl: item.megaMenuConfig?.buttonUrl || '/collections/all',
@@ -342,7 +353,8 @@ export const NavigationManager: React.FC = () => {
               <span>Navigation Studio</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              Configure Header Navigation, Footer Navigation, and Mobile Drawer Navigation links. Add nested dropdowns, mega menu promotional cards, and internal or external links.
+              Configure Header Navigation, Footer Navigation, and Mobile Drawer Navigation links.
+              Add nested dropdowns, mega menu promotional cards, and internal or external links.
             </p>
           </div>
 
@@ -376,9 +388,7 @@ export const NavigationManager: React.FC = () => {
           const isSelected = slot.key === activeSlotKey;
           const slotMenu = menus.find(
             (m) =>
-              m.location === slot.location ||
-              m.handle === slot.handle ||
-              m.handle === slot.key
+              m.location === slot.location || m.handle === slot.handle || m.handle === slot.key,
           );
           const itemCount = slotMenu?.items?.length || 0;
           const SlotIcon = slot.icon;
@@ -409,9 +419,7 @@ export const NavigationManager: React.FC = () => {
                     <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">
                       {slot.title}
                     </h3>
-                    <p className="text-[11px] font-mono text-slate-400">
-                      handle: {slot.handle}
-                    </p>
+                    <p className="text-[11px] font-mono text-slate-400">handle: {slot.handle}</p>
                   </div>
                 </div>
 
@@ -431,7 +439,9 @@ export const NavigationManager: React.FC = () => {
               </p>
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-border text-xs font-bold">
-                <span className={isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}>
+                <span
+                  className={isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}
+                >
                   {isSelected ? 'Active Selection' : 'Click to Configure'}
                 </span>
                 <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300 font-semibold">
@@ -473,7 +483,7 @@ export const NavigationManager: React.FC = () => {
 
             {/* Menu Items Tree */}
             <div className="space-y-3">
-              {(!activeMenu.items || activeMenu.items.length === 0) ? (
+              {!activeMenu.items || activeMenu.items.length === 0 ? (
                 /* Clean Empty Fallback — No Dummy Data! */
                 <div className="text-center py-12 px-4 border-2 border-dashed border-slate-200 dark:border-border rounded-3xl space-y-4">
                   <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 mx-auto flex items-center justify-center">
@@ -484,7 +494,8 @@ export const NavigationManager: React.FC = () => {
                       No navigation items in {activeSlot.title} yet
                     </h4>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      This navigation menu is currently empty. Start building your storefront menu by adding links, or pick a common destination below.
+                      This navigation menu is currently empty. Start building your storefront menu
+                      by adding links, or pick a common destination below.
                     </p>
                   </div>
 
@@ -660,7 +671,7 @@ export const NavigationManager: React.FC = () => {
               {activeSlot.key === 'header' && (
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    {(!activeMenu.items || activeMenu.items.length === 0) ? (
+                    {!activeMenu.items || activeMenu.items.length === 0 ? (
                       <span className="text-xs text-slate-500 italic">
                         (No links added to Header Navigation)
                       </span>
@@ -722,7 +733,7 @@ export const NavigationManager: React.FC = () => {
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     Footer Column
                   </span>
-                  {(!activeMenu.items || activeMenu.items.length === 0) ? (
+                  {!activeMenu.items || activeMenu.items.length === 0 ? (
                     <p className="text-xs text-slate-500 italic">
                       (No links added to Footer Navigation)
                     </p>
@@ -748,10 +759,8 @@ export const NavigationManager: React.FC = () => {
                   <div className="text-[11px] font-bold text-slate-400 border-b border-slate-800 pb-1">
                     📱 Mobile Drawer
                   </div>
-                  {(!activeMenu.items || activeMenu.items.length === 0) ? (
-                    <p className="text-xs text-slate-500 italic">
-                      (No links in Mobile Drawer)
-                    </p>
+                  {!activeMenu.items || activeMenu.items.length === 0 ? (
+                    <p className="text-xs text-slate-500 italic">(No links in Mobile Drawer)</p>
                   ) : (
                     <div className="space-y-1">
                       {activeMenu.items.map((item) => (
@@ -780,9 +789,7 @@ export const NavigationManager: React.FC = () => {
                 <h3 className="font-extrabold text-base">
                   {editingItem ? 'Edit Navigation Link' : 'Add Navigation Link'}
                 </h3>
-                <p className="text-xs text-slate-300">
-                  Target: {activeSlot.title}
-                </p>
+                <p className="text-xs text-slate-300">Target: {activeSlot.title}</p>
               </div>
               <button
                 type="button"

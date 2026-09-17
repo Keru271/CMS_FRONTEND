@@ -4,7 +4,8 @@ import { BillingStudio } from '@/src/components/cms/BillingStudio';
 
 export const metadata: Metadata = {
   title: 'Store Pricing Tiers & Billing | Store Studio',
-  description: 'Manage store subscription, upgrade pricing tiers, and update billing payment methods anytime.',
+  description:
+    'Manage store subscription, upgrade pricing tiers, and update billing payment methods anytime.',
 };
 
 export default function BillingPage() {

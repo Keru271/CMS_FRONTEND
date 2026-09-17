@@ -45,9 +45,14 @@ export const CustomerStudio: React.FC = () => {
   const [customers, setCustomers] = useState<CMSCustomer[]>([]);
   const [orders, setOrders] = useState<CMSOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'ALL' | 'NEW' | 'RETURNING' | 'VIP' | 'WHOLESALE'>('ALL');
+  const [activeTab, setActiveTab] = useState<'ALL' | 'NEW' | 'RETURNING' | 'VIP' | 'WHOLESALE'>(
+    'ALL',
+  );
   const [searchQuery, setSearchQuery] = useState('');
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   // Selected Profile Drawer State
   const [selectedCustomer, setSelectedCustomer] = useState<CMSCustomer | null>(null);
@@ -232,7 +237,9 @@ export const CustomerStudio: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[350px] gap-3">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-slate-500 animate-pulse">Loading Customers CRM...</span>
+        <span className="text-xs font-bold text-slate-500 animate-pulse">
+          Loading Customers CRM...
+        </span>
       </div>
     );
   }
@@ -275,7 +282,8 @@ export const CustomerStudio: React.FC = () => {
               <span>Customers Studio</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              Manage customer profiles, lifetime spend, order history, customer segmentation groups (New, Returning, VIP, Wholesale), tags, addresses, and marketing consent options.
+              Manage customer profiles, lifetime spend, order history, customer segmentation groups
+              (New, Returning, VIP, Wholesale), tags, addresses, and marketing consent options.
             </p>
           </div>
 
@@ -309,11 +317,41 @@ export const CustomerStudio: React.FC = () => {
       <div className="p-4 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           {[
-            { id: 'ALL', label: 'All Customers', count: groupCounts.ALL, icon: Users, color: 'bg-slate-900 text-white' },
-            { id: 'NEW', label: 'New Customers', count: groupCounts.NEW, icon: UserPlus, color: 'bg-blue-600 text-white' },
-            { id: 'RETURNING', label: 'Returning Customers', count: groupCounts.RETURNING, icon: UserCheck, color: 'bg-indigo-600 text-white' },
-            { id: 'VIP', label: 'VIP Spenders', count: groupCounts.VIP, icon: Crown, color: 'bg-amber-500 text-white' },
-            { id: 'WHOLESALE', label: 'Wholesale B2B', count: groupCounts.WHOLESALE, icon: Building, color: 'bg-purple-600 text-white' },
+            {
+              id: 'ALL',
+              label: 'All Customers',
+              count: groupCounts.ALL,
+              icon: Users,
+              color: 'bg-slate-900 text-white',
+            },
+            {
+              id: 'NEW',
+              label: 'New Customers',
+              count: groupCounts.NEW,
+              icon: UserPlus,
+              color: 'bg-blue-600 text-white',
+            },
+            {
+              id: 'RETURNING',
+              label: 'Returning Customers',
+              count: groupCounts.RETURNING,
+              icon: UserCheck,
+              color: 'bg-indigo-600 text-white',
+            },
+            {
+              id: 'VIP',
+              label: 'VIP Spenders',
+              count: groupCounts.VIP,
+              icon: Crown,
+              color: 'bg-amber-500 text-white',
+            },
+            {
+              id: 'WHOLESALE',
+              label: 'Wholesale B2B',
+              count: groupCounts.WHOLESALE,
+              icon: Building,
+              color: 'bg-purple-600 text-white',
+            },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             const IconComp = tab.icon;
@@ -384,7 +422,10 @@ export const CustomerStudio: React.FC = () => {
                   const grpUpper = cust.group.toUpperCase();
 
                   return (
-                    <tr key={cust.id} className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors">
+                    <tr
+                      key={cust.id}
+                      className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors"
+                    >
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
                           <img
@@ -412,10 +453,10 @@ export const CustomerStudio: React.FC = () => {
                             grpUpper === 'VIP'
                               ? 'bg-amber-100 text-amber-800 border border-amber-300'
                               : grpUpper === 'WHOLESALE'
-                              ? 'bg-purple-100 text-purple-800 border border-purple-300'
-                              : grpUpper === 'RETURNING'
-                              ? 'bg-indigo-100 text-indigo-800'
-                              : 'bg-blue-100 text-blue-800'
+                                ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                                : grpUpper === 'RETURNING'
+                                  ? 'bg-indigo-100 text-indigo-800'
+                                  : 'bg-blue-100 text-blue-800'
                           }`}
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-current" />
@@ -447,7 +488,8 @@ export const CustomerStudio: React.FC = () => {
                       </td>
 
                       <td className="py-4 px-6 font-mono font-black text-sm text-emerald-600 dark:text-emerald-400">
-                        {currencySymbol}{cust.totalSpent.toFixed(2)}
+                        {currencySymbol}
+                        {cust.totalSpent.toFixed(2)}
                       </td>
 
                       <td className="py-4 px-6">
@@ -509,12 +551,16 @@ export const CustomerStudio: React.FC = () => {
                 />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-black text-lg sm:text-xl text-white truncate">{selectedCustomer.name}</h3>
+                    <h3 className="font-black text-lg sm:text-xl text-white truncate">
+                      {selectedCustomer.name}
+                    </h3>
                     <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase shrink-0">
                       {selectedCustomer.group}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 font-mono truncate">{selectedCustomer.email} • Joined {selectedCustomer.createdAt}</p>
+                  <p className="text-xs text-slate-400 font-mono truncate">
+                    {selectedCustomer.email} • Joined {selectedCustomer.createdAt}
+                  </p>
                 </div>
               </div>
               <button
@@ -532,25 +578,39 @@ export const CustomerStudio: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] font-extrabold text-indigo-900 uppercase tracking-wider block">Lifetime Spend (LTV)</span>
-                    <span className="text-xl font-black text-indigo-700 block">{currencySymbol}{selectedCustomer.totalSpent.toFixed(2)}</span>
+                    <span className="text-[11px] font-extrabold text-indigo-900 uppercase tracking-wider block">
+                      Lifetime Spend (LTV)
+                    </span>
+                    <span className="text-xl font-black text-indigo-700 block">
+                      {currencySymbol}
+                      {selectedCustomer.totalSpent.toFixed(2)}
+                    </span>
                   </div>
                   <DollarSign className="w-8 h-8 text-indigo-400" />
                 </div>
 
                 <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] font-extrabold text-emerald-900 uppercase tracking-wider block">Total Orders</span>
-                    <span className="text-xl font-black text-emerald-700 block">{selectedCustomer.totalOrders} Orders</span>
+                    <span className="text-[11px] font-extrabold text-emerald-900 uppercase tracking-wider block">
+                      Total Orders
+                    </span>
+                    <span className="text-xl font-black text-emerald-700 block">
+                      {selectedCustomer.totalOrders} Orders
+                    </span>
                   </div>
                   <ShoppingBag className="w-8 h-8 text-emerald-400" />
                 </div>
 
                 <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] font-extrabold text-amber-900 uppercase tracking-wider block">Average Order Value</span>
+                    <span className="text-[11px] font-extrabold text-amber-900 uppercase tracking-wider block">
+                      Average Order Value
+                    </span>
                     <span className="text-xl font-black text-amber-700 block">
-                      {currencySymbol}{selectedCustomer.totalOrders > 0 ? (selectedCustomer.totalSpent / selectedCustomer.totalOrders).toFixed(2) : '0.00'}
+                      {currencySymbol}
+                      {selectedCustomer.totalOrders > 0
+                        ? (selectedCustomer.totalSpent / selectedCustomer.totalOrders).toFixed(2)
+                        : '0.00'}
                     </span>
                   </div>
                   <Sparkles className="w-8 h-8 text-amber-400" />
@@ -566,13 +626,23 @@ export const CustomerStudio: React.FC = () => {
                     <span>Primary Shipping Address</span>
                   </h4>
                   <div className="space-y-1 text-xs text-slate-700 font-semibold">
-                    <span className="font-extrabold text-slate-900 block">{selectedCustomer.address?.name || selectedCustomer.name}</span>
-                    <span className="text-slate-500 block">{selectedCustomer.address?.street || '123 Main Street'}</span>
-                    <span className="text-slate-500 block">
-                      {selectedCustomer.address?.city || 'New York'}, {selectedCustomer.address?.state || 'NY'} {selectedCustomer.address?.zip || '10001'}
+                    <span className="font-extrabold text-slate-900 block">
+                      {selectedCustomer.address?.name || selectedCustomer.name}
                     </span>
-                    <span className="text-slate-500 block">{selectedCustomer.address?.country || 'United States'}</span>
-                    <span className="text-slate-400 font-mono text-[11px] block pt-1">Phone: {selectedCustomer.phone || 'N/A'}</span>
+                    <span className="text-slate-500 block">
+                      {selectedCustomer.address?.street || '123 Main Street'}
+                    </span>
+                    <span className="text-slate-500 block">
+                      {selectedCustomer.address?.city || 'New York'},{' '}
+                      {selectedCustomer.address?.state || 'NY'}{' '}
+                      {selectedCustomer.address?.zip || '10001'}
+                    </span>
+                    <span className="text-slate-500 block">
+                      {selectedCustomer.address?.country || 'United States'}
+                    </span>
+                    <span className="text-slate-400 font-mono text-[11px] block pt-1">
+                      Phone: {selectedCustomer.phone || 'N/A'}
+                    </span>
                   </div>
                 </div>
 
@@ -585,7 +655,9 @@ export const CustomerStudio: React.FC = () => {
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border">
-                      <span className="text-xs font-extrabold text-slate-800">Email Marketing Campaign Subscribed</span>
+                      <span className="text-xs font-extrabold text-slate-800">
+                        Email Marketing Campaign Subscribed
+                      </span>
                       <button
                         type="button"
                         onClick={() => handleToggleConsent('EMAIL')}
@@ -600,7 +672,9 @@ export const CustomerStudio: React.FC = () => {
                     </div>
 
                     <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border">
-                      <span className="text-xs font-extrabold text-slate-800">SMS Direct Marketing Consent</span>
+                      <span className="text-xs font-extrabold text-slate-800">
+                        SMS Direct Marketing Consent
+                      </span>
                       <button
                         type="button"
                         onClick={() => handleToggleConsent('SMS')}
@@ -621,26 +695,43 @@ export const CustomerStudio: React.FC = () => {
               <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
                   <ShoppingBag className="w-4 h-4 text-indigo-600" />
-                  <span>Customer Order History ({orders.filter((o) => o.customerEmail === selectedCustomer.email).length} Orders)</span>
+                  <span>
+                    Customer Order History (
+                    {orders.filter((o) => o.customerEmail === selectedCustomer.email).length}{' '}
+                    Orders)
+                  </span>
                 </h4>
 
                 <div className="divide-y divide-slate-100">
                   {orders.filter((o) => o.customerEmail === selectedCustomer.email).length === 0 ? (
-                    <p className="py-4 text-xs text-slate-400 italic text-center">No order records linked to {selectedCustomer.email}.</p>
+                    <p className="py-4 text-xs text-slate-400 italic text-center">
+                      No order records linked to {selectedCustomer.email}.
+                    </p>
                   ) : (
                     orders
                       .filter((o) => o.customerEmail === selectedCustomer.email)
                       .map((ord) => (
                         <div key={ord.id} className="py-3 flex items-center justify-between gap-4">
                           <div>
-                            <span className="font-mono font-extrabold text-xs text-indigo-600 block">#{ord.orderNumber}</span>
-                            <span className="text-[11px] text-slate-400 block">{ord.createdAt}</span>
+                            <span className="font-mono font-extrabold text-xs text-indigo-600 block">
+                              #{ord.orderNumber}
+                            </span>
+                            <span className="text-[11px] text-slate-400 block">
+                              {ord.createdAt}
+                            </span>
                           </div>
                           <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-extrabold text-[10px] uppercase text-slate-700">
                             {ord.orderStatus}
                           </span>
                           <span className="font-black text-xs text-slate-900 font-mono">
-                            {ord.currency === 'INR' ? '₹' : ord.currency === 'EUR' ? '€' : ord.currency === 'GBP' ? '£' : '$'}{ord.totalAmount.toFixed(2)} {ord.currency || ''}
+                            {ord.currency === 'INR'
+                              ? '₹'
+                              : ord.currency === 'EUR'
+                                ? '€'
+                                : ord.currency === 'GBP'
+                                  ? '£'
+                                  : '$'}
+                            {ord.totalAmount.toFixed(2)} {ord.currency || ''}
                           </span>
                         </div>
                       ))
@@ -675,7 +766,10 @@ export const CustomerStudio: React.FC = () => {
                 <div className="space-y-2 pt-2">
                   {selectedCustomer.notes && selectedCustomer.notes.length > 0 ? (
                     selectedCustomer.notes.map((n) => (
-                      <div key={n.id} className="p-3 rounded-xl bg-white border border-slate-200 space-y-1">
+                      <div
+                        key={n.id}
+                        className="p-3 rounded-xl bg-white border border-slate-200 space-y-1"
+                      >
                         <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
                           <span className="text-indigo-600 font-extrabold">{n.author}</span>
                           <span>{n.createdAt}</span>
@@ -684,7 +778,9 @@ export const CustomerStudio: React.FC = () => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-xs text-slate-400 italic">No internal staff notes recorded yet.</p>
+                    <p className="text-xs text-slate-400 italic">
+                      No internal staff notes recorded yet.
+                    </p>
                   )}
                 </div>
               </div>
@@ -710,7 +806,9 @@ export const CustomerStudio: React.FC = () => {
 
             <form onSubmit={handleSaveGroupAndTags} className="p-6 space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Customer Group Segment</label>
+                <label className="block text-xs font-bold text-slate-700">
+                  Customer Group Segment
+                </label>
                 <select
                   value={editGroup}
                   onChange={(e) => setEditGroup(e.target.value as CustomerGroup)}
@@ -724,7 +822,9 @@ export const CustomerStudio: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Customer Tags (comma-separated)</label>
+                <label className="block text-xs font-bold text-slate-700">
+                  Customer Tags (comma-separated)
+                </label>
                 <input
                   type="text"
                   value={editTagsInput}
@@ -811,7 +911,9 @@ export const CustomerStudio: React.FC = () => {
                   <label className="block text-xs font-bold text-slate-700">Customer Group</label>
                   <select
                     value={addFormData.group}
-                    onChange={(e) => setAddFormData({ ...addFormData, group: e.target.value as CustomerGroup })}
+                    onChange={(e) =>
+                      setAddFormData({ ...addFormData, group: e.target.value as CustomerGroup })
+                    }
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
                   >
                     <option value="NEW">New Customer</option>

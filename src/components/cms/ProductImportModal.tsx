@@ -71,7 +71,9 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
 
   const handleFileSelect = async (selectedFile: File) => {
     const validExtensions = ['.xlsx', '.xls', '.csv'];
-    const hasValidExt = validExtensions.some((ext) => selectedFile.name.toLowerCase().endsWith(ext));
+    const hasValidExt = validExtensions.some((ext) =>
+      selectedFile.name.toLowerCase().endsWith(ext),
+    );
 
     if (!hasValidExt) {
       setErrorMessage('Please upload a valid Excel (.xlsx, .xls) or CSV (.csv) file.');
@@ -88,7 +90,11 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
       const preview = await cmsService.previewProductImport(selectedFile, format);
       setPreviewData(preview);
     } catch (err: any) {
-      setErrorMessage(err?.response?.data?.message || err?.message || 'Failed to parse file. Please verify file format.');
+      setErrorMessage(
+        err?.response?.data?.message ||
+          err?.message ||
+          'Failed to parse file. Please verify file format.',
+      );
       setPreviewData(null);
     } finally {
       setIsLoadingPreview(false);
@@ -118,14 +124,13 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
     setErrorMessage(null);
 
     try {
-      const result = await cmsService.batchImportProducts(
-        previewData.products,
-        duplicateStrategy
-      );
+      const result = await cmsService.batchImportProducts(previewData.products, duplicateStrategy);
       setImportResult(result);
       onSuccess();
     } catch (err: any) {
-      setErrorMessage(err?.response?.data?.message || err?.message || 'Failed to complete batch import.');
+      setErrorMessage(
+        err?.response?.data?.message || err?.message || 'Failed to complete batch import.',
+      );
     } finally {
       setIsImporting(false);
     }
@@ -315,7 +320,8 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
                     : 'Upload Products Excel / CSV Spreadsheet'}
                 </p>
                 <p className="text-xs text-slate-400 mt-1 text-center">
-                  Drag and drop your file here, or click to browse. Supports .xlsx, .xls, and .csv files.
+                  Drag and drop your file here, or click to browse. Supports .xlsx, .xls, and .csv
+                  files.
                 </p>
 
                 {isLoadingPreview && (
@@ -360,7 +366,8 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
                       </span>
                     </div>
                     <span className="text-[11px] text-slate-400">
-                      {previewData.productsCount} products parsed from {previewData.totalRows} raw rows
+                      {previewData.productsCount} products parsed from {previewData.totalRows} raw
+                      rows
                     </span>
                   </div>
                 </div>
@@ -396,7 +403,8 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
                       onChange={() => setDuplicateStrategy('UPDATE')}
                       className="text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                     />
-                    <span className="font-bold">Update existing products</span> (Overwrites price, inventory & details)
+                    <span className="font-bold">Update existing products</span> (Overwrites price,
+                    inventory & details)
                   </label>
 
                   <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
@@ -407,7 +415,8 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
                       onChange={() => setDuplicateStrategy('SKIP')}
                       className="text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                     />
-                    <span className="font-bold">Skip duplicates</span> (Keep existing products unchanged)
+                    <span className="font-bold">Skip duplicates</span> (Keep existing products
+                    unchanged)
                   </label>
                 </div>
               </div>
@@ -428,7 +437,10 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {previewData.products.slice(0, 50).map((p: any, idx: number) => (
-                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-accent/40 transition-colors">
+                      <tr
+                        key={idx}
+                        className="hover:bg-slate-50 dark:hover:bg-accent/40 transition-colors"
+                      >
                         <td className="py-2 px-3">
                           {p.isExisting ? (
                             <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-[10px] font-extrabold">
@@ -451,17 +463,14 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
                           {p.sku || '—'}
                         </td>
                         <td className="py-2 px-3 font-bold text-slate-900 dark:text-foreground">
-                          {currencySymbol}{p.price?.toFixed(2)}
+                          {currencySymbol}
+                          {p.price?.toFixed(2)}
                         </td>
                         <td className="py-2 px-3 text-slate-600 dark:text-slate-300">
                           {p.inventory}
                         </td>
-                        <td className="py-2 px-3 text-slate-500">
-                          {p.categoryName || 'General'}
-                        </td>
-                        <td className="py-2 px-3 text-slate-500">
-                          {p.brandName || '—'}
-                        </td>
+                        <td className="py-2 px-3 text-slate-500">{p.categoryName || 'General'}</td>
+                        <td className="py-2 px-3 text-slate-500">{p.brandName || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

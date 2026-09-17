@@ -41,7 +41,9 @@ export const LockedFeatureGuard: React.FC<LockedFeatureGuardProps> = ({
 
         {/* Badge & Title */}
         <div className="space-y-2">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs uppercase tracking-wider font-bold ${planBadgeColor}`}>
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs uppercase tracking-wider font-bold ${planBadgeColor}`}
+          >
             <Sparkles className="w-3.5 h-3.5" />
             <span>{planBadge}</span>
           </span>

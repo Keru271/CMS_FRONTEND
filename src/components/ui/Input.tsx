@@ -35,7 +35,7 @@ export const Input = React.forwardRef<HTMLInputElement, CustomInputProps>(
       onChange,
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <div className="flex flex-col gap-1.5 w-full font-sans">
@@ -51,7 +51,9 @@ export const Input = React.forwardRef<HTMLInputElement, CustomInputProps>(
               : 'border-[#cbd5e0] bg-[#ffffff] text-[#191a1b] focus-within:border-[#cbc2ea] focus-within:ring-2 focus-within:ring-[#cbc2ea]/40'
           } ${classNames?.inputWrapper || ''}`}
         >
-          {startContent && <span className="text-[#5e5a5a] flex items-center shrink-0">{startContent}</span>}
+          {startContent && (
+            <span className="text-[#5e5a5a] flex items-center shrink-0">{startContent}</span>
+          )}
           <input
             ref={ref}
             value={value}
@@ -70,14 +72,18 @@ export const Input = React.forwardRef<HTMLInputElement, CustomInputProps>(
               ✕
             </button>
           )}
-          {endContent && <span className="text-[#5e5a5a] flex items-center shrink-0">{endContent}</span>}
+          {endContent && (
+            <span className="text-[#5e5a5a] flex items-center shrink-0">{endContent}</span>
+          )}
         </div>
         {isInvalid && errorMessage && (
-          <span className="text-[11px] font-sans text-[#ef4444] font-medium mt-0.5">{errorMessage}</span>
+          <span className="text-[11px] font-sans text-[#ef4444] font-medium mt-0.5">
+            {errorMessage}
+          </span>
         )}
       </div>
     );
-  }
+  },
 );
 
 Input.displayName = 'Input';

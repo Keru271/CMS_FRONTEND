@@ -1,14 +1,4 @@
-export type SupportedLanguage = 
-  | 'en'
-  | 'hi'
-  | 'ta'
-  | 'te'
-  | 'ml'
-  | 'kn'
-  | 'bn'
-  | 'gu'
-  | 'mr'
-  | 'pa';
+export type SupportedLanguage = 'en' | 'hi' | 'ta' | 'te' | 'ml' | 'kn' | 'bn' | 'gu' | 'mr' | 'pa';
 
 export interface LanguageOption {
   code: SupportedLanguage;
@@ -20,16 +10,86 @@ export interface LanguageOption {
 }
 
 export const SUPPORTED_LANGUAGES: LanguageOption[] = [
-  { code: 'en', locale: 'en-US', name: 'English', nativeName: 'English', region: 'Global', badge: 'EN' },
-  { code: 'hi', locale: 'hi-IN', name: 'Hindi', nativeName: 'हिन्दी', region: 'India (North/Central)', badge: 'हि' },
-  { code: 'ta', locale: 'ta-IN', name: 'Tamil', nativeName: 'தமிழ்', region: 'Tamil Nadu / Puducherry', badge: 'த' },
-  { code: 'te', locale: 'te-IN', name: 'Telugu', nativeName: 'తెలుగు', region: 'Andhra Pradesh / Telangana', badge: 'తె' },
-  { code: 'ml', locale: 'ml-IN', name: 'Malayalam', nativeName: 'മലയാളം', region: 'Kerala / Lakshadweep', badge: 'മ' },
-  { code: 'kn', locale: 'kn-IN', name: 'Kannada', nativeName: 'ಕನ್ನಡ', region: 'Karnataka', badge: 'ಕ' },
-  { code: 'bn', locale: 'bn-IN', name: 'Bengali', nativeName: 'বাংলা', region: 'West Bengal / Tripura', badge: 'বা' },
-  { code: 'gu', locale: 'gu-IN', name: 'Gujarati', nativeName: 'ગુજરાતી', region: 'Gujarat', badge: 'ગુ' },
-  { code: 'mr', locale: 'mr-IN', name: 'Marathi', nativeName: 'मराठी', region: 'Maharashtra', badge: 'म' },
-  { code: 'pa', locale: 'pa-IN', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ', region: 'Punjab', badge: 'ਪੰ' },
+  {
+    code: 'en',
+    locale: 'en-US',
+    name: 'English',
+    nativeName: 'English',
+    region: 'Global',
+    badge: 'EN',
+  },
+  {
+    code: 'hi',
+    locale: 'hi-IN',
+    name: 'Hindi',
+    nativeName: 'हिन्दी',
+    region: 'India (North/Central)',
+    badge: 'हि',
+  },
+  {
+    code: 'ta',
+    locale: 'ta-IN',
+    name: 'Tamil',
+    nativeName: 'தமிழ்',
+    region: 'Tamil Nadu / Puducherry',
+    badge: 'த',
+  },
+  {
+    code: 'te',
+    locale: 'te-IN',
+    name: 'Telugu',
+    nativeName: 'తెలుగు',
+    region: 'Andhra Pradesh / Telangana',
+    badge: 'తె',
+  },
+  {
+    code: 'ml',
+    locale: 'ml-IN',
+    name: 'Malayalam',
+    nativeName: 'മലയാളം',
+    region: 'Kerala / Lakshadweep',
+    badge: 'മ',
+  },
+  {
+    code: 'kn',
+    locale: 'kn-IN',
+    name: 'Kannada',
+    nativeName: 'ಕನ್ನಡ',
+    region: 'Karnataka',
+    badge: 'ಕ',
+  },
+  {
+    code: 'bn',
+    locale: 'bn-IN',
+    name: 'Bengali',
+    nativeName: 'বাংলা',
+    region: 'West Bengal / Tripura',
+    badge: 'বা',
+  },
+  {
+    code: 'gu',
+    locale: 'gu-IN',
+    name: 'Gujarati',
+    nativeName: 'ગુજરાતી',
+    region: 'Gujarat',
+    badge: 'ગુ',
+  },
+  {
+    code: 'mr',
+    locale: 'mr-IN',
+    name: 'Marathi',
+    nativeName: 'मराठी',
+    region: 'Maharashtra',
+    badge: 'म',
+  },
+  {
+    code: 'pa',
+    locale: 'pa-IN',
+    name: 'Punjabi',
+    nativeName: 'ਪੰਜਾਬੀ',
+    region: 'Punjab',
+    badge: 'ਪੰ',
+  },
 ];
 
 export const translations: Record<SupportedLanguage, Record<string, string>> = {
@@ -77,7 +137,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Dashboard
     'dashboard.welcome_back': 'Welcome Back',
     'dashboard.overview_title': 'Store Performance Overview',
-    'dashboard.overview_subtitle': 'Real-time telemetry, revenue metrics, and order fulfillment status across your stores.',
+    'dashboard.overview_subtitle':
+      'Real-time telemetry, revenue metrics, and order fulfillment status across your stores.',
     'dashboard.total_revenue': 'Total Revenue',
     'dashboard.total_orders': 'Total Orders',
     'dashboard.average_order': 'Average Order Value',
@@ -125,7 +186,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
 
     // Store Setup & Regional
     'setup.primary_language': 'Primary Language',
-    'setup.language_desc': 'Default storefront text, regional notifications, and system communication language.',
+    'setup.language_desc':
+      'Default storefront text, regional notifications, and system communication language.',
     'setup.store_currency': 'Store Currency',
     'setup.timezone': 'Operational Time Zone',
   },
@@ -271,7 +333,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Dashboard
     'dashboard.welcome_back': 'மீண்டும் வருக',
     'dashboard.overview_title': 'கடை செயல்திறன் கண்ணோட்டம்',
-    'dashboard.overview_subtitle': 'உங்கள் கடையின் நிகழ்நேர வருவாய், ஆர்டர் நிலை மற்றும் விரிவான பகுப்பாய்வு.',
+    'dashboard.overview_subtitle':
+      'உங்கள் கடையின் நிகழ்நேர வருவாய், ஆர்டர் நிலை மற்றும் விரிவான பகுப்பாய்வு.',
     'dashboard.total_revenue': 'மொத்த வருவாய்',
     'dashboard.total_orders': 'மொத்த ஆர்டர்கள்',
     'dashboard.average_order': 'சராசரி ஆர்டர் மதிப்பு',
@@ -416,7 +479,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
 
     // Store Setup & Regional
     'setup.primary_language': 'ప్రాథమిక భాష',
-    'setup.language_desc': 'డిఫాల్ట్ స్టోర్‌ఫ్రంట్ టెక్స్ట్, ప్రాంతీయ నోటిఫికేషన్‌లు మరియు సిస్టమ్ భాష.',
+    'setup.language_desc':
+      'డిఫాల్ట్ స్టోర్‌ఫ్రంట్ టెక్స్ట్, ప్రాంతీయ నోటిఫికేషన్‌లు మరియు సిస్టమ్ భాష.',
     'setup.store_currency': 'స్టోర్ కరెన్సీ',
     'setup.timezone': 'ఆపరేషనల్ టైమ్ జోన్',
   },
@@ -513,7 +577,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
 
     // Store Setup & Regional
     'setup.primary_language': 'പ്രാഥമിക ഭാഷ',
-    'setup.language_desc': 'ഡിഫോൾട്ട് സ്റ്റോർഫ്രണ്ട് ടെക്സ്റ്റ്, പ്രാദേശിക അറിയിപ്പുകൾ, സിസ്റ്റം ആശയവിനിമയ ഭാഷ.',
+    'setup.language_desc':
+      'ഡിഫോൾട്ട് സ്റ്റോർഫ്രണ്ട് ടെക്സ്റ്റ്, പ്രാദേശിക അറിയിപ്പുകൾ, സിസ്റ്റം ആശയവിനിമയ ഭാഷ.',
     'setup.store_currency': 'സ്റ്റോർ കറൻസി',
     'setup.timezone': 'പ്രവർത്തന സമയ മേഖല',
   },

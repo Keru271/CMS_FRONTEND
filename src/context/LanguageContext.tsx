@@ -14,7 +14,11 @@ interface LanguageContextType {
   languages: LanguageOption[];
   currentLanguageOption: LanguageOption;
   t: (key: string, defaultText?: string) => string;
-  tDynamic: (key: string, replacements?: Record<string, string | number>, defaultText?: string) => string;
+  tDynamic: (
+    key: string,
+    replacements?: Record<string, string | number>,
+    defaultText?: string,
+  ) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -41,10 +45,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const currentLanguageOption = useMemo(() => {
-    return (
-      SUPPORTED_LANGUAGES.find((l) => l.code === language) ||
-      SUPPORTED_LANGUAGES[0]
-    );
+    return SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0];
   }, [language]);
 
   const t = useCallback(
@@ -60,7 +61,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       return defaultText || key;
     },
-    [language]
+    [language],
   );
 
   const tDynamic = useCallback(
@@ -73,7 +74,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       return str;
     },
-    [t]
+    [t],
   );
 
   return (

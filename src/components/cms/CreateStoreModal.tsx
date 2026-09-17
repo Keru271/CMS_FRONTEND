@@ -129,7 +129,8 @@ export const CreateStoreModal: React.FC = () => {
       setDescription('');
     } catch (err: any) {
       setErrorMessage(
-        err?.response?.data?.message || 'Failed to create store. Please check slug uniqueness and try again.'
+        err?.response?.data?.message ||
+          'Failed to create store. Please check slug uniqueness and try again.',
       );
     } finally {
       setIsSubmitting(false);
@@ -175,9 +176,7 @@ export const CreateStoreModal: React.FC = () => {
           {/* Store Name & Slug */}
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-[#191a1b] mb-1">
-                Store Name *
-              </label>
+              <label className="block text-xs font-bold text-[#191a1b] mb-1">Store Name *</label>
               <input
                 type="text"
                 autoFocus
@@ -191,12 +190,8 @@ export const CreateStoreModal: React.FC = () => {
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-bold text-[#191a1b]">
-                  Store URL Handle (Slug)
-                </label>
-                <span className="text-[11px] text-[#5e5a5a]">
-                  Unique Web Storefront Address
-                </span>
+                <label className="text-xs font-bold text-[#191a1b]">Store URL Handle (Slug)</label>
+                <span className="text-[11px] text-[#5e5a5a]">Unique Web Storefront Address</span>
               </div>
               <div className="flex items-center rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] px-3 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#191a1b]">
                 <Globe className="w-4 h-4 text-gray-400 shrink-0" />
@@ -249,7 +244,9 @@ export const CreateStoreModal: React.FC = () => {
                         {curr.symbol}
                       </span>
                     </div>
-                    <p className={`text-xs font-bold mt-1 ${isSelected ? 'text-white' : 'text-[#191a1b]'}`}>
+                    <p
+                      className={`text-xs font-bold mt-1 ${isSelected ? 'text-white' : 'text-[#191a1b]'}`}
+                    >
                       {curr.code}
                     </p>
                     <p
@@ -267,9 +264,7 @@ export const CreateStoreModal: React.FC = () => {
 
           {/* Category Chips */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-[#191a1b]">
-              Industry Category
-            </label>
+            <label className="block text-xs font-bold text-[#191a1b]">Industry Category</label>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((cat) => {
                 const isSelected = categoryName === cat.label;
@@ -321,7 +316,9 @@ export const CreateStoreModal: React.FC = () => {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-[#191a1b]">{th.name}</span>
-                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />}
+                        {isSelected && (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        )}
                       </div>
                       <p className="text-[11px] text-[#5e5a5a] line-clamp-1">{th.desc}</p>
                     </div>
@@ -335,7 +332,8 @@ export const CreateStoreModal: React.FC = () => {
           <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-2.5 text-xs text-emerald-900">
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <p className="leading-relaxed text-[11px]">
-              This new store will have completely segregated inventory, order books, domain settings, and encrypted payment credentials (AES-256-GCM).
+              This new store will have completely segregated inventory, order books, domain
+              settings, and encrypted payment credentials (AES-256-GCM).
             </p>
           </div>
 

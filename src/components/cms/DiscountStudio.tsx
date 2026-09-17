@@ -1,7 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CMSDiscount, DiscountType, DiscountMethod, DiscountAppliesTo, DiscountCustomerEligibility, CMSProduct, CollectionData } from '@/src/types';
+import {
+  CMSDiscount,
+  DiscountType,
+  DiscountMethod,
+  DiscountAppliesTo,
+  DiscountCustomerEligibility,
+  CMSProduct,
+  CollectionData,
+} from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import { useCMSContext } from '@/src/context/CMSContext';
 import {
@@ -59,7 +67,10 @@ export const DiscountStudio: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'COUPON_CODE' | 'AUTOMATIC'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -182,10 +193,16 @@ export const DiscountStudio: React.FC = () => {
       discountType: (disc.discountType as DiscountType) || 'PERCENTAGE',
       method: (disc.method as DiscountMethod) || 'COUPON_CODE',
       value: disc.value !== undefined && disc.value !== null ? disc.value : 20,
-      buyQuantity: disc.buyQuantity !== undefined && disc.buyQuantity !== null ? disc.buyQuantity : 2,
-      getQuantity: disc.getQuantity !== undefined && disc.getQuantity !== null ? disc.getQuantity : 1,
-      getDiscountPercent: disc.getDiscountPercent !== undefined && disc.getDiscountPercent !== null ? disc.getDiscountPercent : 100,
-      minOrderAmount: disc.minOrderAmount !== undefined && disc.minOrderAmount !== null ? disc.minOrderAmount : 0,
+      buyQuantity:
+        disc.buyQuantity !== undefined && disc.buyQuantity !== null ? disc.buyQuantity : 2,
+      getQuantity:
+        disc.getQuantity !== undefined && disc.getQuantity !== null ? disc.getQuantity : 1,
+      getDiscountPercent:
+        disc.getDiscountPercent !== undefined && disc.getDiscountPercent !== null
+          ? disc.getDiscountPercent
+          : 100,
+      minOrderAmount:
+        disc.minOrderAmount !== undefined && disc.minOrderAmount !== null ? disc.minOrderAmount : 0,
       appliesTo: (disc.appliesTo as DiscountAppliesTo) || 'ALL',
       targetIds: disc.targetIds || [],
       customerEligibility: (disc.customerEligibility as DiscountCustomerEligibility) || 'ALL',
@@ -194,7 +211,7 @@ export const DiscountStudio: React.FC = () => {
       oncePerCustomer: disc.oncePerCustomer !== false,
       startDate: disc.startDate || new Date().toISOString().split('T')[0],
       endDate: disc.endDate || '',
-      status: disc.status === 'EXPIRED' ? 'DRAFT' : ((disc.status as any) || 'ACTIVE'),
+      status: disc.status === 'EXPIRED' ? 'DRAFT' : (disc.status as any) || 'ACTIVE',
     });
     setIsModalOpen(true);
   };
@@ -205,13 +222,23 @@ export const DiscountStudio: React.FC = () => {
     try {
       const payload: Partial<CMSDiscount> = {
         title: formData.title,
-        code: formData.method === 'COUPON_CODE' ? (formData.code ? formData.code.trim().toUpperCase() : null) : null,
+        code:
+          formData.method === 'COUPON_CODE'
+            ? formData.code
+              ? formData.code.trim().toUpperCase()
+              : null
+            : null,
         discountType: formData.discountType,
         method: formData.method,
         value: Number(formData.value || 0),
-        buyQuantity: formData.discountType === 'BUY_X_GET_Y' ? Number(formData.buyQuantity || 1) : null,
-        getQuantity: formData.discountType === 'BUY_X_GET_Y' ? Number(formData.getQuantity || 1) : null,
-        getDiscountPercent: formData.discountType === 'BUY_X_GET_Y' ? Number(formData.getDiscountPercent || 100) : null,
+        buyQuantity:
+          formData.discountType === 'BUY_X_GET_Y' ? Number(formData.buyQuantity || 1) : null,
+        getQuantity:
+          formData.discountType === 'BUY_X_GET_Y' ? Number(formData.getQuantity || 1) : null,
+        getDiscountPercent:
+          formData.discountType === 'BUY_X_GET_Y'
+            ? Number(formData.getDiscountPercent || 100)
+            : null,
         minOrderAmount: Number(formData.minOrderAmount || 0),
         appliesTo: formData.appliesTo,
         targetIds: formData.targetIds,
@@ -260,7 +287,8 @@ export const DiscountStudio: React.FC = () => {
     const appliedDisc = discounts.find(
       (d) =>
         d.status === 'ACTIVE' &&
-        (d.method === 'AUTOMATIC' || (d.method === 'COUPON_CODE' && d.code?.toUpperCase() === codeQuery))
+        (d.method === 'AUTOMATIC' ||
+          (d.method === 'COUPON_CODE' && d.code?.toUpperCase() === codeQuery)),
     );
 
     if (!appliedDisc) {
@@ -317,7 +345,9 @@ export const DiscountStudio: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[350px] gap-3">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-slate-500 animate-pulse">Loading Discounts Studio...</span>
+        <span className="text-xs font-bold text-slate-500 animate-pulse">
+          Loading Discounts Studio...
+        </span>
       </div>
     );
   }
@@ -360,7 +390,8 @@ export const DiscountStudio: React.FC = () => {
               <span>Discounts & Promotions Studio</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              Create Percentage Discounts, Fixed Amount Vouchers, Free Shipping rules, Buy X Get Y offers, Coupon Codes vs Automatic Discounts, and usage date schedules.
+              Create Percentage Discounts, Fixed Amount Vouchers, Free Shipping rules, Buy X Get Y
+              offers, Coupon Codes vs Automatic Discounts, and usage date schedules.
             </p>
           </div>
 
@@ -457,7 +488,9 @@ export const DiscountStudio: React.FC = () => {
                   <div
                     key={disc.id}
                     className={`p-5 rounded-3xl border bg-white dark:bg-card shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 ${
-                      isExpired ? 'border-slate-200 opacity-60' : 'border-slate-200/80 dark:border-border'
+                      isExpired
+                        ? 'border-slate-200 opacity-60'
+                        : 'border-slate-200/80 dark:border-border'
                     }`}
                   >
                     <div className="space-y-3">
@@ -482,18 +515,22 @@ export const DiscountStudio: React.FC = () => {
                       </div>
 
                       <div>
-                        <h3 className="font-black text-base text-slate-900 dark:text-foreground">{disc.title}</h3>
+                        <h3 className="font-black text-base text-slate-900 dark:text-foreground">
+                          {disc.title}
+                        </h3>
                         <div className="flex items-center gap-2 pt-1">
                           <span className="font-extrabold text-xs text-indigo-600 dark:text-indigo-400">
                             {disc.discountType === 'PERCENTAGE' && `${disc.value}% OFF`}
-                            {disc.discountType === 'FIXED_AMOUNT' && `${currencySymbol}${disc.value.toFixed(2)} OFF`}
+                            {disc.discountType === 'FIXED_AMOUNT' &&
+                              `${currencySymbol}${disc.value.toFixed(2)} OFF`}
                             {disc.discountType === 'FREE_SHIPPING' && 'Free Express Shipping'}
                             {disc.discountType === 'BUY_X_GET_Y' &&
                               `Buy ${disc.buyQuantity || 2} Get ${disc.getQuantity || 1} ${disc.getDiscountPercent && disc.getDiscountPercent < 100 ? `at ${disc.getDiscountPercent}% OFF` : 'Free'}`}
                           </span>
                           {disc.minOrderAmount ? (
                             <span className="text-[10px] font-bold text-slate-500">
-                              (Min {currencySymbol}{disc.minOrderAmount.toFixed(2)} spend)
+                              (Min {currencySymbol}
+                              {disc.minOrderAmount.toFixed(2)} spend)
                             </span>
                           ) : null}
                         </div>
@@ -509,7 +546,9 @@ export const DiscountStudio: React.FC = () => {
                         </div>
                         <div className="flex justify-between text-[11px] text-slate-500">
                           <span>Active Schedule:</span>
-                          <span>{disc.startDate} {disc.endDate ? `to ${disc.endDate}` : '(No Expiry)'}</span>
+                          <span>
+                            {disc.startDate} {disc.endDate ? `to ${disc.endDate}` : '(No Expiry)'}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -555,7 +594,9 @@ export const DiscountStudio: React.FC = () => {
             {/* SIMULATED CART INPUTS */}
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-300">Simulated Cart Subtotal ({currencySymbol})</label>
+                <label className="block text-xs font-bold text-slate-300">
+                  Simulated Cart Subtotal ({currencySymbol})
+                </label>
                 <input
                   type="number"
                   step="5"
@@ -566,7 +607,9 @@ export const DiscountStudio: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-300">Enter Coupon Code to Test</label>
+                <label className="block text-xs font-bold text-slate-300">
+                  Enter Coupon Code to Test
+                </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -584,17 +627,26 @@ export const DiscountStudio: React.FC = () => {
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between text-slate-400">
                   <span>Cart Subtotal:</span>
-                  <span className="font-bold text-white">{currencySymbol}{testCartSubtotal.toFixed(2)}</span>
+                  <span className="font-bold text-white">
+                    {currencySymbol}
+                    {testCartSubtotal.toFixed(2)}
+                  </span>
                 </div>
 
                 <div className="flex justify-between text-emerald-400 font-bold">
                   <span>Discount Savings:</span>
-                  <span>-{currencySymbol}{simResult.savings.toFixed(2)}</span>
+                  <span>
+                    -{currencySymbol}
+                    {simResult.savings.toFixed(2)}
+                  </span>
                 </div>
 
                 <div className="flex justify-between font-black text-sm text-white pt-2 border-t border-slate-800">
                   <span>Final Order Total:</span>
-                  <span className="text-amber-400">{currencySymbol}{Math.max(0, testCartSubtotal - simResult.savings).toFixed(2)}</span>
+                  <span className="text-amber-400">
+                    {currencySymbol}
+                    {Math.max(0, testCartSubtotal - simResult.savings).toFixed(2)}
+                  </span>
                 </div>
               </div>
 
@@ -617,9 +669,13 @@ export const DiscountStudio: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-black text-lg">
-                    {editingDiscount ? `Edit Promotion: ${editingDiscount.title}` : 'Create New Promotion'}
+                    {editingDiscount
+                      ? `Edit Promotion: ${editingDiscount.title}`
+                      : 'Create New Promotion'}
                   </h3>
-                  <p className="text-xs text-slate-400">Configure discount type, trigger method, min spend, targeting, and date limits.</p>
+                  <p className="text-xs text-slate-400">
+                    Configure discount type, trigger method, min spend, targeting, and date limits.
+                  </p>
                 </div>
               </div>
               <button
@@ -631,7 +687,10 @@ export const DiscountStudio: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmitForm} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+            <form
+              onSubmit={handleSubmitForm}
+              className="p-6 space-y-6 max-h-[80vh] overflow-y-auto"
+            >
               {/* TRIGGER METHOD SWITCHER */}
               <div className="space-y-2">
                 <label className="block text-xs font-extrabold text-slate-900 dark:text-foreground uppercase tracking-wider">
@@ -651,7 +710,9 @@ export const DiscountStudio: React.FC = () => {
                       <Ticket className="w-3.5 h-3.5 text-amber-400" />
                       <span>Coupon Code Voucher</span>
                     </span>
-                    <span className="text-[10px] text-slate-400 block">Customer inputs promo code at checkout.</span>
+                    <span className="text-[10px] text-slate-400 block">
+                      Customer inputs promo code at checkout.
+                    </span>
                   </button>
 
                   <button
@@ -667,7 +728,9 @@ export const DiscountStudio: React.FC = () => {
                       <Zap className="w-3.5 h-3.5" />
                       <span>Automatic Cart Discount</span>
                     </span>
-                    <span className="text-[10px] text-indigo-100 block">Applies automatically when criteria match.</span>
+                    <span className="text-[10px] text-indigo-100 block">
+                      Applies automatically when criteria match.
+                    </span>
                   </button>
                 </div>
               </div>
@@ -675,7 +738,9 @@ export const DiscountStudio: React.FC = () => {
               {/* TITLE & CODE */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Promotion Title *</label>
+                  <label className="block text-xs font-bold text-slate-700">
+                    Promotion Title *
+                  </label>
                   <input
                     type="text"
                     required
@@ -688,12 +753,16 @@ export const DiscountStudio: React.FC = () => {
 
                 {formData.method === 'COUPON_CODE' && (
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">Coupon Promo Code *</label>
+                    <label className="block text-xs font-bold text-slate-700">
+                      Coupon Promo Code *
+                    </label>
                     <input
                       type="text"
                       required
                       value={formData.code}
-                      onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, code: e.target.value.toUpperCase() })
+                      }
                       placeholder="e.g. SUMMER2026"
                       className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-black text-indigo-600 tracking-wider uppercase"
                     />
@@ -709,7 +778,11 @@ export const DiscountStudio: React.FC = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     { type: 'PERCENTAGE', label: 'Percentage %', icon: Percent },
-                    { type: 'FIXED_AMOUNT', label: `Fixed Amount (${currencySymbol})`, icon: DollarSign },
+                    {
+                      type: 'FIXED_AMOUNT',
+                      label: `Fixed Amount (${currencySymbol})`,
+                      icon: DollarSign,
+                    },
                     { type: 'FREE_SHIPPING', label: 'Free Shipping', icon: Truck },
                     { type: 'BUY_X_GET_Y', label: 'Buy X Get Y', icon: Gift },
                   ].map((item) => {
@@ -719,7 +792,9 @@ export const DiscountStudio: React.FC = () => {
                       <button
                         key={item.type}
                         type="button"
-                        onClick={() => setFormData({ ...formData, discountType: item.type as DiscountType })}
+                        onClick={() =>
+                          setFormData({ ...formData, discountType: item.type as DiscountType })
+                        }
                         className={`p-3 rounded-2xl border text-center space-y-1 transition-all ${
                           isSel
                             ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
@@ -738,14 +813,18 @@ export const DiscountStudio: React.FC = () => {
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
                 {formData.discountType === 'PERCENTAGE' && (
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">Percentage Value (% Off)</label>
+                    <label className="block text-xs font-bold text-slate-700">
+                      Percentage Value (% Off)
+                    </label>
                     <input
                       type="number"
                       required
                       min={1}
                       max={100}
                       value={formData.value}
-                      onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })
+                      }
                       className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs font-black text-indigo-600"
                     />
                   </div>
@@ -753,13 +832,17 @@ export const DiscountStudio: React.FC = () => {
 
                 {formData.discountType === 'FIXED_AMOUNT' && (
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">Fixed Discount Amount ({currencySymbol} Off)</label>
+                    <label className="block text-xs font-bold text-slate-700">
+                      Fixed Discount Amount ({currencySymbol} Off)
+                    </label>
                     <input
                       type="number"
                       required
                       step="0.5"
                       value={formData.value}
-                      onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })
+                      }
                       className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs font-black text-emerald-600"
                     />
                   </div>
@@ -768,33 +851,54 @@ export const DiscountStudio: React.FC = () => {
                 {formData.discountType === 'BUY_X_GET_Y' && (
                   <div className="grid grid-cols-3 gap-3">
                     <div className="space-y-1">
-                      <label className="block text-xs font-bold text-slate-700">Customer Buys (Qty X)</label>
+                      <label className="block text-xs font-bold text-slate-700">
+                        Customer Buys (Qty X)
+                      </label>
                       <input
                         type="number"
                         min={1}
                         value={formData.buyQuantity}
-                        onChange={(e) => setFormData({ ...formData, buyQuantity: parseInt(e.target.value, 10) || 1 })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            buyQuantity: parseInt(e.target.value, 10) || 1,
+                          })
+                        }
                         className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="block text-xs font-bold text-slate-700">Customer Gets (Qty Y)</label>
+                      <label className="block text-xs font-bold text-slate-700">
+                        Customer Gets (Qty Y)
+                      </label>
                       <input
                         type="number"
                         min={1}
                         value={formData.getQuantity}
-                        onChange={(e) => setFormData({ ...formData, getQuantity: parseInt(e.target.value, 10) || 1 })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            getQuantity: parseInt(e.target.value, 10) || 1,
+                          })
+                        }
                         className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="block text-xs font-bold text-slate-700">At % Discount</label>
+                      <label className="block text-xs font-bold text-slate-700">
+                        At % Discount
+                      </label>
                       <input
                         type="number"
                         min={1}
                         max={100}
                         value={formData.getDiscountPercent}
-                        onChange={(e) => setFormData({ ...formData, getDiscountPercent: parseFloat(e.target.value) || 100 })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            getDiscountPercent: parseFloat(e.target.value) || 100,
+                          })
+                        }
                         className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-indigo-600"
                       />
                     </div>
@@ -803,12 +907,16 @@ export const DiscountStudio: React.FC = () => {
 
                 {/* MINIMUM SPEND REQUIREMENT */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Minimum Order Cart Subtotal ({currencySymbol})</label>
+                  <label className="block text-xs font-bold text-slate-700">
+                    Minimum Order Cart Subtotal ({currencySymbol})
+                  </label>
                   <input
                     type="number"
                     step="5"
                     value={formData.minOrderAmount}
-                    onChange={(e) => setFormData({ ...formData, minOrderAmount: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, minOrderAmount: parseFloat(e.target.value) || 0 })
+                    }
                     placeholder="0.00 for no minimum"
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs font-bold"
                   />
@@ -869,7 +977,9 @@ export const DiscountStudio: React.FC = () => {
                         Select Eligible Products ({formData.targetIds.length} Selected)
                       </label>
                       {products.length === 0 && (
-                        <span className="text-[10px] text-amber-600 font-semibold">No products found in catalog</span>
+                        <span className="text-[10px] text-amber-600 font-semibold">
+                          No products found in catalog
+                        </span>
                       )}
                     </div>
 
@@ -892,21 +1002,31 @@ export const DiscountStudio: React.FC = () => {
                                   checked={isSelected}
                                   onChange={(e) => {
                                     if (e.target.checked) {
-                                      setFormData({ ...formData, targetIds: [...formData.targetIds, prod.id] });
+                                      setFormData({
+                                        ...formData,
+                                        targetIds: [...formData.targetIds, prod.id],
+                                      });
                                     } else {
                                       setFormData({
                                         ...formData,
-                                        targetIds: formData.targetIds.filter((id) => id !== prod.id),
+                                        targetIds: formData.targetIds.filter(
+                                          (id) => id !== prod.id,
+                                        ),
                                       });
                                     }
                                   }}
                                   className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
                                 />
                                 <span className="font-bold">{prod.name}</span>
-                                {prod.sku && <span className="text-[10px] text-slate-400 font-mono">({prod.sku})</span>}
+                                {prod.sku && (
+                                  <span className="text-[10px] text-slate-400 font-mono">
+                                    ({prod.sku})
+                                  </span>
+                                )}
                               </div>
                               <span className="font-extrabold text-indigo-600 dark:text-indigo-400">
-                                {currencySymbol}{prod.price.toFixed(2)}
+                                {currencySymbol}
+                                {prod.price.toFixed(2)}
                               </span>
                             </label>
                           );
@@ -928,7 +1048,9 @@ export const DiscountStudio: React.FC = () => {
                         Select Eligible Collections ({formData.targetIds.length} Selected)
                       </label>
                       {collections.length === 0 && (
-                        <span className="text-[10px] text-amber-600 font-semibold">No collections found</span>
+                        <span className="text-[10px] text-amber-600 font-semibold">
+                          No collections found
+                        </span>
                       )}
                     </div>
 
@@ -951,20 +1073,31 @@ export const DiscountStudio: React.FC = () => {
                                   checked={isSelected}
                                   onChange={(e) => {
                                     if (e.target.checked) {
-                                      setFormData({ ...formData, targetIds: [...formData.targetIds, coll.id] });
+                                      setFormData({
+                                        ...formData,
+                                        targetIds: [...formData.targetIds, coll.id],
+                                      });
                                     } else {
                                       setFormData({
                                         ...formData,
-                                        targetIds: formData.targetIds.filter((id) => id !== coll.id),
+                                        targetIds: formData.targetIds.filter(
+                                          (id) => id !== coll.id,
+                                        ),
                                       });
                                     }
                                   }}
                                   className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300"
                                 />
                                 <span className="font-bold">{coll.name}</span>
-                                {coll.slug && <span className="text-[10px] text-slate-400 font-mono">({coll.slug})</span>}
+                                {coll.slug && (
+                                  <span className="text-[10px] text-slate-400 font-mono">
+                                    ({coll.slug})
+                                  </span>
+                                )}
                               </div>
-                              <span className="text-[10px] font-bold text-slate-500">{coll.type || 'MANUAL'}</span>
+                              <span className="text-[10px] font-bold text-slate-500">
+                                {coll.type || 'MANUAL'}
+                              </span>
                             </label>
                           );
                         })}
@@ -1000,11 +1133,16 @@ export const DiscountStudio: React.FC = () => {
                               checked={isSelected}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setFormData({ ...formData, targetCustomers: [...formData.targetCustomers, grp] });
+                                  setFormData({
+                                    ...formData,
+                                    targetCustomers: [...formData.targetCustomers, grp],
+                                  });
                                 } else {
                                   setFormData({
                                     ...formData,
-                                    targetCustomers: formData.targetCustomers.filter((g) => g !== grp),
+                                    targetCustomers: formData.targetCustomers.filter(
+                                      (g) => g !== grp,
+                                    ),
                                   });
                                 }
                               }}
@@ -1022,18 +1160,27 @@ export const DiscountStudio: React.FC = () => {
               {/* USAGE LIMITS & SCHEDULE DATES */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Storewide Max Usage Limit</label>
+                  <label className="block text-xs font-bold text-slate-700">
+                    Storewide Max Usage Limit
+                  </label>
                   <input
                     type="number"
                     value={formData.usageLimit}
-                    onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value ? parseInt(e.target.value, 10) : '' })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        usageLimit: e.target.value ? parseInt(e.target.value, 10) : '',
+                      })
+                    }
                     placeholder="Unlimited"
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Start Date Schedule</label>
+                  <label className="block text-xs font-bold text-slate-700">
+                    Start Date Schedule
+                  </label>
                   <input
                     type="date"
                     required
@@ -1044,7 +1191,9 @@ export const DiscountStudio: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Expiration End Date</label>
+                  <label className="block text-xs font-bold text-slate-700">
+                    Expiration End Date
+                  </label>
                   <input
                     type="date"
                     value={formData.endDate}

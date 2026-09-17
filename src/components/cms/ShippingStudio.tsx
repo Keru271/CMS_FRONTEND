@@ -51,7 +51,9 @@ import {
 
 export const ShippingStudio: React.FC = () => {
   // Navigation Tabs
-  const [activeTab, setActiveTab] = useState<'rateshopping' | 'carriers' | 'shipments' | 'ndr' | 'zones' | 'simulator'>('rateshopping');
+  const [activeTab, setActiveTab] = useState<
+    'rateshopping' | 'carriers' | 'shipments' | 'ndr' | 'zones' | 'simulator'
+  >('rateshopping');
 
   // Core Data
   const [zones, setZones] = useState<CMSShippingZone[]>([]);
@@ -70,7 +72,10 @@ export const ShippingStudio: React.FC = () => {
   const [ndrRecords, setNdrRecords] = useState<CMSNdrRecord[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   // Policy Save State
   const [isSavingPolicy, setIsSavingPolicy] = useState(false);
@@ -95,7 +100,9 @@ export const ShippingStudio: React.FC = () => {
   // NDR Action Modal
   const [selectedNdr, setSelectedNdr] = useState<CMSNdrRecord | null>(null);
   const [isNdrModalOpen, setIsNdrModalOpen] = useState(false);
-  const [ndrActionType, setNdrActionType] = useState<'REATTEMPT' | 'UPDATE_ADDRESS' | 'RTO'>('REATTEMPT');
+  const [ndrActionType, setNdrActionType] = useState<'REATTEMPT' | 'UPDATE_ADDRESS' | 'RTO'>(
+    'REATTEMPT',
+  );
   const [ndrRemarks, setNdrRemarks] = useState('');
   const [ndrNewPhone, setNdrNewPhone] = useState('');
   const [ndrNewAddress, setNdrNewAddress] = useState('');
@@ -162,14 +169,15 @@ export const ShippingStudio: React.FC = () => {
   const loadAllData = async () => {
     setIsLoading(true);
     try {
-      const [zoneData, providerData, policyData, credData, shipmentData, ndrData] = await Promise.all([
-        cmsService.getShippingZones(),
-        cmsService.getShippingProviders(),
-        cmsService.getRateShoppingPolicy(),
-        cmsService.getCarrierCredentials(),
-        cmsService.getShipments(),
-        cmsService.getNdrRecords(),
-      ]);
+      const [zoneData, providerData, policyData, credData, shipmentData, ndrData] =
+        await Promise.all([
+          cmsService.getShippingZones(),
+          cmsService.getShippingProviders(),
+          cmsService.getRateShoppingPolicy(),
+          cmsService.getCarrierCredentials(),
+          cmsService.getShipments(),
+          cmsService.getNdrRecords(),
+        ]);
       setZones(zoneData);
       setProviders(providerData);
       if (policyData) setPolicy(policyData);
@@ -361,7 +369,8 @@ export const ShippingStudio: React.FC = () => {
                 </span>
               </h1>
               <p className="text-xs text-slate-500">
-                Carrier-agnostic abstraction layer with live rate shopping, aggregator routing, and NDR management.
+                Carrier-agnostic abstraction layer with live rate shopping, aggregator routing, and
+                NDR management.
               </p>
             </div>
           </div>
@@ -388,11 +397,37 @@ export const ShippingStudio: React.FC = () => {
       {/* Navigation Tabs */}
       <div className="flex flex-wrap gap-2 p-1.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
         {[
-          { id: 'rateshopping', label: 'Rate-Shopping Policy', icon: Sliders, badge: policy.priority },
-          { id: 'carriers', label: 'Carrier Integrations', icon: Key, badge: `${credentials.filter((c) => c.isActive).length} Active` },
-          { id: 'shipments', label: 'Live Shipments', icon: Package, badge: shipments.length.toString() },
-          { id: 'ndr', label: 'NDR Dashboard', icon: AlertTriangle, badge: `${ndrRecords.filter((r) => r.ndrStatus === 'PENDING').length} Action Required`, alert: ndrRecords.some((r) => r.ndrStatus === 'PENDING') },
-          { id: 'zones', label: 'Shipping Zones & Rates', icon: Globe, badge: `${zones.length} Zones` },
+          {
+            id: 'rateshopping',
+            label: 'Rate-Shopping Policy',
+            icon: Sliders,
+            badge: policy.priority,
+          },
+          {
+            id: 'carriers',
+            label: 'Carrier Integrations',
+            icon: Key,
+            badge: `${credentials.filter((c) => c.isActive).length} Active`,
+          },
+          {
+            id: 'shipments',
+            label: 'Live Shipments',
+            icon: Package,
+            badge: shipments.length.toString(),
+          },
+          {
+            id: 'ndr',
+            label: 'NDR Dashboard',
+            icon: AlertTriangle,
+            badge: `${ndrRecords.filter((r) => r.ndrStatus === 'PENDING').length} Action Required`,
+            alert: ndrRecords.some((r) => r.ndrStatus === 'PENDING'),
+          },
+          {
+            id: 'zones',
+            label: 'Shipping Zones & Rates',
+            icon: Globe,
+            badge: `${zones.length} Zones`,
+          },
           { id: 'simulator', label: 'Live Rate & Tracking Simulator', icon: Calculator },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -415,8 +450,8 @@ export const ShippingStudio: React.FC = () => {
                     isActive
                       ? 'bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900'
                       : tab.alert
-                      ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 animate-pulse'
-                      : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 animate-pulse'
+                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
                   }`}
                 >
                   {tab.badge}
@@ -445,11 +480,16 @@ export const ShippingStudio: React.FC = () => {
                   <span className="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
                     Maximum Margin
                   </span>
-                  {policy.priority === 'CHEAPEST' && <CheckCircle className="w-5 h-5 text-indigo-600" />}
+                  {policy.priority === 'CHEAPEST' && (
+                    <CheckCircle className="w-5 h-5 text-indigo-600" />
+                  )}
                 </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Cheapest Carrier First</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Cheapest Carrier First
+                </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Orchestrator queries all serviceable couriers in parallel and automatically ranks the lowest cost quote first.
+                  Orchestrator queries all serviceable couriers in parallel and automatically ranks
+                  the lowest cost quote first.
                 </p>
               </div>
               <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
@@ -470,11 +510,16 @@ export const ShippingStudio: React.FC = () => {
                   <span className="text-xs font-black px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
                     Highest Speed
                   </span>
-                  {policy.priority === 'FASTEST' && <CheckCircle className="w-5 h-5 text-indigo-600" />}
+                  {policy.priority === 'FASTEST' && (
+                    <CheckCircle className="w-5 h-5 text-indigo-600" />
+                  )}
                 </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Fastest Delivery First</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Fastest Delivery First
+                </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Prioritizes Air Express / Same-Day Hyperlocal couriers with the shortest transit time (1-2 business days).
+                  Prioritizes Air Express / Same-Day Hyperlocal couriers with the shortest transit
+                  time (1-2 business days).
                 </p>
               </div>
               <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
@@ -495,11 +540,16 @@ export const ShippingStudio: React.FC = () => {
                   <span className="text-xs font-black px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
                     Contract Loyalty
                   </span>
-                  {policy.priority === 'PREFERRED' && <CheckCircle className="w-5 h-5 text-indigo-600" />}
+                  {policy.priority === 'PREFERRED' && (
+                    <CheckCircle className="w-5 h-5 text-indigo-600" />
+                  )}
                 </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Merchant-Preferred Carrier</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Merchant-Preferred Carrier
+                </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Routes orders preferentially to your contract carrier (e.g. Delhivery Direct or Shiprocket) when serviceable.
+                  Routes orders preferentially to your contract carrier (e.g. Delhivery Direct or
+                  Shiprocket) when serviceable.
                 </p>
               </div>
               <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
@@ -540,10 +590,14 @@ export const ShippingStudio: React.FC = () => {
                 <input
                   type="number"
                   value={policy.freeShippingThreshold}
-                  onChange={(e) => setPolicy({ ...policy, freeShippingThreshold: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setPolicy({ ...policy, freeShippingThreshold: Number(e.target.value) })
+                  }
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-semibold"
                 />
-                <span className="text-[11px] text-slate-500 mt-1 block">Orders above this amount get free standard shipping.</span>
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  Orders above this amount get free standard shipping.
+                </span>
               </div>
 
               <div>
@@ -553,10 +607,14 @@ export const ShippingStudio: React.FC = () => {
                 <input
                   type="number"
                   value={policy.codMarkupAmount}
-                  onChange={(e) => setPolicy({ ...policy, codMarkupAmount: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setPolicy({ ...policy, codMarkupAmount: Number(e.target.value) })
+                  }
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-semibold"
                 />
-                <span className="text-[11px] text-slate-500 mt-1 block">Added to shipping cost when customer selects COD payment.</span>
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  Added to shipping cost when customer selects COD payment.
+                </span>
               </div>
 
               <div className="flex items-center gap-3 pt-4">
@@ -567,10 +625,14 @@ export const ShippingStudio: React.FC = () => {
                   onChange={(e) => setPolicy({ ...policy, fallbackEnabled: e.target.checked })}
                   className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
                 />
-                <label htmlFor="cb-fallback" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                <label
+                  htmlFor="cb-fallback"
+                  className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                >
                   Zero-Downtime Zone Fallback
                   <span className="block text-[11px] font-normal text-slate-500">
-                    If live courier APIs time out, seamlessly fall back to merchant default zone rates so checkout never crashes.
+                    If live courier APIs time out, seamlessly fall back to merchant default zone
+                    rates so checkout never crashes.
                   </span>
                 </label>
               </div>
@@ -583,10 +645,14 @@ export const ShippingStudio: React.FC = () => {
                   onChange={(e) => setPolicy({ ...policy, codEnabled: e.target.checked })}
                   className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
                 />
-                <label htmlFor="cb-cod" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                <label
+                  htmlFor="cb-cod"
+                  className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                >
                   Enable COD Verification at Checkout
                   <span className="block text-[11px] font-normal text-slate-500">
-                    Pincode COD serviceability is verified upfront before showing the COD payment option.
+                    Pincode COD serviceability is verified upfront before showing the COD payment
+                    option.
                   </span>
                 </label>
               </div>
@@ -598,7 +664,11 @@ export const ShippingStudio: React.FC = () => {
                 disabled={isSavingPolicy}
                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 transition disabled:opacity-60"
               >
-                {isSavingPolicy ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {isSavingPolicy ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4" />
+                )}
                 Save Policy Configuration
               </button>
             </div>
@@ -633,21 +703,31 @@ export const ShippingStudio: React.FC = () => {
                       </span>
                     </div>
 
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">{cred.carrierName}</h3>
-                    <p className="text-xs text-slate-500 mt-1 font-mono truncate">{cred.endpointUrl || 'https://api.carrier.com'}</p>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      {cred.carrierName}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1 font-mono truncate">
+                      {cred.endpointUrl || 'https://api.carrier.com'}
+                    </p>
 
                     <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl space-y-1.5 text-xs">
                       <div className="flex justify-between text-slate-500">
                         <span>API Key:</span>
-                        <span className="font-mono text-slate-800 dark:text-slate-200">{cred.apiKey || 'Not configured'}</span>
+                        <span className="font-mono text-slate-800 dark:text-slate-200">
+                          {cred.apiKey || 'Not configured'}
+                        </span>
                       </div>
                       <div className="flex justify-between text-slate-500">
                         <span>Account #:</span>
-                        <span className="font-mono text-slate-800 dark:text-slate-200">{cred.accountNumber || '—'}</span>
+                        <span className="font-mono text-slate-800 dark:text-slate-200">
+                          {cred.accountNumber || '—'}
+                        </span>
                       </div>
                       <div className="flex justify-between text-slate-500">
                         <span>Environment:</span>
-                        <span className="font-semibold text-indigo-600">{cred.sandboxMode ? 'Sandbox Simulator' : 'Production Live'}</span>
+                        <span className="font-semibold text-indigo-600">
+                          {cred.sandboxMode ? 'Sandbox Simulator' : 'Production Live'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -658,7 +738,9 @@ export const ShippingStudio: React.FC = () => {
                       disabled={isTesting}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 transition"
                     >
-                      <Zap className={`w-3.5 h-3.5 text-amber-500 ${isTesting ? 'animate-spin' : ''}`} />
+                      <Zap
+                        className={`w-3.5 h-3.5 text-amber-500 ${isTesting ? 'animate-spin' : ''}`}
+                      />
                       {isTesting ? 'Pinging...' : 'Test Ping'}
                     </button>
 
@@ -689,9 +771,12 @@ export const ShippingStudio: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm">
             <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Active Carrier Shipments</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Active Carrier Shipments
+                </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Normalized shipment records across all integrated couriers with tracking status and labels.
+                  Normalized shipment records across all integrated couriers with tracking status
+                  and labels.
                 </p>
               </div>
               <button
@@ -720,25 +805,38 @@ export const ShippingStudio: React.FC = () => {
                     const isCancelled = s.trackingStatus === 'CANCELLED';
                     const isDelivered = s.trackingStatus === 'DELIVERED';
                     return (
-                      <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition">
+                      <tr
+                        key={s.id}
+                        className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition"
+                      >
                         <td className="py-4 px-6 font-mono font-bold text-slate-900 dark:text-white">
                           {s.awbNumber}
                         </td>
-                        <td className="py-4 px-6 font-semibold text-indigo-600">
-                          {s.orderNumber}
+                        <td className="py-4 px-6 font-semibold text-indigo-600">{s.orderNumber}</td>
+                        <td className="py-4 px-6">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 block">
+                            {s.carrierName}
+                          </span>
+                          <span className="text-[10px] text-slate-500 uppercase">
+                            {s.serviceName || s.serviceType}
+                          </span>
                         </td>
                         <td className="py-4 px-6">
-                          <span className="font-bold text-slate-800 dark:text-slate-200 block">{s.carrierName}</span>
-                          <span className="text-[10px] text-slate-500 uppercase">{s.serviceName || s.serviceType}</span>
+                          <span className="text-slate-800 dark:text-slate-200 block font-semibold">
+                            {s.destinationCity || 'Metro Hub'}
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            PIN: {s.destinationPincode || '—'}
+                          </span>
                         </td>
                         <td className="py-4 px-6">
-                          <span className="text-slate-800 dark:text-slate-200 block font-semibold">{s.destinationCity || 'Metro Hub'}</span>
-                          <span className="text-[10px] text-slate-500 font-mono">PIN: {s.destinationPincode || '—'}</span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="font-bold text-slate-900 dark:text-white block">₹{s.shippingCost.toFixed(2)}</span>
+                          <span className="font-bold text-slate-900 dark:text-white block">
+                            ₹{s.shippingCost.toFixed(2)}
+                          </span>
                           {s.isCod && (
-                            <span className="text-[10px] text-amber-600 font-bold">COD: ₹{s.codAmount.toFixed(2)}</span>
+                            <span className="text-[10px] text-amber-600 font-bold">
+                              COD: ₹{s.codAmount.toFixed(2)}
+                            </span>
                           )}
                         </td>
                         <td className="py-4 px-6">
@@ -747,8 +845,8 @@ export const ShippingStudio: React.FC = () => {
                               isDelivered
                                 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
                                 : isCancelled
-                                ? 'bg-slate-100 text-slate-500'
-                                : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 animate-pulse'
+                                  ? 'bg-slate-100 text-slate-500'
+                                  : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 animate-pulse'
                             }`}
                           >
                             {s.trackingStatus}
@@ -817,17 +915,25 @@ export const ShippingStudio: React.FC = () => {
                 First-Attempt Failure Management (NDR Action Center)
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Indian courier networks experience 15-30% first-attempt delivery failures. Resolve them here before RTO occurs.
+                Indian courier networks experience 15-30% first-attempt delivery failures. Resolve
+                them here before RTO occurs.
               </p>
             </div>
 
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {ndrRecords.map((record) => (
-                <div key={record.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div
+                  key={record.id}
+                  className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                >
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-3">
-                      <span className="font-mono font-bold text-sm text-slate-900 dark:text-white">{record.awbNumber}</span>
-                      <span className="text-xs font-semibold text-indigo-600">{record.orderNumber}</span>
+                      <span className="font-mono font-bold text-sm text-slate-900 dark:text-white">
+                        {record.awbNumber}
+                      </span>
+                      <span className="text-xs font-semibold text-indigo-600">
+                        {record.orderNumber}
+                      </span>
                       <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">
                         Attempt #{record.attemptCount} Failed
                       </span>
@@ -839,10 +945,17 @@ export const ShippingStudio: React.FC = () => {
 
                     <div className="flex items-center gap-4 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
-                        <Phone className="w-3.5 h-3.5" /> {record.customerPhone || 'No phone provided'}
+                        <Phone className="w-3.5 h-3.5" />{' '}
+                        {record.customerPhone || 'No phone provided'}
                       </span>
                       <span>Courier: {record.carrierName}</span>
-                      <span>Last Attempt: {new Date(record.lastAttemptAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span>
+                        Last Attempt:{' '}
+                        {new Date(record.lastAttemptAt).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
                     </div>
                   </div>
 
@@ -895,8 +1008,12 @@ export const ShippingStudio: React.FC = () => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Regional Shipping Zones</h3>
-              <p className="text-xs text-slate-500">Define fallback price slabs and delivery SLAs per country cluster.</p>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                Regional Shipping Zones
+              </h3>
+              <p className="text-xs text-slate-500">
+                Define fallback price slabs and delivery SLAs per country cluster.
+              </p>
             </div>
             <button
               onClick={() => {
@@ -923,7 +1040,9 @@ export const ShippingStudio: React.FC = () => {
                       <Globe className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-base font-bold text-slate-900 dark:text-white">{zone.name}</h4>
+                      <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                        {zone.name}
+                      </h4>
                       <p className="text-xs text-slate-500">{zone.countries.join(', ')}</p>
                     </div>
                   </div>
@@ -950,7 +1069,9 @@ export const ShippingStudio: React.FC = () => {
                     >
                       <div>
                         <div className="flex justify-between items-start mb-2">
-                          <span className="text-xs font-bold text-slate-900 dark:text-white">{rate.name}</span>
+                          <span className="text-xs font-bold text-slate-900 dark:text-white">
+                            {rate.name}
+                          </span>
                           <span className="text-xs font-black text-emerald-600">
                             {rate.type === 'FREE' ? 'FREE' : `$${rate.price.toFixed(2)}`}
                           </span>
@@ -979,7 +1100,8 @@ export const ShippingStudio: React.FC = () => {
                 Live Rate & Serviceability Simulator
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Simulate checkout queries against live rate-shopping orchestrator and postal code databases.
+                Simulate checkout queries against live rate-shopping orchestrator and postal code
+                databases.
               </p>
             </div>
 
@@ -1047,7 +1169,10 @@ export const ShippingStudio: React.FC = () => {
                     onChange={(e) => setSimIsCod(e.target.checked)}
                     className="w-4 h-4 rounded text-indigo-600"
                   />
-                  <label htmlFor="sim-cod" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                  <label
+                    htmlFor="sim-cod"
+                    className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                  >
                     COD Requested
                   </label>
                 </div>
@@ -1058,7 +1183,11 @@ export const ShippingStudio: React.FC = () => {
                 disabled={isSimulating}
                 className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm"
               >
-                {isSimulating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Calculator className="w-4 h-4" />}
+                {isSimulating ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Calculator className="w-4 h-4" />
+                )}
                 Run Rate Shopping Query
               </button>
             </div>
@@ -1066,16 +1195,23 @@ export const ShippingStudio: React.FC = () => {
             {simResult && (
               <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-slate-900 dark:text-white">Matched Zone: {simResult.matchedZoneName}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    Matched Zone: {simResult.matchedZoneName}
+                  </span>
                   <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-extrabold text-[10px]">
                     Cheapest: ${simResult.cheapestRate || 5.99}
                   </span>
                 </div>
                 <div className="space-y-2">
                   {(simResult.eligibleRates || []).map((r: any, idx: number) => (
-                    <div key={idx} className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex justify-between items-center text-xs">
+                    <div
+                      key={idx}
+                      className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex justify-between items-center text-xs"
+                    >
                       <div>
-                        <span className="font-bold block text-slate-800 dark:text-slate-200">{r.name}</span>
+                        <span className="font-bold block text-slate-800 dark:text-slate-200">
+                          {r.name}
+                        </span>
                         <span className="text-[10px] text-slate-500">{r.estimatedDays}</span>
                       </div>
                       <span className="font-mono font-bold text-slate-900 dark:text-white">
@@ -1113,7 +1249,11 @@ export const ShippingStudio: React.FC = () => {
                 disabled={isTrackingLoading}
                 className="px-4 py-2.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
               >
-                {isTrackingLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                {isTrackingLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4" />
+                )}
                 Track
               </button>
             </div>
@@ -1143,11 +1283,18 @@ export const ShippingStudio: React.FC = () => {
                           ev.completed ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
                         }`}
                       />
-                      <h5 className="text-xs font-bold text-slate-900 dark:text-white">{ev.title}</h5>
+                      <h5 className="text-xs font-bold text-slate-900 dark:text-white">
+                        {ev.title}
+                      </h5>
                       <span className="text-[11px] text-slate-500 block">{ev.location}</span>
                       {ev.timestamp && (
                         <span className="text-[10px] text-slate-400 block mt-0.5">
-                          {new Date(ev.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          {new Date(ev.timestamp).toLocaleDateString([], {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </span>
                       )}
                     </div>
@@ -1168,14 +1315,19 @@ export const ShippingStudio: React.FC = () => {
                 <Key className="w-5 h-5 text-indigo-500" />
                 Configure {editingCred.carrierName}
               </h3>
-              <button onClick={() => setIsCredModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => setIsCredModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3.5 text-xs">
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">API Key / Token</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  API Key / Token
+                </label>
                 <input
                   type="password"
                   value={credApiKeyInput}
@@ -1186,7 +1338,9 @@ export const ShippingStudio: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">API Secret / Client Secret</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  API Secret / Client Secret
+                </label>
                 <input
                   type="password"
                   value={credApiSecretInput}
@@ -1204,7 +1358,10 @@ export const ShippingStudio: React.FC = () => {
                   onChange={(e) => setCredSandboxInput(e.target.checked)}
                   className="w-4 h-4 rounded text-indigo-600"
                 />
-                <label htmlFor="cred-sandbox" className="font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                <label
+                  htmlFor="cred-sandbox"
+                  className="font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                >
                   Sandbox Simulation Mode
                 </label>
               </div>
@@ -1217,7 +1374,10 @@ export const ShippingStudio: React.FC = () => {
                   onChange={(e) => setCredActiveInput(e.target.checked)}
                   className="w-4 h-4 rounded text-indigo-600"
                 />
-                <label htmlFor="cred-active" className="font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                <label
+                  htmlFor="cred-active"
+                  className="font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                >
                   Enable in Rate-Shopping Pool
                 </label>
               </div>
@@ -1250,14 +1410,19 @@ export const ShippingStudio: React.FC = () => {
                 <Truck className="w-5 h-5 text-indigo-500" />
                 Manifest Order to Carrier
               </h3>
-              <button onClick={() => setIsManifestModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => setIsManifestModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3.5 text-xs">
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Select Order</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Select Order
+                </label>
                 <input
                   type="text"
                   value={manifestOrderId}
@@ -1268,7 +1433,9 @@ export const ShippingStudio: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Carrier Provider</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Carrier Provider
+                </label>
                 <select
                   value={manifestCarrier}
                   onChange={(e) => setManifestCarrier(e.target.value)}
@@ -1284,7 +1451,9 @@ export const ShippingStudio: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Service Type</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Service Type
+                  </label>
                   <select
                     value={manifestServiceType}
                     onChange={(e) => setManifestServiceType(e.target.value)}
@@ -1296,7 +1465,9 @@ export const ShippingStudio: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Package Weight (kg)</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Package Weight (kg)
+                  </label>
                   <input
                     type="number"
                     step="0.1"
@@ -1320,7 +1491,11 @@ export const ShippingStudio: React.FC = () => {
                 disabled={isManifesting}
                 className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5"
               >
-                {isManifesting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                {isManifesting ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Send className="w-3.5 h-3.5" />
+                )}
                 Generate AWB & Manifest
               </button>
             </div>
@@ -1337,7 +1512,10 @@ export const ShippingStudio: React.FC = () => {
                 <AlertTriangle className="w-5 h-5 text-rose-500" />
                 Resolve Delivery Failure (AWB {selectedNdr.awbNumber})
               </h3>
-              <button onClick={() => setIsNdrModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => setIsNdrModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1349,7 +1527,9 @@ export const ShippingStudio: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Action to Take</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Action to Take
+                </label>
                 <select
                   value={ndrActionType}
                   onChange={(e) => setNdrActionType(e.target.value as any)}
@@ -1364,7 +1544,9 @@ export const ShippingStudio: React.FC = () => {
               {ndrActionType === 'UPDATE_ADDRESS' && (
                 <>
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Customer Phone</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Customer Phone
+                    </label>
                     <input
                       type="text"
                       value={ndrNewPhone}
@@ -1374,7 +1556,9 @@ export const ShippingStudio: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Corrected Address</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Corrected Address
+                    </label>
                     <textarea
                       rows={2}
                       value={ndrNewAddress}
@@ -1387,7 +1571,9 @@ export const ShippingStudio: React.FC = () => {
               )}
 
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Instructions for Courier Rider</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Instructions for Courier Rider
+                </label>
                 <input
                   type="text"
                   value={ndrRemarks}
@@ -1422,8 +1608,13 @@ export const ShippingStudio: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 border border-slate-200 shadow-2xl text-slate-900 space-y-4">
             <div className="flex justify-between items-center pb-2 border-b">
-              <span className="text-xs font-black tracking-wider uppercase">Official Shipping Label</span>
-              <button onClick={() => setPreviewLabelAwb(null)} className="text-slate-400 hover:text-slate-600">
+              <span className="text-xs font-black tracking-wider uppercase">
+                Official Shipping Label
+              </span>
+              <button
+                onClick={() => setPreviewLabelAwb(null)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1431,7 +1622,9 @@ export const ShippingStudio: React.FC = () => {
             <div className="p-4 border-2 border-black rounded-xl space-y-3 font-mono text-center">
               <div className="text-lg font-black tracking-widest border-b pb-1">NEXUS COMMERCE</div>
               <div className="text-left text-xs space-y-1">
-                <div><strong>SHIP TO:</strong> Valued Customer</div>
+                <div>
+                  <strong>SHIP TO:</strong> Valued Customer
+                </div>
                 <div>Indiranagar, 100ft Road</div>
                 <div>Bengaluru, Karnataka - 560038</div>
                 <div>PH: +91 98402 18921</div>
@@ -1442,7 +1635,10 @@ export const ShippingStudio: React.FC = () => {
                 {/* Barcode Simulator */}
                 <div className="h-10 bg-slate-900 flex items-center justify-around px-2">
                   {Array.from({ length: 32 }).map((_, i) => (
-                    <div key={i} className={`h-full ${i % 2 === 0 ? 'w-1 bg-white' : 'w-0.5 bg-black'}`} />
+                    <div
+                      key={i}
+                      className={`h-full ${i % 2 === 0 ? 'w-1 bg-white' : 'w-0.5 bg-black'}`}
+                    />
                   ))}
                 </div>
               </div>

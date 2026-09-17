@@ -26,7 +26,13 @@ apiClient.interceptors.request.use(
       const resolvedStoreId = cmsService.getActiveStoreId();
 
       // Placeholder IDs that should never be sent to the backend
-      const INVALID_STORE_IDS = new Set(['default-store-id', 'store-active', 'store-placeholder', 'null', 'undefined']);
+      const INVALID_STORE_IDS = new Set([
+        'default-store-id',
+        'store-active',
+        'store-placeholder',
+        'null',
+        'undefined',
+      ]);
       const isValidStoreId = resolvedStoreId && !INVALID_STORE_IDS.has(resolvedStoreId);
 
       if (isValidStoreId) {
@@ -48,7 +54,7 @@ apiClient.interceptors.request.use(
   },
   (error: AxiosError) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response Interceptor: Global Error Handling
@@ -60,7 +66,9 @@ apiClient.interceptors.response.use(
     if (error.response) {
       // Server responded with a status code outside 2xx
       if (error.response.status === 401) {
-        console.warn('Unauthorized (401) response received. Clearing auth token and redirecting to login...');
+        console.warn(
+          'Unauthorized (401) response received. Clearing auth token and redirecting to login...',
+        );
         if (typeof window !== 'undefined') {
           const currentPath = window.location.pathname;
           // Avoid redirect loops on public auth routes and onboarding pages
@@ -77,7 +85,6 @@ apiClient.interceptors.response.use(
             window.location.href = '/login';
           }
         }
-
       } else if (error.response.status === 404) {
         // If /users/me returns 404, the stored JWT belongs to a deleted/reset user account
         if (error.config?.url?.includes('/users/me') && typeof window !== 'undefined') {
@@ -104,8 +111,7 @@ apiClient.interceptors.response.use(
       console.error('Axios Request Error:', error.message);
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;
-
