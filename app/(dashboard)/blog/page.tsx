@@ -30,6 +30,14 @@ import { cmsService } from '@/src/services/cmsService';
 
 const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
 
+// Helper to convert ISO or Date to local YYYY-MM-DDTHH:mm string for datetime-local input without timezone shift
+const toLocalDatetimeString = (dateInput?: string | Date | null): string => {
+  const d = dateInput ? new Date(dateInput) : new Date();
+  if (isNaN(d.getTime())) return '';
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 export default function BlogManagementPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [products, setProducts] = useState<CMSProduct[]>([]);
@@ -55,11 +63,13 @@ export default function BlogManagementPage() {
   const [category, setCategory] = useState('Lifestyle');
   const [tags, setTags] = useState('');
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'SCHEDULED'>('PUBLISHED');
-  const [publishedAt, setPublishedAt] = useState(new Date().toISOString().slice(0, 16));
+  const [publishedAt, setPublishedAt] = useState(toLocalDatetimeString());
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [canonicalUrl, setCanonicalUrl] = useState('');
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+
+  const [currentTimestamp, setCurrentTimestamp] = useState<number>(Date.now());
 
   const fetchPosts = async () => {
     try {
@@ -89,6 +99,28 @@ export default function BlogManagementPage() {
     fetchProducts();
   }, []);
 
+  // Real-time ticking timer so scheduled badges update automatically every 5 seconds
+  useEffect(() => {
+    const tickTimer = setInterval(() => {
+      setCurrentTimestamp(Date.now());
+    }, 5000);
+    return () => clearInterval(tickTimer);
+  }, []);
+
+  // Auto-sync posts from backend every 15 seconds if any scheduled post exists
+  useEffect(() => {
+    const hasScheduled = posts.some((p) => p.status === 'SCHEDULED');
+    if (!hasScheduled) return;
+
+    const syncTimer = setInterval(() => {
+      cmsService.getBlogPosts().then((data) => {
+        if (Array.isArray(data)) setPosts(data);
+      }).catch(() => {});
+    }, 15000);
+
+    return () => clearInterval(syncTimer);
+  }, [posts]);
+
   const handleOpenCreate = () => {
     setEditingPost(null);
     setTitle('');
@@ -100,7 +132,7 @@ export default function BlogManagementPage() {
     setCategory('Stories & Trends');
     setTags('trends, style, guide');
     setStatus('PUBLISHED');
-    setPublishedAt(new Date().toISOString().slice(0, 16));
+    setPublishedAt(toLocalDatetimeString());
     setMetaTitle('');
     setMetaDescription('');
     setCanonicalUrl('');
@@ -120,9 +152,7 @@ export default function BlogManagementPage() {
     setCategory(post.category || 'Stories');
     setTags(post.tags || '');
     setStatus(post.status);
-    setPublishedAt(
-      post.publishedAt ? new Date(post.publishedAt).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16)
-    );
+    setPublishedAt(toLocalDatetimeString(post.publishedAt || post.createdAt));
     setMetaTitle(post.metaTitle || '');
     setMetaDescription(post.metaDescription || '');
     setCanonicalUrl(post.canonicalUrl || '');
@@ -224,7 +254,21 @@ export default function BlogManagementPage() {
     }
   };
 
+  // Helper to determine real-time publication status based on current time
+  const getEffectiveStatus = (post: BlogPost): 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' => {
+    if (post.status === 'SCHEDULED') {
+      if (!post.publishedAt) return 'PUBLISHED';
+      const pubTime = new Date(post.publishedAt).getTime();
+      if (!isNaN(pubTime) && pubTime <= currentTimestamp) {
+        return 'PUBLISHED';
+      }
+      return 'SCHEDULED';
+    }
+    return post.status;
+  };
+
   const filteredPosts = posts.filter((p) => {
+    const effectiveStatus = getEffectiveStatus(p);
     const matchesSearch =
       !searchQuery ||
       p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -232,16 +276,16 @@ export default function BlogManagementPage() {
       (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesCategory = categoryFilter === 'ALL' || p.category === categoryFilter;
-    const matchesStatus = statusFilter === 'ALL' || p.status === statusFilter;
+    const matchesStatus = statusFilter === 'ALL' || effectiveStatus === statusFilter;
 
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
   const uniqueCategories = Array.from(new Set(posts.map((p) => p.category).filter(Boolean)));
 
-  const publishedCount = posts.filter((p) => p.status === 'PUBLISHED').length;
-  const draftCount = posts.filter((p) => p.status === 'DRAFT').length;
-  const scheduledCount = posts.filter((p) => p.status === 'SCHEDULED').length;
+  const publishedCount = posts.filter((p) => getEffectiveStatus(p) === 'PUBLISHED').length;
+  const draftCount = posts.filter((p) => getEffectiveStatus(p) === 'DRAFT').length;
+  const scheduledCount = posts.filter((p) => getEffectiveStatus(p) === 'SCHEDULED').length;
 
   return (
     <div className="space-y-6 pb-12">
@@ -395,120 +439,142 @@ export default function BlogManagementPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredPosts.map((post) => (
-            <div
-              key={post.id}
-              className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between"
-            >
-              <div>
-                {/* Image */}
-                <div className="relative aspect-[16/9] w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  {post.featuredImage ? (
-                    <img
-                      src={post.featuredImage}
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400">
-                      <ImageIcon className="w-8 h-8" />
-                    </div>
-                  )}
+          {filteredPosts.map((post) => {
+            const effectiveStatus = getEffectiveStatus(post);
+            const isFutureScheduled = effectiveStatus === 'SCHEDULED';
 
-                  {/* Badges */}
-                  <div className="absolute top-3 left-3 flex items-center gap-2">
-                    <span
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg backdrop-blur-md shadow-sm ${
-                        post.status === 'PUBLISHED'
-                          ? 'bg-emerald-500/90 text-white'
-                          : post.status === 'SCHEDULED'
-                          ? 'bg-amber-500/90 text-white'
-                          : 'bg-slate-700/90 text-white'
-                      }`}
-                    >
-                      {post.status}
-                    </span>
-                    {post.category && (
-                      <span className="px-2.5 py-1 text-xs font-medium bg-black/60 text-white rounded-lg backdrop-blur-md">
-                        {post.category}
+            return (
+              <div
+                key={post.id}
+                className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between"
+              >
+                <div>
+                  {/* Image */}
+                  <div className="relative aspect-[16/9] w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    {post.featuredImage ? (
+                      <img
+                        src={post.featuredImage}
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <ImageIcon className="w-8 h-8" />
+                      </div>
+                    )}
+
+                    {/* Badges */}
+                    <div className="absolute top-3 left-3 flex items-center gap-2">
+                      <span
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-lg backdrop-blur-md shadow-sm flex items-center gap-1 ${
+                          effectiveStatus === 'PUBLISHED'
+                            ? 'bg-emerald-500/90 text-white'
+                            : effectiveStatus === 'SCHEDULED'
+                            ? 'bg-amber-500/90 text-white'
+                            : 'bg-slate-700/90 text-white'
+                        }`}
+                      >
+                        {isFutureScheduled && <Clock className="w-3 h-3" />}
+                        {effectiveStatus}
                       </span>
+                      {post.category && (
+                        <span className="px-2.5 py-1 text-xs font-medium bg-black/60 text-white rounded-lg backdrop-blur-md">
+                          {post.category}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Content Details */}
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
+                      <span className="flex items-center gap-1">
+                        <User className="w-3.5 h-3.5" />
+                        {post.author || 'Store Editorial'}
+                      </span>
+                      <span>•</span>
+                      {isFutureScheduled ? (
+                        <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium" title="Scheduled to publish">
+                          <Clock className="w-3.5 h-3.5" />
+                          {new Date(post.publishedAt || post.createdAt).toLocaleString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {new Date(post.publishedAt || post.createdAt).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="font-bold text-base text-slate-900 dark:text-white line-clamp-2 mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                      {post.title}
+                    </h3>
+
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 mb-4">
+                      {post.excerpt || post.content.replace(/<[^>]*>?/gm, '').slice(0, 120) + '...'}
+                    </p>
+
+                    {post.tags && (
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {post.tags
+                          .split(',')
+                          .map((t) => t.trim())
+                          .filter(Boolean)
+                          .slice(0, 3)
+                          .map((tagItem) => (
+                            <span
+                              key={tagItem}
+                              className="px-2 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md"
+                            >
+                              #{tagItem}
+                            </span>
+                          ))}
+                      </div>
                     )}
                   </div>
                 </div>
 
-                {/* Content Details */}
-                <div className="p-5">
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
-                    <span className="flex items-center gap-1">
-                      <User className="w-3.5 h-3.5" />
-                      {post.author || 'Store Editorial'}
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
-                    </span>
+                {/* Actions Footer */}
+                <div className="px-5 py-3.5 bg-slate-50/70 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <a
+                    href={`${STOREFRONT_URL}/blog/${post.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    Live Preview
+                  </a>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleOpenEdit(post)}
+                      className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition"
+                      title="Edit article"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition"
+                      title="Delete article"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-
-                  <h3 className="font-bold text-base text-slate-900 dark:text-white line-clamp-2 mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
-                    {post.title}
-                  </h3>
-
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 mb-4">
-                    {post.excerpt || post.content.replace(/<[^>]*>?/gm, '').slice(0, 120) + '...'}
-                  </p>
-
-                  {post.tags && (
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {post.tags
-                        .split(',')
-                        .map((t) => t.trim())
-                        .filter(Boolean)
-                        .slice(0, 3)
-                        .map((tagItem) => (
-                          <span
-                            key={tagItem}
-                            className="px-2 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md"
-                          >
-                            #{tagItem}
-                          </span>
-                        ))}
-                    </div>
-                  )}
                 </div>
               </div>
-
-              {/* Actions Footer */}
-              <div className="px-5 py-3.5 bg-slate-50/70 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <a
-                  href={`${STOREFRONT_URL}/blog/${post.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  Live Preview
-                </a>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleOpenEdit(post)}
-                    className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition"
-                    title="Edit article"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(post.id)}
-                    className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition"
-                    title="Delete article"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -600,22 +666,32 @@ export default function BlogManagementPage() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
-                    Status
+                    Publication Status
                   </label>
                   <select
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as any)}
+                    onChange={(e) => {
+                      const newStatus = e.target.value as 'DRAFT' | 'PUBLISHED' | 'SCHEDULED';
+                      setStatus(newStatus);
+                      if (newStatus === 'SCHEDULED') {
+                        const current = new Date(publishedAt);
+                        if (isNaN(current.getTime()) || current <= new Date()) {
+                          const bumped = new Date(Date.now() + 60 * 60 * 1000);
+                          setPublishedAt(toLocalDatetimeString(bumped));
+                        }
+                      }
+                    }}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none"
                   >
-                    <option value="PUBLISHED">Published</option>
-                    <option value="SCHEDULED">Scheduled</option>
+                    <option value="PUBLISHED">Published (Live)</option>
+                    <option value="SCHEDULED">Scheduled (Future)</option>
                     <option value="DRAFT">Draft</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
-                    Publish Date
+                    {status === 'SCHEDULED' ? 'Schedule Release Time *' : 'Publish Date & Time'}
                   </label>
                   <input
                     type="datetime-local"
@@ -625,6 +701,58 @@ export default function BlogManagementPage() {
                   />
                 </div>
               </div>
+
+              {/* Schedule Banner / Helpers */}
+              {status === 'SCHEDULED' && (
+                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                    <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span>
+                      Scheduled to go live on:{' '}
+                      <strong className="font-semibold">
+                        {publishedAt ? new Date(publishedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Set a time'}
+                      </strong>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mr-1">Quick presets:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date(Date.now() + 60 * 60 * 1000);
+                        setPublishedAt(toLocalDatetimeString(d));
+                      }}
+                      className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700/70 rounded-lg text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition font-medium text-[11px]"
+                    >
+                      +1 Hour
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setDate(d.getDate() + 1);
+                        d.setHours(9, 0, 0, 0);
+                        setPublishedAt(toLocalDatetimeString(d));
+                      }}
+                      className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700/70 rounded-lg text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition font-medium text-[11px]"
+                    >
+                      Tomorrow 9 AM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setDate(d.getDate() + 7);
+                        d.setHours(9, 0, 0, 0);
+                        setPublishedAt(toLocalDatetimeString(d));
+                      }}
+                      className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700/70 rounded-lg text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition font-medium text-[11px]"
+                    >
+                      Next Week
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Featured Image URL & Tags */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

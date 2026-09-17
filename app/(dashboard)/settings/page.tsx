@@ -6,6 +6,8 @@ import { useCMSContext } from '@/src/context/CMSContext';
 import { UserPreferencesStudio } from '@/src/components/cms/UserPreferencesStudio';
 import { Store, Sliders, ArrowRight, ShieldCheck, Palette, Building2, Copy, Check, Hash } from 'lucide-react';
 
+import { cmsService } from '@/src/services/cmsService';
+
 export default function SettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -15,7 +17,7 @@ export default function SettingsPage() {
 
   const { merchantData, activeStore } = useCMSContext();
 
-  const storeId = activeStore?.id || merchantData?.store?.id || (typeof window !== 'undefined' ? localStorage.getItem('selected_store_id') : '') || '';
+  const storeId = activeStore?.id || merchantData?.store?.id || cmsService.getActiveStoreId() || '';
 
   const handleCopyStoreId = async () => {
     if (!storeId) return;

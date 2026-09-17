@@ -18,6 +18,8 @@ import {
   Check,
 } from 'lucide-react';
 import { cmsService } from '@/src/services/cmsService';
+import { useCMSContext } from '@/src/context/CMSContext';
+import { getCurrencySymbol } from '@/src/lib/currency';
 
 interface ProductImportModalProps {
   isOpen: boolean;
@@ -30,6 +32,15 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  let currencySymbol = '₹';
+  try {
+    const cmsCtx = useCMSContext();
+    currencySymbol = cmsCtx.currencySymbol || '₹';
+  } catch {
+    const session = cmsService.getMerchantSession();
+    currencySymbol = getCurrencySymbol(session?.store?.currency || 'INR');
+  }
+
   const [activeTab, setActiveTab] = useState<'excel' | 'shopify'>('excel');
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -440,7 +451,7 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
                           {p.sku || '—'}
                         </td>
                         <td className="py-2 px-3 font-bold text-slate-900 dark:text-foreground">
-                          ${p.price?.toFixed(2)}
+                          {currencySymbol}{p.price?.toFixed(2)}
                         </td>
                         <td className="py-2 px-3 text-slate-600 dark:text-slate-300">
                           {p.inventory}

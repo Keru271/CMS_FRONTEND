@@ -1,14 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@heroui/react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { X, Save, Package, Image as ImageIcon, Tag, Sparkles, Wand2, Check } from 'lucide-react';
+import {
+  X,
+  Save,
+  Package,
+  Image as ImageIcon,
+  Tag,
+  Sparkles,
+  Wand2,
+  Check,
+  Search,
+  Globe,
+  Share2,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Eye,
+  Smartphone,
+  Monitor,
+} from 'lucide-react';
 import { CMSProduct, ProductFormData } from '@/src/types';
 import { Input } from '@/src/components/ui/Input';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
 import { cmsService } from '@/src/services/cmsService';
+import { useCMSContext } from '@/src/context/CMSContext';
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -37,7 +56,18 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   initialProduct,
   categories,
 }) => {
+  const { merchantData, currencySymbol = '₹' } = useCMSContext();
   const isEditing = !!initialProduct;
+
+  const storeName = merchantData?.store?.storeName || 'OmniStore';
+  const storeDomain =
+    (merchantData?.store as any)?.customDomain ||
+    `${merchantData?.store?.slug || 'my-store'}.omnistore.com`;
+
+  // SEO Governance Accordion & Preview State
+  const [isSeoExpanded, setIsSeoExpanded] = useState(true);
+  const [seoPreviewDevice, setSeoPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [isGeneratingSeoAi, setIsGeneratingSeoAi] = useState(false);
 
   // AI Copywriter Modal State
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -45,12 +75,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [aiKeywords, setAiKeywords] = useState('');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
+  const initialUrlSlug =
+    initialProduct?.urlSlug ||
+    (initialProduct?.name
+      ? initialProduct.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')
+      : '');
+
   const formik = useFormik<ProductFormData>({
     enableReinitialize: true,
     initialValues: {
       name: initialProduct?.name || '',
       sku: initialProduct?.sku || `SKU-`,
       category: initialProduct?.category || categories[0] || 'Electronics',
+      categories:
+        initialProduct?.categories ||
+        (initialProduct?.category ? [initialProduct.category] : [categories[0] || 'Electronics']),
       price: initialProduct?.price ?? '',
       originalPrice: initialProduct?.originalPrice ?? '',
       stockQuantity: initialProduct?.stockQuantity ?? 10,
@@ -59,11 +98,34 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       image: initialProduct?.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
       description: initialProduct?.description || '',
       tags: initialProduct?.tags ? initialProduct.tags.join(', ') : '',
+      // SEO Governance Fields
+      seoTitle: initialProduct?.seoTitle || initialProduct?.metaTitle || initialProduct?.name || '',
+      seoDescription: initialProduct?.seoDescription || initialProduct?.metaDescription || (initialProduct?.description ? initialProduct.description.slice(0, 160) : ''),
+      metaTitle: initialProduct?.metaTitle || initialProduct?.seoTitle || initialProduct?.name || '',
+      metaDescription: initialProduct?.metaDescription || initialProduct?.seoDescription || (initialProduct?.description ? initialProduct.description.slice(0, 160) : ''),
+      urlSlug: initialUrlSlug,
+      ogImage: initialProduct?.ogImage || initialProduct?.image || '',
+      canonicalUrl: initialProduct?.canonicalUrl || (initialUrlSlug ? `https://${storeDomain}/products/${initialUrlSlug}` : ''),
     },
     validationSchema: productValidationSchema,
     onSubmit: async (values, helpers) => {
       try {
-        await onSubmit(values);
+        const resolvedSlug = values.urlSlug || values.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+        const resolvedSeoTitle = values.seoTitle || values.metaTitle || values.name;
+        const resolvedSeoDesc = values.seoDescription || values.metaDescription || (values.description ? values.description.slice(0, 160) : '');
+        const resolvedOgImage = values.ogImage || values.image || '';
+        const resolvedCanonical = values.canonicalUrl || `https://${storeDomain}/products/${resolvedSlug}`;
+
+        await onSubmit({
+          ...values,
+          urlSlug: resolvedSlug,
+          seoTitle: resolvedSeoTitle,
+          metaTitle: resolvedSeoTitle,
+          seoDescription: resolvedSeoDesc,
+          metaDescription: resolvedSeoDesc,
+          ogImage: resolvedOgImage,
+          canonicalUrl: resolvedCanonical,
+        });
         helpers.resetForm();
         onClose();
       } catch (err) {
@@ -107,6 +169,43 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       setIsGeneratingAi(false);
     }
   };
+
+  // AI Generate Product SEO Title & Description
+  const handleAutoGenerateSeo = () => {
+    const title = formik.values.name.trim();
+    if (!title) {
+      alert('Please enter a Product Title first.');
+      return;
+    }
+    setIsGeneratingSeoAi(true);
+    setTimeout(() => {
+      const cleanSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const category = formik.values.category || 'Quality';
+      const autoTitle = `${title} | Buy Online at ${storeName}`;
+      const plainDesc = formik.values.description
+        ? formik.values.description.replace(/<[^>]*>?/gm, '').slice(0, 140)
+        : `Shop ${title} online with fast delivery, authentic quality warranty, and premium customer service at ${storeName}.`;
+      const autoDesc = `${plainDesc} Order today with express shipping!`.slice(0, 160);
+
+      formik.setFieldValue('seoTitle', autoTitle);
+      formik.setFieldValue('metaTitle', autoTitle);
+      formik.setFieldValue('seoDescription', autoDesc);
+      formik.setFieldValue('metaDescription', autoDesc);
+      formik.setFieldValue('urlSlug', cleanSlug);
+      formik.setFieldValue('canonicalUrl', `https://${storeDomain}/products/${cleanSlug}`);
+      if (!formik.values.ogImage && formik.values.image) {
+        formik.setFieldValue('ogImage', formik.values.image);
+      }
+      setIsGeneratingSeoAi(false);
+    }, 400);
+  };
+
+  const effectiveSeoTitle = formik.values.seoTitle || formik.values.name || 'Product Title | OmniStore';
+  const effectiveSeoDesc =
+    formik.values.seoDescription ||
+    (formik.values.description ? formik.values.description.slice(0, 160) : 'High quality product available with fast shipping.');
+  const effectiveSlug = formik.values.urlSlug || (formik.values.name ? formik.values.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-') : 'product-item');
+  const effectiveOgImage = formik.values.ogImage || formik.values.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80';
 
   if (!isOpen) return null;
 
@@ -165,11 +264,23 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {/* Row 2: Category & Status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5 w-full">
-              <label className="text-xs font-sans font-medium text-[#191a1b]">Category *</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-sans font-medium text-[#191a1b]">Primary Category *</label>
+                <span className="text-[10px] text-indigo-600 font-bold">
+                  {(formik.values.categories || []).length} assigned
+                </span>
+              </div>
               <select
                 name="category"
                 value={formik.values.category}
-                onChange={formik.handleChange}
+                onChange={(e) => {
+                  const newCat = e.target.value;
+                  formik.setFieldValue('category', newCat);
+                  const currCats = formik.values.categories || [];
+                  if (!currCats.includes(newCat)) {
+                    formik.setFieldValue('categories', [newCat, ...currCats]);
+                  }
+                }}
                 onBlur={formik.handleBlur}
                 className="bg-[#ffffff] border border-[#cbd5e0] text-xs rounded-lg p-2.5 text-[#191a1b] focus:outline-none focus:border-[#cbc2ea] font-medium cursor-pointer"
               >
@@ -179,6 +290,37 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   </option>
                 ))}
               </select>
+
+              {/* Multi-category Quick Toggle Chips */}
+              {categories.length > 1 && (
+                <div className="flex flex-wrap gap-1 mt-1 max-h-20 overflow-y-auto p-1.5 bg-slate-50 rounded-lg border border-slate-200">
+                  {categories.map((cat) => {
+                    const isSelected = (formik.values.categories || []).includes(cat);
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          const curr = formik.values.categories || [];
+                          const next = isSelected ? curr.filter((c) => c !== cat) : [...curr, cat];
+                          formik.setFieldValue('categories', next.length > 0 ? next : [cat]);
+                          if (!isSelected && !formik.values.category) {
+                            formik.setFieldValue('category', cat);
+                          }
+                        }}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition flex items-center gap-1 cursor-pointer ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span>{cat}</span>
+                        {isSelected && <Check className="w-2.5 h-2.5" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-1.5 w-full">
@@ -203,7 +345,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               name="price"
               type="number"
               step="0.01"
-              label="Price ($) *"
+              label={`Price (${currencySymbol}) *`}
               placeholder="199.99"
               value={formik.values.price}
               onChange={formik.handleChange}
@@ -216,7 +358,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               name="originalPrice"
               type="number"
               step="0.01"
-              label="Original Price ($)"
+              label={`Original Price (${currencySymbol})`}
               placeholder="249.99"
               value={formik.values.originalPrice}
               onChange={formik.handleChange}
@@ -324,6 +466,275 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             />
             {formik.touched.description && formik.errors.description && (
               <span className="text-[10px] text-[#ef4444] font-medium">{formik.errors.description}</span>
+            )}
+          </div>
+
+          {/* ─── SEO GOVERNANCE & SEARCH RANKING SECTION ────────────────── */}
+          <div className="border border-indigo-100 rounded-2xl bg-slate-50/70 overflow-hidden transition-all shadow-xs">
+            {/* Accordion Toggle Header */}
+            <div
+              onClick={() => setIsSeoExpanded(!isSeoExpanded)}
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-100/70 transition select-none bg-gradient-to-r from-indigo-50/50 via-white to-white"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold shadow-xs">
+                  <Globe className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-slate-900">SEO Governance & Social Meta</h4>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                      Auto-Synced with SEO Studio
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Customize search engine ranking title, snippet description, URL slug, and OpenGraph social share card
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAutoGenerateSeo();
+                  }}
+                  disabled={isGeneratingSeoAi}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition flex items-center gap-1 shadow-xs"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>{isGeneratingSeoAi ? 'Generating…' : '✨ Auto-Generate SEO'}</span>
+                </button>
+                <div className="text-slate-400 p-1">
+                  {isSeoExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </div>
+              </div>
+            </div>
+
+            {isSeoExpanded && (
+              <div className="p-4 pt-2 border-t border-slate-200/80 space-y-4 bg-white">
+                {/* Live SERP & Social Previews */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  {/* Google Search Snippet Card */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
+                    <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
+                        <Search className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Google Search SERP Preview</span>
+                      </div>
+                      <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md text-[10px]">
+                        <button
+                          type="button"
+                          onClick={() => setSeoPreviewDevice('desktop')}
+                          className={`px-1.5 py-0.5 rounded font-medium flex items-center gap-1 ${
+                            seoPreviewDevice === 'desktop' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+                          }`}
+                        >
+                          <Monitor className="w-2.5 h-2.5" /> Desktop
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSeoPreviewDevice('mobile')}
+                          className={`px-1.5 py-0.5 rounded font-medium flex items-center gap-1 ${
+                            seoPreviewDevice === 'mobile' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+                          }`}
+                        >
+                          <Smartphone className="w-2.5 h-2.5" /> Mobile
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-[11px] text-[#202124]">
+                        <div className="w-4 h-4 rounded-full bg-indigo-100 flex items-center justify-center text-[9px] font-bold text-indigo-700">
+                          {storeName.charAt(0)}
+                        </div>
+                        <span className="font-medium text-slate-800">{storeName}</span>
+                        <span className="text-slate-400">›</span>
+                        <span className="text-slate-600 truncate text-[10px]">products › {effectiveSlug}</span>
+                      </div>
+                      <h5 className="text-sm font-medium text-[#1a0dab] hover:underline leading-snug cursor-pointer line-clamp-1">
+                        {effectiveSeoTitle}
+                      </h5>
+                      <p className="text-[11px] text-[#4d5156] leading-relaxed line-clamp-2">
+                        {effectiveSeoDesc}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Social Share (OpenGraph) Preview Card */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
+                    <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
+                        <Share2 className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Social Share (OpenGraph) Preview</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">Facebook / Twitter / iMessage</span>
+                    </div>
+
+                    <div className="rounded-lg border border-slate-200 overflow-hidden bg-slate-50">
+                      <div className="h-20 bg-slate-200 relative overflow-hidden">
+                        {effectiveOgImage ? (
+                          <img
+                            src={effectiveOgImage}
+                            alt="Social Share Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-mono">
+                            No Social Image
+                          </div>
+                        )}
+                        <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-black/60 text-white rounded text-[9px] font-bold uppercase tracking-wider">
+                          OpenGraph
+                        </span>
+                      </div>
+                      <div className="p-2 space-y-0.5">
+                        <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider block">
+                          {storeDomain}
+                        </span>
+                        <p className="text-[11px] font-bold text-slate-900 line-clamp-1 leading-tight">
+                          {effectiveSeoTitle}
+                        </p>
+                        <p className="text-[10px] text-slate-500 line-clamp-1">
+                          {effectiveSeoDesc}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SEO Input Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  {/* SEO Page Title */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-slate-800">SEO Page Title</label>
+                      <span
+                        className={`text-[10px] font-mono ${
+                          (formik.values.seoTitle?.length || 0) > 65
+                            ? 'text-amber-600 font-bold'
+                            : 'text-slate-400'
+                        }`}
+                      >
+                        {formik.values.seoTitle?.length || 0}/65 chars
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      name="seoTitle"
+                      placeholder="e.g. AeroPulse Noise-Cancelling Headphones | OmniStore"
+                      value={formik.values.seoTitle}
+                      onChange={(e) => {
+                        formik.handleChange(e);
+                        formik.setFieldValue('metaTitle', e.target.value);
+                      }}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {/* Product URL Slug */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-slate-800">URL Slug / Handle</label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const slug = formik.values.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+                          formik.setFieldValue('urlSlug', slug);
+                          formik.setFieldValue('canonicalUrl', `https://${storeDomain}/products/${slug}`);
+                        }}
+                        className="text-[10px] font-bold text-indigo-600 hover:underline"
+                      >
+                        Reset from Title
+                      </button>
+                    </div>
+                    <div className="flex items-center rounded-xl border border-slate-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500">
+                      <span className="px-2.5 py-2 bg-slate-50 text-[11px] text-slate-400 border-r border-slate-200 font-mono">
+                        /products/
+                      </span>
+                      <input
+                        type="text"
+                        name="urlSlug"
+                        placeholder="aeropulse-wireless-headphones"
+                        value={formik.values.urlSlug}
+                        onChange={(e) => {
+                          const slugVal = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                          formik.setFieldValue('urlSlug', slugVal);
+                          formik.setFieldValue('canonicalUrl', `https://${storeDomain}/products/${slugVal}`);
+                        }}
+                        className="w-full px-2.5 py-2 text-xs font-mono text-slate-900 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* SEO Meta Description */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-slate-800">SEO Meta Description</label>
+                    <span
+                      className={`text-[10px] font-mono ${
+                        (formik.values.seoDescription?.length || 0) > 160
+                          ? 'text-amber-600 font-bold'
+                          : 'text-slate-400'
+                      }`}
+                    >
+                      {formik.values.seoDescription?.length || 0}/160 chars
+                    </span>
+                  </div>
+                  <textarea
+                    rows={2}
+                    name="seoDescription"
+                    placeholder="Provide a concise 120-160 character snippet summarizing key product benefits for search engine results..."
+                    value={formik.values.seoDescription}
+                    onChange={(e) => {
+                      formik.handleChange(e);
+                      formik.setFieldValue('metaDescription', e.target.value);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                {/* OpenGraph Image & Canonical URL */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-slate-800">Social Share Image (OpenGraph)</label>
+                      {formik.values.image && formik.values.ogImage !== formik.values.image && (
+                        <button
+                          type="button"
+                          onClick={() => formik.setFieldValue('ogImage', formik.values.image)}
+                          className="text-[10px] font-bold text-indigo-600 hover:underline"
+                        >
+                          Use Main Image
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="url"
+                      name="ogImage"
+                      placeholder="https://..."
+                      value={formik.values.ogImage}
+                      onChange={formik.handleChange}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-800">Canonical URL (Optional)</label>
+                    <input
+                      type="url"
+                      name="canonicalUrl"
+                      placeholder={`https://${storeDomain}/products/...`}
+                      value={formik.values.canonicalUrl}
+                      onChange={formik.handleChange}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 

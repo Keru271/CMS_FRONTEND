@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import { Button } from '@heroui/react';
+import React, { useState } from "react";
+import Link from "next/link";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { Button } from "@heroui/react";
 import {
   User,
   Mail,
@@ -17,17 +17,22 @@ import {
   ShieldCheck,
   Eye,
   EyeOff,
-} from 'lucide-react';
-import { MerchantUser } from '@/src/types';
-import { cmsService } from '@/src/services/cmsService';
+} from "lucide-react";
+import { MerchantUser } from "@/src/types";
+import { cmsService } from "@/src/services/cmsService";
+import { TokenResponse, useGoogleLogin } from "@react-oauth/google";
 
 interface MerchantAuthModalProps {
-  onSuccess: (merchant: MerchantUser, mode: 'register' | 'login' | 'verify') => void;
-  initialMode?: 'signin' | 'signup' | 'forgot' | 'verify';
+  onSuccess: (
+    merchant: MerchantUser,
+    mode: "register" | "login" | "verify",
+  ) => void;
+  initialMode?: "signin" | "signup" | "forgot" | "verify";
   emailForVerification?: string;
 }
 
-const phoneRegExp = /^(\+?\d{1,4}[\s-]?)?\(?\d{1,4}\)?[\s-]?\d{1,4}[\s-]?\d{1,9}$/;
+const phoneRegExp =
+  /^(\+?\d{1,4}[\s-]?)?\(?\d{1,4}\)?[\s-]?\d{1,4}[\s-]?\d{1,9}$/;
 const uppercaseRegExp = /[A-Z]/;
 const lowercaseRegExp = /[a-z]/;
 const numberRegExp = /[0-9]/;
@@ -35,43 +40,52 @@ const specialCharRegExp = /[^A-Za-z0-9]/;
 
 const registerSchema = Yup.object({
   firstName: Yup.string()
-    .min(4, 'First name must be greater than 3 characters')
-    .required('First name is required'),
+    .min(4, "First name must be greater than 3 characters")
+    .required("First name is required"),
   lastName: Yup.string()
-    .min(1, 'Last name is required')
-    .required('Last name is required'),
+    .min(1, "Last name is required")
+    .required("Last name is required"),
   mobileNumber: Yup.string()
-    .matches(phoneRegExp, 'Please enter a valid mobile number')
-    .required('Mobile number is required'),
+    .matches(phoneRegExp, "Please enter a valid mobile number")
+    .required("Mobile number is required"),
   email: Yup.string()
-    .email('Please enter a valid email address')
-    .required('Email address is required'),
+    .email("Please enter a valid email address")
+    .required("Email address is required"),
   password: Yup.string()
-    .min(6, 'Password must be at least 6 characters')
-    .matches(uppercaseRegExp, 'Password must contain at least 1 uppercase letter')
-    .matches(lowercaseRegExp, 'Password must contain at least 1 lowercase letter')
-    .matches(numberRegExp, 'Password must contain at least 1 number')
-    .matches(specialCharRegExp, 'Password must contain at least 1 special character')
-    .required('Password is required'),
+    .min(6, "Password must be at least 6 characters")
+    .matches(
+      uppercaseRegExp,
+      "Password must contain at least 1 uppercase letter",
+    )
+    .matches(
+      lowercaseRegExp,
+      "Password must contain at least 1 lowercase letter",
+    )
+    .matches(numberRegExp, "Password must contain at least 1 number")
+    .matches(
+      specialCharRegExp,
+      "Password must contain at least 1 special character",
+    )
+    .required("Password is required"),
 });
 
 const loginSchema = Yup.object({
   email: Yup.string()
-    .email('Please enter a valid email address')
-    .required('Email address is required'),
-  password: Yup.string().required('Password is required'),
+    .email("Please enter a valid email address")
+    .required("Email address is required"),
+  password: Yup.string().required("Password is required"),
 });
 
 const forgotSchema = Yup.object({
   email: Yup.string()
-    .email('Please enter a valid email address')
-    .required('Email address is required'),
+    .email("Please enter a valid email address")
+    .required("Email address is required"),
 });
 
 const verifySchema = Yup.object({
   otp: Yup.string()
-    .length(6, 'Verification code must be 6 digits')
-    .required('Verification code is required'),
+    .length(6, "Verification code must be 6 digits")
+    .required("Verification code is required"),
 });
 
 const getPasswordStrength = (pwd: string) => {
@@ -88,10 +102,12 @@ const getPasswordStrength = (pwd: string) => {
 
 export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
   onSuccess,
-  initialMode = 'signin',
-  emailForVerification = 'adhithya@gmail.com',
+  initialMode = "signin",
+  emailForVerification = "adhithya@gmail.com",
 }) => {
-  const [authMode] = useState<'signin' | 'signup' | 'forgot' | 'verify'>(initialMode);
+  const [authMode] = useState<"signin" | "signup" | "forgot" | "verify">(
+    initialMode,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [resetSent, setResetSent] = useState(false);
@@ -100,71 +116,86 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
   const [latestToken, setLatestToken] = useState<string | null>(null);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  // Google Authentication State
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
-  const [googleEmail, setGoogleEmail] = useState('');
-  const [googleName, setGoogleName] = useState('');
-  const [isGoogleProcessing, setIsGoogleProcessing] = useState(false);
-
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedToken = sessionStorage.getItem('cms_latest_verification_token');
-      if (savedToken) {
-        setLatestToken(savedToken);
-      }
-    }
-  }, []);
-
-  const handleContinueWithGoogle = async (emailToUse?: string, nameToUse?: string) => {
-    const finalEmail = emailToUse || googleEmail || 'merchant@gmail.com';
-    const finalName = nameToUse || googleName || 'Google Merchant';
-
-    setIsGoogleProcessing(true);
+  // Unified Google Authentication Handler (Login & Signup)
+  const handleGoogleAuthSuccess = async (tokenResponse: TokenResponse) => {
+    setIsGoogleLoading(true);
     setServerError(null);
-
     try {
-      const res = await cmsService.continueWithGoogle({
-        email: finalEmail,
-        name: finalName,
+      if (!tokenResponse?.access_token) {
+        throw new Error("No access token received from Google.");
+      }
+
+      const res = await cmsService.googleAuth({
+        googleAccessToken: tokenResponse.access_token,
+        mode: authMode === "signup" ? "signup" : "signin",
       });
 
-      setIsGoogleModalOpen(false);
-
       if (res.user) {
-        onSuccess(res.user, res.isNewUser ? 'register' : 'login');
+        onSuccess(res.user, res.isNewUser ? "register" : "login");
       }
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || 'Google authentication failed. Please try again.';
+      console.error("Google Auth Error:", err);
+      const email = err.response?.data?.email;
+      if (email) {
+        loginFormik.setFieldValue("email", email);
+      }
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        "Google authentication failed. Please try again.";
       setServerError(msg);
     } finally {
-      setIsGoogleProcessing(false);
+      setIsGoogleLoading(false);
     }
   };
+
+  const handleGoogleAuthError = (errorResponse: any) => {
+    console.error("Google login failed / cancelled:", errorResponse);
+    setIsGoogleLoading(false);
+    if (errorResponse?.error !== "popup_closed_by_user") {
+      setServerError("Google authentication was cancelled or failed. Please try again.");
+    }
+  };
+
+  const triggerGoogleAuth = useGoogleLogin({
+    onSuccess: handleGoogleAuthSuccess,
+    onError: handleGoogleAuthError,
+  });
 
   // REGISTER FORMIK
   const registerFormik = useFormik({
     initialValues: {
-      firstName: '',
-      lastName: '',
-      mobileNumber: '',
-      email: '',
-      password: '',
+      firstName: "",
+      lastName: "",
+      mobileNumber: "",
+      email: "",
+      password: "",
     },
     validationSchema: registerSchema,
     onSubmit: async (values) => {
       setIsSubmitting(true);
       setServerError(null);
       try {
-        const response = await cmsService.registerMerchant(values);
+        const response = await cmsService.registerMerchant({
+          ...values,
+          login_type: "NORMAL",
+        });
         if (response.verificationToken) {
           setLatestToken(response.verificationToken);
         }
-        onSuccess({ ...values, storeId: response.storeId || undefined }, 'register');
+        onSuccess(
+          { ...values, storeId: response.storeId || undefined },
+          "register",
+        );
       } catch (err: any) {
         const msg =
-          err.response?.data?.message || err.message || 'Registration failed. Please try again.';
+          err.response?.data?.message ||
+          err.message ||
+          "Registration failed. Please try again.";
         setServerError(msg);
+        registerFormik.resetForm();
       } finally {
         setIsSubmitting(false);
       }
@@ -176,39 +207,42 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
   // LOGIN FORMIK
   const loginFormik = useFormik({
     initialValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
     validationSchema: loginSchema,
     onSubmit: async (values) => {
       setIsSubmitting(true);
       setServerError(null);
       try {
-        const res = await cmsService.loginMerchant(values.email, values.password);
+        const res = await cmsService.loginMerchant(
+          values.email,
+          values.password,
+        );
         if (res.requiresVerification) {
-          if (typeof window !== 'undefined') {
-            sessionStorage.setItem('cms_pending_verification_email', res.email || values.email);
-            if (res.verificationToken) {
-              sessionStorage.setItem('cms_latest_verification_token', res.verificationToken);
-            }
+          if (res.verificationToken) {
+            setLatestToken(res.verificationToken);
           }
-          const nameParts = ((res as any).name || '').trim().split(' ');
-          const derivedFirstName = nameParts[0] || '';
-          const derivedLastName = nameParts.slice(1).join(' ') || '';
+          const nameParts = ((res as any).name || "").trim().split(" ");
+          const derivedFirstName = nameParts[0] || "";
+          const derivedLastName = nameParts.slice(1).join(" ") || "";
           onSuccess(
             {
               firstName: derivedFirstName,
               lastName: derivedLastName,
-              mobileNumber: (res as any).phone || '',
+              mobileNumber: (res as any).phone || "",
               email: res.email || values.email,
             },
-            'verify'
+            "verify",
           );
         } else if (res.user) {
-          onSuccess(res.user, 'login');
+          onSuccess(res.user, "login");
         }
       } catch (err: any) {
-        const msg = err.response?.data?.message || err.message || 'Invalid email or password.';
+        const msg =
+          err.response?.data?.message ||
+          err.message ||
+          "Invalid email or password.";
         setServerError(msg);
       } finally {
         setIsSubmitting(false);
@@ -219,7 +253,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
   // FORGOT PASSWORD FORMIK
   const forgotFormik = useFormik({
     initialValues: {
-      email: '',
+      email: "",
     },
     validationSchema: forgotSchema,
     onSubmit: async () => {
@@ -237,7 +271,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
   // EMAIL VERIFICATION FORMIK
   const verifyFormik = useFormik({
     initialValues: {
-      otp: latestToken || '',
+      otp: latestToken || "",
     },
     enableReinitialize: true,
     validationSchema: verifySchema,
@@ -245,20 +279,26 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
       setIsSubmitting(true);
       setServerError(null);
       try {
-        const verifyRes = await cmsService.verifyMerchantEmail(emailForVerification, values.otp);
-        const nameParts = (verifyRes.user?.name || 'Merchant Owner').split(' ');
+        const verifyRes = await cmsService.verifyMerchantEmail(
+          emailForVerification,
+          values.otp,
+        );
+        const nameParts = (verifyRes.user?.name || "Merchant Owner").split(" ");
         onSuccess(
           {
-            firstName: nameParts[0] || 'Merchant',
-            lastName: nameParts.slice(1).join(' ') || 'Owner',
-            mobileNumber: verifyRes.user?.phone || '+1 555-0199',
+            firstName: nameParts[0] || "Merchant",
+            lastName: nameParts.slice(1).join(" ") || "Owner",
+            mobileNumber: verifyRes.user?.phone || "+1 555-0199",
             email: emailForVerification,
             storeId: verifyRes.storeId || verifyRes.user?.storeId || undefined,
           },
-          'verify'
+          "verify",
         );
       } catch (err: any) {
-        const msg = err.response?.data?.message || err.message || 'Invalid verification code.';
+        const msg =
+          err.response?.data?.message ||
+          err.message ||
+          "Invalid verification code.";
         setServerError(msg);
       } finally {
         setIsSubmitting(false);
@@ -273,12 +313,15 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
     setServerError(null);
     setResendSuccessMsg(null);
     try {
-      const data = await cmsService.resendVerificationCode(emailForVerification);
+      const data =
+        await cmsService.resendVerificationCode(emailForVerification);
       if (data.verificationToken) {
         setLatestToken(data.verificationToken);
-        verifyFormik.setFieldValue('otp', data.verificationToken);
+        verifyFormik.setFieldValue("otp", data.verificationToken);
       }
-      setResendSuccessMsg(data.message || 'A new verification code has been sent!');
+      setResendSuccessMsg(
+        data.message || "A new verification code has been sent!",
+      );
       setResendCooldown(30);
       const timer = setInterval(() => {
         setResendCooldown((prev) => {
@@ -290,7 +333,10 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
         });
       }, 1000);
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || 'Failed to resend verification code.';
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to resend verification code.";
       setServerError(msg);
     }
   };
@@ -314,7 +360,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
         <div className="w-full md:w-1/2 p-5 sm:p-8 md:p-12 flex flex-col justify-between relative bg-white dark:bg-card text-sage-text">
           {/* Top Right Action Button */}
           <div className="flex justify-end mb-4 md:mb-6">
-            {authMode === 'signin' ? (
+            {authMode === "signin" ? (
               <Link
                 href="/register"
                 className="px-5 sm:px-6 py-1.5 rounded-full border border-sage-border text-sage-muted font-medium text-xs hover:border-sage-primary hover:text-sage-primary transition-all"
@@ -335,22 +381,22 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
             {/* Header Title & Subtitle */}
             <div className="mb-5 sm:mb-6">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-sage-text tracking-tight">
-                {authMode === 'verify'
-                  ? 'Verify Your Email'
-                  : authMode === 'forgot'
-                    ? 'Forgot Password'
-                    : authMode === 'signup'
-                      ? 'Create Merchant Account'
-                      : 'Welcome back'}
+                {authMode === "verify"
+                  ? "Verify Your Email"
+                  : authMode === "forgot"
+                    ? "Forgot Password"
+                    : authMode === "signup"
+                      ? "Create Merchant Account"
+                      : "Welcome back"}
               </h1>
               <p className="text-xs text-sage-muted mt-1">
-                {authMode === 'verify'
+                {authMode === "verify"
                   ? `We've sent a 6-digit verification code to ${emailForVerification}. Enter the code below to activate your account.`
-                  : authMode === 'forgot'
+                  : authMode === "forgot"
                     ? "Enter your email address and we'll send a password reset link."
-                    : authMode === 'signup'
-                      ? 'Enter your merchant details to register your account.'
-                      : 'Enter your email & password'}
+                    : authMode === "signup"
+                      ? "Enter your merchant details to register your account."
+                      : "Enter your email & password"}
               </p>
             </div>
 
@@ -383,15 +429,17 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
             )}
 
             {/* OTP VERIFICATION HELPER */}
-            {authMode === 'verify' && latestToken && (
+            {authMode === "verify" && latestToken && (
               <div className="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex items-center justify-between">
                 <div>
                   <span className="font-medium">Verification Code: </span>
-                  <span className="font-mono font-bold text-sm tracking-widest">{latestToken}</span>
+                  <span className="font-mono font-bold text-sm tracking-widest">
+                    {latestToken}
+                  </span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => verifyFormik.setFieldValue('otp', latestToken)}
+                  onClick={() => verifyFormik.setFieldValue("otp", latestToken)}
                   className="px-2 py-1 bg-emerald-600 text-white rounded text-[11px] font-bold hover:bg-emerald-700 transition-colors"
                 >
                   Use Code
@@ -400,14 +448,15 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
             )}
 
             {/* EMAIL VERIFICATION FORM */}
-            {authMode === 'verify' && (
+            {authMode === "verify" && (
               <form onSubmit={verifyFormik.handleSubmit} className="space-y-4">
                 <div>
                   <div
-                    className={`border rounded-xl px-4 py-3 min-h-[48px] bg-sage-input-bg flex items-center gap-3.5 transition-all ${verifyFormik.touched.otp && verifyFormik.errors.otp
-                        ? 'border-sage-danger focus-within:border-sage-danger'
-                        : 'border-sage-border focus-within:border-sage-primary'
-                      }`}
+                    className={`border rounded-xl px-4 py-3 min-h-[48px] bg-sage-input-bg flex items-center gap-3.5 transition-all ${
+                      verifyFormik.touched.otp && verifyFormik.errors.otp
+                        ? "border-sage-danger focus-within:border-sage-danger"
+                        : "border-sage-border focus-within:border-sage-primary"
+                    }`}
                   >
                     <KeyRound className="w-5 h-5 text-sage-primary shrink-0" />
                     <div className="flex-1">
@@ -441,7 +490,9 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                     onClick={handleResendCode}
                     className="font-semibold text-sage-primary hover:underline disabled:opacity-50"
                   >
-                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                    {resendCooldown > 0
+                      ? `Resend in ${resendCooldown}s`
+                      : "Resend Code"}
                   </button>
                 </div>
 
@@ -473,7 +524,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
             )}
 
             {/* FORGOT PASSWORD FORM */}
-            {authMode === 'forgot' && (
+            {authMode === "forgot" && (
               <div className="w-full space-y-4">
                 {resetSent ? (
                   <div className="space-y-4 py-2">
@@ -490,7 +541,10 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                     </Link>
                   </div>
                 ) : (
-                  <form onSubmit={forgotFormik.handleSubmit} className="space-y-4">
+                  <form
+                    onSubmit={forgotFormik.handleSubmit}
+                    className="space-y-4"
+                  >
                     <div className="border border-sage-border rounded-xl px-4 py-2.5 min-h-[48px] bg-sage-input-bg flex items-center gap-3.5 focus-within:border-sage-primary transition-all">
                       <Mail className="w-5 h-5 text-sage-primary shrink-0" />
                       <div className="flex-1">
@@ -508,11 +562,12 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                         />
                       </div>
                     </div>
-                    {forgotFormik.touched.email && forgotFormik.errors.email && (
-                      <span className="text-[11px] text-sage-danger font-medium block -mt-2">
-                        {forgotFormik.errors.email}
-                      </span>
-                    )}
+                    {forgotFormik.touched.email &&
+                      forgotFormik.errors.email && (
+                        <span className="text-[11px] text-sage-danger font-medium block -mt-2">
+                          {forgotFormik.errors.email}
+                        </span>
+                      )}
 
                     <Button
                       type="submit"
@@ -541,15 +596,20 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
             )}
 
             {/* SIGN UP FORM WITH VALIDATION */}
-            {authMode === 'signup' && (
-              <form onSubmit={registerFormik.handleSubmit} className="space-y-3">
+            {authMode === "signup" && (
+              <form
+                onSubmit={registerFormik.handleSubmit}
+                className="space-y-3"
+              >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <div
-                      className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${registerFormik.touched.firstName && registerFormik.errors.firstName
-                          ? 'border-sage-danger focus-within:border-sage-danger'
-                          : 'border-sage-border focus-within:border-sage-primary'
-                        }`}
+                      className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
+                        registerFormik.touched.firstName &&
+                        registerFormik.errors.firstName
+                          ? "border-sage-danger focus-within:border-sage-danger"
+                          : "border-sage-border focus-within:border-sage-primary"
+                      }`}
                     >
                       <User className="w-4 h-4 text-sage-primary shrink-0" />
                       <div className="flex-1">
@@ -566,19 +626,22 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                         />
                       </div>
                     </div>
-                    {registerFormik.touched.firstName && registerFormik.errors.firstName && (
-                      <span className="text-[10px] text-sage-danger font-medium mt-1 block">
-                        {registerFormik.errors.firstName}
-                      </span>
-                    )}
+                    {registerFormik.touched.firstName &&
+                      registerFormik.errors.firstName && (
+                        <span className="text-[10px] text-sage-danger font-medium mt-1 block">
+                          {registerFormik.errors.firstName}
+                        </span>
+                      )}
                   </div>
 
                   <div>
                     <div
-                      className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${registerFormik.touched.lastName && registerFormik.errors.lastName
-                          ? 'border-sage-danger focus-within:border-sage-danger'
-                          : 'border-sage-border focus-within:border-sage-primary'
-                        }`}
+                      className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
+                        registerFormik.touched.lastName &&
+                        registerFormik.errors.lastName
+                          ? "border-sage-danger focus-within:border-sage-danger"
+                          : "border-sage-border focus-within:border-sage-primary"
+                      }`}
                     >
                       <User className="w-4 h-4 text-sage-primary shrink-0" />
                       <div className="flex-1">
@@ -595,20 +658,23 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                         />
                       </div>
                     </div>
-                    {registerFormik.touched.lastName && registerFormik.errors.lastName && (
-                      <span className="text-[10px] text-sage-danger font-medium mt-1 block">
-                        {registerFormik.errors.lastName}
-                      </span>
-                    )}
+                    {registerFormik.touched.lastName &&
+                      registerFormik.errors.lastName && (
+                        <span className="text-[10px] text-sage-danger font-medium mt-1 block">
+                          {registerFormik.errors.lastName}
+                        </span>
+                      )}
                   </div>
                 </div>
 
                 <div>
                   <div
-                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${registerFormik.touched.mobileNumber && registerFormik.errors.mobileNumber
-                        ? 'border-sage-danger focus-within:border-sage-danger'
-                        : 'border-sage-border focus-within:border-sage-primary'
-                      }`}
+                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
+                      registerFormik.touched.mobileNumber &&
+                      registerFormik.errors.mobileNumber
+                        ? "border-sage-danger focus-within:border-sage-danger"
+                        : "border-sage-border focus-within:border-sage-primary"
+                    }`}
                   >
                     <Phone className="w-4 h-4 text-sage-primary shrink-0" />
                     <div className="flex-1">
@@ -626,19 +692,22 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                       />
                     </div>
                   </div>
-                  {registerFormik.touched.mobileNumber && registerFormik.errors.mobileNumber && (
-                    <span className="text-[10px] text-sage-danger font-medium mt-1 block">
-                      {registerFormik.errors.mobileNumber}
-                    </span>
-                  )}
+                  {registerFormik.touched.mobileNumber &&
+                    registerFormik.errors.mobileNumber && (
+                      <span className="text-[10px] text-sage-danger font-medium mt-1 block">
+                        {registerFormik.errors.mobileNumber}
+                      </span>
+                    )}
                 </div>
 
                 <div>
                   <div
-                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${registerFormik.touched.email && registerFormik.errors.email
-                        ? 'border-sage-danger focus-within:border-sage-danger'
-                        : 'border-sage-border focus-within:border-sage-primary'
-                      }`}
+                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
+                      registerFormik.touched.email &&
+                      registerFormik.errors.email
+                        ? "border-sage-danger focus-within:border-sage-danger"
+                        : "border-sage-border focus-within:border-sage-primary"
+                    }`}
                   >
                     <Mail className="w-4 h-4 text-sage-primary shrink-0" />
                     <div className="flex-1">
@@ -656,19 +725,22 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                       />
                     </div>
                   </div>
-                  {registerFormik.touched.email && registerFormik.errors.email && (
-                    <span className="text-[10px] text-sage-danger font-medium mt-1 block">
-                      {registerFormik.errors.email}
-                    </span>
-                  )}
+                  {registerFormik.touched.email &&
+                    registerFormik.errors.email && (
+                      <span className="text-[10px] text-sage-danger font-medium mt-1 block">
+                        {registerFormik.errors.email}
+                      </span>
+                    )}
                 </div>
 
                 <div>
                   <div
-                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${registerFormik.touched.password && registerFormik.errors.password
-                        ? 'border-sage-danger focus-within:border-sage-danger'
-                        : 'border-sage-border focus-within:border-sage-primary'
-                      }`}
+                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
+                      registerFormik.touched.password &&
+                      registerFormik.errors.password
+                        ? "border-sage-danger focus-within:border-sage-danger"
+                        : "border-sage-border focus-within:border-sage-primary"
+                    }`}
                   >
                     <Lock className="w-4 h-4 text-sage-primary shrink-0" />
                     <div className="flex-1">
@@ -677,7 +749,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                       </label>
                       <input
                         name="password"
-                        type={showRegisterPassword ? 'text' : 'password'}
+                        type={showRegisterPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={registerFormik.values.password}
                         onChange={registerFormik.handleChange}
@@ -687,10 +759,14 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                     </div>
                     <button
                       type="button"
-                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                      onClick={() =>
+                        setShowRegisterPassword(!showRegisterPassword)
+                      }
                       className="p-1 text-sage-muted hover:text-sage-primary transition focus:outline-none"
                       tabIndex={-1}
-                      aria-label={showRegisterPassword ? 'Hide password' : 'Show password'}
+                      aria-label={
+                        showRegisterPassword ? "Hide password" : "Show password"
+                      }
                     >
                       {showRegisterPassword ? (
                         <EyeOff className="w-4 h-4 text-sage-muted hover:text-sage-text" />
@@ -699,52 +775,54 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                       )}
                     </button>
                   </div>
-                  {registerFormik.touched.password && registerFormik.errors.password && (
-                    <span className="text-[10px] text-sage-danger font-medium mt-1 block">
-                      {registerFormik.errors.password}
-                    </span>
-                  )}
+                  {registerFormik.touched.password &&
+                    registerFormik.errors.password && (
+                      <span className="text-[10px] text-sage-danger font-medium mt-1 block">
+                        {registerFormik.errors.password}
+                      </span>
+                    )}
 
                   {/* Password Strength Meter & Live Checklist */}
                   {registerFormik.values.password && (
                     <div className="mt-2 p-2.5 rounded-xl bg-sage-input-bg/70 border border-sage-border/60 space-y-2 text-[11px]">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[10px] font-semibold text-sage-muted">
-                          Strength:{' '}
+                          Strength:{" "}
                           <span
                             className={
                               pwdStrength.score <= 1
-                                ? 'text-red-500 font-bold'
+                                ? "text-red-500 font-bold"
                                 : pwdStrength.score === 2
-                                  ? 'text-orange-500 font-bold'
+                                  ? "text-orange-500 font-bold"
                                   : pwdStrength.score <= 4
-                                    ? 'text-amber-500 font-bold'
-                                    : 'text-emerald-500 font-bold'
+                                    ? "text-amber-500 font-bold"
+                                    : "text-emerald-500 font-bold"
                             }
                           >
                             {pwdStrength.score <= 1
-                              ? 'Weak'
+                              ? "Weak"
                               : pwdStrength.score === 2
-                                ? 'Fair'
+                                ? "Fair"
                                 : pwdStrength.score <= 4
-                                  ? 'Good'
-                                  : 'Strong'}
+                                  ? "Good"
+                                  : "Strong"}
                           </span>
                         </span>
                         <div className="flex-1 flex gap-1 h-1.5 max-w-[140px]">
                           {[1, 2, 3, 4, 5].map((lvl) => (
                             <div
                               key={lvl}
-                              className={`flex-1 h-full rounded-full transition-all duration-300 ${lvl <= pwdStrength.score
+                              className={`flex-1 h-full rounded-full transition-all duration-300 ${
+                                lvl <= pwdStrength.score
                                   ? pwdStrength.score <= 1
-                                    ? 'bg-red-500'
+                                    ? "bg-red-500"
                                     : pwdStrength.score === 2
-                                      ? 'bg-orange-500'
+                                      ? "bg-orange-500"
                                       : pwdStrength.score <= 4
-                                        ? 'bg-amber-500'
-                                        : 'bg-emerald-500'
-                                  : 'bg-gray-200 dark:bg-gray-700'
-                                }`}
+                                        ? "bg-amber-500"
+                                        : "bg-emerald-500"
+                                  : "bg-gray-200 dark:bg-gray-700"
+                              }`}
                             />
                           ))}
                         </div>
@@ -752,39 +830,47 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
 
                       <div className="grid grid-cols-2 gap-1.5 pt-0.5 text-[10px]">
                         <div
-                          className={`flex items-center gap-1.5 font-medium ${pwdStrength.checks.uppercase
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-sage-muted'
-                            }`}
+                          className={`flex items-center gap-1.5 font-medium ${
+                            pwdStrength.checks.uppercase
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-sage-muted"
+                          }`}
                         >
-                          <span>{pwdStrength.checks.uppercase ? '✓' : '○'}</span>
+                          <span>
+                            {pwdStrength.checks.uppercase ? "✓" : "○"}
+                          </span>
                           <span>1 Uppercase (A-Z)</span>
                         </div>
                         <div
-                          className={`flex items-center gap-1.5 font-medium ${pwdStrength.checks.lowercase
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-sage-muted'
-                            }`}
+                          className={`flex items-center gap-1.5 font-medium ${
+                            pwdStrength.checks.lowercase
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-sage-muted"
+                          }`}
                         >
-                          <span>{pwdStrength.checks.lowercase ? '✓' : '○'}</span>
+                          <span>
+                            {pwdStrength.checks.lowercase ? "✓" : "○"}
+                          </span>
                           <span>1 Lowercase (a-z)</span>
                         </div>
                         <div
-                          className={`flex items-center gap-1.5 font-medium ${pwdStrength.checks.number
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-sage-muted'
-                            }`}
+                          className={`flex items-center gap-1.5 font-medium ${
+                            pwdStrength.checks.number
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-sage-muted"
+                          }`}
                         >
-                          <span>{pwdStrength.checks.number ? '✓' : '○'}</span>
+                          <span>{pwdStrength.checks.number ? "✓" : "○"}</span>
                           <span>1 Number (0-9)</span>
                         </div>
                         <div
-                          className={`flex items-center gap-1.5 font-medium ${pwdStrength.checks.special
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-sage-muted'
-                            }`}
+                          className={`flex items-center gap-1.5 font-medium ${
+                            pwdStrength.checks.special
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-sage-muted"
+                          }`}
                         >
-                          <span>{pwdStrength.checks.special ? '✓' : '○'}</span>
+                          <span>{pwdStrength.checks.special ? "✓" : "○"}</span>
                           <span>1 Special Char (!@#$)</span>
                         </div>
                       </div>
@@ -807,7 +893,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
             )}
 
             {/* SIGN IN FORM */}
-            {authMode === 'signin' && (
+            {authMode === "signin" && (
               <form onSubmit={loginFormik.handleSubmit} className="space-y-4">
                 <div>
                   <div className="border border-sage-border rounded-xl px-4 py-2.5 min-h-[48px] bg-sage-input-bg flex items-center gap-3.5 focus-within:border-sage-primary transition-all">
@@ -843,7 +929,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                       </label>
                       <input
                         name="password"
-                        type={showLoginPassword ? 'text' : 'password'}
+                        type={showLoginPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={loginFormik.values.password}
                         onChange={loginFormik.handleChange}
@@ -856,7 +942,9 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                       onClick={() => setShowLoginPassword(!showLoginPassword)}
                       className="p-1 text-sage-muted hover:text-sage-primary transition focus:outline-none"
                       tabIndex={-1}
-                      aria-label={showLoginPassword ? 'Hide password' : 'Show password'}
+                      aria-label={
+                        showLoginPassword ? "Hide password" : "Show password"
+                      }
                     >
                       {showLoginPassword ? (
                         <EyeOff className="w-4 h-4 text-sage-muted hover:text-sage-text" />
@@ -865,11 +953,12 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                       )}
                     </button>
                   </div>
-                  {loginFormik.touched.password && loginFormik.errors.password && (
-                    <span className="text-[11px] text-sage-danger font-medium mt-1 block">
-                      {loginFormik.errors.password}
-                    </span>
-                  )}
+                  {loginFormik.touched.password &&
+                    loginFormik.errors.password && (
+                      <span className="text-[11px] text-sage-danger font-medium mt-1 block">
+                        {loginFormik.errors.password}
+                      </span>
+                    )}
                 </div>
 
                 <div className="flex items-center justify-between pt-1 gap-2">
@@ -878,15 +967,19 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                     className="flex items-center gap-2 cursor-pointer select-none"
                   >
                     <div
-                      className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 flex items-center ${rememberMe ? 'bg-sage-primary' : 'bg-sage-border'
-                        }`}
+                      className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 flex items-center ${
+                        rememberMe ? "bg-sage-primary" : "bg-sage-border"
+                      }`}
                     >
                       <div
-                        className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200 ${rememberMe ? 'translate-x-4' : 'translate-x-0'
-                          }`}
+                        className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+                          rememberMe ? "translate-x-4" : "translate-x-0"
+                        }`}
                       />
                     </div>
-                    <span className="text-xs font-medium text-sage-text">Remember me</span>
+                    <span className="text-xs font-medium text-sage-text">
+                      Remember me
+                    </span>
                   </div>
 
                   <Link
@@ -912,7 +1005,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
             )}
 
             {/* Social Login Options */}
-            {authMode !== 'verify' && (
+            {authMode !== "verify" && (
               <div className="mt-6 sm:mt-8">
                 <div className="relative flex items-center justify-center my-4">
                   <div className="border-t border-dashed border-sage-border w-full" />
@@ -924,43 +1017,41 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 mt-4 w-full">
                   <button
                     type="button"
+                    disabled={isSubmitting || isGoogleLoading}
                     onClick={() => {
-                      setGoogleEmail('');
-                      setGoogleName('');
-                      setIsGoogleModalOpen(true);
+                      setServerError(null);
+                      setIsGoogleLoading(true);
+                      triggerGoogleAuth();
                     }}
-                    className="w-full sm:w-auto flex-1 px-5 py-2.5 rounded-full border border-sage-border hover:border-sage-primary text-xs font-semibold text-sage-text flex items-center justify-center gap-2.5 transition-all bg-white dark:bg-card hover:bg-sage-accent/50 min-h-[42px] cursor-pointer shadow-xs active:scale-98"
+                    className="w-full sm:w-auto flex-1 px-5 py-2.5 rounded-full border border-sage-border hover:border-sage-primary text-xs font-semibold text-sage-text flex items-center justify-center gap-2.5 transition-all bg-white dark:bg-card hover:bg-sage-accent/50 min-h-[42px] cursor-pointer shadow-xs active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                      <path
-                        fill="#4285F4"
-                        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-                      />
-                      <path
-                        fill="#34A853"
-                        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z"
-                      />
-                      <path
-                        fill="#FBBC05"
-                        d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.2.01 10.04.01 12c0 1.96.46 3.8 1.28 5.42l3.99-3.15z"
-                      />
-                      <path
-                        fill="#EA4335"
-                        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-                      />
-                    </svg>
-                    <span>Continue with Google</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleContinueWithGoogle('demo.merchant@facebook.com', 'Facebook Merchant')}
-                    className="w-full sm:w-auto flex-1 px-5 py-2.5 rounded-full border border-sage-border hover:border-sage-primary text-xs font-semibold text-sage-text flex items-center justify-center gap-2.5 transition-all bg-white dark:bg-card hover:bg-sage-accent/50 min-h-[42px] cursor-pointer shadow-xs active:scale-98"
-                  >
-                    <svg className="w-4 h-4 shrink-0 fill-[#1877F2]" viewBox="0 0 24 24">
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                    </svg>
-                    <span>Facebook</span>
+                    {isGoogleLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-sage-primary" />
+                    ) : (
+                      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                        <path
+                          fill="#4285F4"
+                          d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.2.01 10.04.01 12c0 1.96.46 3.8 1.28 5.42l3.99-3.15z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                        />
+                      </svg>
+                    )}
+                    <span>
+                      {isGoogleLoading
+                        ? "Authenticating with Google..."
+                        : "Continue with Google"}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -968,143 +1059,6 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
           </div>
         </div>
       </div>
-
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* INTERACTIVE GOOGLE SIGN-IN MODAL DIALOG                        */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {isGoogleModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            {/* Modal Header */}
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-xs">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.2.01 10.04.01 12c0 1.96.46 3.8 1.28 5.42l3.99-3.15z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    Sign in with Google
-                  </h3>
-                  <p className="text-xs text-slate-500">to continue to OmniStore CMS</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsGoogleModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 flex items-center justify-center cursor-pointer transition"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 space-y-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
-                Choose an Account:
-              </span>
-
-              {/* Quick Select Accounts */}
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  disabled={isGoogleProcessing}
-                  onClick={() => handleContinueWithGoogle('balakeerthi2710@gmail.com', 'Keerthivasan B')}
-                  className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 flex items-center gap-3 transition cursor-pointer text-left group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
-                    K
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <strong className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-blue-600">
-                      Keerthivasan B
-                    </strong>
-                    <span className="text-[11px] text-slate-500 truncate block">
-                      balakeerthi2710@gmail.com
-                    </span>
-                  </div>
-                  <span className="text-xs text-blue-600 font-bold opacity-0 group-hover:opacity-100 transition">
-                    Continue →
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  disabled={isGoogleProcessing}
-                  onClick={() => handleContinueWithGoogle('adhithya.merchant@gmail.com', 'Adhithya Kumar')}
-                  className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 flex items-center gap-3 transition cursor-pointer text-left group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
-                    A
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <strong className="text-xs font-bold text-slate-900 dark:text-white block group-hover:text-blue-600">
-                      Adhithya Kumar
-                    </strong>
-                    <span className="text-[11px] text-slate-500 truncate block">
-                      adhithya.merchant@gmail.com
-                    </span>
-                  </div>
-                  <span className="text-xs text-blue-600 font-bold opacity-0 group-hover:opacity-100 transition">
-                    Continue →
-                  </span>
-                </button>
-              </div>
-
-              {/* Or Custom Google Account Input */}
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
-                  Or enter another Google account:
-                </span>
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    placeholder="Full Name (e.g. Alex Rivera)"
-                    value={googleName}
-                    onChange={(e) => setGoogleName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold outline-none focus:border-blue-500"
-                  />
-                  <input
-                    type="email"
-                    placeholder="Google Email (e.g. alex@gmail.com)"
-                    value={googleEmail}
-                    onChange={(e) => setGoogleEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold outline-none focus:border-blue-500"
-                  />
-                </div>
-                <button
-                  type="button"
-                  disabled={isGoogleProcessing || !googleEmail.trim()}
-                  onClick={() => handleContinueWithGoogle()}
-                  className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {isGoogleProcessing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <span>Continue with Custom Account</span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

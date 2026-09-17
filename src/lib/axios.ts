@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { cmsService } from '@/src/services/cmsService';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -16,38 +17,13 @@ export const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
 
-      // Automatically resolve active store ID from all storage keys & session objects
-      const resolvedStoreId =
-        localStorage.getItem('current_store_id') ||
-        localStorage.getItem('active_store_id') ||
-        localStorage.getItem('storeId') ||
-        localStorage.getItem('activeStoreId') ||
-        localStorage.getItem('selected_store_id') ||
-        (() => {
-          try {
-            const sessionStr =
-              localStorage.getItem('merchant_cms_session') ||
-              localStorage.getItem('auth_user') ||
-              localStorage.getItem('user_session');
-            if (sessionStr) {
-              const session = JSON.parse(sessionStr);
-              return (
-                session?.store?.id ||
-                session?.storeId ||
-                session?.activeStoreId ||
-                session?.user?.storeId ||
-                session?.currentStore?.id ||
-                null
-              );
-            }
-          } catch {}
-          return null;
-        })();
+      // Automatically resolve active store ID from cmsService in-memory state
+      const resolvedStoreId = cmsService.getActiveStoreId();
 
       // Placeholder IDs that should never be sent to the backend
       const INVALID_STORE_IDS = new Set(['default-store-id', 'store-active', 'store-placeholder', 'null', 'undefined']);
@@ -97,10 +73,7 @@ apiClient.interceptors.response.use(
             !currentPath.includes('/store-setup') &&
             !currentPath.includes('/setup')
           ) {
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('merchant_cms_session');
-            sessionStorage.removeItem('cms_pending_verification_email');
-            sessionStorage.removeItem('cms_latest_verification_token');
+            cmsService.clearMerchantSession();
             window.location.href = '/login';
           }
         }
@@ -109,11 +82,7 @@ apiClient.interceptors.response.use(
         // If /users/me returns 404, the stored JWT belongs to a deleted/reset user account
         if (error.config?.url?.includes('/users/me') && typeof window !== 'undefined') {
           console.warn('User profile deleted or reset in database. Clearing stale auth token...');
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('selected_store_id');
-          localStorage.removeItem('merchant_cms_session');
-          sessionStorage.removeItem('cms_pending_verification_email');
-          sessionStorage.removeItem('cms_latest_verification_token');
+          cmsService.clearMerchantSession();
           const currentPath = window.location.pathname;
           if (
             !currentPath.includes('/login') &&
@@ -139,3 +108,4 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+

@@ -13,26 +13,21 @@ function VerifyEmailContent() {
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
   useEffect(() => {
-    const pendingEmail = sessionStorage.getItem('cms_pending_verification_email');
     if (emailParam) {
       setUnverifiedEmail(emailParam);
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('cms_pending_verification_email', emailParam);
-      }
-    } else if (pendingEmail) {
-      setUnverifiedEmail(pendingEmail);
     }
   }, [emailParam]);
 
   const handleVerificationSuccess = async (merchant: MerchantUser) => {
     const activeEmail = unverifiedEmail || merchant.email;
-    const storeId =
-      merchant.storeId ||
-      (typeof window !== 'undefined' ? localStorage.getItem('selected_store_id') : null) ||
-      undefined;
+    const storeId = merchant.storeId || cmsService.getActiveStoreId() || undefined;
+
+    if (storeId) {
+      cmsService.setActiveStoreId(storeId);
+    }
 
     // auth_token is stored by verifyMerchantEmail in cmsService
-    // Save merchant session
+    // Save merchant session in-memory
     cmsService.saveMerchantSession({
       merchant: { ...merchant, email: activeEmail, storeId },
       store: storeId
@@ -47,16 +42,6 @@ function VerifyEmailContent() {
           }
         : undefined,
     });
-
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('cms_pending_verification_email');
-      sessionStorage.setItem('just_registered', 'true');
-      sessionStorage.setItem('open_whatsapp_setup_once', 'true');
-      if (storeId) {
-        localStorage.setItem('selected_store_id', storeId);
-        localStorage.setItem('current_store_id', storeId);
-      }
-    }
 
     // After verification → go to store setup (WhatsApp flow)
     router.push('/store-setup?first_time=true');

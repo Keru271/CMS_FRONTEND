@@ -27,6 +27,7 @@ import {
   CollectionFormData,
 } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import DragDropUpload from '@/src/components/ui/DragDropUpload';
 
 interface CategoryManagerProps {
   initialTab?: 'CATEGORIES' | 'BRANDS' | 'COLLECTIONS';
@@ -880,15 +881,27 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Logo Image URL</label>
-                <input
-                  type="text"
-                  value={brandFormData.logo || ''}
-                  onChange={(e) => setBrandFormData({ ...brandFormData, logo: e.target.value })}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-medium"
+              <div className="space-y-2">
+                <DragDropUpload
+                  folder="brands"
+                  fileType="LOGO"
+                  label="Brand Logo"
+                  currentUrl={brandFormData.logo || undefined}
+                  onUploadComplete={(url) => setBrandFormData({ ...brandFormData, logo: url })}
+                  hint="PNG, SVG, or JPG (max 5MB)"
+                  previewShape="square"
+                  maxSizeMB={5}
                 />
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-slate-500">Or paste image URL</label>
+                  <input
+                    type="text"
+                    value={brandFormData.logo || ''}
+                    onChange={(e) => setBrandFormData({ ...brandFormData, logo: e.target.value })}
+                    placeholder="https://images.unsplash.com/..."
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-medium"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -991,15 +1004,27 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Banner Image URL</label>
-                <input
-                  type="text"
-                  value={collectionFormData.image || ''}
-                  onChange={(e) => setCollectionFormData({ ...collectionFormData, image: e.target.value })}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-medium"
+              <div className="space-y-2">
+                <DragDropUpload
+                  folder="collections"
+                  fileType="COLLECTION_IMAGE"
+                  label="Banner Image"
+                  currentUrl={collectionFormData.image || undefined}
+                  onUploadComplete={(url) => setCollectionFormData({ ...collectionFormData, image: url })}
+                  hint="JPG, PNG, or WebP (max 10MB)"
+                  previewShape="rect"
+                  maxSizeMB={10}
                 />
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-slate-500">Or paste image URL</label>
+                  <input
+                    type="text"
+                    value={collectionFormData.image || ''}
+                    onChange={(e) => setCollectionFormData({ ...collectionFormData, image: e.target.value })}
+                    placeholder="https://images.unsplash.com/..."
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-medium"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-6 p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200">

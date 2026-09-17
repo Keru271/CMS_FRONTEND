@@ -13,9 +13,6 @@ function LoginContent() {
 
   const handleAuthSuccess = (user: MerchantUser, mode: 'register' | 'login' | 'verify') => {
     if (mode === 'verify') {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('cms_pending_verification_email', user.email);
-      }
       router.push(`/verify-email?email=${encodeURIComponent(user.email)}`);
       return;
     }
@@ -27,32 +24,9 @@ function LoginContent() {
     };
     cmsService.saveMerchantSession(updatedSession as any);
 
-    const userKey = (user.email || 'user').toLowerCase().trim();
-    const alreadyOpened =
-      typeof window !== 'undefined' &&
-      (localStorage.getItem(`whatsapp_setup_opened_${userKey}`) === 'true' ||
-        localStorage.getItem(`whatsapp_setup_completed_${userKey}`) === 'true' ||
-        localStorage.getItem('whatsapp_setup_completed') === 'true');
-
-    const isJustRegistered =
-      !alreadyOpened &&
-      (isRegisteredParam || (typeof window !== 'undefined' && sessionStorage.getItem('just_registered') === 'true'));
-
-    if (isJustRegistered) {
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('just_registered');
-        sessionStorage.setItem('open_whatsapp_setup_once', 'true');
-        // Mark that WhatsApp setup chat has been opened for this user so it NEVER opens again!
-        localStorage.setItem(`whatsapp_setup_opened_${userKey}`, 'true');
-        localStorage.setItem('whatsapp_setup_opened', 'true');
-      }
-      // Route newly registered merchants straight into the WhatsApp Store Setup Webchat (first time only)
+    if (isRegisteredParam) {
       router.push('/store-setup?first_time=true');
     } else {
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('just_registered');
-        sessionStorage.removeItem('open_whatsapp_setup_once');
-      }
       router.push('/dashboard');
     }
   };

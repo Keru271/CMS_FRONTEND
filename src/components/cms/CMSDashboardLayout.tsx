@@ -51,17 +51,8 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   // Determine active user role and permissions
-  const userRole = (
-    merchantData?.merchant?.role ||
-    (typeof window !== 'undefined' ? localStorage.getItem('user_role') : null) ||
-    'OWNER'
-  ).toUpperCase();
-
-  const userPermissions =
-    merchantData?.merchant?.permissions ||
-    (typeof window !== 'undefined' && localStorage.getItem('user_permissions')
-      ? JSON.parse(localStorage.getItem('user_permissions') || '{}')
-      : null);
+  const userRole = (merchantData?.merchant?.role || 'OWNER').toUpperCase();
+  const userPermissions = merchantData?.merchant?.permissions || null;
 
   const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN' || userRole === 'MERCHANT';
 
@@ -102,6 +93,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
       return (
         path.startsWith('/themes') ||
         path.startsWith('/pages') ||
+        path.startsWith('/forms') ||
         path.startsWith('/blog') ||
         path.startsWith('/navigation') ||
         path.startsWith('/seo')
@@ -119,6 +111,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
         path.startsWith('/shipping') ||
         path.startsWith('/marketing') ||
         path.startsWith('/seo') ||
+        path.startsWith('/forms') ||
         path.startsWith('/blog')
       );
     }
@@ -133,6 +126,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
       if (
         path.startsWith('/themes') ||
         path.startsWith('/pages') ||
+        path.startsWith('/forms') ||
         path.startsWith('/blog') ||
         path.startsWith('/navigation')
       ) {

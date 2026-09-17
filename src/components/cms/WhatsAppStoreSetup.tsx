@@ -73,28 +73,9 @@ const CURRENCY_CHIPS = [
   { code: 'AED', symbol: 'د.إ', label: 'AED (د.إ) - UAE Dirham' },
 ];
 
-const STORAGE_KEY_MESSAGES = 'cms_whatsapp_setup_messages';
-const STORAGE_KEY_STAGE = 'cms_whatsapp_setup_stage';
-const STORAGE_KEY_FORM = 'cms_whatsapp_setup_form_draft';
-
 export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved, onSwitchToForm }) => {
   const router = useRouter();
   const { merchantData, setMerchantData } = useCMSContext();
-
-  // Helper to safely load draft state from localStorage
-  const getStoredDraft = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        const savedForm = localStorage.getItem(STORAGE_KEY_FORM);
-        if (savedForm) return JSON.parse(savedForm);
-      } catch (e) {
-        console.error('Failed to parse stored WhatsApp form draft', e);
-      }
-    }
-    return null;
-  };
-
-  const storedDraft = getStoredDraft();
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [inputText, setInputText] = useState('');
@@ -110,40 +91,32 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
     | 'currency'
     | 'summary'
     | 'completed'
-  >(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const savedStage = localStorage.getItem(STORAGE_KEY_STAGE);
-        if (savedStage) return savedStage as any;
-      } catch (e) {}
-    }
-    return 'store-name';
-  });
+  >('store-name');
 
   // Setup Draft State
   const [storeName, setStoreName] = useState(
-    storedDraft?.storeName ?? (merchantData?.store?.storeName || '')
+    merchantData?.store?.storeName || ''
   );
   const [category, setCategory] = useState(
-    storedDraft?.category ?? (merchantData?.store?.category || 'Tech & Electronics')
+    merchantData?.store?.category || 'Tech & Electronics'
   );
   const [tagline, setTagline] = useState(
-    storedDraft?.tagline ?? (merchantData?.store?.tagline || 'Next-generation tech for modern living.')
+    merchantData?.store?.tagline || 'Next-generation tech for modern living.'
   );
   const [contactEmail, setContactEmail] = useState(
-    storedDraft?.contactEmail ?? (merchantData?.store?.supportEmail || merchantData?.merchant?.email || 'support@omnistore.com')
+    merchantData?.store?.supportEmail || merchantData?.merchant?.email || 'support@omnistore.com'
   );
   const [contactPhone, setContactPhone] = useState(
-    storedDraft?.contactPhone ?? (merchantData?.store?.supportPhone || merchantData?.merchant?.mobileNumber || '+91 98765 43210')
+    merchantData?.store?.supportPhone || merchantData?.merchant?.mobileNumber || '+91 98765 43210'
   );
   const [address, setAddress] = useState(
-    storedDraft?.address ?? '100 Innovation Way, Indiranagar, Bengaluru, Karnataka 560038, India'
+    '100 Innovation Way, Indiranagar, Bengaluru, Karnataka 560038, India'
   );
   const [selectedTheme, setSelectedTheme] = useState<StoreTemplate>(
-    storedDraft?.selectedTheme ?? (merchantData?.selectedTemplate || STORE_TEMPLATES[0])
+    merchantData?.selectedTemplate || STORE_TEMPLATES[0]
   );
   const [currency, setCurrency] = useState(
-    storedDraft?.currency ?? (merchantData?.store?.currency || 'INR')
+    merchantData?.store?.currency || 'INR'
   );
   const [isSaving, setIsSaving] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -220,79 +193,23 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
     }
   };
 
-  // Initial Welcome Message with localStorage restore
-  const [messages, setMessages] = useState<ChatStepMessage[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY_MESSAGES);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch (e) {
-        console.error('Failed to load WhatsApp setup chat messages', e);
-      }
-    }
-    return [
-      {
-        id: 'msg-welcome-1',
-        sender: 'assistant',
-        text: `👋 Hey there! Welcome to the **OmniStore WhatsApp Setup Concierge**.\n\nI'll guide you step-by-step to get your online storefront, business contact info, and theme fully configured in under 2 minutes! ⚡`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        type: 'text',
-      },
-      {
-        id: 'msg-welcome-2',
-        sender: 'assistant',
-        text: `Let's kick things off with your brand identity: **What is the name of your store?** 🏷️\n\nType your store name below, or tap one of our suggested brand inspirations:`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        type: 'store-name-options',
-      },
-    ];
-  });
-
-  // Persist messages to localStorage on change
-  useEffect(() => {
-    if (typeof window !== 'undefined' && messages.length > 0) {
-      try {
-        localStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(messages));
-      } catch (e) {
-        console.error('Failed to save WhatsApp setup messages', e);
-      }
-    }
-  }, [messages]);
-
-  // Persist current stage to localStorage on change
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(STORAGE_KEY_STAGE, currentStage);
-      } catch (e) {
-        console.error('Failed to save WhatsApp setup stage', e);
-      }
-    }
-  }, [currentStage]);
-
-  // Persist draft form data to localStorage on change
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const draftObj = {
-          storeName,
-          category,
-          tagline,
-          contactEmail,
-          contactPhone,
-          address,
-          selectedTheme,
-          currency,
-        };
-        localStorage.setItem(STORAGE_KEY_FORM, JSON.stringify(draftObj));
-      } catch (e) {
-        console.error('Failed to save WhatsApp setup form draft', e);
-      }
-    }
-  }, [storeName, category, tagline, contactEmail, contactPhone, address, selectedTheme, currency]);
+  // Initial Welcome Message
+  const [messages, setMessages] = useState<ChatStepMessage[]>([
+    {
+      id: 'msg-welcome-1',
+      sender: 'assistant',
+      text: `👋 Hey there! Welcome to the **OmniStore WhatsApp Setup Concierge**.\n\nI'll guide you step-by-step to get your online storefront, business contact info, and theme fully configured in under 2 minutes! ⚡`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      type: 'text',
+    },
+    {
+      id: 'msg-welcome-2',
+      sender: 'assistant',
+      text: `Let's kick things off with your brand identity: **What is the name of your store?** 🏷️\n\nType your store name below, or tap one of our suggested brand inspirations:`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      type: 'store-name-options',
+    },
+  ]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -696,18 +613,6 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
       cmsService.saveMerchantSession(updatedMerchantData);
 
       if (onSaved) onSaved(storePayload);
-
-      if (typeof window !== 'undefined') {
-        const userEmail = (merchantData?.merchant?.email || '').toLowerCase().trim();
-        if (userEmail) {
-          localStorage.setItem(`whatsapp_setup_completed_${userEmail}`, 'true');
-          localStorage.setItem(`whatsapp_setup_opened_${userEmail}`, 'true');
-        }
-        localStorage.setItem('whatsapp_setup_completed', 'true');
-        localStorage.setItem('whatsapp_setup_opened', 'true');
-        sessionStorage.removeItem('open_whatsapp_setup_once');
-        sessionStorage.removeItem('just_registered');
-      }
     } catch (err) {
       console.warn('Store setup notice:', err);
     } finally {
@@ -729,19 +634,8 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
     }
   };
 
-
-
   // Restart Chat
   const handleResetChat = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.removeItem(STORAGE_KEY_MESSAGES);
-        localStorage.removeItem(STORAGE_KEY_STAGE);
-        localStorage.removeItem(STORAGE_KEY_FORM);
-      } catch (e) {
-        console.error('Failed to clear WhatsApp setup storage', e);
-      }
-    }
     setCurrentStage('store-name');
     setMessages([
       {
@@ -1220,17 +1114,6 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                       <button
                         onClick={() => {
                           setCountdown(null);
-                          if (typeof window !== 'undefined') {
-                            const userEmail = (merchantData?.merchant?.email || '').toLowerCase().trim();
-                            if (userEmail) {
-                              localStorage.setItem(`whatsapp_setup_completed_${userEmail}`, 'true');
-                              localStorage.setItem(`whatsapp_setup_opened_${userEmail}`, 'true');
-                            }
-                            localStorage.setItem('whatsapp_setup_completed', 'true');
-                            localStorage.setItem('whatsapp_setup_opened', 'true');
-                            sessionStorage.removeItem('open_whatsapp_setup_once');
-                            sessionStorage.removeItem('just_registered');
-                          }
                           router.push('/dashboard');
                         }}
                         className="px-4 py-2.5 bg-[#075e54] hover:bg-[#128c7e] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-98"
@@ -1242,17 +1125,6 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({ onSaved,
                       <button
                         onClick={() => {
                           setCountdown(null);
-                          if (typeof window !== 'undefined') {
-                            const userEmail = (merchantData?.merchant?.email || '').toLowerCase().trim();
-                            if (userEmail) {
-                              localStorage.setItem(`whatsapp_setup_completed_${userEmail}`, 'true');
-                              localStorage.setItem(`whatsapp_setup_opened_${userEmail}`, 'true');
-                            }
-                            localStorage.setItem('whatsapp_setup_completed', 'true');
-                            localStorage.setItem('whatsapp_setup_opened', 'true');
-                            sessionStorage.removeItem('open_whatsapp_setup_once');
-                            sessionStorage.removeItem('just_registered');
-                          }
                           router.push('/themes');
                         }}
                         className="px-4 py-2.5 bg-[#f0f2f5] hover:bg-[#e4e6eb] text-[#111b21] text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all border border-[#cbd5e0] cursor-pointer"

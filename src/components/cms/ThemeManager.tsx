@@ -862,11 +862,10 @@ export const ThemeManager: React.FC = () => {
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {toastMessage && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 ${
-            toastMessage.type === 'success'
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 ${toastMessage.type === 'success'
               ? 'bg-emerald-900/90 text-white border-emerald-700'
               : 'bg-rose-900/90 text-white border-rose-700'
-          }`}
+            }`}
         >
           {toastMessage.type === 'success' ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -941,11 +940,10 @@ export const ThemeManager: React.FC = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all ${
-                  isActive
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all ${isActive
                     ? 'bg-white text-slate-900 shadow-md scale-105'
                     : 'text-slate-300 hover:bg-white/10 hover:text-white'
-                }`}
+                  }`}
               >
                 <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
                 <span>{tab.label}</span>
@@ -977,11 +975,10 @@ export const ThemeManager: React.FC = () => {
               return (
                 <div
                   key={tmpl.id}
-                  className={`rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between bg-white dark:bg-card ${
-                    isPublished
+                  className={`rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between bg-white dark:bg-card ${isPublished
                       ? 'border-indigo-600 ring-2 ring-indigo-600/30 shadow-xl'
                       : 'border-slate-200/80 dark:border-border hover:border-indigo-300 shadow-sm hover:shadow-md'
-                  }`}
+                    }`}
                 >
                   <div className="space-y-4">
                     <div className="relative h-48 w-full overflow-hidden bg-slate-100 dark:bg-accent group">
@@ -1009,7 +1006,7 @@ export const ThemeManager: React.FC = () => {
                     </div>
                   </div>
                   <div className="p-4 pt-0 flex flex-wrap sm:flex-nowrap items-center gap-2 border-t border-slate-100 dark:border-border mt-3">
-                     <button
+                    <button
                       type="button"
                       onClick={() => {
                         setPreviewTemplate(tmpl);
@@ -1062,11 +1059,10 @@ export const ThemeManager: React.FC = () => {
             <button
               type="button"
               onClick={() => setMobileEditorView('editor')}
-              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                mobileEditorView === 'editor'
+              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${mobileEditorView === 'editor'
                   ? 'bg-white dark:bg-card text-indigo-600 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-              }`}
+                }`}
             >
               <Palette className="w-3.5 h-3.5" />
               <span>Theme Controls</span>
@@ -1074,11 +1070,10 @@ export const ThemeManager: React.FC = () => {
             <button
               type="button"
               onClick={() => setMobileEditorView('preview')}
-              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                mobileEditorView === 'preview'
+              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${mobileEditorView === 'preview'
                   ? 'bg-white dark:bg-card text-indigo-600 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-              }`}
+                }`}
             >
               <Eye className="w-3.5 h-3.5" />
               <span>Live Canvas</span>
@@ -1087,323 +1082,271 @@ export const ThemeManager: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className={`lg:col-span-5 space-y-6 ${mobileEditorView === 'preview' ? 'hidden lg:block' : 'block'}`}>
-            {activeTab === 'colors' && (
-              <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
-                <div className="border-b border-slate-100 dark:border-border pb-3">
-                  <h2 className="text-base font-black text-slate-900 dark:text-foreground flex items-center gap-2">
-                    <Palette className="w-5 h-5 text-indigo-600" />
-                    <span>Store Color Palette</span>
-                  </h2>
-                  <p className="text-xs text-slate-500">Customize main branding, text contrast, and background colors.</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                    Curated Preset Palettes
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {PRESET_PALETTES.map((preset) => (
-                      <button
-                        key={preset.name}
-                        type="button"
-                        onClick={() => handleApplyPreset(preset)}
-                        className="p-2.5 rounded-2xl border border-slate-200 dark:border-border hover:border-indigo-400 bg-slate-50/50 dark:bg-card text-left space-y-1.5 transition-all group"
-                      >
-                        <span className="text-[11px] font-extrabold text-slate-800 dark:text-foreground block truncate">
-                          {preset.name}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <span className="w-3.5 h-3.5 rounded-full shadow-2xs" style={{ backgroundColor: preset.primary }} />
-                          <span className="w-3.5 h-3.5 rounded-full shadow-2xs" style={{ backgroundColor: preset.secondary }} />
-                          <span className="w-3.5 h-3.5 rounded-full shadow-2xs" style={{ backgroundColor: preset.accent }} />
-                        </div>
-                      </button>
-                    ))}
+              {activeTab === 'colors' && (
+                <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
+                  <div className="border-b border-slate-100 dark:border-border pb-3">
+                    <h2 className="text-base font-black text-slate-900 dark:text-foreground flex items-center gap-2">
+                      <Palette className="w-5 h-5 text-indigo-600" />
+                      <span>Store Color Palette</span>
+                    </h2>
+                    <p className="text-xs text-slate-500">Customize main branding, text contrast, and background colors.</p>
                   </div>
-                </div>
-                <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-border">
-                  {[
-                    { field: 'themePrimaryColor', label: 'Primary Brand Color', desc: 'Used for main buttons, headers, & icons' },
-                    { field: 'themeSecondaryColor', label: 'Secondary Color', desc: 'Used for subheadings, borders & badges' },
-                    { field: 'themeBackgroundColor', label: 'Background Color', desc: 'Main canvas background fill' },
-                    { field: 'themeTextColor', label: 'Primary Text Color', desc: 'Body text and heading font color' },
-                    { field: 'themeAccentColor', label: 'Accent / Highlight', desc: 'Callouts, sale tags, and indicators' },
-                  ].map((item) => (
-                    <div key={item.field} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/60 dark:bg-card border border-slate-200/80">
-                      <div className="space-y-0.5">
-                        <label className="block text-xs font-bold text-slate-800 dark:text-foreground">
-                          {item.label}
-                        </label>
-                        <p className="text-[10px] text-slate-400">{item.desc}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={(themeConfig as any)[item.field] || '#3B82F6'}
-                          onChange={(e) => handleConfigChange(item.field as any, e.target.value)}
-                          className="w-8 h-8 rounded-xl cursor-pointer border-0 bg-transparent"
-                        />
-                        <input
-                          type="text"
-                          value={(themeConfig as any)[item.field] || '#3B82F6'}
-                          onChange={(e) => handleConfigChange(item.field as any, e.target.value)}
-                          className="w-20 px-2 py-1 text-center font-mono text-xs font-bold border border-slate-200 rounded-xl bg-white dark:bg-accent"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Store Background Image Drag & Drop */}
-                <div className="pt-4 border-t border-slate-100 dark:border-border space-y-3">
-                  <div>
-                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground flex items-center gap-2">
-                      <ImageIcon className="w-4 h-4 text-indigo-600" />
-                      <span>Store Background Image</span>
-                    </h3>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      Upload an optional canvas background texture, wallpaper, or brand hero pattern.
-                    </p>
-                  </div>
-
-                  <DragDropUpload
-                    folder="backgrounds"
-                    fileType="IMAGE"
-                    currentUrl={themeConfig.themeBackgroundImage || undefined}
-                    onUploadComplete={(url) => {
-                      handleConfigChange('themeBackgroundImage', url || null);
-                      if (url) showToast('Background image uploaded successfully!', 'success');
-                    }}
-                    hint="Drag & drop JPG, PNG, or WebP (max 10MB)"
-                    previewShape="rect"
-                    maxSizeMB={10}
-                  />
-
-                  <div className="space-y-1">
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                      Or paste a direct image URL
-                    </label>
-                    <input
-                      type="url"
-                      value={themeConfig.themeBackgroundImage || ''}
-                      onChange={(e) => handleConfigChange('themeBackgroundImage', e.target.value)}
-                      placeholder="https://images.unsplash.com/... or /uploads/bg.webp"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-
-                  {themeConfig.themeBackgroundImage && (
-                    <button
-                      type="button"
-                      onClick={() => handleConfigChange('themeBackgroundImage', null)}
-                      className="text-xs font-bold text-rose-500 hover:text-rose-600 transition flex items-center gap-1"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Remove background image</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-            {activeTab === 'typography' && (
-              <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
-                <div className="border-b border-slate-100 dark:border-border pb-3">
-                  <h2 className="text-base font-black text-slate-900 dark:text-foreground flex items-center gap-2">
-                    <Type className="w-5 h-5 text-indigo-600" />
-                    <span>Typography & Google Fonts</span>
-                  </h2>
-                  <p className="text-xs text-slate-500">Configure font pairings for headings, buttons, and body reading text.</p>
-                </div>
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                      Heading Font Family
+                      Curated Preset Palettes
                     </label>
-                    <select
-                      value={normalizeFontValue(themeConfig.themeHeadingFont, 'Inter')}
-                      onChange={(e) => handleConfigChange('themeHeadingFont', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="Inter">Inter (Modern & Clean)</option>
-                      <option value="Outfit">Outfit (Geometric & Tech)</option>
-                      <option value="Playfair Display">Playfair Display (Editorial Luxury)</option>
-                      <option value="Plus Jakarta Sans">Plus Jakarta Sans (High-End SaaS)</option>
-                      <option value="Space Grotesk">Space Grotesk (Brutalist Streetwear)</option>
-                      <option value="Cinzel">Cinzel (Regal & Classical)</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                      Body Copy Font Family
-                    </label>
-                    <select
-                      value={normalizeFontValue(themeConfig.themeBodyFont, 'Inter')}
-                      onChange={(e) => handleConfigChange('themeBodyFont', e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="Inter">Inter (Highly Readable)</option>
-                      <option value="Roboto">Roboto (Neutral & Balanced)</option>
-                      <option value="DM Sans">DM Sans (Friendly & Minimal)</option>
-                      <option value="Lora">Lora (Warm & Editorial)</option>
-                      <option value="Plus Jakarta Sans">Plus Jakarta Sans (High-End Modern)</option>
-                      <option value="Outfit">Outfit (Clean & Geometric)</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                      Base Font Scale
-                    </label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {[
-                        { id: 'sm', label: 'Small (13px)' },
-                        { id: 'md', label: 'Default (15px)' },
-                        { id: 'lg', label: 'Large (17px)' },
-                        { id: 'xl', label: 'X-Large (19px)' },
-                      ].map((sz) => (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {PRESET_PALETTES.map((preset) => (
                         <button
-                          key={sz.id}
+                          key={preset.name}
                           type="button"
-                          onClick={() => handleConfigChange('themeFontSize', sz.id)}
-                          className={`p-2.5 rounded-2xl border text-center text-xs font-extrabold transition-all ${
-                            themeConfig.themeFontSize === sz.id
-                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                              : 'bg-slate-50 dark:bg-card text-slate-700 dark:text-slate-300 border-slate-200/80 hover:bg-slate-100'
-                          }`}
+                          onClick={() => handleApplyPreset(preset)}
+                          className="p-2.5 rounded-2xl border border-slate-200 dark:border-border hover:border-indigo-400 bg-slate-50/50 dark:bg-card text-left space-y-1.5 transition-all group"
                         >
-                          {sz.id.toUpperCase()}
+                          <span className="text-[11px] font-extrabold text-slate-800 dark:text-foreground block truncate">
+                            {preset.name}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className="w-3.5 h-3.5 rounded-full shadow-2xs" style={{ backgroundColor: preset.primary }} />
+                            <span className="w-3.5 h-3.5 rounded-full shadow-2xs" style={{ backgroundColor: preset.secondary }} />
+                            <span className="w-3.5 h-3.5 rounded-full shadow-2xs" style={{ backgroundColor: preset.accent }} />
+                          </div>
                         </button>
                       ))}
                     </div>
                   </div>
+                  <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-border">
+                    {[
+                      { field: 'themePrimaryColor', label: 'Primary Brand Color', desc: 'Used for main buttons, headers, & icons' },
+                      { field: 'themeSecondaryColor', label: 'Secondary Color', desc: 'Used for subheadings, borders & badges' },
+                      { field: 'themeBackgroundColor', label: 'Background Color', desc: 'Main canvas background fill' },
+                      { field: 'themeTextColor', label: 'Primary Text Color', desc: 'Body text and heading font color' },
+                      { field: 'themeAccentColor', label: 'Accent / Highlight', desc: 'Callouts, sale tags, and indicators' },
+                    ].map((item) => (
+                      <div key={item.field} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/60 dark:bg-card border border-slate-200/80">
+                        <div className="space-y-0.5">
+                          <label className="block text-xs font-bold text-slate-800 dark:text-foreground">
+                            {item.label}
+                          </label>
+                          <p className="text-[10px] text-slate-400">{item.desc}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={(themeConfig as any)[item.field] || '#3B82F6'}
+                            onChange={(e) => handleConfigChange(item.field as any, e.target.value)}
+                            className="w-8 h-8 rounded-xl cursor-pointer border-0 bg-transparent"
+                          />
+                          <input
+                            type="text"
+                            value={(themeConfig as any)[item.field] || '#3B82F6'}
+                            onChange={(e) => handleConfigChange(item.field as any, e.target.value)}
+                            className="w-20 px-2 py-1 text-center font-mono text-xs font-bold border border-slate-200 rounded-xl bg-white dark:bg-accent"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-            {activeTab === 'headerFooter' && (
-              <div className="space-y-6">
-                <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground flex items-center gap-2">
-                    <Sliders className="w-4 h-4 text-indigo-600" />
-                    <span>Header Navigation Configuration</span>
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-bold text-slate-700">Announcement Bar Text</label>
-                      <input
-                        type="text"
-                        value={themeConfig.headerAnnouncement}
-                        onChange={(e) => handleConfigChange('headerAnnouncement', e.target.value)}
-                        placeholder="e.g. Free Shipping on orders over $50"
-                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium"
-                      />
+              )}
+              {activeTab === 'typography' && (
+                <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
+                  <div className="border-b border-slate-100 dark:border-border pb-3">
+                    <h2 className="text-base font-black text-slate-900 dark:text-foreground flex items-center gap-2">
+                      <Type className="w-5 h-5 text-indigo-600" />
+                      <span>Typography & Google Fonts</span>
+                    </h2>
+                    <p className="text-xs text-slate-500">Configure font pairings for headings, buttons, and body reading text.</p>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                        Heading Font Family
+                      </label>
+                      <select
+                        value={normalizeFontValue(themeConfig.themeHeadingFont, 'Inter')}
+                        onChange={(e) => handleConfigChange('themeHeadingFont', e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="Inter">Inter (Modern & Clean)</option>
+                        <option value="Outfit">Outfit (Geometric & Tech)</option>
+                        <option value="Playfair Display">Playfair Display (Editorial Luxury)</option>
+                        <option value="Plus Jakarta Sans">Plus Jakarta Sans (High-End SaaS)</option>
+                        <option value="Space Grotesk">Space Grotesk (Brutalist Streetwear)</option>
+                        <option value="Cinzel">Cinzel (Regal & Classical)</option>
+                      </select>
                     </div>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-xs font-bold text-slate-700">Sticky Header on Scroll</span>
-                      <input
-                        type="checkbox"
-                        checked={themeConfig.headerSticky}
-                        onChange={(e) => handleConfigChange('headerSticky', e.target.checked)}
-                        className="w-4 h-4 rounded text-indigo-600"
-                      />
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                        Body Copy Font Family
+                      </label>
+                      <select
+                        value={normalizeFontValue(themeConfig.themeBodyFont, 'Inter')}
+                        onChange={(e) => handleConfigChange('themeBodyFont', e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="Inter">Inter (Highly Readable)</option>
+                        <option value="Roboto">Roboto (Neutral & Balanced)</option>
+                        <option value="DM Sans">DM Sans (Friendly & Minimal)</option>
+                        <option value="Lora">Lora (Warm & Editorial)</option>
+                        <option value="Plus Jakarta Sans">Plus Jakarta Sans (High-End Modern)</option>
+                        <option value="Outfit">Outfit (Clean & Geometric)</option>
+                      </select>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700">Show Search Bar</span>
-                      <input
-                        type="checkbox"
-                        checked={themeConfig.headerShowSearch}
-                        onChange={(e) => handleConfigChange('headerShowSearch', e.target.checked)}
-                        className="w-4 h-4 rounded text-indigo-600"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700">Show Currency Selector</span>
-                      <input
-                        type="checkbox"
-                        checked={themeConfig.headerShowCurrency}
-                        onChange={(e) => handleConfigChange('headerShowCurrency', e.target.checked)}
-                        className="w-4 h-4 rounded text-indigo-600"
-                      />
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                        Base Font Scale
+                      </label>
+                      <div className="grid grid-cols-4 gap-2">
+                        {[
+                          { id: 'sm', label: 'Small (13px)' },
+                          { id: 'md', label: 'Default (15px)' },
+                          { id: 'lg', label: 'Large (17px)' },
+                          { id: 'xl', label: 'X-Large (19px)' },
+                        ].map((sz) => (
+                          <button
+                            key={sz.id}
+                            type="button"
+                            onClick={() => handleConfigChange('themeFontSize', sz.id)}
+                            className={`p-2.5 rounded-2xl border text-center text-xs font-extrabold transition-all ${themeConfig.themeFontSize === sz.id
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                                : 'bg-slate-50 dark:bg-card text-slate-700 dark:text-slate-300 border-slate-200/80 hover:bg-slate-100'
+                              }`}
+                          >
+                            {sz.id.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground flex items-center gap-2">
-                    <Sliders className="w-4 h-4 text-emerald-600" />
-                    <span>Footer Section Configuration</span>
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-bold text-slate-700">Copyright Text</label>
-                      <input
-                        type="text"
-                        value={themeConfig.footerCopyright}
-                        onChange={(e) => handleConfigChange('footerCopyright', e.target.value)}
-                        placeholder="© 2026 Store Name. All rights reserved."
-                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium"
-                      />
+              )}
+              {activeTab === 'headerFooter' && (
+                <div className="space-y-6">
+                  <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground flex items-center gap-2">
+                      <Sliders className="w-4 h-4 text-indigo-600" />
+                      <span>Header Navigation Configuration</span>
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="block text-xs font-bold text-slate-700">Announcement Bar Text</label>
+                        <input
+                          type="text"
+                          value={themeConfig.headerAnnouncement}
+                          onChange={(e) => handleConfigChange('headerAnnouncement', e.target.value)}
+                          placeholder="e.g. Free Shipping on orders over $50"
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-xs font-bold text-slate-700">Sticky Header on Scroll</span>
+                        <input
+                          type="checkbox"
+                          checked={themeConfig.headerSticky}
+                          onChange={(e) => handleConfigChange('headerSticky', e.target.checked)}
+                          className="w-4 h-4 rounded text-indigo-600"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-700">Show Search Bar</span>
+                        <input
+                          type="checkbox"
+                          checked={themeConfig.headerShowSearch}
+                          onChange={(e) => handleConfigChange('headerShowSearch', e.target.checked)}
+                          className="w-4 h-4 rounded text-indigo-600"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-700">Show Currency Selector</span>
+                        <input
+                          type="checkbox"
+                          checked={themeConfig.headerShowCurrency}
+                          onChange={(e) => handleConfigChange('headerShowCurrency', e.target.checked)}
+                          className="w-4 h-4 rounded text-indigo-600"
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-xs font-bold text-slate-700">Show Social Media Links</span>
-                      <input
-                        type="checkbox"
-                        checked={themeConfig.footerShowSocial}
-                        onChange={(e) => handleConfigChange('footerShowSocial', e.target.checked)}
-                        className="w-4 h-4 rounded text-indigo-600"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700">Show Newsletter Box</span>
-                      <input
-                        type="checkbox"
-                        checked={themeConfig.footerShowNewsletter}
-                        onChange={(e) => handleConfigChange('footerShowNewsletter', e.target.checked)}
-                        className="w-4 h-4 rounded text-indigo-600"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700">Show Payment Method Badges</span>
-                      <input
-                        type="checkbox"
-                        checked={themeConfig.footerShowPaymentBadges}
-                        onChange={(e) => handleConfigChange('footerShowPaymentBadges', e.target.checked)}
-                        className="w-4 h-4 rounded text-indigo-600"
-                      />
+                  </div>
+                  <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground flex items-center gap-2">
+                      <Sliders className="w-4 h-4 text-emerald-600" />
+                      <span>Footer Section Configuration</span>
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="block text-xs font-bold text-slate-700">Copyright Text</label>
+                        <input
+                          type="text"
+                          value={themeConfig.footerCopyright}
+                          onChange={(e) => handleConfigChange('footerCopyright', e.target.value)}
+                          placeholder="© 2026 Store Name. All rights reserved."
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-xs font-bold text-slate-700">Show Social Media Links</span>
+                        <input
+                          type="checkbox"
+                          checked={themeConfig.footerShowSocial}
+                          onChange={(e) => handleConfigChange('footerShowSocial', e.target.checked)}
+                          className="w-4 h-4 rounded text-indigo-600"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-700">Show Newsletter Box</span>
+                        <input
+                          type="checkbox"
+                          checked={themeConfig.footerShowNewsletter}
+                          onChange={(e) => handleConfigChange('footerShowNewsletter', e.target.checked)}
+                          className="w-4 h-4 rounded text-indigo-600"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-700">Show Payment Method Badges</span>
+                        <input
+                          type="checkbox"
+                          checked={themeConfig.footerShowPaymentBadges}
+                          onChange={(e) => handleConfigChange('footerShowPaymentBadges', e.target.checked)}
+                          className="w-4 h-4 rounded text-indigo-600"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-          <div className={`lg:col-span-7 static lg:sticky lg:top-6 space-y-3 ${mobileEditorView === 'editor' ? 'hidden lg:block' : 'block'}`}>
-            <div className="flex items-center justify-between px-2">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                <Eye className="w-4 h-4 text-indigo-600" />
-                <span>Live Active Theme Canvas ({activeTemplate?.name})</span>
-              </span>
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-                {[
-                  { id: 'home', label: 'Home' },
-                  { id: 'plp', label: 'Catalog' },
-                  { id: 'pdp', label: 'Product' },
-                  { id: 'cart', label: 'Cart' },
-                ].map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setPreviewPage(p.id as any)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all ${
-                      previewPage === p.id ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
+              )}
             </div>
-            <div className="rounded-3xl border border-slate-200/80 shadow-xl overflow-hidden min-h-[560px]">
-              {renderTemplateLivePreview(activeTemplate, themeConfig, previewPage)}
+            <div className={`lg:col-span-7 static lg:sticky lg:top-6 space-y-3 ${mobileEditorView === 'editor' ? 'hidden lg:block' : 'block'}`}>
+              <div className="flex items-center justify-between px-2">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <Eye className="w-4 h-4 text-indigo-600" />
+                  <span>Live Active Theme Canvas ({activeTemplate?.name})</span>
+                </span>
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                  {[
+                    { id: 'home', label: 'Home' },
+                    { id: 'plp', label: 'Catalog' },
+                    { id: 'pdp', label: 'Product' },
+                    { id: 'cart', label: 'Cart' },
+                  ].map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setPreviewPage(p.id as any)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all ${previewPage === p.id ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-3xl border border-slate-200/80 shadow-xl overflow-hidden min-h-[560px]">
+                {renderTemplateLivePreview(activeTemplate, themeConfig, previewPage)}
+              </div>
             </div>
           </div>
         </div>
-      </div>
       )}
       {/* ── LIVE HOSTED SITE PREVIEW MODAL ─────────────────────────────── */}
       {livePreviewTemplate && (
@@ -1429,9 +1372,8 @@ export const ThemeManager: React.FC = () => {
                   key={p.path}
                   type="button"
                   onClick={() => setLivePreviewPage(p.path as any)}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                    livePreviewPage === p.path ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-                  }`}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${livePreviewPage === p.path ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                    }`}
                 >
                   {p.label}
                 </button>
@@ -1451,9 +1393,8 @@ export const ThemeManager: React.FC = () => {
                     key={vp.id}
                     type="button"
                     onClick={() => setLiveViewport(vp.id as any)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                      liveViewport === vp.id ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${liveViewport === vp.id ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                      }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
                     <span className="hidden sm:block">{vp.label}</span>
@@ -1498,13 +1439,12 @@ export const ThemeManager: React.FC = () => {
           {/* Iframe canvas */}
           <div className="flex-1 overflow-hidden bg-slate-950 flex justify-center items-start p-4 sm:p-8">
             <div
-              className={`bg-white overflow-hidden shadow-2xl rounded-2xl border border-slate-800 transition-all duration-300 h-full ${
-                liveViewport === 'desktop'
+              className={`bg-white overflow-hidden shadow-2xl rounded-2xl border border-slate-800 transition-all duration-300 h-full ${liveViewport === 'desktop'
                   ? 'w-full'
                   : liveViewport === 'tablet'
-                  ? 'w-[768px]'
-                  : 'w-[390px]'
-              }`}
+                    ? 'w-[768px]'
+                    : 'w-[390px]'
+                }`}
             >
               {/* Simulated browser bar */}
               <div className="h-9 bg-slate-100 border-b border-slate-200 flex items-center px-3 gap-2 shrink-0">
@@ -1553,11 +1493,10 @@ export const ThemeManager: React.FC = () => {
                   key={p.id}
                   type="button"
                   onClick={() => setPreviewPage(p.id as any)}
-                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                    previewPage === p.id
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${previewPage === p.id
                       ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-white'
-                  }`}
+                    }`}
                 >
                   {p.label}
                 </button>
@@ -1575,11 +1514,10 @@ export const ThemeManager: React.FC = () => {
                     key={vp.id}
                     type="button"
                     onClick={() => setPreviewViewport(vp.id as any)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                      previewViewport === vp.id
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${previewViewport === vp.id
                         ? 'bg-indigo-600 text-white shadow-sm'
                         : 'text-slate-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
                     <span>{vp.label}</span>
@@ -1610,13 +1548,12 @@ export const ThemeManager: React.FC = () => {
           </div>
           <div className="flex-1 overflow-auto p-4 sm:p-8 flex justify-center items-start bg-slate-950">
             <div
-              className={`bg-white rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 border border-slate-800 ${
-                previewViewport === 'desktop'
+              className={`bg-white rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 border border-slate-800 ${previewViewport === 'desktop'
                   ? 'w-full max-w-6xl min-h-[750px]'
                   : previewViewport === 'tablet'
                     ? 'w-[768px] min-h-[650px]'
                     : 'w-[390px] min-h-[600px]'
-              }`}
+                }`}
             >
               {renderTemplateLivePreview(previewTemplate, themeConfig, previewPage)}
             </div>

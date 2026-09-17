@@ -19,34 +19,24 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'cms_language';
+let _inMemoryLanguage: SupportedLanguage = 'en';
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<SupportedLanguage>('en');
+  const [language, setLanguageState] = useState<SupportedLanguage>(_inMemoryLanguage);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    try {
-      const savedLang = localStorage.getItem(STORAGE_KEY) as SupportedLanguage | null;
-      if (savedLang && translations[savedLang]) {
-        setLanguageState(savedLang);
-      }
-    } catch {
-      // ignore localStorage errors (e.g. private browsing)
+    if (_inMemoryLanguage && translations[_inMemoryLanguage]) {
+      setLanguageState(_inMemoryLanguage);
     }
   }, []);
 
   const setLanguage = useCallback((lang: SupportedLanguage) => {
+    _inMemoryLanguage = lang;
     setLanguageState(lang);
-    try {
-      localStorage.setItem(STORAGE_KEY, lang);
-      // Also update html lang attribute
-      if (typeof document !== 'undefined') {
-        document.documentElement.lang = lang;
-      }
-    } catch {
-      // ignore
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
     }
   }, []);
 

@@ -29,21 +29,7 @@ function StoreSetupContent() {
     }
   }, [searchParams]);
 
-  const markSetupCompleted = () => {
-    if (typeof window !== 'undefined') {
-      if (userKey) {
-        localStorage.setItem(`whatsapp_setup_completed_${userKey}`, 'true');
-        localStorage.setItem(`whatsapp_setup_opened_${userKey}`, 'true');
-      }
-      localStorage.setItem('whatsapp_setup_completed', 'true');
-      localStorage.setItem('whatsapp_setup_opened', 'true');
-      sessionStorage.removeItem('open_whatsapp_setup_once');
-      sessionStorage.removeItem('just_registered');
-    }
-  };
-
   const handleSaved = (updated: StoreSetupData) => {
-    markSetupCompleted();
     if (merchantData) {
       setMerchantData({
         ...merchantData,

@@ -3,6 +3,7 @@ import { Lexend, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/src/components/providers/HeroUIProvider";
 import { ProtectedRoute } from "@/src/components/auth/ProtectedRoute";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const lexend = Lexend({
   variable: "--font-lexend",
@@ -24,8 +25,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Statamic CMS — Warm Editorial Platform",
-  description: "Statamic-styled E-Commerce CMS Platform built with Next.js, Tailwind CSS, HeroUI, Formik, and Axios.",
+  title: "Wendr CMS — Warm Editorial Platform",
+  description:
+    "Wendr-styled E-Commerce CMS Platform built with Next.js, Tailwind CSS, HeroUI, Formik, and Axios.",
 };
 
 export const viewport: Viewport = {
@@ -35,14 +37,24 @@ export const viewport: Viewport = {
   themeColor: "#fdf1ef",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  console.log({ clientId: process.env.NEXT_PUBLIC_CLIENT_ID });
   return (
-    <html lang="en" className={`${lexend.variable} ${fraunces.variable} ${jetbrainsMono.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${lexend.variable} ${fraunces.variable} ${jetbrainsMono.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col bg-[#fdf1ef] text-[#191a1b] font-sans selection:bg-[#191a1b] selection:text-[#d4ff4c]">
         <Providers>
-          <ProtectedRoute>
-            {children}
-          </ProtectedRoute>
+          <GoogleOAuthProvider
+            clientId={process.env.NEXT_PUBLIC_CLIENT_ID || ""}
+          >
+            <ProtectedRoute>{children}</ProtectedRoute>
+          </GoogleOAuthProvider>
         </Providers>
       </body>
     </html>

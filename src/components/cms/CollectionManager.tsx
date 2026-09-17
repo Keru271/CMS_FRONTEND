@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { CollectionData, CollectionFormData, CollectionRule, CMSProduct } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import { useCMSContext } from '@/src/context/CMSContext';
+import { getCurrencySymbol } from '@/src/lib/currency';
+import DragDropUpload from '@/src/components/ui/DragDropUpload';
 import {
   Layers,
   Plus,
@@ -28,6 +31,15 @@ import {
 } from 'lucide-react';
 
 export const CollectionManager: React.FC = () => {
+  let currencySymbol = '₹';
+  try {
+    const cmsCtx = useCMSContext();
+    currencySymbol = cmsCtx.currencySymbol || '₹';
+  } catch {
+    const session = cmsService.getMerchantSession();
+    currencySymbol = getCurrencySymbol(session?.store?.currency || 'INR');
+  }
+
   const [collections, setCollections] = useState<CollectionData[]>([]);
   const [products, setProducts] = useState<CMSProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -488,20 +500,32 @@ export const CollectionManager: React.FC = () => {
                 </div>
 
                 {/* Collection Image */}
-                <div className="space-y-1.5 md:col-span-2">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                    Collection Banner Image URL
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="text"
-                      value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                      placeholder="https://images.unsplash.com/..."
-                      className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-semibold"
-                    />
-                    <div className="w-12 h-10 rounded-xl overflow-hidden bg-slate-100 border shrink-0">
-                      <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                <div className="space-y-2 md:col-span-2">
+                  <DragDropUpload
+                    folder="collections"
+                    fileType="COLLECTION_IMAGE"
+                    label="Collection Banner Image"
+                    currentUrl={formData.image || undefined}
+                    onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+                    hint="JPG, PNG, or WebP banner (max 10MB)"
+                    previewShape="rect"
+                    maxSizeMB={10}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold text-slate-500">Or paste image URL</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={formData.image}
+                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                        placeholder="https://images.unsplash.com/..."
+                        className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-semibold"
+                      />
+                      {formData.image && (
+                        <div className="w-12 h-10 rounded-xl overflow-hidden bg-slate-100 border shrink-0">
+                          <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -588,7 +612,7 @@ export const CollectionManager: React.FC = () => {
                             <option value="title">Product Title</option>
                             <option value="category">Category</option>
                             <option value="brand">Brand Name</option>
-                            <option value="price">Selling Price ($)</option>
+                            <option value="price">Selling Price ({currencySymbol})</option>
                             <option value="inventory">Inventory Stock</option>
                             <option value="compareAtPrice">Compare-at Price</option>
                           </select>
@@ -666,7 +690,7 @@ export const CollectionManager: React.FC = () => {
                               )}
                               <span className="text-xs font-bold text-slate-800">{p.name}</span>
                             </div>
-                            <span className="text-xs font-black text-slate-900">${p.price}</span>
+                            <span className="text-xs font-black text-slate-900">{currencySymbol}{p.price}</span>
                           </div>
                         );
                       })}
@@ -689,7 +713,7 @@ export const CollectionManager: React.FC = () => {
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {matchingProductsPreview.slice(0, 5).map((mp) => (
                       <span key={mp.id} className="px-2.5 py-1 rounded-xl bg-white/10 text-white text-[11px] font-bold">
-                        {mp.name} (${mp.price})
+                        {mp.name} ({currencySymbol}{mp.price})
                       </span>
                     ))}
                     {matchingProductsPreview.length > 5 && (

@@ -17,6 +17,9 @@ import {
 import { cmsService } from '@/src/services/cmsService';
 import { usePlanAccess } from '@/src/hooks/usePlanAccess';
 import { PlanLockOverlay } from '@/src/components/cms/PlanLockOverlay';
+import { useCMSContext } from '@/src/context/CMSContext';
+import { getCurrencySymbol } from '@/src/lib/currency';
+import DragDropUpload from '@/src/components/ui/DragDropUpload';
 import {
   Package,
   Plus,
@@ -53,10 +56,27 @@ import {
   Wand2,
   Split,
   ArrowUpDown,
+  FolderPlus,
+  BookmarkPlus,
+  CheckSquare,
+  Square,
+  BellRing,
 } from 'lucide-react';
 
 export const ProductStudio: React.FC = () => {
   const { plan, planName, maxProducts } = usePlanAccess();
+  let currencySymbol = '₹';
+  let storeCurrency = 'INR';
+  try {
+    const cmsCtx = useCMSContext();
+    currencySymbol = cmsCtx.currencySymbol || '₹';
+    storeCurrency = cmsCtx.currency || 'INR';
+  } catch {
+    const session = cmsService.getMerchantSession();
+    storeCurrency = session?.store?.currency || 'INR';
+    currencySymbol = getCurrencySymbol(storeCurrency);
+  }
+
   const [products, setProducts] = useState<CMSProduct[]>([]);
   const [categories, setCategories] = useState<CMSCategory[]>([]);
   const [brands, setBrands] = useState<BrandData[]>([]);
@@ -100,12 +120,31 @@ export const ProductStudio: React.FC = () => {
     colorOptions: [],
     material: '',
     categoryName: 'General',
+    categories: ['General'],
     brandName: '',
     collectionName: '',
+    collections: [],
     status: 'ACTIVE',
     metaTitle: '',
     metaDescription: '',
   });
+
+  // Quick Add Taxonomy Modal States (Direct Privilege from Storefront Organization)
+  const [isQuickCategoryModalOpen, setIsQuickCategoryModalOpen] = useState(false);
+  const [quickCategoryData, setQuickCategoryData] = useState({ name: '', slug: '', icon: '📦', description: '' });
+  const [isSavingQuickCategory, setIsSavingQuickCategory] = useState(false);
+
+  const [isQuickBrandModalOpen, setIsQuickBrandModalOpen] = useState(false);
+  const [quickBrandData, setQuickBrandData] = useState({ name: '', slug: '', logo: '', website: '', description: '' });
+  const [isSavingQuickBrand, setIsSavingQuickBrand] = useState(false);
+
+  const [isQuickCollectionModalOpen, setIsQuickCollectionModalOpen] = useState(false);
+  const [quickCollectionData, setQuickCollectionData] = useState({ name: '', slug: '', type: 'MANUAL' as 'MANUAL' | 'AUTOMATIC', image: '', description: '' });
+  const [isSavingQuickCollection, setIsSavingQuickCollection] = useState(false);
+
+  // Search Filters for Existing Taxonomy Pickers in Product Form
+  const [categorySearchTerm, setCategorySearchTerm] = useState('');
+  const [collectionSearchTerm, setCollectionSearchTerm] = useState('');
 
   // Variant Matrix Generator State
   const [showMatrixBuilder, setShowMatrixBuilder] = useState(false);
@@ -150,6 +189,7 @@ export const ProductStudio: React.FC = () => {
       setIsUpgradeModalOpen(true);
       return;
     }
+    const defaultCategory = categories[0]?.name || 'General';
     setEditingProduct(null);
     setFormData({
       name: '',
@@ -170,8 +210,10 @@ export const ProductStudio: React.FC = () => {
       material: 'Titanium & Memory Foam',
       tags: 'bestseller, featured',
       brandName: brands[0]?.name || 'AeroTech Lab',
-      categoryName: categories[0]?.name || 'Tech & Electronics',
-      collectionName: collections[0]?.name || 'Best Sellers 2026',
+      categoryName: defaultCategory,
+      categories: [defaultCategory],
+      collectionName: collections[0]?.name || '',
+      collections: collections[0]?.name ? [collections[0].name] : [],
       metaTitle: '',
       metaDescription: '',
       status: 'ACTIVE',
@@ -194,6 +236,22 @@ export const ProductStudio: React.FC = () => {
             })()
           : [];
 
+    const productCategories =
+      Array.isArray(prod.categories) && prod.categories.length > 0
+        ? prod.categories
+        : prod.categoryName
+          ? prod.categoryName.split(',').map((s) => s.trim()).filter(Boolean)
+          : prod.category
+            ? [prod.category]
+            : ['General'];
+
+    const productCollections =
+      Array.isArray(prod.collections) && prod.collections.length > 0
+        ? prod.collections
+        : prod.collectionName
+          ? prod.collectionName.split(',').map((s) => s.trim()).filter(Boolean)
+          : [];
+
     setFormData({
       name: prod.name,
       description: prod.description,
@@ -213,13 +271,213 @@ export const ProductStudio: React.FC = () => {
       material: prod.material || '',
       tags: Array.isArray(prod.tags) ? prod.tags.join(', ') : prod.tags || '',
       brandName: prod.brandName || '',
-      categoryName: prod.categoryName || prod.category || '',
-      collectionName: prod.collectionName || '',
+      categoryName: productCategories[0] || 'General',
+      categories: productCategories,
+      collectionName: productCollections[0] || '',
+      collections: productCollections,
       metaTitle: prod.metaTitle || '',
       metaDescription: prod.metaDescription || '',
       status: prod.status || 'ACTIVE',
     });
     setActiveSubTab('add-product');
+  };
+
+  // Set primary category from existing categories
+  const handlePrimaryCategoryChange = (catName: string) => {
+    const current = formData.categories || [];
+    const next = current.includes(catName) ? current : [catName, ...current];
+    setFormData({
+      ...formData,
+      categoryName: catName,
+      category: catName,
+      categories: next,
+    });
+  };
+
+  // Toggle category inclusion in multi-category selection
+  const handleToggleCategory = (catName: string) => {
+    const current = formData.categories || [];
+    const exists = current.includes(catName);
+    let next: string[];
+    if (exists) {
+      next = current.filter((c) => c !== catName);
+      if (next.length === 0 && categories.length > 0) {
+        next = [categories[0].name];
+      }
+    } else {
+      next = [...current, catName];
+    }
+    setFormData({
+      ...formData,
+      categories: next,
+      categoryName: next[0] || 'General',
+      category: next[0] || 'General',
+    });
+  };
+
+  // Select all existing categories
+  const handleSelectAllCategories = () => {
+    const allNames = categories.map((c) => c.name);
+    setFormData({
+      ...formData,
+      categories: allNames,
+      categoryName: allNames[0] || formData.categoryName || 'General',
+      category: allNames[0] || formData.categoryName || 'General',
+    });
+  };
+
+  // Reset/Clear categories to default
+  const handleClearAllCategories = () => {
+    const defaultCat = categories[0]?.name || 'General';
+    setFormData({
+      ...formData,
+      categories: [defaultCat],
+      categoryName: defaultCat,
+      category: defaultCat,
+    });
+  };
+
+  // Set primary collection from existing collections
+  const handlePrimaryCollectionChange = (colName: string) => {
+    const current = formData.collections || [];
+    const next = !colName ? current : current.includes(colName) ? current : [colName, ...current];
+    setFormData({
+      ...formData,
+      collectionName: colName,
+      collections: next,
+    });
+  };
+
+  // Toggle collection inclusion in multi-collection selection
+  const handleToggleCollection = (colName: string) => {
+    const current = formData.collections || [];
+    const exists = current.includes(colName);
+    const next = exists ? current.filter((c) => c !== colName) : [...current, colName];
+    setFormData({
+      ...formData,
+      collections: next,
+      collectionName: next[0] || '',
+    });
+  };
+
+  // Select all existing collections
+  const handleSelectAllCollections = () => {
+    const allNames = collections.map((c) => c.name);
+    setFormData({
+      ...formData,
+      collections: allNames,
+      collectionName: allNames[0] || '',
+    });
+  };
+
+  // Clear all selected collections
+  const handleClearAllCollections = () => {
+    setFormData({
+      ...formData,
+      collections: [],
+      collectionName: '',
+    });
+  };
+
+  // Quick Add Category Handler (Saves inline and auto-selects)
+  const handleSaveQuickCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickCategoryData.name.trim()) return;
+    setIsSavingQuickCategory(true);
+    try {
+      const generatedSlug = (quickCategoryData.slug || quickCategoryData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')).toLowerCase();
+      const payload = {
+        name: quickCategoryData.name.trim(),
+        slug: generatedSlug,
+        icon: quickCategoryData.icon || '📦',
+        description: quickCategoryData.description || '',
+      };
+      await cmsService.createCategory(payload);
+      const updatedCats = await cmsService.getCategories(true);
+      setCategories(updatedCats);
+      const currentCats = formData.categories || [];
+      const nextCats = currentCats.includes(payload.name) ? currentCats : [...currentCats, payload.name];
+      setFormData({
+        ...formData,
+        categories: nextCats,
+        categoryName: nextCats[0] || payload.name,
+        category: nextCats[0] || payload.name,
+      });
+      setIsQuickCategoryModalOpen(false);
+      setQuickCategoryData({ name: '', slug: '', icon: '📦', description: '' });
+      showToast(`Category "${payload.name}" created and added to product!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to create category.', 'error');
+    } finally {
+      setIsSavingQuickCategory(false);
+    }
+  };
+
+  // Quick Add Brand Handler (Saves inline and auto-selects)
+  const handleSaveQuickBrand = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickBrandData.name.trim()) return;
+    setIsSavingQuickBrand(true);
+    try {
+      const generatedSlug = (quickBrandData.slug || quickBrandData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')).toLowerCase();
+      const payload = {
+        name: quickBrandData.name.trim(),
+        slug: generatedSlug,
+        logo: quickBrandData.logo || '',
+        website: quickBrandData.website || '',
+        description: quickBrandData.description || '',
+        status: 'ACTIVE' as const,
+      };
+      await cmsService.createBrand(payload);
+      const updatedBrands = await cmsService.getBrands();
+      setBrands(updatedBrands);
+      setFormData({
+        ...formData,
+        brandName: payload.name,
+      });
+      setIsQuickBrandModalOpen(false);
+      setQuickBrandData({ name: '', slug: '', logo: '', website: '', description: '' });
+      showToast(`Brand "${payload.name}" created and selected!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to create brand.', 'error');
+    } finally {
+      setIsSavingQuickBrand(false);
+    }
+  };
+
+  // Quick Add Collection Handler (Saves inline and auto-selects)
+  const handleSaveQuickCollection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickCollectionData.name.trim()) return;
+    setIsSavingQuickCollection(true);
+    try {
+      const generatedSlug = (quickCollectionData.slug || quickCollectionData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')).toLowerCase();
+      const payload = {
+        name: quickCollectionData.name.trim(),
+        slug: generatedSlug,
+        type: quickCollectionData.type || 'MANUAL',
+        image: quickCollectionData.image || '',
+        description: quickCollectionData.description || '',
+        featured: false,
+      };
+      await cmsService.createCollection(payload);
+      const updatedCols = await cmsService.getCollections();
+      setCollections(updatedCols);
+      const currentCols = formData.collections || [];
+      const nextCols = currentCols.includes(payload.name) ? currentCols : [...currentCols, payload.name];
+      setFormData({
+        ...formData,
+        collections: nextCols,
+        collectionName: nextCols[0] || payload.name,
+      });
+      setIsQuickCollectionModalOpen(false);
+      setQuickCollectionData({ name: '', slug: '', type: 'MANUAL', image: '', description: '' });
+      showToast(`Collection "${payload.name}" created and added to product!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to create collection.', 'error');
+    } finally {
+      setIsSavingQuickCollection(false);
+    }
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -512,6 +770,14 @@ export const ProductStudio: React.FC = () => {
               <span>Export Excel</span>
             </button>
 
+            <a
+              href="/products/notifications"
+              className="px-4 py-2.5 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-500/30 backdrop-blur-sm flex items-center gap-2 transition-all shadow-md"
+            >
+              <BellRing className="w-4 h-4 text-amber-400" />
+              <span>Back-in-Stock Alerts</span>
+            </a>
+
             <button
               type="button"
               onClick={handleOpenAddProduct}
@@ -695,7 +961,7 @@ export const ProductStudio: React.FC = () => {
                                 if (min !== max) {
                                   return (
                                     <>
-                                      <span>${min.toFixed(2)} – ${max.toFixed(2)}</span>
+                                      <span>{currencySymbol}{min.toFixed(2)} – {currencySymbol}{max.toFixed(2)}</span>
                                       <span className="text-[10px] text-indigo-600 block font-bold">
                                         Multi-price
                                       </span>
@@ -706,10 +972,10 @@ export const ProductStudio: React.FC = () => {
                             }
                             return (
                               <>
-                                ${typeof prod.price === 'number' ? prod.price.toFixed(2) : prod.price}
+                                {currencySymbol}{typeof prod.price === 'number' ? prod.price.toFixed(2) : prod.price}
                                 {prod.compareAtPrice && (
                                   <span className="text-[10px] text-slate-400 line-through block font-normal">
-                                    ${prod.compareAtPrice}
+                                    {currencySymbol}{prod.compareAtPrice}
                                   </span>
                                 )}
                               </>
@@ -858,16 +1124,26 @@ export const ProductStudio: React.FC = () => {
                     />
                   </div>
 
-                  {/* Images list */}
+                  {/* Product Image Upload */}
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold text-slate-700">Images & Media URLs</label>
-                    <div className="flex items-center gap-3">
+                    <DragDropUpload
+                      folder="products"
+                      fileType="PRODUCT_IMAGE"
+                      label="Product Cover Image"
+                      currentUrl={(formData.images && formData.images[0]) || ''}
+                      onUploadComplete={(url) => setFormData({ ...formData, images: [url] })}
+                      hint="JPG, PNG, or WebP (max 5MB)"
+                      previewShape="square"
+                      maxSizeMB={5}
+                    />
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-bold text-slate-500">Or paste image URL</label>
                       <input
                         type="text"
                         value={(formData.images && formData.images[0]) || ''}
                         onChange={(e) => setFormData({ ...formData, images: [e.target.value] })}
                         placeholder="https://images.unsplash.com/..."
-                        className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-semibold"
+                        className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-semibold"
                       />
                     </div>
                   </div>
@@ -884,7 +1160,7 @@ export const ProductStudio: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <label className="block text-xs font-bold text-slate-700">
-                      Selling Price ($) <span className="text-rose-500">*</span>
+                      Selling Price ({currencySymbol}) <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="number"
@@ -897,7 +1173,7 @@ export const ProductStudio: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">Compare-at Price ($)</label>
+                    <label className="block text-xs font-bold text-slate-700">Compare-at Price ({currencySymbol})</label>
                     <input
                       type="number"
                       step="0.01"
@@ -909,7 +1185,7 @@ export const ProductStudio: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">Cost Price ($)</label>
+                    <label className="block text-xs font-bold text-slate-700">Cost Price ({currencySymbol})</label>
                     <input
                       type="number"
                       step="0.01"
@@ -929,7 +1205,7 @@ export const ProductStudio: React.FC = () => {
                       <span className="text-xs font-bold text-emerald-900">Estimated Profit per Unit</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-sm font-black text-emerald-700 block">${profitMarginNum.toFixed(2)}</span>
+                      <span className="text-sm font-black text-emerald-700 block">{currencySymbol}{profitMarginNum.toFixed(2)}</span>
                       <span className="text-[10px] font-extrabold text-emerald-600">{profitMarginPercent}% Margin</span>
                     </div>
                   </div>
@@ -1125,7 +1401,7 @@ export const ProductStudio: React.FC = () => {
                               const prices = formData.variants.map((v) => Number(v.price) || 0);
                               const min = Math.min(...prices);
                               const max = Math.max(...prices);
-                              return min === max ? `$${min.toFixed(2)}` : `$${min.toFixed(2)} – $${max.toFixed(2)}`;
+                              return min === max ? `${currencySymbol}${min.toFixed(2)}` : `${currencySymbol}${min.toFixed(2)} – ${currencySymbol}${max.toFixed(2)}`;
                             })()}
                           </span>
                         </div>
@@ -1159,9 +1435,9 @@ export const ProductStudio: React.FC = () => {
                             <tr>
                               <th className="p-3 w-44">Variant Name</th>
                               <th className="p-3 w-36">SKU</th>
-                              <th className="p-3 w-28">Price ($)</th>
-                              <th className="p-3 w-28">Compare ($)</th>
-                              <th className="p-3 w-28">Cost ($)</th>
+                              <th className="p-3 w-28">Price ({currencySymbol})</th>
+                              <th className="p-3 w-28">Compare ({currencySymbol})</th>
+                              <th className="p-3 w-28">Cost ({currencySymbol})</th>
                               <th className="p-3 w-36">Stock (Qty)</th>
                               <th className="p-3 w-36">Image URL</th>
                               <th className="p-3 w-20 text-right">Actions</th>
@@ -1325,7 +1601,7 @@ export const ProductStudio: React.FC = () => {
                         Single SKU Product (No Variants Defined)
                       </h4>
                       <p className="text-xs text-slate-400 max-w-md mx-auto mt-0.5">
-                        This product currently has one flat price (${formData.price || 0}) and stock quantity ({formData.inventory || 0} units).
+                        This product currently has one flat price ({currencySymbol}{formData.price || 0}) and stock quantity ({formData.inventory || 0} units).
                       </p>
                     </div>
                     <div className="flex items-center justify-center gap-3 pt-1">
@@ -1369,35 +1645,168 @@ export const ProductStudio: React.FC = () => {
                 </select>
               </div>
 
-              {/* Organization: Brand, Category, Collection */}
-              <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground border-b border-slate-100 pb-2">
-                  Storefront Organization
-                </h3>
+              {/* Organization: Brand, Categories (Multi-select), Collections (Multi-select) */}
+              <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-2.5">
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground">
+                      Storefront Organization
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Choose primary & multi-categories, brand, and collections</p>
+                  </div>
+                  <span className="text-[10px] text-indigo-600 font-bold bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full">
+                    Multi-Taxonomy
+                  </span>
+                </div>
 
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-700">Product Category</label>
+                <div className="space-y-5">
+                  {/* 1. PRODUCT CATEGORIES (Choose Primary + Multi-select from Existing with Search & Quick Add) */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <label className="text-xs font-bold text-slate-800 dark:text-foreground">Primary Category</label>
+                        <span className="text-[10px] text-rose-500 font-black">*</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQuickCategoryData({ name: '', slug: '', icon: '📦', description: '' });
+                          setIsQuickCategoryModalOpen(true);
+                        }}
+                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                      >
+                        <FolderPlus className="w-3.5 h-3.5" />
+                        <span>+ Add Category</span>
+                      </button>
+                    </div>
+
+                    {/* Choose Primary Category from Existing Categories Dropdown */}
                     <select
-                      value={formData.categoryName}
-                      onChange={(e) => setFormData({ ...formData, categoryName: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                      value={formData.categoryName || formData.category || (categories[0]?.name || 'General')}
+                      onChange={(e) => handlePrimaryCategoryChange(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-bold text-slate-900 dark:text-foreground"
                     >
-                      {categories.map((c) => (
-                        <option key={c.id} value={c.name}>
-                          {c.name}
-                        </option>
-                      ))}
+                      {categories.length === 0 ? (
+                        <option value="General">General</option>
+                      ) : (
+                        categories.map((cat) => (
+                          <option key={cat.id} value={cat.name}>
+                            {cat.icon ? `${cat.icon} ` : ''}{cat.name}
+                          </option>
+                        ))
+                      )}
                     </select>
+
+                    {/* All Assigned Categories (Multi-select from Existing) */}
+                    <div className="pt-1.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                            Also in Categories ({formData.categories?.length || 0} selected)
+                          </label>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={handleSelectAllCategories}
+                            className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                          >
+                            Select All
+                          </button>
+                          <span className="text-slate-300">|</span>
+                          <button
+                            type="button"
+                            onClick={handleClearAllCategories}
+                            className="text-[10px] font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 cursor-pointer"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Filter Search Input for Existing Categories */}
+                      {categories.length > 4 && (
+                        <div className="relative">
+                          <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            value={categorySearchTerm}
+                            onChange={(e) => setCategorySearchTerm(e.target.value)}
+                            placeholder="Filter existing categories..."
+                            className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 bg-white dark:bg-card dark:border-border text-[11px] placeholder:text-slate-400"
+                          />
+                        </div>
+                      )}
+
+                      {/* Existing Categories Selection Chips */}
+                      <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto p-2 bg-slate-50 dark:bg-accent/40 rounded-2xl border border-slate-200/80 dark:border-border">
+                        {categories.length === 0 ? (
+                          <div className="w-full text-center py-2 text-slate-400 text-xs">
+                            No existing categories. Click "+ Add Category" to create one.
+                          </div>
+                        ) : (
+                          categories
+                            .filter((cat) =>
+                              !categorySearchTerm ||
+                              cat.name.toLowerCase().includes(categorySearchTerm.toLowerCase())
+                            )
+                            .map((cat) => {
+                              const isSelected = (formData.categories || []).includes(cat.name);
+                              const isPrimary = (formData.categoryName || formData.category) === cat.name;
+                              return (
+                                <button
+                                  key={cat.id}
+                                  type="button"
+                                  onClick={() => handleToggleCategory(cat.name)}
+                                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-slate-900 text-white shadow-xs dark:bg-indigo-600'
+                                      : 'bg-white dark:bg-card text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-border hover:border-slate-300 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <span>{cat.icon || '📦'}</span>
+                                  <span>{cat.name}</span>
+                                  {isPrimary && (
+                                    <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1 rounded-xs">
+                                      Primary
+                                    </span>
+                                  )}
+                                  {isSelected ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                  ) : (
+                                    <Plus className="w-3 h-3 text-slate-400" />
+                                  )}
+                                </button>
+                              );
+                            })
+                        )}
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-700">Brand</label>
+                  {/* 2. BRAND SELECTION (Choose from Existing Brands + Inline Quick Add) */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-800 dark:text-foreground">Brand / Manufacturer</label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQuickBrandData({ name: '', slug: '', logo: '', website: '', description: '' });
+                          setIsQuickBrandModalOpen(true);
+                        }}
+                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>+ Add Brand</span>
+                      </button>
+                    </div>
+
                     <select
-                      value={formData.brandName}
+                      value={formData.brandName || ''}
                       onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-bold text-slate-900 dark:text-foreground"
                     >
+                      <option value="">Select an Existing Brand (Optional)</option>
                       {brands.map((b) => (
                         <option key={b.id} value={b.name}>
                           {b.name}
@@ -1406,40 +1815,147 @@ export const ProductStudio: React.FC = () => {
                     </select>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-700">Collection</label>
+                  {/* 3. COLLECTIONS (Choose Primary + Multi-select from Existing with Search & Quick Add) */}
+                  <div className="space-y-2.5 pt-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <label className="text-xs font-bold text-slate-800 dark:text-foreground">Primary Collection</label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQuickCollectionData({ name: '', slug: '', type: 'MANUAL', image: '', description: '' });
+                          setIsQuickCollectionModalOpen(true);
+                        }}
+                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                      >
+                        <BookmarkPlus className="w-3.5 h-3.5" />
+                        <span>+ Add Collection</span>
+                      </button>
+                    </div>
+
+                    {/* Choose Primary Collection from Existing Collections Dropdown */}
                     <select
-                      value={formData.collectionName}
-                      onChange={(e) => setFormData({ ...formData, collectionName: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                      value={formData.collectionName || ''}
+                      onChange={(e) => handlePrimaryCollectionChange(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-bold text-slate-900 dark:text-foreground"
                     >
+                      <option value="">None / Choose Existing Primary Collection</option>
                       {collections.map((col) => (
                         <option key={col.id} value={col.name}>
-                          {col.name}
+                          🏷️ {col.name} ({col.type || 'MANUAL'})
                         </option>
                       ))}
                     </select>
+
+                    {/* All Assigned Collections (Multi-select from Existing) */}
+                    <div className="pt-1.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                            Also in Collections ({formData.collections?.length || 0} selected)
+                          </label>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={handleSelectAllCollections}
+                            className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                          >
+                            Select All
+                          </button>
+                          <span className="text-slate-300">|</span>
+                          <button
+                            type="button"
+                            onClick={handleClearAllCollections}
+                            className="text-[10px] font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Filter Search Input for Existing Collections */}
+                      {collections.length > 4 && (
+                        <div className="relative">
+                          <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            value={collectionSearchTerm}
+                            onChange={(e) => setCollectionSearchTerm(e.target.value)}
+                            placeholder="Filter existing collections..."
+                            className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 bg-white dark:bg-card dark:border-border text-[11px] placeholder:text-slate-400"
+                          />
+                        </div>
+                      )}
+
+                      {/* Existing Collections Selection Chips */}
+                      <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto p-2 bg-slate-50 dark:bg-accent/40 rounded-2xl border border-slate-200/80 dark:border-border">
+                        {collections.length === 0 ? (
+                          <div className="w-full text-center py-2 text-slate-400 text-xs">
+                            No existing collections. Click "+ Add Collection" to create one.
+                          </div>
+                        ) : (
+                          collections
+                            .filter((col) =>
+                              !collectionSearchTerm ||
+                              col.name.toLowerCase().includes(collectionSearchTerm.toLowerCase())
+                            )
+                            .map((col) => {
+                              const isSelected = (formData.collections || []).includes(col.name);
+                              const isPrimary = formData.collectionName === col.name;
+                              return (
+                                <button
+                                  key={col.id}
+                                  type="button"
+                                  onClick={() => handleToggleCollection(col.name)}
+                                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-purple-600 text-white shadow-xs'
+                                      : 'bg-white dark:bg-card text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-border hover:border-slate-300 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <span>🏷️</span>
+                                  <span>{col.name}</span>
+                                  {isPrimary && (
+                                    <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1 rounded-xs">
+                                      Primary
+                                    </span>
+                                  )}
+                                  {isSelected ? (
+                                    <Check className="w-3.5 h-3.5 text-purple-200" />
+                                  ) : (
+                                    <Plus className="w-3 h-3 text-slate-400" />
+                                  )}
+                                </button>
+                              );
+                            })
+                        )}
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-700">Material Spec</label>
+                  {/* 4. MATERIAL SPEC */}
+                  <div className="space-y-1 pt-1">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Material Specification</label>
                     <input
                       type="text"
                       value={formData.material || ''}
                       onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                      placeholder="e.g. 100% Organic Cotton"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                      placeholder="e.g. 100% Organic Cotton / Brushed Titanium"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-bold"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-slate-700">Product Tags (comma separated)</label>
+                  {/* 5. PRODUCT TAGS */}
+                  <div className="space-y-1 pt-1">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Search Tags (comma separated)</label>
                     <input
                       type="text"
                       value={formData.tags || ''}
                       onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                      placeholder="bestseller, summer, limited"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold"
+                      placeholder="bestseller, summer, limited, trending"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-semibold"
                     />
                   </div>
                 </div>
@@ -1635,6 +2151,280 @@ export const ProductStudio: React.FC = () => {
                 'Automated Abandoned Cart Email & WhatsApp',
               ]}
             />
+          </div>
+        </div>
+      )}
+
+      {/* ─── INLINE QUICK CREATE MODAL: CATEGORY ─── */}
+      {isQuickCategoryModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <FolderPlus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">Quick Add Category</h3>
+                  <p className="text-[11px] text-slate-400">Creates and assigns to current product</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuickCategoryModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuickCategory} className="space-y-4">
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Category Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Wireless Audio"
+                  value={quickCategoryData.name}
+                  onChange={(e) => {
+                    const nameVal = e.target.value;
+                    const slugVal = nameVal.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+                    setQuickCategoryData({ ...quickCategoryData, name: nameVal, slug: slugVal });
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2 space-y-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">URL Slug</label>
+                  <input
+                    type="text"
+                    value={quickCategoryData.slug}
+                    onChange={(e) => setQuickCategoryData({ ...quickCategoryData, slug: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Icon</label>
+                  <input
+                    type="text"
+                    value={quickCategoryData.icon}
+                    onChange={(e) => setQuickCategoryData({ ...quickCategoryData, icon: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs text-center font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Description (Optional)</label>
+                <textarea
+                  rows={2}
+                  value={quickCategoryData.description}
+                  onChange={(e) => setQuickCategoryData({ ...quickCategoryData, description: e.target.value })}
+                  placeholder="Brief summary of category..."
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                <button
+                  type="button"
+                  onClick={() => setIsQuickCategoryModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingQuickCategory}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  {isSavingQuickCategory ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  <span>Save & Assign</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── INLINE QUICK CREATE MODAL: BRAND ─── */}
+      {isQuickBrandModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">Quick Add Brand</h3>
+                  <p className="text-[11px] text-slate-400">Creates and assigns to current product</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuickBrandModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuickBrand} className="space-y-4">
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Brand Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Lumix Crafted"
+                  value={quickBrandData.name}
+                  onChange={(e) => {
+                    const nameVal = e.target.value;
+                    const slugVal = nameVal.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+                    setQuickBrandData({ ...quickBrandData, name: nameVal, slug: slugVal });
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-bold"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Brand Logo URL (Optional)</label>
+                <input
+                  type="text"
+                  value={quickBrandData.logo}
+                  onChange={(e) => setQuickBrandData({ ...quickBrandData, logo: e.target.value })}
+                  placeholder="https://..."
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Official Website (Optional)</label>
+                <input
+                  type="text"
+                  value={quickBrandData.website}
+                  onChange={(e) => setQuickBrandData({ ...quickBrandData, website: e.target.value })}
+                  placeholder="https://brand.com"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                <button
+                  type="button"
+                  onClick={() => setIsQuickBrandModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingQuickBrand}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  {isSavingQuickBrand ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  <span>Save & Select Brand</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── INLINE QUICK CREATE MODAL: COLLECTION ─── */}
+      {isQuickCollectionModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                  <BookmarkPlus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">Quick Add Collection</h3>
+                  <p className="text-[11px] text-slate-400">Creates and assigns to current product</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuickCollectionModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuickCollection} className="space-y-4">
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Collection Title *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Summer Essentials 2026"
+                  value={quickCollectionData.name}
+                  onChange={(e) => {
+                    const nameVal = e.target.value;
+                    const slugVal = nameVal.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+                    setQuickCollectionData({ ...quickCollectionData, name: nameVal, slug: slugVal });
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">URL Slug</label>
+                  <input
+                    type="text"
+                    value={quickCollectionData.slug}
+                    onChange={(e) => setQuickCollectionData({ ...quickCollectionData, slug: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Type</label>
+                  <select
+                    value={quickCollectionData.type}
+                    onChange={(e) => setQuickCollectionData({ ...quickCollectionData, type: e.target.value as 'MANUAL' | 'AUTOMATIC' })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-bold"
+                  >
+                    <option value="MANUAL">Manual</option>
+                    <option value="AUTOMATIC">Automated</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Cover Image URL (Optional)</label>
+                <input
+                  type="text"
+                  value={quickCollectionData.image}
+                  onChange={(e) => setQuickCollectionData({ ...quickCollectionData, image: e.target.value })}
+                  placeholder="https://..."
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                <button
+                  type="button"
+                  onClick={() => setIsQuickCollectionModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingQuickCollection}
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  {isSavingQuickCollection ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  <span>Save & Assign</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

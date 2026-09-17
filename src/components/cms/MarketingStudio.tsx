@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { CMSMarketingCampaign, CMSPixelConfig, AbandonedCartData, MarketingChannel } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import { useCMSContext } from '@/src/context/CMSContext';
+import { getCurrencySymbol } from '@/src/lib/currency';
 import { usePlanAccess } from '@/src/hooks/usePlanAccess';
 import { LockedFeatureGuard } from '@/src/components/cms/LockedFeatureGuard';
 import {
@@ -39,6 +41,15 @@ import {
 
 export const MarketingStudio: React.FC = () => {
   const { isStarter } = usePlanAccess();
+  let currencySymbol = '₹';
+  try {
+    const cmsCtx = useCMSContext();
+    currencySymbol = cmsCtx.currencySymbol || '₹';
+  } catch {
+    const session = cmsService.getMerchantSession();
+    currencySymbol = getCurrencySymbol(session?.store?.currency || 'INR');
+  }
+
   const [campaigns, setCampaigns] = useState<CMSMarketingCampaign[]>([]);
   const [pixelConfig, setPixelConfig] = useState<CMSPixelConfig>({});
   const [abandonedCarts, setAbandonedCarts] = useState<AbandonedCartData[]>([]);
@@ -340,14 +351,24 @@ export const MarketingStudio: React.FC = () => {
               <span>Marketing Campaign Broadcasts</span>
             </h3>
 
-            <button
-              type="button"
-              onClick={() => handleOpenCreateCampaign(activeTab === 'CAMPAIGNS' ? 'EMAIL' : (activeTab as any))}
-              className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold flex items-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>New {activeTab === 'CAMPAIGNS' ? 'Broadcast' : activeTab}</span>
-            </button>
+            <div className="flex items-center gap-2.5">
+              <a
+                href="/email-templates"
+                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-400 text-xs font-extrabold flex items-center gap-1.5 border border-indigo-200 dark:border-indigo-900/50 transition-all"
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Email Template Builder</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => handleOpenCreateCampaign(activeTab === 'CAMPAIGNS' ? 'EMAIL' : (activeTab as any))}
+                className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md shadow-indigo-600/30"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>New {activeTab === 'CAMPAIGNS' ? 'Broadcast' : activeTab}</span>
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -359,7 +380,7 @@ export const MarketingStudio: React.FC = () => {
                   <th className="py-4 px-6">Target Audience</th>
                   <th className="py-4 px-6">Sent Reach</th>
                   <th className="py-4 px-6">Clicks & CTR</th>
-                  <th className="py-4 px-6">Revenue ($)</th>
+                  <th className="py-4 px-6">Revenue ({currencySymbol})</th>
                   <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
               </thead>
@@ -397,7 +418,7 @@ export const MarketingStudio: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-4 px-6 font-black text-sm text-emerald-600">
-                        ${c.revenueTotal.toFixed(2)}
+                        {currencySymbol}{c.revenueTotal.toFixed(2)}
                       </td>
                       <td className="py-4 px-6 text-right space-x-2">
                         <button
@@ -473,7 +494,7 @@ export const MarketingStudio: React.FC = () => {
                       </td>
                       <td className="py-4 px-6 font-bold">{ac.itemsCount} Items</td>
                       <td className="py-4 px-6 font-black text-sm text-slate-900 dark:text-foreground">
-                        ${ac.cartSubtotal.toFixed(2)}
+                        {currencySymbol}{ac.cartSubtotal.toFixed(2)}
                       </td>
                       <td className="py-4 px-6 text-slate-500 font-semibold">{ac.abandonedAt}</td>
                       <td className="py-4 px-6">

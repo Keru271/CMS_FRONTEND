@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import ReactSlider from 'react-slider';
 import { PriceTierData, StoreSubscriptionData, StoreBillingInvoiceData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import {
@@ -35,9 +36,10 @@ import {
   Crown,
   Package,
   Flame,
-  Shield,
-  Activity,
   ChevronDown,
+  ChevronLeft,
+  LayoutGrid,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 export const BillingStudio: React.FC = () => {
@@ -47,6 +49,12 @@ export const BillingStudio: React.FC = () => {
   const [customerRegion, setCustomerRegion] = useState<'INDIA' | 'INTERNATIONAL'>('INDIA');
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  // Pricing Swiper & View Mode State
+  const [pricingViewMode, setPricingViewMode] = useState<'swiper' | 'grid'>('swiper');
+  const [activePricingSlide, setActivePricingSlide] = useState(1); // Default to Growth / Pro
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
 
   // Selected Plan for Upgrade / Payment
   const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<PriceTierData | null>(null);
@@ -515,22 +523,22 @@ export const BillingStudio: React.FC = () => {
 
         <div>
           <h2 className="text-2xl sm:text-3xl font-serif font-black tracking-tight text-[#191a1b]">
-            Flexible Plans for Stores of Every Size
+            Transparent Pricing for Every Stage of Growth
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto mt-1">
-            Transparent pricing with zero hidden fees. Upgrade, downgrade, or switch anytime with instant difference calculation.
+            Choose the plan that fits your business needs. Upgrade, downgrade, or cancel anytime with instant prorated calculation.
           </p>
         </div>
 
-        {/* Monthly vs Annual Toggle */}
-        <div className="inline-flex items-center p-1.5 rounded-2xl bg-slate-900 shadow-lg border border-slate-800 mt-2">
+        {/* Monthly vs Annual Toggle (Refero Segmented Pill) */}
+        <div className="inline-flex items-center p-1 rounded-full bg-[#edf0f5] border border-[#e2e8f0] shadow-xs mt-2">
           <button
             type="button"
             onClick={() => setBillingCycle('MONTHLY')}
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-6 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
               billingCycle === 'MONTHLY'
-                ? 'bg-white text-slate-950 shadow-md font-extrabold'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-white text-slate-900 shadow-sm font-extrabold'
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             Monthly Billing
@@ -538,266 +546,630 @@ export const BillingStudio: React.FC = () => {
           <button
             type="button"
             onClick={() => setBillingCycle('ANNUAL')}
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`px-6 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               billingCycle === 'ANNUAL'
-                ? 'bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 shadow-md font-extrabold'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-white text-slate-900 shadow-sm font-extrabold'
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             <span>Annual Billing</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-              billingCycle === 'ANNUAL' ? 'bg-slate-950 text-emerald-300' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-            }`}>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-600 border border-rose-200">
               Save 20%
             </span>
           </button>
         </div>
       </div>
 
-      {/* 4-TIER COMPARISON CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 pt-4">
-        {tiers.map((tier) => {
-          const id = tier.id.toUpperCase();
-          const isCurrent = (currentPlanId || 'STARTER').toUpperCase() === id;
-          const isAnnual = billingCycle === 'ANNUAL';
-          const isIndian = customerRegion === 'INDIA';
+      {/* VIEW CONTROLS & QUICK PLAN SELECTOR */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200/80">
+        {/* Quick Tier Jumper Tabs */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl overflow-x-auto max-w-full">
+          {tiers.map((t, idx) => {
+            const isActive = pricingViewMode === 'swiper' ? activePricingSlide === idx : false;
+            const isGrowth = t.id.toUpperCase() === 'GROWTH' || t.id.toUpperCase() === 'PRO' || t.popular;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => {
+                  setActivePricingSlide(idx);
+                  if (pricingViewMode !== 'swiper') setPricingViewMode('swiper');
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                  isActive
+                    ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-900/10 dark:bg-slate-900 dark:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {isGrowth && <Sparkles className="w-3 h-3 text-rose-500 fill-rose-500" />}
+                <span>{t.badge || t.name}</span>
+              </button>
+            );
+          })}
+        </div>
 
-          const price = isIndian
-            ? isAnnual
-              ? tier.priceAnnualInr
-              : tier.priceMonthlyInr
-            : isAnnual
-            ? tier.priceAnnualUsd
-            : tier.priceMonthlyUsd;
-
-          const currentTier = tiers.find((t) => (currentPlanId || 'STARTER').toUpperCase() === t.id.toUpperCase()) || tiers[0];
-          const currentPrice = isIndian
-            ? isAnnual
-              ? currentTier.priceAnnualInr
-              : currentTier.priceMonthlyInr
-            : isAnnual
-            ? currentTier.priceAnnualUsd
-            : currentTier.priceMonthlyUsd;
-
-          const isUpgradeTier = !isCurrent && price > currentPrice && currentPrice > 0;
-          const upgradeDiffPrice = isUpgradeTier ? Math.max(0, price - currentPrice) : price;
-          const currencySymbol = isIndian ? '₹' : '$';
-
-          // Specific Visual Theme for each Tier
-          const isAgency = id === 'AGENCY';
-          const isEnterprise = id === 'ENTERPRISE';
-          const isGrowth = id === 'GROWTH';
-          const isStarter = id === 'STARTER' || (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0);
-
-          return (
-            <div
-              key={tier.id}
-              className={`rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 relative group ${
-                isCurrent
-                  ? 'bg-gradient-to-b from-emerald-950/40 via-slate-900 to-slate-950 border-2 border-emerald-500 shadow-2xl shadow-emerald-500/20 ring-4 ring-emerald-500/20 scale-[1.02] z-10'
-                  : isAgency
-                  ? 'bg-gradient-to-b from-slate-900 via-slate-900 to-emerald-950/30 border border-emerald-500/40 hover:border-emerald-400 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-1'
-                  : isEnterprise
-                  ? 'bg-gradient-to-b from-slate-900 via-slate-900 to-purple-950/30 border border-purple-500/40 hover:border-purple-400 shadow-xl hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1'
-                  : isGrowth
-                  ? 'bg-gradient-to-b from-slate-900 via-slate-900 to-blue-950/30 border-2 border-blue-500/60 hover:border-blue-400 shadow-xl hover:shadow-2xl hover:shadow-blue-500/15 hover:-translate-y-1'
-                  : 'bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-slate-800 hover:border-slate-700 shadow-lg hover:-translate-y-1'
+        {/* View Mode Toggle & Navigation Chevrons */}
+        <div className="flex items-center gap-2">
+          {/* Swiper vs Grid Switcher */}
+          <div className="inline-flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => setPricingViewMode('swiper')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                pricingViewMode === 'swiper'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
               }`}
+              title="Expanding Swiper Slider"
             >
-              {/* Top Floating Badge */}
-              {isCurrent ? (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-500 text-slate-950 text-[11px] font-black uppercase tracking-wider shadow-lg shadow-emerald-500/40 flex items-center gap-1.5 z-10">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>✓ Your Active Plan</span>
-                </div>
-              ) : isUpgradeTier ? (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-amber-500 to-indigo-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10 animate-bounce">
-                  <Flame className="w-3 h-3 text-amber-300 fill-amber-300" />
-                  <span>Upgrade & Save {currencySymbol}{currentPrice.toLocaleString()}</span>
-                </div>
-              ) : isGrowth ? (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md z-10">
-                  ⭐ Most Popular
-                </div>
-              ) : isEnterprise ? (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-black uppercase tracking-wider shadow-md z-10">
-                  ⚡ Zero Fee & Scale
-                </div>
-              ) : isAgency ? (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-md z-10">
-                  👑 VIP Dedicated Cloud
-                </div>
-              ) : null}
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>Slider</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPricingViewMode('grid')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                pricingViewMode === 'grid'
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
+              }`}
+              title="Grid View"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Grid</span>
+            </button>
+          </div>
 
-              {/* Card Header & Icon */}
-              <div className="space-y-5">
-                <div>
-                  <div className="flex items-center justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border shadow-inner ${
-                        isAgency
-                          ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+          {/* Navigation Arrows for Swiper Mode */}
+          {pricingViewMode === 'swiper' && tiers.length > 0 && (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setActivePricingSlide((prev) => (prev - 1 + tiers.length) % tiers.length)}
+                className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs cursor-pointer"
+                title="Previous Plan"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setActivePricingSlide((prev) => (prev + 1) % tiers.length)}
+                className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs cursor-pointer"
+                title="Next Plan"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* SWIPER / EXPANDING ACCORDION SLIDER VIEW (MATCHING ATTACHED DESIGN) */}
+      {pricingViewMode === 'swiper' && tiers.length > 0 ? (
+        <div
+          className="relative pt-2 pb-4 overflow-hidden select-none"
+          onTouchStart={(e) => setTouchStartX(e.targetTouches[0].clientX)}
+          onTouchMove={(e) => setTouchEndX(e.targetTouches[0].clientX)}
+          onTouchEnd={() => {
+            if (!touchStartX || !touchEndX) return;
+            const diff = touchStartX - touchEndX;
+            if (diff > 50) setActivePricingSlide((prev) => (prev + 1) % tiers.length);
+            if (diff < -50) setActivePricingSlide((prev) => (prev - 1 + tiers.length) % tiers.length);
+            setTouchStartX(null);
+            setTouchEndX(null);
+          }}
+        >
+          {/* Horizontal Expanding Card Track Container */}
+          <div className="p-4 sm:p-6 rounded-[36px] bg-[#0c0d10] dark:bg-[#07080a] border border-slate-800/80 shadow-2xl overflow-x-auto scrollbar-none">
+            <div className="flex items-stretch gap-3 sm:gap-4 min-w-[720px] sm:min-w-full h-[560px]">
+              {tiers.map((tier, idx) => {
+                const id = tier.id.toUpperCase();
+                const isExpanded = activePricingSlide === idx;
+                const isCurrent = (currentPlanId || 'STARTER').toUpperCase() === id;
+                const isAnnual = billingCycle === 'ANNUAL';
+                const isIndian = customerRegion === 'INDIA';
+
+                const price = isIndian
+                  ? isAnnual
+                    ? tier.priceAnnualInr
+                    : tier.priceMonthlyInr
+                  : isAnnual
+                  ? tier.priceAnnualUsd
+                  : tier.priceMonthlyUsd;
+
+                const currentTier = tiers.find((t) => (currentPlanId || 'STARTER').toUpperCase() === t.id.toUpperCase()) || tiers[0];
+                const currentPrice = isIndian
+                  ? isAnnual
+                    ? currentTier.priceAnnualInr
+                    : currentTier.priceMonthlyInr
+                  : isAnnual
+                  ? currentTier.priceAnnualUsd
+                  : currentTier.priceMonthlyUsd;
+
+                const isUpgradeTier = !isCurrent && price > currentPrice && currentPrice > 0;
+                const upgradeDiffPrice = isUpgradeTier ? Math.max(0, price - currentPrice) : price;
+                const currencySymbol = isIndian ? '₹' : '$';
+
+                const isGrowth = id === 'GROWTH' || id === 'PRO' || tier.popular;
+                const isEnterprise = id === 'ENTERPRISE';
+                const isAgency = id === 'AGENCY';
+                const isStarter = id === 'STARTER' || (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0);
+
+                // Background Gradients matching card themes
+                const bgGradient = isGrowth
+                  ? 'bg-gradient-to-br from-[#1a0d18] via-[#240e1d] to-[#120815] border-rose-500/60 shadow-rose-500/15'
+                  : isEnterprise
+                  ? 'bg-gradient-to-br from-[#120e24] via-[#1a1435] to-[#0c0818] border-purple-500/50 shadow-purple-500/15'
+                  : isAgency
+                  ? 'bg-gradient-to-br from-[#0c1a1a] via-[#112424] to-[#081212] border-emerald-500/50 shadow-emerald-500/15'
+                  : 'bg-gradient-to-br from-[#16181f] via-[#1c1f28] to-[#111318] border-slate-700/60 shadow-slate-900/20';
+
+                return (
+                  <div
+                    key={tier.id}
+                    onClick={() => {
+                      if (!isExpanded) setActivePricingSlide(idx);
+                    }}
+                    className={`relative rounded-[30px] border overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col justify-between ${
+                      isExpanded
+                        ? `flex-[4] sm:flex-[3.8] p-7 sm:p-8 cursor-default shadow-2xl ring-2 ${
+                            isGrowth ? 'ring-rose-500/40' : isCurrent ? 'ring-emerald-500/40' : 'ring-indigo-500/30'
+                          } ${bgGradient}`
+                        : `flex-[0.9] sm:flex-[1] min-w-[96px] sm:min-w-[120px] p-4 sm:p-5 cursor-pointer hover:opacity-100 opacity-75 hover:scale-[1.01] ${bgGradient}`
+                    }`}
+                  >
+                    {/* EXPANDED SLIDE VIEW (WIDE DETAILED CARD LIKE SLIDE 1) */}
+                    {isExpanded ? (
+                      <div className="flex flex-col justify-between h-full space-y-6 text-white animate-in fade-in duration-300">
+                        {/* Top Row: Floating Badge & Tier Title */}
+                        <div>
+                          <div className="flex items-center justify-between gap-3 mb-3">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
+                                  isGrowth
+                                    ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md'
+                                    : isEnterprise
+                                    ? 'bg-purple-600 text-white'
+                                    : isAgency
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-slate-700 text-slate-200'
+                                }`}
+                              >
+                                {tier.badge || tier.name}
+                              </span>
+                              {isCurrent && (
+                                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-extrabold flex items-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>Active Plan</span>
+                                </span>
+                              )}
+                              {isGrowth && !isCurrent && (
+                                <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-extrabold flex items-center gap-1">
+                                  <Sparkles className="w-3.5 h-3.5 text-rose-400" />
+                                  <span>Popular</span>
+                                </span>
+                              )}
+                            </div>
+
+                            <span className="text-xs font-bold text-slate-400">
+                              Slide {idx + 1} of {tiers.length}
+                            </span>
+                          </div>
+
+                          <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-2">
+                            {tier.name}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-slate-300 mt-1 line-clamp-2">
+                            {tier.description}
+                          </p>
+                        </div>
+
+                        {/* Price Display */}
+                        <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-3xl sm:text-4xl font-black text-white tracking-tight font-sans">
+                              {currencySymbol}{upgradeDiffPrice.toLocaleString()}
+                            </span>
+                            <span className="text-base sm:text-lg font-medium text-slate-300 font-normal">
+                              /{isAnnual ? 'year' : 'month'}
+                            </span>
+                            {isAnnual && !isStarter && (
+                              <span className="ml-auto px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[11px] font-bold">
+                                Save 20%
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-400 mt-1">
+                            {isStarter
+                              ? 'Free tier for personal catalogs'
+                              : isAnnual
+                              ? `${currencySymbol}${price.toLocaleString()} billed annually`
+                              : 'Billed monthly, cancel anytime'}
+                          </div>
+                        </div>
+
+                        {/* Features Checklist */}
+                        <div className="space-y-2.5 flex-1 overflow-y-auto max-h-48 pr-1 scrollbar-thin">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                            Included in this plan:
+                          </span>
+                          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-200">
+                            {tier.features.map((feat, fIdx) => (
+                              <li key={fIdx} className="flex items-start gap-2 leading-snug">
+                                <div
+                                  className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                                    isGrowth
+                                      ? 'bg-rose-500/20 text-rose-400'
+                                      : isEnterprise
+                                      ? 'bg-purple-500/20 text-purple-400'
+                                      : isAgency
+                                      ? 'bg-emerald-500/20 text-emerald-400'
+                                      : 'bg-slate-700 text-slate-300'
+                                  }`}
+                                >
+                                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                </div>
+                                <span className="text-slate-200 font-medium">{feat}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* CTA Action Button */}
+                        <div className="pt-2">
+                          {isCurrent ? (
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full py-3.5 rounded-2xl bg-white/10 text-emerald-300 font-bold text-xs border border-emerald-500/30 flex items-center justify-center gap-2 cursor-default"
+                            >
+                              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                              <span>Current Active Plan</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={isProcessingPayment}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleInitiatePlanUpgrade(tier);
+                              }}
+                              className={`w-full py-3.5 rounded-2xl font-bold text-xs transition-all shadow-xl active:scale-98 flex items-center justify-center gap-2 cursor-pointer ${
+                                isGrowth
+                                  ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white shadow-rose-500/25'
+                                  : isStarter
+                                  ? 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                                  : 'bg-white text-slate-900 hover:bg-slate-100'
+                              }`}
+                            >
+                              {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                              ) : isStarter ? (
+                                <>
+                                  <span>Activate Free Plan</span>
+                                  <Check className="w-4 h-4" />
+                                </>
+                              ) : isUpgradeTier ? (
+                                <>
+                                  <span>Upgrade to {tier.badge || tier.name} for {currencySymbol}{upgradeDiffPrice.toLocaleString()}</span>
+                                  <ArrowRight className="w-4 h-4" />
+                                </>
+                              ) : (
+                                <>
+                                  <span>Upgrade to {tier.badge || tier.name}</span>
+                                  <ArrowRight className="w-4 h-4" />
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      /* COLLAPSED / ACCORDION PREVIEW CARD (VERTICAL LIKE SLIDE 2 & 3) */
+                      <div className="flex flex-col justify-between items-center h-full py-2 text-center text-white select-none">
+                        {/* Top Indicator */}
+                        <div className="w-8 h-8 rounded-2xl bg-white/10 flex items-center justify-center text-xs font-bold text-slate-300">
+                          {idx + 1}
+                        </div>
+
+                        {/* Middle: Vertical Title & Pricing Pill */}
+                        <div className="space-y-4 my-auto flex flex-col items-center">
+                          <div
+                            className={`p-2.5 rounded-2xl ${
+                              isGrowth
+                                ? 'bg-rose-500/20 text-rose-300'
+                                : isEnterprise
+                                ? 'bg-purple-500/20 text-purple-300'
+                                : isAgency
+                                ? 'bg-emerald-500/20 text-emerald-300'
+                                : 'bg-slate-800 text-slate-300'
+                            }`}
+                          >
+                            {isGrowth ? (
+                              <Sparkles className="w-5 h-5" />
+                            ) : isEnterprise ? (
+                              <Crown className="w-5 h-5" />
+                            ) : isAgency ? (
+                              <Building className="w-5 h-5" />
+                            ) : (
+                              <Package className="w-5 h-5" />
+                            )}
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-xs font-black uppercase tracking-wider block text-white">
+                              {tier.badge || tier.name}
+                            </span>
+                            <span className="text-[11px] font-extrabold text-slate-400 block font-sans">
+                              {currencySymbol}{price.toLocaleString()}
+                            </span>
+                          </div>
+
+                          {isCurrent && (
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Active Plan" />
+                          )}
+                        </div>
+
+                        {/* Bottom: Click Hint */}
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 group-hover:text-white transition">
+                          <span>View</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Swiper Interactive React-Slider Scrubber & Indicators */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 px-2">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-rose-500" />
+                <span>Drag Slider:</span>
+              </span>
+              <div className="w-full sm:w-60 px-2">
+                <ReactSlider
+                  className="w-full h-7 flex items-center cursor-pointer select-none"
+                  thumbClassName="w-6 h-6 rounded-full bg-white shadow-md border-2 border-rose-500 flex items-center justify-center text-[10px] font-black text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500/50 cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
+                  trackClassName="h-2 rounded-full bg-slate-200 dark:bg-slate-750"
+                  min={0}
+                  max={Math.max(0, tiers.length - 1)}
+                  value={activePricingSlide}
+                  onChange={(val: number) => setActivePricingSlide(val)}
+                  renderThumb={(props, state) => {
+                    const { key, ...restProps } = props as any;
+                    return (
+                      <div key={key} {...restProps}>
+                        {state.valueNow + 1}
+                      </div>
+                    );
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Quick Step Indicators */}
+            <div className="flex items-center gap-2">
+              {tiers.map((t, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setActivePricingSlide(idx)}
+                  className={`transition-all duration-300 rounded-full cursor-pointer flex items-center gap-1 ${
+                    activePricingSlide === idx
+                      ? 'px-3 py-1 bg-rose-500 text-white text-[11px] font-bold shadow-sm'
+                      : 'w-2.5 h-2.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
+                  }`}
+                  title={`Go to ${t.badge || t.name}`}
+                >
+                  {activePricingSlide === idx ? (
+                    <span>{t.badge || t.name}</span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* 4-TIER REFERO COMPARISON GRID */
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 pt-4">
+          {tiers.map((tier) => {
+            const id = tier.id.toUpperCase();
+            const isCurrent = (currentPlanId || 'STARTER').toUpperCase() === id;
+            const isAnnual = billingCycle === 'ANNUAL';
+            const isIndian = customerRegion === 'INDIA';
+
+            const price = isIndian
+              ? isAnnual
+                ? tier.priceAnnualInr
+                : tier.priceMonthlyInr
+              : isAnnual
+              ? tier.priceAnnualUsd
+              : tier.priceMonthlyUsd;
+
+            const currentTier = tiers.find((t) => (currentPlanId || 'STARTER').toUpperCase() === t.id.toUpperCase()) || tiers[0];
+            const currentPrice = isIndian
+              ? isAnnual
+                ? currentTier.priceAnnualInr
+                : currentTier.priceMonthlyInr
+              : isAnnual
+              ? currentTier.priceAnnualUsd
+              : currentTier.priceMonthlyUsd;
+
+            const isUpgradeTier = !isCurrent && price > currentPrice && currentPrice > 0;
+            const upgradeDiffPrice = isUpgradeTier ? Math.max(0, price - currentPrice) : price;
+            const currencySymbol = isIndian ? '₹' : '$';
+
+            const isGrowth = id === 'GROWTH' || id === 'PRO' || tier.popular;
+            const isEnterprise = id === 'ENTERPRISE';
+            const isAgency = id === 'AGENCY';
+            const isStarter = id === 'STARTER' || (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0);
+
+            return (
+              <div
+                key={tier.id}
+                className={`rounded-[26px] p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 relative group ${
+                  isGrowth
+                    ? 'border-2 border-[#ff4893] bg-gradient-to-b from-[#fff9f6] via-[#fff1f6] to-[#fdf2f8] shadow-xl shadow-rose-500/10 hover:-translate-y-1'
+                    : isCurrent
+                    ? 'bg-white border-2 border-emerald-500 shadow-xl shadow-emerald-500/10 ring-2 ring-emerald-500/20'
+                    : 'bg-white border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md hover:-translate-y-1'
+                }`}
+              >
+                {/* Top Floating Badge */}
+                {isCurrent ? (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Your Active Plan</span>
+                  </div>
+                ) : isUpgradeTier ? (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10">
+                    <Flame className="w-3 h-3 text-amber-200 fill-amber-200" />
+                    <span>Upgrade & Save {currencySymbol}{currentPrice.toLocaleString()}</span>
+                  </div>
+                ) : null}
+
+                {/* Card Header & Content */}
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className={`text-sm font-black italic tracking-wider uppercase ${
+                        isGrowth
+                          ? 'bg-gradient-to-r from-[#ff5722] via-[#ff4081] to-[#d946ef] bg-clip-text text-transparent'
                           : isEnterprise
-                          ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                          : isGrowth
-                          ? 'bg-blue-500/20 border-blue-500/40 text-blue-300'
-                          : 'bg-slate-800 border-slate-700 text-slate-300'
+                          ? 'text-purple-700'
+                          : isAgency
+                          ? 'text-slate-900'
+                          : 'text-slate-500'
                       }`}>
-                        {isAgency ? (
-                          <Crown className="w-5 h-5 text-amber-300" />
-                        ) : isEnterprise ? (
-                          <Building className="w-5 h-5 text-purple-300" />
-                        ) : isGrowth ? (
-                          <Zap className="w-5 h-5 text-cyan-300" />
-                        ) : (
-                          <Sparkles className="w-5 h-5 text-slate-300" />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-serif font-black text-white leading-tight">{tier.name}</h3>
-                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
-                          {tier.badge}
+                        {tier.badge || tier.name}
+                      </span>
+                      {isGrowth && !isCurrent && (
+                        <span className="text-[11px] font-extrabold text-rose-600 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-rose-500" />
+                          <span>Best Value</span>
                         </span>
-                      </div>
+                      )}
                     </div>
-                  </div>
-                  <p className="text-xs text-slate-400 line-clamp-2 mt-1">{tier.description}</p>
-                </div>
-
-                {/* Price Display Card */}
-                <div className={`p-4 rounded-2xl border transition-all ${
-                  isCurrent
-                    ? 'bg-emerald-950/50 border-emerald-500/40'
-                    : isUpgradeTier
-                    ? 'bg-indigo-950/40 border-indigo-500/40 shadow-inner'
-                    : 'bg-slate-950/80 border-slate-800'
-                }`}>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-3xl sm:text-4xl font-serif font-black text-white tracking-tight">
-                      {currencySymbol}
-                      {upgradeDiffPrice.toLocaleString()}
-                    </span>
-                    <span className="text-xs font-bold text-slate-400">
-                      / {isAnnual ? 'year' : 'month'}
-                    </span>
+                    <p className="text-xs text-slate-600 leading-relaxed min-h-[36px] line-clamp-2">
+                      {tier.description}
+                    </p>
                   </div>
 
-                  {/* Prorated Upgrade Pill */}
-                  {isUpgradeTier && (
-                    <div className="mt-2.5 pt-2 border-t border-indigo-500/30 space-y-1">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-indigo-300">
-                        <span>Active Plan Credit:</span>
-                        <span className="text-emerald-400">- {currencySymbol}{currentPrice.toLocaleString()}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400">
-                        Original Price: <span className="line-through">{currencySymbol}{price.toLocaleString()}</span>
-                      </div>
+                  {/* Savings Callout Pill */}
+                  {isAnnual && !isStarter && (
+                    <div className="text-xs font-bold text-rose-600 flex items-center gap-1">
+                      <span>Save 20% on Annual Plan</span>
+                      <span>✨</span>
                     </div>
                   )}
 
-                  {/* Platform Fee & Gateway pill */}
-                  <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-800 text-[11px]">
-                    <span className="font-bold text-emerald-400 flex items-center gap-1">
-                      {tier.transactionFeePercent === 0
-                        ? '🎉 0% Platform Fee'
-                        : `${tier.transactionFeePercent}% Platform Fee`}
+                  {/* Price Display */}
+                  <div className="py-2">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight font-sans">
+                        {currencySymbol}{upgradeDiffPrice.toLocaleString()}
+                      </span>
+                      <span className="text-xl sm:text-2xl font-serif italic text-slate-500 font-normal">
+                        /{isAnnual ? 'year' : 'month'}
+                      </span>
+                    </div>
+                    <div className="text-[11px] font-medium text-slate-500 mt-1">
+                      {isStarter
+                        ? 'Free to use'
+                        : isAnnual
+                        ? `${currencySymbol}${price.toLocaleString()} billed annually`
+                        : 'Billed monthly'}
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="h-px bg-slate-200/80 w-full" />
+
+                  {/* Features List */}
+                  <div className="space-y-2.5 pt-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                      What&apos;s Included:
                     </span>
-                    <span className="font-mono text-[10px] font-semibold text-slate-400">
-                      {isIndian ? '🇮🇳 Razorpay' : '🌍 Stripe'}
-                    </span>
+                    <ul className="space-y-2.5 text-xs text-slate-700">
+                      {tier.features.map((feat, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 leading-snug">
+                          <div
+                            className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                              isGrowth
+                                ? 'bg-rose-100 text-rose-600'
+                                : isEnterprise
+                                ? 'bg-purple-100 text-purple-700'
+                                : isAgency
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </div>
+                          <span className="text-slate-700 font-medium">
+                            {feat}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
 
-                {/* Features List */}
-                <div className="space-y-3 pt-1">
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 block">
-                    Plan Capabilities:
-                  </span>
-                  <ul className="space-y-2.5 text-xs text-slate-300">
-                    {tier.features.map((feat, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5">
-                        <div
-                          className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                            isAgency
-                              ? 'bg-emerald-500 text-slate-950'
-                              : isEnterprise
-                              ? 'bg-purple-500 text-white'
-                              : isGrowth
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-slate-700 text-slate-300'
-                          }`}
-                        >
-                          <Check className="w-2.5 h-2.5 stroke-[3]" />
-                        </div>
-                        <span className="leading-tight text-slate-200">
-                          {feat}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                {/* Action Button */}
+                <div className="pt-6">
+                  {isCurrent ? (
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full py-3.5 rounded-full bg-slate-100 text-slate-600 font-bold text-xs cursor-default flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Current Plan</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isProcessingPayment}
+                      onClick={() => handleInitiatePlanUpgrade(tier)}
+                      className={`w-full py-3.5 rounded-full font-bold text-xs transition-all shadow-sm active:scale-98 flex items-center justify-center gap-2 cursor-pointer ${
+                        isGrowth
+                          ? 'bg-black text-white hover:bg-slate-800 shadow-md shadow-black/20'
+                          : isStarter
+                          ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                          : 'bg-slate-900 text-white hover:bg-black'
+                      }`}
+                    >
+                      {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : isStarter ? (
+                        <>
+                          <span>Activate Free Tier</span>
+                          <Check className="w-4 h-4" />
+                        </>
+                      ) : isUpgradeTier ? (
+                        <>
+                          <span>Upgrade for {currencySymbol}{upgradeDiffPrice.toLocaleString()}</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      ) : (
+                        <>
+                          <span>Upgrade Now</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
-
-              {/* Action Button: Dual Gateway / Free Switch */}
-              <div className="pt-7">
-                {isCurrent ? (
-                  <button
-                    type="button"
-                    disabled
-                    className="w-full py-3.5 rounded-2xl bg-emerald-950/80 border border-emerald-500/60 text-emerald-300 font-bold text-xs cursor-default flex items-center justify-center gap-2 shadow-inner"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>✓ Currently Active Plan</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={isProcessingPayment}
-                    onClick={() => handleInitiatePlanUpgrade(tier)}
-                    className={`w-full py-3.5 rounded-2xl font-black text-xs transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 cursor-pointer ${
-                      isStarter
-                        ? 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
-                        : isUpgradeTier
-                        ? 'bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 hover:brightness-110 text-white shadow-indigo-500/30'
-                        : isAgency
-                        ? 'bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-400 hover:brightness-110 text-slate-950 shadow-emerald-500/30'
-                        : isEnterprise
-                        ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:brightness-110 text-white shadow-purple-500/30'
-                        : isGrowth
-                        ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:brightness-110 text-white shadow-blue-500/30'
-                        : 'bg-white text-slate-950 hover:bg-slate-100'
-                    }`}
-                  >
-                    {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : isStarter ? (
-                      <>
-                        <span>Activate Free Tier</span>
-                        <Check className="w-4 h-4" />
-                      </>
-                    ) : isUpgradeTier ? (
-                      <>
-                        <span>Upgrade for {currencySymbol}{upgradeDiffPrice.toLocaleString()} (Difference Only)</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    ) : isIndian ? (
-                      <>
-                        <span>Subscribe with Razorpay ({currencySymbol}{price.toLocaleString()})</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    ) : (
-                      <>
-                        <span>Subscribe with Stripe ({currencySymbol}{price.toLocaleString()})</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* ── DEVELOPER API TIER ADD-ON (1,000/mo) ────────────────────────── */}
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/40 shadow-xl relative overflow-hidden">

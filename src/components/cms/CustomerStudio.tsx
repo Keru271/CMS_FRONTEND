@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { CMSCustomer, CustomerGroup, CMSOrder } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import { useCMSContext } from '@/src/context/CMSContext';
+import { getCurrencySymbol } from '@/src/lib/currency';
 import {
   Users,
   Search,
@@ -31,6 +33,15 @@ import {
 } from 'lucide-react';
 
 export const CustomerStudio: React.FC = () => {
+  let currencySymbol = '₹';
+  try {
+    const cmsCtx = useCMSContext();
+    currencySymbol = cmsCtx.currencySymbol || '₹';
+  } catch {
+    const session = cmsService.getMerchantSession();
+    currencySymbol = getCurrencySymbol(session?.store?.currency || 'INR');
+  }
+
   const [customers, setCustomers] = useState<CMSCustomer[]>([]);
   const [orders, setOrders] = useState<CMSOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -356,7 +367,7 @@ export const CustomerStudio: React.FC = () => {
                 <th className="py-4 px-6">Group Segment</th>
                 <th className="py-4 px-6">Tags</th>
                 <th className="py-4 px-6">Orders Count</th>
-                <th className="py-4 px-6">Lifetime Spend ($)</th>
+                <th className="py-4 px-6">Lifetime Spend ({currencySymbol})</th>
                 <th className="py-4 px-6">Marketing Consent</th>
                 <th className="py-4 px-6 text-right">Actions</th>
               </tr>
@@ -436,7 +447,7 @@ export const CustomerStudio: React.FC = () => {
                       </td>
 
                       <td className="py-4 px-6 font-mono font-black text-sm text-emerald-600 dark:text-emerald-400">
-                        ${cust.totalSpent.toFixed(2)}
+                        {currencySymbol}{cust.totalSpent.toFixed(2)}
                       </td>
 
                       <td className="py-4 px-6">
@@ -522,7 +533,7 @@ export const CustomerStudio: React.FC = () => {
                 <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-between">
                   <div>
                     <span className="text-[11px] font-extrabold text-indigo-900 uppercase tracking-wider block">Lifetime Spend (LTV)</span>
-                    <span className="text-xl font-black text-indigo-700 block">${selectedCustomer.totalSpent.toFixed(2)}</span>
+                    <span className="text-xl font-black text-indigo-700 block">{currencySymbol}{selectedCustomer.totalSpent.toFixed(2)}</span>
                   </div>
                   <DollarSign className="w-8 h-8 text-indigo-400" />
                 </div>
@@ -539,7 +550,7 @@ export const CustomerStudio: React.FC = () => {
                   <div>
                     <span className="text-[11px] font-extrabold text-amber-900 uppercase tracking-wider block">Average Order Value</span>
                     <span className="text-xl font-black text-amber-700 block">
-                      ${selectedCustomer.totalOrders > 0 ? (selectedCustomer.totalSpent / selectedCustomer.totalOrders).toFixed(2) : '0.00'}
+                      {currencySymbol}{selectedCustomer.totalOrders > 0 ? (selectedCustomer.totalSpent / selectedCustomer.totalOrders).toFixed(2) : '0.00'}
                     </span>
                   </div>
                   <Sparkles className="w-8 h-8 text-amber-400" />
