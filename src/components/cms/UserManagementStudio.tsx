@@ -58,7 +58,8 @@ const ROLE_PRESETS: {
     role: 'ADMIN',
     title: 'Store Administrator',
     desc: 'Full administrative access across all products, orders, settings, payments, themes, and team members.',
-    badgeColor: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800',
+    badgeColor:
+      'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800',
     icon: ShieldCheck,
     permissions: {
       canManageProducts: true,
@@ -76,7 +77,8 @@ const ROLE_PRESETS: {
     role: 'STOCK_CHECKER',
     title: 'Stock Checker & Inventory Clerk',
     desc: 'Manage catalog products, stock levels, warehouse inventory audits, SKUs, and variant quantities.',
-    badgeColor: 'bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-950/50 dark:text-cyan-300 dark:border-cyan-800',
+    badgeColor:
+      'bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-950/50 dark:text-cyan-300 dark:border-cyan-800',
     icon: Boxes,
     permissions: {
       canManageProducts: true,
@@ -94,7 +96,8 @@ const ROLE_PRESETS: {
     role: 'FULFILLMENT',
     title: 'Logistics & Fulfillment Specialist',
     desc: 'Access orders, packing slips, carrier shipping rates, tracking numbers, and fulfillment status updates.',
-    badgeColor: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800',
+    badgeColor:
+      'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800',
     icon: Truck,
     permissions: {
       canManageProducts: false,
@@ -112,7 +115,8 @@ const ROLE_PRESETS: {
     role: 'SUPPORT',
     title: 'Customer Support Agent',
     desc: 'View customer accounts, lookup order details, process refunds, and respond to support queries.',
-    badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800',
+    badgeColor:
+      'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800',
     icon: Headphones,
     permissions: {
       canManageProducts: false,
@@ -130,7 +134,8 @@ const ROLE_PRESETS: {
     role: 'EDITOR',
     title: 'Theme & Content Designer',
     desc: 'Customize storefront templates, landing pages, marketing banners, navigation menus, and media.',
-    badgeColor: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800',
+    badgeColor:
+      'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800',
     icon: Palette,
     permissions: {
       canManageProducts: true,
@@ -148,7 +153,8 @@ const ROLE_PRESETS: {
     role: 'CUSTOM',
     title: 'Custom Staff Role',
     desc: 'Define custom access permissions tailored to your exact store workflow requirements.',
-    badgeColor: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-accent dark:text-slate-300 dark:border-border',
+    badgeColor:
+      'bg-slate-100 text-slate-800 border-slate-200 dark:bg-accent dark:text-slate-300 dark:border-border',
     icon: Settings,
     permissions: {
       canManageProducts: true,
@@ -171,7 +177,10 @@ export const UserManagementStudio: React.FC = () => {
   const [storeName, setStoreName] = useState('OmniStore');
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -265,7 +274,10 @@ export const UserManagementStudio: React.FC = () => {
   // Open Add Member Modal
   const handleOpenAddModal = () => {
     if (members.length >= maxStaff) {
-      showToast(`Team member quota reached (${maxStaff} seats) for ${planName}. Please upgrade your plan to add more staff.`, 'error');
+      showToast(
+        `Team member quota reached (${maxStaff} seats) for ${planName}. Please upgrade your plan to add more staff.`,
+        'error',
+      );
       return;
     }
     const defaultPreset = ROLE_PRESETS[1]; // Stock Checker default
@@ -353,7 +365,10 @@ export const UserManagementStudio: React.FC = () => {
         showToast(`Access revoked for "${member.name}".`, 'success');
         await loadMembers();
       } catch (err: any) {
-        showToast(err.response?.data?.message || err.message || 'Failed to delete member.', 'error');
+        showToast(
+          err.response?.data?.message || err.message || 'Failed to delete member.',
+          'error',
+        );
       } finally {
         setIsSaving(false);
       }
@@ -380,7 +395,10 @@ export const UserManagementStudio: React.FC = () => {
       setTransferTargetEmail('');
       await loadMembers();
     } catch (err: any) {
-      showToast(err.response?.data?.message || err.message || 'Failed to transfer store ownership.', 'error');
+      showToast(
+        err.response?.data?.message || err.message || 'Failed to transfer store ownership.',
+        'error',
+      );
     } finally {
       setIsSaving(false);
     }
@@ -391,20 +409,26 @@ export const UserManagementStudio: React.FC = () => {
       m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (m.customRoleTitle || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.role.toLowerCase().includes(searchQuery.toLowerCase())
+      m.role.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const adminCount = members.filter((m) => m.role === 'ADMIN' || m.isOwner).length;
   const stockCheckerCount = members.filter((m) => m.role === 'STOCK_CHECKER').length;
   const opsCount = members.filter(
-    (m) => m.role === 'FULFILLMENT' || m.role === 'SUPPORT' || m.role === 'EDITOR' || m.role === 'MANAGER'
+    (m) =>
+      m.role === 'FULFILLMENT' ||
+      m.role === 'SUPPORT' ||
+      m.role === 'EDITOR' ||
+      m.role === 'MANAGER',
   ).length;
 
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-slate-500 animate-pulse">Loading Store Team & Access Control...</span>
+        <span className="text-xs font-bold text-slate-500 animate-pulse">
+          Loading Store Team & Access Control...
+        </span>
       </div>
     );
   }
@@ -439,11 +463,13 @@ export const UserManagementStudio: React.FC = () => {
                 <Users className="w-3.5 h-3.5" />
                 <span>Store Team & Access Control</span>
               </span>
-              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                members.length >= maxStaff
-                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-              }`}>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                  members.length >= maxStaff
+                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                }`}
+              >
                 👥 {members.length} / {maxStaff >= 999 ? 'Unlimited' : maxStaff} Seats ({planName})
               </span>
               {owner && (
@@ -458,7 +484,8 @@ export const UserManagementStudio: React.FC = () => {
               <span>User Management & Roles</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              Add team members to <strong>{storeName}</strong>, assign granular roles (Admin, Stock Checker, Logistics, Support, Designer), and safely transfer store ownership.
+              Add team members to <strong>{storeName}</strong>, assign granular roles (Admin, Stock
+              Checker, Logistics, Support, Designer), and safely transfer store ownership.
             </p>
           </div>
 
@@ -487,19 +514,27 @@ export const UserManagementStudio: React.FC = () => {
         {/* Overview Stats Bar */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-700/60">
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Members</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Total Members
+            </span>
             <span className="text-xl font-black text-white">{members.length}</span>
           </div>
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Admins & Owners</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Admins & Owners
+            </span>
             <span className="text-xl font-black text-purple-300">{adminCount}</span>
           </div>
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Stock Checkers</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Stock Checkers
+            </span>
             <span className="text-xl font-black text-cyan-300">{stockCheckerCount}</span>
           </div>
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Operations & Support</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Operations & Support
+            </span>
             <span className="text-xl font-black text-emerald-300">{opsCount}</span>
           </div>
         </div>
@@ -540,7 +575,10 @@ export const UserManagementStudio: React.FC = () => {
               {filteredMembers.map((member) => {
                 const isOwner = member.isOwner || member.role === 'OWNER';
                 return (
-                  <tr key={member.id} className="hover:bg-slate-50/80 dark:hover:bg-accent/20 transition-colors">
+                  <tr
+                    key={member.id}
+                    className="hover:bg-slate-50/80 dark:hover:bg-accent/20 transition-colors"
+                  >
                     {/* User & Email */}
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
@@ -549,10 +587,10 @@ export const UserManagementStudio: React.FC = () => {
                             isOwner
                               ? 'bg-amber-500 text-white shadow-amber-500/30'
                               : member.role === 'ADMIN'
-                              ? 'bg-purple-600 text-white'
-                              : member.role === 'STOCK_CHECKER'
-                              ? 'bg-cyan-600 text-white'
-                              : 'bg-indigo-600 text-white'
+                                ? 'bg-purple-600 text-white'
+                                : member.role === 'STOCK_CHECKER'
+                                  ? 'bg-cyan-600 text-white'
+                                  : 'bg-indigo-600 text-white'
                           }`}
                         >
                           {isOwner ? (
@@ -580,12 +618,12 @@ export const UserManagementStudio: React.FC = () => {
                             isOwner
                               ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-700'
                               : member.role === 'ADMIN'
-                              ? 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-700'
-                              : member.role === 'STOCK_CHECKER'
-                              ? 'bg-cyan-100 text-cyan-900 border-cyan-300 dark:bg-cyan-950/50 dark:text-cyan-300 dark:border-cyan-700'
-                              : member.role === 'FULFILLMENT'
-                              ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-700'
-                              : 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-accent dark:text-slate-200'
+                                ? 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-700'
+                                : member.role === 'STOCK_CHECKER'
+                                  ? 'bg-cyan-100 text-cyan-900 border-cyan-300 dark:bg-cyan-950/50 dark:text-cyan-300 dark:border-cyan-700'
+                                  : member.role === 'FULFILLMENT'
+                                    ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-700'
+                                    : 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-accent dark:text-slate-200'
                           }`}
                         >
                           {isOwner && <Crown className="w-3 h-3 text-amber-600" />}
@@ -601,13 +639,15 @@ export const UserManagementStudio: React.FC = () => {
                           member.status === 'ACTIVE'
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
                             : member.status === 'INVITED'
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300'
-                            : 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300'
+                              : 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
                         }`}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${
-                            member.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                            member.status === 'ACTIVE'
+                              ? 'bg-emerald-500 animate-pulse'
+                              : 'bg-slate-400'
                           }`}
                         />
                         <span>{member.status}</span>
@@ -711,7 +751,9 @@ export const UserManagementStudio: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-black text-lg">Add Staff Member</h3>
-                  <p className="text-xs text-slate-400">Grant store access with pre-configured role presets or custom permissions.</p>
+                  <p className="text-xs text-slate-400">
+                    Grant store access with pre-configured role presets or custom permissions.
+                  </p>
                 </div>
               </div>
               <button
@@ -723,7 +765,10 @@ export const UserManagementStudio: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmitAddMember} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+            <form
+              onSubmit={handleSubmitAddMember}
+              className="p-6 space-y-6 max-h-[80vh] overflow-y-auto"
+            >
               {/* Member Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -795,7 +840,9 @@ export const UserManagementStudio: React.FC = () => {
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-extrabold text-xs text-slate-900 dark:text-foreground flex items-center gap-2">
-                            <Icon className={`w-4 h-4 ${isSelected ? 'text-indigo-600' : 'text-slate-500'}`} />
+                            <Icon
+                              className={`w-4 h-4 ${isSelected ? 'text-indigo-600' : 'text-slate-500'}`}
+                            />
                             <span>{preset.title}</span>
                           </span>
                           {isSelected && <Check className="w-4 h-4 text-indigo-600 shrink-0" />}
@@ -820,13 +867,29 @@ export const UserManagementStudio: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
                     { key: 'canManageProducts', label: 'Catalog & Products', icon: Package },
-                    { key: 'canManageInventory', label: 'Stock & Inventory Quantities', icon: Boxes },
+                    {
+                      key: 'canManageInventory',
+                      label: 'Stock & Inventory Quantities',
+                      icon: Boxes,
+                    },
                     { key: 'canManageOrders', label: 'Orders & Shipments', icon: Truck },
-                    { key: 'canManageCustomers', label: 'Customer Directory & Profiles', icon: Users },
+                    {
+                      key: 'canManageCustomers',
+                      label: 'Customer Directory & Profiles',
+                      icon: Users,
+                    },
                     { key: 'canManageThemes', label: 'Themes, Pages & Navigation', icon: Palette },
                     { key: 'canManageSettings', label: 'Store Settings & Tax', icon: Settings },
-                    { key: 'canManagePayments', label: 'Payment Gateways & Payouts', icon: DollarSign },
-                    { key: 'canManageAnalytics', label: 'Analytics & Sales Reports', icon: BarChart3 },
+                    {
+                      key: 'canManagePayments',
+                      label: 'Payment Gateways & Payouts',
+                      icon: DollarSign,
+                    },
+                    {
+                      key: 'canManageAnalytics',
+                      label: 'Analytics & Sales Reports',
+                      icon: BarChart3,
+                    },
                   ].map((perm) => {
                     const Icon = perm.icon;
                     const isChecked = (addForm as any)[perm.key];
@@ -908,20 +971,29 @@ export const UserManagementStudio: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmitEditMember} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+            <form
+              onSubmit={handleSubmitEditMember}
+              className="p-6 space-y-6 max-h-[80vh] overflow-y-auto"
+            >
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Role Title</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Role Title
+                  </label>
                   <input
                     type="text"
                     value={editingMember.customRoleTitle || ''}
-                    onChange={(e) => setEditingMember({ ...editingMember, customRoleTitle: e.target.value })}
+                    onChange={(e) =>
+                      setEditingMember({ ...editingMember, customRoleTitle: e.target.value })
+                    }
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-card text-xs font-bold"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Account Status</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Account Status
+                  </label>
                   <select
                     value={editingMember.status}
                     onChange={(e) => setEditingMember({ ...editingMember, status: e.target.value })}
@@ -936,7 +1008,9 @@ export const UserManagementStudio: React.FC = () => {
 
               {/* Checkboxes */}
               <div className="p-5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/80 dark:border-border space-y-3">
-                <h4 className="text-xs font-black text-slate-900 dark:text-foreground">Permissions</h4>
+                <h4 className="text-xs font-black text-slate-900 dark:text-foreground">
+                  Permissions
+                </h4>
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { key: 'canManageProducts', label: 'Catalog Products' },
@@ -1001,7 +1075,9 @@ export const UserManagementStudio: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-black text-lg">Transfer Store Ownership</h3>
-                  <p className="text-xs text-amber-100">Hand over primary administrative ownership of this store.</p>
+                  <p className="text-xs text-amber-100">
+                    Hand over primary administrative ownership of this store.
+                  </p>
                 </div>
               </div>
               <button
@@ -1021,7 +1097,9 @@ export const UserManagementStudio: React.FC = () => {
                   <span>Important Security Notice</span>
                 </div>
                 <p className="leading-relaxed">
-                  Transferring ownership grants the recipient full primary authority over <strong>{storeName}</strong>, billing subscriptions, domain configurations, and team members.
+                  Transferring ownership grants the recipient full primary authority over{' '}
+                  <strong>{storeName}</strong>, billing subscriptions, domain configurations, and
+                  team members.
                 </p>
               </div>
 
@@ -1043,7 +1121,9 @@ export const UserManagementStudio: React.FC = () => {
               {/* Quick Pick From Existing Members */}
               {members.filter((m) => !m.isOwner).length > 0 && (
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 block">Or select from existing team:</span>
+                  <span className="text-[11px] font-bold text-slate-500 block">
+                    Or select from existing team:
+                  </span>
                   <div className="flex flex-wrap gap-2">
                     {members
                       .filter((m) => !m.isOwner)
@@ -1141,7 +1221,9 @@ export const UserManagementStudio: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-black text-lg">Staff Account Created!</h3>
-                  <p className="text-xs text-emerald-100">Login credentials ready for the new user.</p>
+                  <p className="text-xs text-emerald-100">
+                    Login credentials ready for the new user.
+                  </p>
                 </div>
               </div>
               <button
@@ -1155,27 +1237,42 @@ export const UserManagementStudio: React.FC = () => {
 
             <div className="p-6 space-y-4">
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                The user <strong>{createdCredentials.name}</strong> can now log in to the CMS dashboard using the following credentials:
+                The user <strong>{createdCredentials.name}</strong> can now log in to the CMS
+                dashboard using the following credentials:
               </p>
 
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border space-y-3 font-mono text-xs">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">Role</span>
-                  <span className="font-bold text-indigo-600 dark:text-indigo-400">{createdCredentials.role}</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">
+                    Role
+                  </span>
+                  <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                    {createdCredentials.role}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">Login Email</span>
-                  <span className="font-bold text-slate-900 dark:text-foreground">{createdCredentials.email}</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">
+                    Login Email
+                  </span>
+                  <span className="font-bold text-slate-900 dark:text-foreground">
+                    {createdCredentials.email}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">Password</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">
+                    Password
+                  </span>
                   <span className="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
                     {createdCredentials.password}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">CMS Portal URL</span>
-                  <span className="text-slate-600 dark:text-slate-300 text-[11px]">http://localhost:3000/login</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">
+                    CMS Portal URL
+                  </span>
+                  <span className="text-slate-600 dark:text-slate-300 text-[11px]">
+                    http://localhost:3000/login
+                  </span>
                 </div>
               </div>
 
@@ -1184,7 +1281,7 @@ export const UserManagementStudio: React.FC = () => {
                   type="button"
                   onClick={() => {
                     navigator.clipboard.writeText(
-                      `OmniStore CMS Login Credentials:\nRole: ${createdCredentials.role}\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}\nPortal: http://localhost:3000/login`
+                      `OmniStore CMS Login Credentials:\nRole: ${createdCredentials.role}\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}\nPortal: http://localhost:3000/login`,
                     );
                     showToast('Credentials copied to clipboard!', 'success');
                   }}

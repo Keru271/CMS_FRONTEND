@@ -4,7 +4,8 @@ import { DeveloperStudio } from '@/src/components/cms/DeveloperStudio';
 
 export const metadata: Metadata = {
   title: 'Developer Studio & API Integrations | Store Studio',
-  description: 'Manage scoped REST API keys, real-time webhook subscriptions, and ERP integrations.',
+  description:
+    'Manage scoped REST API keys, real-time webhook subscriptions, and ERP integrations.',
 };
 
 export default function DeveloperPage() {

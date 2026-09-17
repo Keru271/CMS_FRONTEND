@@ -28,7 +28,8 @@ import {
 import { BlogPost, BlogPostInput, CMSProduct } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 
-const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
+const STOREFRONT_URL =
+  process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
 
 // Helper to convert ISO or Date to local YYYY-MM-DDTHH:mm string for datetime-local input without timezone shift
 const toLocalDatetimeString = (dateInput?: string | Date | null): string => {
@@ -113,9 +114,12 @@ export default function BlogManagementPage() {
     if (!hasScheduled) return;
 
     const syncTimer = setInterval(() => {
-      cmsService.getBlogPosts().then((data) => {
-        if (Array.isArray(data)) setPosts(data);
-      }).catch(() => {});
+      cmsService
+        .getBlogPosts()
+        .then((data) => {
+          if (Array.isArray(data)) setPosts(data);
+        })
+        .catch(() => {});
     }, 15000);
 
     return () => clearInterval(syncTimer);
@@ -176,7 +180,7 @@ export default function BlogManagementPage() {
           .toLowerCase()
           .trim()
           .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '')
+          .replace(/^-+|-+$/g, ''),
       );
       if (!metaTitle) {
         setMetaTitle(val);
@@ -244,7 +248,8 @@ export default function BlogManagementPage() {
 
   const handleBulkDelete = async () => {
     if (!selectedIds.length) return;
-    if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected articles?`)) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected articles?`))
+      return;
     try {
       await cmsService.bulkDeleteBlogPosts(selectedIds);
       setSelectedIds([]);
@@ -301,7 +306,8 @@ export default function BlogManagementPage() {
                 Blog & Editorial Studio
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Publish rich storytelling, buying guides, and SEO content to drive organic traffic and sales.
+                Publish rich storytelling, buying guides, and SEO content to drive organic traffic
+                and sales.
               </p>
             </div>
           </div>
@@ -341,7 +347,9 @@ export default function BlogManagementPage() {
             <span className="text-xs font-semibold uppercase tracking-wider">Live & Active</span>
             <CheckCircle className="w-4 h-4 text-emerald-500" />
           </div>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{publishedCount}</p>
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            {publishedCount}
+          </p>
           <span className="text-xs text-slate-400">Indexed on storefront</span>
         </div>
 
@@ -425,7 +433,9 @@ export default function BlogManagementPage() {
       ) : filteredPosts.length === 0 ? (
         <div className="text-center p-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
           <BookOpen className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">No articles found</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            No articles found
+          </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4">
             Start writing engaging stories, styling tips, or product highlights.
           </p>
@@ -470,8 +480,8 @@ export default function BlogManagementPage() {
                           effectiveStatus === 'PUBLISHED'
                             ? 'bg-emerald-500/90 text-white'
                             : effectiveStatus === 'SCHEDULED'
-                            ? 'bg-amber-500/90 text-white'
-                            : 'bg-slate-700/90 text-white'
+                              ? 'bg-amber-500/90 text-white'
+                              : 'bg-slate-700/90 text-white'
                         }`}
                       >
                         {isFutureScheduled && <Clock className="w-3 h-3" />}
@@ -494,7 +504,10 @@ export default function BlogManagementPage() {
                       </span>
                       <span>•</span>
                       {isFutureScheduled ? (
-                        <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium" title="Scheduled to publish">
+                        <span
+                          className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium"
+                          title="Scheduled to publish"
+                        >
                           <Clock className="w-3.5 h-3.5" />
                           {new Date(post.publishedAt || post.createdAt).toLocaleString(undefined, {
                             month: 'short',
@@ -506,11 +519,14 @@ export default function BlogManagementPage() {
                       ) : (
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5" />
-                          {new Date(post.publishedAt || post.createdAt).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
+                          {new Date(post.publishedAt || post.createdAt).toLocaleDateString(
+                            undefined,
+                            {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            },
+                          )}
                         </span>
                       )}
                     </div>
@@ -710,12 +726,19 @@ export default function BlogManagementPage() {
                     <span>
                       Scheduled to go live on:{' '}
                       <strong className="font-semibold">
-                        {publishedAt ? new Date(publishedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Set a time'}
+                        {publishedAt
+                          ? new Date(publishedAt).toLocaleString(undefined, {
+                              dateStyle: 'medium',
+                              timeStyle: 'short',
+                            })
+                          : 'Set a time'}
                       </strong>
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mr-1">Quick presets:</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mr-1">
+                      Quick presets:
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -769,7 +792,11 @@ export default function BlogManagementPage() {
                   />
                   {featuredImage && (
                     <div className="mt-2 h-24 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-                      <img src={featuredImage} alt="Preview" className="w-full h-full object-cover" />
+                      <img
+                        src={featuredImage}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   )}
                 </div>
@@ -806,7 +833,9 @@ export default function BlogManagementPage() {
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase">
                     Article Body Content * (Markdown / Rich HTML)
                   </label>
-                  <span className="text-[11px] text-slate-400">Supports headers (##), bold (**), quotes (&gt;), lists (-)</span>
+                  <span className="text-[11px] text-slate-400">
+                    Supports headers (##), bold (**), quotes (&gt;), lists (-)
+                  </span>
                 </div>
                 <textarea
                   rows={10}
@@ -828,7 +857,8 @@ export default function BlogManagementPage() {
                     </h4>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                    Select products from your catalog to embed as shoppable cards inside the article reader.
+                    Select products from your catalog to embed as shoppable cards inside the article
+                    reader.
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-44 overflow-y-auto pr-1">
                     {products.map((prod) => {
@@ -838,7 +868,7 @@ export default function BlogManagementPage() {
                           key={prod.id}
                           onClick={() => {
                             setSelectedProductIds((prev) =>
-                              isSelected ? prev.filter((id) => id !== prod.id) : [...prev, prod.id]
+                              isSelected ? prev.filter((id) => id !== prod.id) : [...prev, prod.id],
                             );
                           }}
                           className={`p-2 rounded-xl border text-xs cursor-pointer flex items-center gap-2 transition ${
@@ -847,7 +877,12 @@ export default function BlogManagementPage() {
                               : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300'
                           }`}
                         >
-                          <input type="checkbox" checked={isSelected} readOnly className="rounded text-indigo-600" />
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            readOnly
+                            className="rounded text-indigo-600"
+                          />
                           <span className="truncate">{prod.name}</span>
                         </div>
                       );

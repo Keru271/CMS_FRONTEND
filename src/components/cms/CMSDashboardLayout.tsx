@@ -62,7 +62,12 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     if (isOwnerOrAdmin) return true;
 
     // Pages open to any authenticated team member:
-    if (path === '/dashboard' || path === '/' || path.startsWith('/docs') || path.startsWith('/settings')) {
+    if (
+      path === '/dashboard' ||
+      path === '/' ||
+      path.startsWith('/docs') ||
+      path.startsWith('/settings')
+    ) {
       return true;
     }
 
@@ -86,7 +91,9 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     if (userRole === 'SUPPORT') {
-      return path.startsWith('/customers') || path.startsWith('/orders') || path.startsWith('/reviews');
+      return (
+        path.startsWith('/customers') || path.startsWith('/orders') || path.startsWith('/reviews')
+      );
     }
 
     if (userRole === 'EDITOR') {
@@ -119,10 +126,12 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     // Granular permission checks:
     if (userPermissions) {
       if (path.startsWith('/products')) return !!userPermissions.canManageProducts;
-      if (path.startsWith('/categories')) return !!userPermissions.canManageProducts || !!userPermissions.canManageInventory;
+      if (path.startsWith('/categories'))
+        return !!userPermissions.canManageProducts || !!userPermissions.canManageInventory;
       if (path.startsWith('/orders')) return !!userPermissions.canManageOrders;
       if (path.startsWith('/customers')) return !!userPermissions.canManageCustomers;
-      if (path.startsWith('/reviews')) return !!userPermissions.canManageCustomers || !!userPermissions.canManageProducts;
+      if (path.startsWith('/reviews'))
+        return !!userPermissions.canManageCustomers || !!userPermissions.canManageProducts;
       if (
         path.startsWith('/themes') ||
         path.startsWith('/pages') ||
@@ -132,13 +141,15 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
       ) {
         return !!userPermissions.canManageThemes;
       }
-      if (path.startsWith('/seo')) return !!userPermissions.canManageThemes || !!userPermissions.canManageSettings;
+      if (path.startsWith('/seo'))
+        return !!userPermissions.canManageThemes || !!userPermissions.canManageSettings;
       if (path.startsWith('/shipping')) return !!userPermissions.canManageLogistics;
       if (path.startsWith('/discounts') || path.startsWith('/marketing')) {
         return !!userPermissions.canManageAnalytics || !!userPermissions.canManageProducts;
       }
       if (path.startsWith('/store-setup')) return !!userPermissions.canManageSettings;
-      if (path.startsWith('/tax') || path.startsWith('/payments') || path.startsWith('/payment')) return !!userPermissions.canManagePayments;
+      if (path.startsWith('/tax') || path.startsWith('/payments') || path.startsWith('/payment'))
+        return !!userPermissions.canManagePayments;
       if (path.startsWith('/loyalty')) return !!userPermissions.canManageCustomers;
     }
 
@@ -199,7 +210,8 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
                   Store Operations Blocked
                 </h2>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  This store is currently suspended by Master Administration. Review the suspension notice modal.
+                  This store is currently suspended by Master Administration. Review the suspension
+                  notice modal.
                 </p>
               </div>
             </div>
@@ -219,14 +231,19 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
                     Section Not Permitted
                   </h2>
                   <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
-                    Your assigned staff role (<strong className="text-rose-600">{userRole.replace('_', ' ')}</strong>) does not have authorization to access <strong>{pathname}</strong>.
+                    Your assigned staff role (
+                    <strong className="text-rose-600">{userRole.replace('_', ' ')}</strong>) does
+                    not have authorization to access <strong>{pathname}</strong>.
                   </p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-xs text-slate-500 space-y-1 text-left">
-                  <span className="font-bold text-slate-700 dark:text-slate-200 block">Need access to this module?</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-200 block">
+                    Need access to this module?
+                  </span>
                   <p className="text-[11px]">
-                    Please request a permission upgrade or role adjustment from your primary Store Administrator.
+                    Please request a permission upgrade or role adjustment from your primary Store
+                    Administrator.
                   </p>
                 </div>
 

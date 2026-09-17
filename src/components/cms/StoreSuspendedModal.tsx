@@ -22,24 +22,22 @@ import {
 } from 'lucide-react';
 
 export const StoreSuspendedModal: React.FC = () => {
-  const {
-    merchantData,
-    isCheckingStatus,
-    refreshStoreStatus,
-    handleLogout,
-  } = useCMSContext();
+  const { merchantData, isCheckingStatus, refreshStoreStatus, handleLogout } = useCMSContext();
 
   const storeId = merchantData?.store?.id;
   const storeName = merchantData?.store?.storeName || 'Merchant Store';
   const storeSlug = merchantData?.store?.slug || 'store';
   const merchantEmail = merchantData?.merchant?.email || 'merchant@example.com';
-  const merchantName = `${merchantData?.merchant?.firstName || 'Merchant'} ${merchantData?.merchant?.lastName || 'Owner'}`.trim();
+  const merchantName =
+    `${merchantData?.merchant?.firstName || 'Merchant'} ${merchantData?.merchant?.lastName || 'Owner'}`.trim();
 
   // Mode: 'NOTICE' | 'APPEAL_FORM' | 'SUCCESS'
   const [viewMode, setViewMode] = useState<'NOTICE' | 'APPEAL_FORM' | 'SUCCESS'>('NOTICE');
 
   // Appeal Form State
-  const [appealType, setAppealType] = useState<'APPEAL' | 'COMPLIANCE' | 'TECHNICAL' | 'BILLING' | 'GENERAL'>('APPEAL');
+  const [appealType, setAppealType] = useState<
+    'APPEAL' | 'COMPLIANCE' | 'TECHNICAL' | 'BILLING' | 'GENERAL'
+  >('APPEAL');
   const [priority, setPriority] = useState<'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'>('HIGH');
   const [subject, setSubject] = useState(`Store Suspension Appeal — ${storeName} (/${storeSlug})`);
   const [message, setMessage] = useState('');
@@ -78,7 +76,9 @@ export const StoreSuspendedModal: React.FC = () => {
       }
     } catch (err: any) {
       setErrorMessage(
-        err?.response?.data?.message || err?.message || 'Error submitting query. Please verify connection.'
+        err?.response?.data?.message ||
+          err?.message ||
+          'Error submitting query. Please verify connection.',
       );
     } finally {
       setIsSubmitting(false);
@@ -89,7 +89,6 @@ export const StoreSuspendedModal: React.FC = () => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-[#191a1b]/65 backdrop-blur-sm animate-fadeIn">
       {/* Statamic Style Reference Modal Container */}
       <div className="relative w-full max-w-2xl bg-white rounded-2xl p-6 sm:p-8 text-[#191a1b] font-sans shadow-[0_0_0_1px_rgba(94,90,90,0.1),0_16px_40px_-8px_rgba(0,0,0,0.12)] space-y-6 overflow-hidden max-h-[90vh] overflow-y-auto">
-        
         {/* VIEW 1: DEFAULT SUSPENSION NOTICE */}
         {viewMode === 'NOTICE' && (
           <>
@@ -112,7 +111,8 @@ export const StoreSuspendedModal: React.FC = () => {
                 </h2>
 
                 <p className="text-xs sm:text-sm text-[#5e5a5a] leading-relaxed">
-                  This store and all merchant management operations have been temporarily suspended by Master Platform Administration.
+                  This store and all merchant management operations have been temporarily suspended
+                  by Master Platform Administration.
                 </p>
               </div>
             </div>
@@ -134,7 +134,9 @@ export const StoreSuspendedModal: React.FC = () => {
                   <div className="font-semibold text-[#191a1b] flex items-center gap-1.5">
                     <Store className="w-3.5 h-3.5 text-[#5e5a5a]" />
                     <span>{storeName}</span>
-                    <span className="font-mono text-[11px] font-bold text-[#4e5154]">/{storeSlug}</span>
+                    <span className="font-mono text-[11px] font-bold text-[#4e5154]">
+                      /{storeSlug}
+                    </span>
                   </div>
                 </div>
 
@@ -208,7 +210,9 @@ export const StoreSuspendedModal: React.FC = () => {
 
             {/* Footer Note */}
             <p className="text-[11px] text-[#5e5a5a] text-center font-normal pt-1">
-              Once Platform Governance reinstates your store, click <span className="font-semibold text-[#191a1b]">Re-verify Store Status</span> to immediately restore studio access.
+              Once Platform Governance reinstates your store, click{' '}
+              <span className="font-semibold text-[#191a1b]">Re-verify Store Status</span> to
+              immediately restore studio access.
             </p>
           </>
         )}
@@ -304,10 +308,12 @@ export const StoreSuspendedModal: React.FC = () => {
               {/* Readonly Account Meta */}
               <div className="p-3 rounded-lg bg-[#fdf1ef] border border-[#cbd5e0] grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-[#5e5a5a]">
                 <div>
-                  <span className="font-semibold text-[#191a1b]">Merchant Email:</span> {merchantEmail}
+                  <span className="font-semibold text-[#191a1b]">Merchant Email:</span>{' '}
+                  {merchantEmail}
                 </div>
                 <div>
-                  <span className="font-semibold text-[#191a1b]">Store:</span> {storeName} (<span className="font-mono">{storeSlug}</span>)
+                  <span className="font-semibold text-[#191a1b]">Store:</span> {storeName} (
+                  <span className="font-mono">{storeSlug}</span>)
                 </div>
               </div>
 
@@ -325,7 +331,8 @@ export const StoreSuspendedModal: React.FC = () => {
                   className="w-full p-3.5 rounded-lg bg-[#ffffff] border border-[#cbd5e0] focus:border-[#cbc2ea] focus:ring-2 focus:ring-[#cbc2ea]/40 text-[#191a1b] font-sans outline-none text-xs leading-relaxed resize-none"
                 />
                 <span className="text-[10px] text-[#5e5a5a] block mt-1">
-                  Submitted queries will be immediately queued in the Master Admin Panel for compliance review.
+                  Submitted queries will be immediately queued in the Master Admin Panel for
+                  compliance review.
                 </span>
               </div>
             </div>
@@ -376,7 +383,8 @@ export const StoreSuspendedModal: React.FC = () => {
                 Under <span className="italic font-normal">Governance Review</span>
               </h2>
               <p className="text-xs sm:text-sm text-[#5e5a5a] max-w-md mx-auto leading-relaxed">
-                Your appeal has been dispatched to Master Platform Administration. Our compliance team will review your query shortly.
+                Your appeal has been dispatched to Master Platform Administration. Our compliance
+                team will review your query shortly.
               </p>
             </div>
 

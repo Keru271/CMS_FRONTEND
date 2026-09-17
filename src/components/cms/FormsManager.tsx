@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   FileText,
   Plus,
@@ -29,29 +29,26 @@ import {
   Users,
   Award,
   Zap,
-} from "lucide-react";
-import { CMSForm, FormCategory, FormStatus } from "@/src/types";
-import { cmsService } from "@/src/services/cmsService";
-import { EmbedShareModal } from "./EmbedShareModal";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+} from 'lucide-react';
+import { CMSForm, FormCategory, FormStatus } from '@/src/types';
+import { cmsService } from '@/src/services/cmsService';
+import { EmbedShareModal } from './EmbedShareModal';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Props {
   onOpenBuilder?: (formId: string) => void;
   onOpenSubmissions?: (formId: string) => void;
 }
 
-export const FormsManager: React.FC<Props> = ({
-  onOpenBuilder,
-  onOpenSubmissions,
-}) => {
+export const FormsManager: React.FC<Props> = ({ onOpenBuilder, onOpenSubmissions }) => {
   const router = useRouter();
   const [forms, setForms] = useState<CMSForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [activeShareForm, setActiveShareForm] = useState<CMSForm | null>(null);
 
@@ -63,7 +60,7 @@ export const FormsManager: React.FC<Props> = ({
       });
       setForms(data);
     } catch (err) {
-      console.error("Failed to load forms", err);
+      console.error('Failed to load forms', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -84,28 +81,28 @@ export const FormsManager: React.FC<Props> = ({
       const res = await cmsService.duplicateForm(id);
       setForms((prev) => [res.form, ...prev]);
     } catch (err) {
-      console.error("Failed to duplicate form", err);
+      console.error('Failed to duplicate form', err);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this form and all its submissions?")) return;
+    if (!confirm('Are you sure you want to delete this form and all its submissions?')) return;
     try {
       await cmsService.deleteForm(id);
       setForms((prev) => prev.filter((f) => f.id !== id));
     } catch (err) {
-      console.error("Failed to delete form", err);
+      console.error('Failed to delete form', err);
     }
   };
 
   const handleResetPresets = async () => {
-    if (!confirm("Reset and seed default starter form templates?")) return;
+    if (!confirm('Reset and seed default starter form templates?')) return;
     setRefreshing(true);
     try {
       const res = await cmsService.resetFormPresets();
       setForms(res.forms);
     } catch (err) {
-      console.error("Failed to reset presets", err);
+      console.error('Failed to reset presets', err);
     } finally {
       setRefreshing(false);
     }
@@ -113,7 +110,7 @@ export const FormsManager: React.FC<Props> = ({
 
   // KPI calculations
   const totalSubmissions = forms.reduce((acc, f) => acc + (f.submissionsCount || 0), 0);
-  const activeFormsCount = forms.filter((f) => f.status === "PUBLISHED").length;
+  const activeFormsCount = forms.filter((f) => f.status === 'PUBLISHED').length;
 
   const navigateToBuilder = (id: string) => {
     if (onOpenBuilder) {
@@ -129,7 +126,7 @@ export const FormsManager: React.FC<Props> = ({
     } else if (id) {
       router.push(`/forms/${id}/submissions`);
     } else {
-      router.push("/forms/submissions");
+      router.push('/forms/submissions');
     }
   };
 
@@ -176,9 +173,7 @@ export const FormsManager: React.FC<Props> = ({
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Total Forms
           </p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-            {forms.length}
-          </p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{forms.length}</p>
         </div>
         <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-900/40 shadow-sm">
           <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
@@ -219,19 +214,19 @@ export const FormsManager: React.FC<Props> = ({
         {/* Category Filter Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           {[
-            { id: "ALL", label: "All Categories" },
-            { id: "CONTACT", label: "Contact & Support" },
-            { id: "FEEDBACK", label: "Feedback & NPS" },
-            { id: "ORDER_INQUIRY", label: "B2B & Wholesale" },
-            { id: "REGISTRATION", label: "Registration" },
+            { id: 'ALL', label: 'All Categories' },
+            { id: 'CONTACT', label: 'Contact & Support' },
+            { id: 'FEEDBACK', label: 'Feedback & NPS' },
+            { id: 'ORDER_INQUIRY', label: 'B2B & Wholesale' },
+            { id: 'REGISTRATION', label: 'Registration' },
           ].map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap ${
                 selectedCategory === cat.id
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
               }`}
             >
               {cat.label}
@@ -254,21 +249,21 @@ export const FormsManager: React.FC<Props> = ({
 
           <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
             <button
-              onClick={() => setViewMode("grid")}
+              onClick={() => setViewMode('grid')}
               className={`p-1.5 rounded-lg text-xs transition ${
-                viewMode === "grid"
-                  ? "bg-white dark:bg-slate-900 text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-800"
+                viewMode === 'grid'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <Grid className="w-4 h-4" />
             </button>
             <button
-              onClick={() => setViewMode("table")}
+              onClick={() => setViewMode('table')}
               className={`p-1.5 rounded-lg text-xs transition ${
-                viewMode === "table"
-                  ? "bg-white dark:bg-slate-900 text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-800"
+                viewMode === 'table'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               <ListIcon className="w-4 h-4" />
@@ -290,7 +285,8 @@ export const FormsManager: React.FC<Props> = ({
             No Forms Created Yet
           </h3>
           <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto mt-1 mb-4">
-            Create custom forms with our drag-and-drop builder to collect leads, feedback, and customer inquiries.
+            Create custom forms with our drag-and-drop builder to collect leads, feedback, and
+            customer inquiries.
           </p>
           <button
             onClick={() => setCreateModalOpen(true)}
@@ -300,13 +296,13 @@ export const FormsManager: React.FC<Props> = ({
             <span>Create Your First Form</span>
           </button>
         </div>
-      ) : viewMode === "grid" ? (
+      ) : viewMode === 'grid' ? (
         /* Grid Cards View */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {forms.map((form) => {
             const fieldsCount =
               form.fields?.length || (form.fieldsJson ? JSON.parse(form.fieldsJson).length : 0);
-            const isPublished = form.status === "PUBLISHED";
+            const isPublished = form.status === 'PUBLISHED';
 
             return (
               <div
@@ -322,13 +318,13 @@ export const FormsManager: React.FC<Props> = ({
                     <span
                       className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                         isPublished
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                          : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                          : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                       }`}
                     >
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
-                          isPublished ? "bg-emerald-500" : "bg-slate-400"
+                          isPublished ? 'bg-emerald-500' : 'bg-slate-400'
                         }`}
                       />
                       {form.status}
@@ -344,9 +340,7 @@ export const FormsManager: React.FC<Props> = ({
                       {form.title}
                     </h3>
                     {form.description && (
-                      <p className="text-xs text-slate-500 line-clamp-2 mt-1">
-                        {form.description}
-                      </p>
+                      <p className="text-xs text-slate-500 line-clamp-2 mt-1">{form.description}</p>
                     )}
                   </div>
 
@@ -355,13 +349,13 @@ export const FormsManager: React.FC<Props> = ({
                     <div>
                       <span className="font-semibold text-slate-800 dark:text-slate-200">
                         {fieldsCount}
-                      </span>{" "}
+                      </span>{' '}
                       fields
                     </div>
                     <div>
                       <span className="font-semibold text-slate-800 dark:text-slate-200">
                         {form.submissionsCount || 0}
-                      </span>{" "}
+                      </span>{' '}
                       submissions
                     </div>
                   </div>
@@ -453,9 +447,9 @@ export const FormsManager: React.FC<Props> = ({
                     <td className="p-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                          form.status === "PUBLISHED"
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                            : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                          form.status === 'PUBLISHED'
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                            : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                         }`}
                       >
                         {form.status}
@@ -517,9 +511,7 @@ export const FormsManager: React.FC<Props> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Create New Form
-              </h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Create New Form</h3>
               <button
                 onClick={() => setCreateModalOpen(false)}
                 className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
@@ -538,7 +530,7 @@ export const FormsManager: React.FC<Props> = ({
                 <div
                   onClick={() => {
                     setCreateModalOpen(false);
-                    navigateToBuilder("new");
+                    navigateToBuilder('new');
                   }}
                   className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 hover:border-blue-500 hover:bg-blue-50/30 transition cursor-pointer flex items-center justify-between group"
                 >

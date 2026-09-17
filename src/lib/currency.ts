@@ -41,7 +41,7 @@ export const getCurrencySymbol = (currencyCode?: string | null): string => {
 
 export const formatPrice = (
   amount: number | string | undefined | null,
-  currencyCode?: string | null
+  currencyCode?: string | null,
 ): string => {
   const symbol = getCurrencySymbol(currencyCode);
   const num = typeof amount === 'number' ? amount : parseFloat(String(amount || 0));

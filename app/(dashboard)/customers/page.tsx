@@ -16,7 +16,8 @@ export default function CustomersPage() {
         </span>
         <h3 className="font-extrabold text-xl text-sage-text">Customer Profiles & History</h3>
         <p className="text-xs text-sage-muted max-w-md mx-auto">
-          Manage buyer profiles, transaction logs, and customer communications for {merchantData?.store?.storeName || 'your store'}.
+          Manage buyer profiles, transaction logs, and customer communications for{' '}
+          {merchantData?.store?.storeName || 'your store'}.
         </p>
       </div>
     </div>

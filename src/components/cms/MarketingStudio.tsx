@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CMSMarketingCampaign, CMSPixelConfig, AbandonedCartData, MarketingChannel } from '@/src/types';
+import {
+  CMSMarketingCampaign,
+  CMSPixelConfig,
+  AbandonedCartData,
+  MarketingChannel,
+} from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { getCurrencySymbol } from '@/src/lib/currency';
@@ -54,8 +59,13 @@ export const MarketingStudio: React.FC = () => {
   const [pixelConfig, setPixelConfig] = useState<CMSPixelConfig>({});
   const [abandonedCarts, setAbandonedCarts] = useState<AbandonedCartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'CAMPAIGNS' | 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PUSH' | 'ABANDONED_CART' | 'PIXELS' | 'UTM'>('CAMPAIGNS');
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [activeTab, setActiveTab] = useState<
+    'CAMPAIGNS' | 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PUSH' | 'ABANDONED_CART' | 'PIXELS' | 'UTM'
+  >('CAMPAIGNS');
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   // Campaign Modal
   const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
@@ -204,7 +214,9 @@ export const MarketingStudio: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[350px] gap-3">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-slate-500 animate-pulse">Loading Marketing & Growth Studio...</span>
+        <span className="text-xs font-bold text-slate-500 animate-pulse">
+          Loading Marketing & Growth Studio...
+        </span>
       </div>
     );
   }
@@ -214,10 +226,11 @@ export const MarketingStudio: React.FC = () => {
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 ${toastMessage.type === 'success'
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 ${
+            toastMessage.type === 'success'
               ? 'bg-emerald-900/90 text-white border-emerald-700'
               : 'bg-rose-900/90 text-white border-rose-700'
-            }`}
+          }`}
         >
           {toastMessage.type === 'success' ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -246,7 +259,8 @@ export const MarketingStudio: React.FC = () => {
               <span>Marketing & Growth Studio</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              Execute Email, SMS, WhatsApp Business, & Web Push broadcasts, recover lost abandoned cart revenue, build UTM tracking links, and configure Google Analytics & Meta Pixels.
+              Execute Email, SMS, WhatsApp Business, & Web Push broadcasts, recover lost abandoned
+              cart revenue, build UTM tracking links, and configure Google Analytics & Meta Pixels.
             </p>
           </div>
 
@@ -265,7 +279,9 @@ export const MarketingStudio: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Total Campaign Reach</span>
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
+              Total Campaign Reach
+            </span>
             <span className="text-2xl font-black text-slate-900 dark:text-foreground block">
               {campaigns.reduce((acc, c) => acc + c.sentCount, 0).toLocaleString()}
             </span>
@@ -275,7 +291,9 @@ export const MarketingStudio: React.FC = () => {
 
         <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Total Clicks & Engagement</span>
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
+              Total Clicks & Engagement
+            </span>
             <span className="text-2xl font-black text-indigo-600 block">
               {campaigns.reduce((acc, c) => acc + c.clickCount, 0).toLocaleString()}
             </span>
@@ -285,7 +303,9 @@ export const MarketingStudio: React.FC = () => {
 
         <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Conversion Orders</span>
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
+              Conversion Orders
+            </span>
             <span className="text-2xl font-black text-emerald-600 block">
               {campaigns.reduce((acc, c) => acc + c.conversionCount, 0)} Orders
             </span>
@@ -295,9 +315,12 @@ export const MarketingStudio: React.FC = () => {
 
         <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Cart Recovery Revenue</span>
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
+              Cart Recovery Revenue
+            </span>
             <span className="text-2xl font-black text-amber-500 block">
-              ${abandonedCarts
+              $
+              {abandonedCarts
                 .filter((c) => c.status === 'RECOVERED')
                 .reduce((acc, c) => acc + (c.cartSubtotal || 0), 0)
                 .toFixed(2)}
@@ -327,10 +350,11 @@ export const MarketingStudio: React.FC = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 shrink-0 ${isActive
+                className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 shrink-0 ${
+                  isActive
                     ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md'
                     : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-                  }`}
+                }`}
               >
                 <IconC className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
@@ -362,7 +386,9 @@ export const MarketingStudio: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => handleOpenCreateCampaign(activeTab === 'CAMPAIGNS' ? 'EMAIL' : (activeTab as any))}
+                onClick={() =>
+                  handleOpenCreateCampaign(activeTab === 'CAMPAIGNS' ? 'EMAIL' : (activeTab as any))
+                }
                 className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md shadow-indigo-600/30"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -386,22 +412,33 @@ export const MarketingStudio: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-border font-medium text-slate-800 dark:text-slate-200">
                 {(() => {
-                  const filtered = campaigns.filter((c) => (activeTab === 'CAMPAIGNS' ? true : c.channel === activeTab));
+                  const filtered = campaigns.filter((c) =>
+                    activeTab === 'CAMPAIGNS' ? true : c.channel === activeTab,
+                  );
                   if (filtered.length === 0) {
                     return (
                       <tr>
                         <td colSpan={7} className="text-center py-16 text-slate-400">
                           <Megaphone className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                          <span className="block text-slate-600 dark:text-slate-300 font-bold text-sm">No campaigns found</span>
-                          <span className="text-xs text-slate-400 font-normal">Create your first broadcast to start engaging your audience.</span>
+                          <span className="block text-slate-600 dark:text-slate-300 font-bold text-sm">
+                            No campaigns found
+                          </span>
+                          <span className="text-xs text-slate-400 font-normal">
+                            Create your first broadcast to start engaging your audience.
+                          </span>
                         </td>
                       </tr>
                     );
                   }
                   return filtered.map((c) => (
-                    <tr key={c.id} className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors">
+                    <tr
+                      key={c.id}
+                      className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors"
+                    >
                       <td className="py-4 px-6">
-                        <div className="font-extrabold text-sm text-slate-900 dark:text-foreground">{c.title}</div>
+                        <div className="font-extrabold text-sm text-slate-900 dark:text-foreground">
+                          {c.title}
+                        </div>
                         <div className="text-[11px] text-slate-400 italic">{c.subject}</div>
                       </td>
                       <td className="py-4 px-6">
@@ -412,13 +449,16 @@ export const MarketingStudio: React.FC = () => {
                       <td className="py-4 px-6 font-semibold">{c.targetSegment}</td>
                       <td className="py-4 px-6 font-bold">{c.sentCount.toLocaleString()} Sent</td>
                       <td className="py-4 px-6">
-                        <span className="font-black text-slate-900 dark:text-foreground">{c.clickCount} Clicks</span>
+                        <span className="font-black text-slate-900 dark:text-foreground">
+                          {c.clickCount} Clicks
+                        </span>
                         <span className="text-[10px] text-slate-400 block font-mono">
                           {((c.clickCount / (c.sentCount || 1)) * 100).toFixed(1)}% CTR
                         </span>
                       </td>
                       <td className="py-4 px-6 font-black text-sm text-emerald-600">
-                        {currencySymbol}{c.revenueTotal.toFixed(2)}
+                        {currencySymbol}
+                        {c.revenueTotal.toFixed(2)}
                       </td>
                       <td className="py-4 px-6 text-right space-x-2">
                         <button
@@ -439,8 +479,8 @@ export const MarketingStudio: React.FC = () => {
       )}
 
       {/* 2. ABANDONED CART RECOVERY TAB */}
-      {activeTab === 'ABANDONED_CART' && (
-        isStarter ? (
+      {activeTab === 'ABANDONED_CART' &&
+        (isStarter ? (
           <LockedFeatureGuard
             title="Automated Abandoned Cart Recovery"
             description="Recover up to 25% of lost revenue automatically by sending smart 1-click cart recovery emails with discount vouchers to shoppers who dropped off."
@@ -453,103 +493,131 @@ export const MarketingStudio: React.FC = () => {
             ]}
           />
         ) : (
-        <div className="p-6 rounded-3xl border border-slate-200/80 dark:border-border bg-white dark:bg-card shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <h3 className="font-black text-base text-slate-900 dark:text-foreground flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-amber-500" />
-                <span>Abandoned Checkout Recovery Engine</span>
-              </h3>
-              <p className="text-xs text-slate-500">Automatically recover lost revenue by dispatching 1-click cart recovery emails with promo vouchers.</p>
+          <div className="p-6 rounded-3xl border border-slate-200/80 dark:border-border bg-white dark:bg-card shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <h3 className="font-black text-base text-slate-900 dark:text-foreground flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5 text-amber-500" />
+                  <span>Abandoned Checkout Recovery Engine</span>
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Automatically recover lost revenue by dispatching 1-click cart recovery emails
+                  with promo vouchers.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-accent border-b border-slate-200/80 dark:border-border text-slate-500 font-extrabold uppercase text-[10px] tracking-wider">
-                  <th className="py-4 px-6">Customer</th>
-                  <th className="py-4 px-6">Items Count</th>
-                  <th className="py-4 px-6">Cart Subtotal</th>
-                  <th className="py-4 px-6">Abandoned Time</th>
-                  <th className="py-4 px-6">Recovery Voucher</th>
-                  <th className="py-4 px-6 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-border font-medium text-slate-800 dark:text-slate-200">
-                {abandonedCarts.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-16 text-slate-400">
-                      <ShoppingCart className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                      <span className="block text-slate-600 dark:text-slate-300 font-bold text-sm">No abandoned checkouts</span>
-                      <span className="text-xs text-slate-400 font-normal">Abandoned customer carts will automatically appear here once shoppers leave checkout.</span>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-accent border-b border-slate-200/80 dark:border-border text-slate-500 font-extrabold uppercase text-[10px] tracking-wider">
+                    <th className="py-4 px-6">Customer</th>
+                    <th className="py-4 px-6">Items Count</th>
+                    <th className="py-4 px-6">Cart Subtotal</th>
+                    <th className="py-4 px-6">Abandoned Time</th>
+                    <th className="py-4 px-6">Recovery Voucher</th>
+                    <th className="py-4 px-6 text-right">Actions</th>
                   </tr>
-                ) : (
-                  abandonedCarts.map((ac) => (
-                    <tr key={ac.id} className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="font-extrabold text-slate-900 dark:text-foreground">{ac.customerName}</div>
-                        <div className="text-[11px] font-mono text-indigo-600">{ac.customerEmail}</div>
-                      </td>
-                      <td className="py-4 px-6 font-bold">{ac.itemsCount} Items</td>
-                      <td className="py-4 px-6 font-black text-sm text-slate-900 dark:text-foreground">
-                        {currencySymbol}{ac.cartSubtotal.toFixed(2)}
-                      </td>
-                      <td className="py-4 px-6 text-slate-500 font-semibold">{ac.abandonedAt}</td>
-                      <td className="py-4 px-6">
-                        <span className="px-2.5 py-1 rounded-xl bg-amber-100 font-mono font-black text-[10px] text-amber-800">
-                          {ac.recoveryDiscountCode || 'RECOVER10'}
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-border font-medium text-slate-800 dark:text-slate-200">
+                  {abandonedCarts.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-16 text-slate-400">
+                        <ShoppingCart className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                        <span className="block text-slate-600 dark:text-slate-300 font-bold text-sm">
+                          No abandoned checkouts
+                        </span>
+                        <span className="text-xs text-slate-400 font-normal">
+                          Abandoned customer carts will automatically appear here once shoppers
+                          leave checkout.
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-right">
-                        {ac.status === 'EMAIL_SENT' ? (
-                          <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-[11px] font-extrabold inline-flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Recovery Email Sent</span>
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleSendRecovery(ac.id)}
-                            className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[11px] inline-flex items-center gap-1 shadow-sm"
-                          >
-                            <Send className="w-3.5 h-3.5" />
-                            <span>Send Recovery Email</span>
-                          </button>
-                        )}
-                      </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    abandonedCarts.map((ac) => (
+                      <tr
+                        key={ac.id}
+                        className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors"
+                      >
+                        <td className="py-4 px-6">
+                          <div className="font-extrabold text-slate-900 dark:text-foreground">
+                            {ac.customerName}
+                          </div>
+                          <div className="text-[11px] font-mono text-indigo-600">
+                            {ac.customerEmail}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 font-bold">{ac.itemsCount} Items</td>
+                        <td className="py-4 px-6 font-black text-sm text-slate-900 dark:text-foreground">
+                          {currencySymbol}
+                          {ac.cartSubtotal.toFixed(2)}
+                        </td>
+                        <td className="py-4 px-6 text-slate-500 font-semibold">{ac.abandonedAt}</td>
+                        <td className="py-4 px-6">
+                          <span className="px-2.5 py-1 rounded-xl bg-amber-100 font-mono font-black text-[10px] text-amber-800">
+                            {ac.recoveryDiscountCode || 'RECOVER10'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          {ac.status === 'EMAIL_SENT' ? (
+                            <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-[11px] font-extrabold inline-flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Recovery Email Sent</span>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSendRecovery(ac.id)}
+                              className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[11px] inline-flex items-center gap-1 shadow-sm"
+                            >
+                              <Send className="w-3.5 h-3.5" />
+                              <span>Send Recovery Email</span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-        )
-      )}
+        ))}
 
       {/* 3. TRACKING PIXELS & GA4 TAB */}
       {activeTab === 'PIXELS' && (
-        <form onSubmit={handleSavePixels} className="p-6 rounded-3xl border border-slate-200/80 dark:border-border bg-white dark:bg-card shadow-sm space-y-6">
+        <form
+          onSubmit={handleSavePixels}
+          className="p-6 rounded-3xl border border-slate-200/80 dark:border-border bg-white dark:bg-card shadow-sm space-y-6"
+        >
           <div className="space-y-1 border-b pb-4">
             <h3 className="font-black text-lg text-slate-900 dark:text-foreground flex items-center gap-2">
               <Target className="w-5 h-5 text-indigo-600" />
               <span>Tracking Pixels & Analytics Integration</span>
             </h3>
-            <p className="text-xs text-slate-500">Inject Google Analytics 4 Measurement ID, Meta Facebook Pixel, TikTok Pixel, and Pinterest Tags automatically into storefront headers.</p>
+            <p className="text-xs text-slate-500">
+              Inject Google Analytics 4 Measurement ID, Meta Facebook Pixel, TikTok Pixel, and
+              Pinterest Tags automatically into storefront headers.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* GA4 */}
             <div className="p-5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-black text-sm text-slate-900 dark:text-foreground">Google Analytics 4 (GA4)</span>
+                <span className="font-black text-sm text-slate-900 dark:text-foreground">
+                  Google Analytics 4 (GA4)
+                </span>
                 <button
                   type="button"
-                  onClick={() => setPixelConfig({ ...pixelConfig, isGa4Active: !pixelConfig.isGa4Active })}
-                  className={`px-3 py-1 rounded-full text-xs font-black ${pixelConfig.isGa4Active ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-                    }`}
+                  onClick={() =>
+                    setPixelConfig({ ...pixelConfig, isGa4Active: !pixelConfig.isGa4Active })
+                  }
+                  className={`px-3 py-1 rounded-full text-xs font-black ${
+                    pixelConfig.isGa4Active
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-200 text-slate-600'
+                  }`}
                 >
                   {pixelConfig.isGa4Active ? 'Enabled' : 'Disabled'}
                 </button>
@@ -557,7 +625,9 @@ export const MarketingStudio: React.FC = () => {
               <input
                 type="text"
                 value={pixelConfig.ga4MeasurementId || ''}
-                onChange={(e) => setPixelConfig({ ...pixelConfig, ga4MeasurementId: e.target.value })}
+                onChange={(e) =>
+                  setPixelConfig({ ...pixelConfig, ga4MeasurementId: e.target.value })
+                }
                 placeholder="e.g. G-X987654321"
                 className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs font-mono font-bold text-indigo-600"
               />
@@ -566,12 +636,19 @@ export const MarketingStudio: React.FC = () => {
             {/* Meta Pixel */}
             <div className="p-5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-black text-sm text-slate-900 dark:text-foreground">Meta Pixel (Facebook & Instagram)</span>
+                <span className="font-black text-sm text-slate-900 dark:text-foreground">
+                  Meta Pixel (Facebook & Instagram)
+                </span>
                 <button
                   type="button"
-                  onClick={() => setPixelConfig({ ...pixelConfig, isMetaActive: !pixelConfig.isMetaActive })}
-                  className={`px-3 py-1 rounded-full text-xs font-black ${pixelConfig.isMetaActive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-                    }`}
+                  onClick={() =>
+                    setPixelConfig({ ...pixelConfig, isMetaActive: !pixelConfig.isMetaActive })
+                  }
+                  className={`px-3 py-1 rounded-full text-xs font-black ${
+                    pixelConfig.isMetaActive
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-200 text-slate-600'
+                  }`}
                 >
                   {pixelConfig.isMetaActive ? 'Enabled' : 'Disabled'}
                 </button>
@@ -588,12 +665,19 @@ export const MarketingStudio: React.FC = () => {
             {/* TikTok Pixel */}
             <div className="p-5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-black text-sm text-slate-900 dark:text-foreground">TikTok Ads Pixel</span>
+                <span className="font-black text-sm text-slate-900 dark:text-foreground">
+                  TikTok Ads Pixel
+                </span>
                 <button
                   type="button"
-                  onClick={() => setPixelConfig({ ...pixelConfig, isTikTokActive: !pixelConfig.isTikTokActive })}
-                  className={`px-3 py-1 rounded-full text-xs font-black ${pixelConfig.isTikTokActive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-                    }`}
+                  onClick={() =>
+                    setPixelConfig({ ...pixelConfig, isTikTokActive: !pixelConfig.isTikTokActive })
+                  }
+                  className={`px-3 py-1 rounded-full text-xs font-black ${
+                    pixelConfig.isTikTokActive
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-200 text-slate-600'
+                  }`}
                 >
                   {pixelConfig.isTikTokActive ? 'Enabled' : 'Disabled'}
                 </button>
@@ -610,12 +694,22 @@ export const MarketingStudio: React.FC = () => {
             {/* Pinterest Tag */}
             <div className="p-5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-black text-sm text-slate-900 dark:text-foreground">Pinterest Tag</span>
+                <span className="font-black text-sm text-slate-900 dark:text-foreground">
+                  Pinterest Tag
+                </span>
                 <button
                   type="button"
-                  onClick={() => setPixelConfig({ ...pixelConfig, isPinterestActive: !pixelConfig.isPinterestActive })}
-                  className={`px-3 py-1 rounded-full text-xs font-black ${pixelConfig.isPinterestActive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-                    }`}
+                  onClick={() =>
+                    setPixelConfig({
+                      ...pixelConfig,
+                      isPinterestActive: !pixelConfig.isPinterestActive,
+                    })
+                  }
+                  className={`px-3 py-1 rounded-full text-xs font-black ${
+                    pixelConfig.isPinterestActive
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-200 text-slate-600'
+                  }`}
                 >
                   {pixelConfig.isPinterestActive ? 'Enabled' : 'Disabled'}
                 </button>
@@ -651,12 +745,17 @@ export const MarketingStudio: React.FC = () => {
               <Share2 className="w-5 h-5 text-indigo-600" />
               <span>UTM Campaign Link Builder</span>
             </h3>
-            <p className="text-xs text-slate-500">Generate tracking URLs for paid Google Search, Meta Ads, Newsletter blasts, & Social influencers.</p>
+            <p className="text-xs text-slate-500">
+              Generate tracking URLs for paid Google Search, Meta Ads, Newsletter blasts, & Social
+              influencers.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5 md:col-span-2">
-              <label className="block text-xs font-bold text-slate-700">Target Storefront Page URL *</label>
+              <label className="block text-xs font-bold text-slate-700">
+                Target Storefront Page URL *
+              </label>
               <input
                 type="url"
                 value={utmUrl}
@@ -667,7 +766,9 @@ export const MarketingStudio: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700">UTM Source (utm_source) *</label>
+              <label className="block text-xs font-bold text-slate-700">
+                UTM Source (utm_source) *
+              </label>
               <input
                 type="text"
                 value={utmSource}
@@ -678,7 +779,9 @@ export const MarketingStudio: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700">UTM Medium (utm_medium) *</label>
+              <label className="block text-xs font-bold text-slate-700">
+                UTM Medium (utm_medium) *
+              </label>
               <input
                 type="text"
                 value={utmMedium}
@@ -689,7 +792,9 @@ export const MarketingStudio: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700">UTM Campaign (utm_campaign) *</label>
+              <label className="block text-xs font-bold text-slate-700">
+                UTM Campaign (utm_campaign) *
+              </label>
               <input
                 type="text"
                 value={utmCampaign}
@@ -713,9 +818,12 @@ export const MarketingStudio: React.FC = () => {
 
           {/* GENERATED RESULT BOX */}
           <div className="p-5 rounded-2xl bg-slate-900 text-white space-y-3">
-            <span className="text-[11px] font-black uppercase tracking-wider text-amber-400 block">Generated Campaign Tracking URL</span>
+            <span className="text-[11px] font-black uppercase tracking-wider text-amber-400 block">
+              Generated Campaign Tracking URL
+            </span>
             <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-indigo-300 break-all">
-              {generatedUtmUrl || 'Enter your target URL and campaign parameters above to generate a tracking link.'}
+              {generatedUtmUrl ||
+                'Enter your target URL and campaign parameters above to generate a tracking link.'}
             </div>
             <div className="flex justify-end">
               <button
@@ -723,7 +831,11 @@ export const MarketingStudio: React.FC = () => {
                 onClick={handleCopyUtm}
                 className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold flex items-center gap-1.5"
               >
-                {copiedUtm ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                {copiedUtm ? (
+                  <Check className="w-4 h-4 text-emerald-400" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
                 <span>{copiedUtm ? 'Copied!' : 'Copy Tracking Link'}</span>
               </button>
             </div>
@@ -764,7 +876,12 @@ export const MarketingStudio: React.FC = () => {
                   <label className="block text-xs font-bold text-slate-700">Channel</label>
                   <select
                     value={campaignForm.channel}
-                    onChange={(e) => setCampaignForm({ ...campaignForm, channel: e.target.value as MarketingChannel })}
+                    onChange={(e) =>
+                      setCampaignForm({
+                        ...campaignForm,
+                        channel: e.target.value as MarketingChannel,
+                      })
+                    }
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
                   >
                     <option value="EMAIL">EMAIL</option>
@@ -778,7 +895,9 @@ export const MarketingStudio: React.FC = () => {
                   <label className="block text-xs font-bold text-slate-700">Target Audience</label>
                   <select
                     value={campaignForm.targetSegment}
-                    onChange={(e) => setCampaignForm({ ...campaignForm, targetSegment: e.target.value })}
+                    onChange={(e) =>
+                      setCampaignForm({ ...campaignForm, targetSegment: e.target.value })
+                    }
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
                   >
                     <option value="All Customers">All Customers</option>
@@ -803,7 +922,9 @@ export const MarketingStudio: React.FC = () => {
                 <div className="flex justify-between items-center text-xs font-bold text-slate-700">
                   <span>Message Body</span>
                   {campaignForm.channel === 'SMS' && (
-                    <span className="text-[10px] font-mono text-indigo-600">{campaignForm.body.length}/160 chars</span>
+                    <span className="text-[10px] font-mono text-indigo-600">
+                      {campaignForm.body.length}/160 chars
+                    </span>
                   )}
                 </div>
                 <textarea

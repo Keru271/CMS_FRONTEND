@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Inbox,
   Search,
@@ -28,29 +28,26 @@ import {
   Check,
   X,
   ExternalLink,
-} from "lucide-react";
-import { CMSForm, FormSubmission, FormSubmissionStatus, FormField } from "@/src/types";
-import { cmsService } from "@/src/services/cmsService";
+} from 'lucide-react';
+import { CMSForm, FormSubmission, FormSubmissionStatus, FormField } from '@/src/types';
+import { cmsService } from '@/src/services/cmsService';
 
 interface Props {
   initialFormId?: string;
   onBackToForms?: () => void;
 }
 
-export const FormSubmissionsStudio: React.FC<Props> = ({
-  initialFormId,
-  onBackToForms,
-}) => {
+export const FormSubmissionsStudio: React.FC<Props> = ({ initialFormId, onBackToForms }) => {
   const [forms, setForms] = useState<CMSForm[]>([]);
-  const [selectedFormId, setSelectedFormId] = useState<string>(initialFormId || "ALL");
+  const [selectedFormId, setSelectedFormId] = useState<string>(initialFormId || 'ALL');
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeSubmission, setActiveSubmission] = useState<FormSubmission | null>(null);
-  const [staffNotes, setStaffNotes] = useState("");
+  const [staffNotes, setStaffNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -70,7 +67,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
         const list = await cmsService.getForms();
         setForms(list);
       } catch (err) {
-        console.error("Failed to load forms list", err);
+        console.error('Failed to load forms list', err);
       }
     };
     loadForms();
@@ -80,7 +77,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
   const loadSubmissions = async () => {
     setLoading(true);
     try {
-      if (selectedFormId && selectedFormId !== "ALL") {
+      if (selectedFormId && selectedFormId !== 'ALL') {
         const res = await cmsService.getFormSubmissions(selectedFormId, {
           status: selectedStatus,
           search: searchQuery,
@@ -103,7 +100,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
         if (res.counts) setStatusCounts(res.counts);
       }
     } catch (err) {
-      console.error("Failed to load submissions", err);
+      console.error('Failed to load submissions', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -126,13 +123,13 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
     try {
       await cmsService.updateSubmission(submissionId, { status: newStatus });
       setSubmissions((prev) =>
-        prev.map((s) => (s.id === submissionId ? { ...s, status: newStatus } : s))
+        prev.map((s) => (s.id === submissionId ? { ...s, status: newStatus } : s)),
       );
       if (activeSubmission && activeSubmission.id === submissionId) {
         setActiveSubmission((prev) => (prev ? { ...prev, status: newStatus } : null));
       }
     } catch (err) {
-      console.error("Failed to update status", err);
+      console.error('Failed to update status', err);
     }
   };
 
@@ -142,25 +139,25 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
     try {
       await cmsService.updateSubmission(activeSubmission.id, { notes: staffNotes });
       setSubmissions((prev) =>
-        prev.map((s) => (s.id === activeSubmission.id ? { ...s, notes: staffNotes } : s))
+        prev.map((s) => (s.id === activeSubmission.id ? { ...s, notes: staffNotes } : s)),
       );
       setActiveSubmission((prev) => (prev ? { ...prev, notes: staffNotes } : null));
     } catch (err) {
-      console.error("Failed to save notes", err);
+      console.error('Failed to save notes', err);
     } finally {
       setSavingNotes(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this submission?")) return;
+    if (!confirm('Are you sure you want to delete this submission?')) return;
     try {
       await cmsService.deleteSubmission(id);
       setSubmissions((prev) => prev.filter((s) => s.id !== id));
       if (activeSubmission?.id === id) setActiveSubmission(null);
       setTotalCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
-      console.error("Failed to delete submission", err);
+      console.error('Failed to delete submission', err);
     }
   };
 
@@ -173,16 +170,16 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
       setSelectedIds([]);
       setTotalCount((prev) => Math.max(0, prev - selectedIds.length));
     } catch (err) {
-      console.error("Failed to bulk delete", err);
+      console.error('Failed to bulk delete', err);
     }
   };
 
   const handleExportCsv = async () => {
-    if (selectedFormId && selectedFormId !== "ALL") {
+    if (selectedFormId && selectedFormId !== 'ALL') {
       try {
         const blob = await cmsService.exportSubmissionsCsv(selectedFormId);
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
+        const a = document.createElement('a');
         a.href = url;
         a.download = `submissions-${selectedFormId}-${Date.now()}.csv`;
         document.body.appendChild(a);
@@ -190,25 +187,25 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } catch (err) {
-        console.error("Export failed", err);
+        console.error('Export failed', err);
       }
     } else {
       // Export current loaded table
       if (submissions.length === 0) return;
-      const headers = ["ID", "Form", "Status", "Name", "Email", "Date", "Data"];
+      const headers = ['ID', 'Form', 'Status', 'Name', 'Email', 'Date', 'Data'];
       const rows = submissions.map((s) => [
         `"${s.id}"`,
-        `"${s.form?.title || ""}"`,
+        `"${s.form?.title || ''}"`,
         `"${s.status}"`,
-        `"${s.submitterName || ""}"`,
-        `"${s.submitterEmail || ""}"`,
+        `"${s.submitterName || ''}"`,
+        `"${s.submitterEmail || ''}"`,
         `"${s.createdAt}"`,
         `"${JSON.stringify(s.data).replace(/"/g, '""')}"`,
       ]);
-      const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
       a.download = `all-submissions-${Date.now()}.csv`;
       a.click();
@@ -217,7 +214,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
   };
 
   const currentForm = useMemo(() => {
-    if (selectedFormId === "ALL") return null;
+    if (selectedFormId === 'ALL') return null;
     return forms.find((f) => f.id === selectedFormId || f.slug === selectedFormId);
   }, [forms, selectedFormId]);
 
@@ -228,28 +225,28 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
 
   const getStatusBadge = (status: FormSubmissionStatus) => {
     switch (status) {
-      case "NEW":
+      case 'NEW':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
             New
           </span>
         );
-      case "REVIEWED":
+      case 'REVIEWED':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
             <Clock className="w-3 h-3" />
             Reviewed
           </span>
         );
-      case "RESOLVED":
+      case 'RESOLVED':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
             <CheckCircle2 className="w-3 h-3" />
             Resolved
           </span>
         );
-      case "SPAM":
+      case 'SPAM':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
             <AlertCircle className="w-3 h-3" />
@@ -275,7 +272,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
 
   const toggleSelectOne = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
@@ -332,7 +329,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
             className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition"
             title="Refresh Data"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-blue-500" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-blue-500' : ''}`} />
           </button>
 
           <button
@@ -351,9 +348,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Total Submissions
           </p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-            {totalCount}
-          </p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{totalCount}</p>
         </div>
         <div className="p-4 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-900/40 shadow-sm">
           <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
@@ -386,11 +381,11 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
         {/* Status Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           {[
-            { id: "ALL", label: "All" },
-            { id: "NEW", label: "New" },
-            { id: "REVIEWED", label: "Reviewed" },
-            { id: "RESOLVED", label: "Resolved" },
-            { id: "SPAM", label: "Spam" },
+            { id: 'ALL', label: 'All' },
+            { id: 'NEW', label: 'New' },
+            { id: 'REVIEWED', label: 'Reviewed' },
+            { id: 'RESOLVED', label: 'Resolved' },
+            { id: 'SPAM', label: 'Spam' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -400,8 +395,8 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap ${
                 selectedStatus === tab.id
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
               }`}
             >
               {tab.label}
@@ -448,9 +443,9 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
               No Submissions Found
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto mt-1">
-              {searchQuery || selectedStatus !== "ALL"
-                ? "Try clearing your filters or search query to see other responses."
-                : "Share your form or embed it into your site to start collecting submissions."}
+              {searchQuery || selectedStatus !== 'ALL'
+                ? 'Try clearing your filters or search query to see other responses.'
+                : 'Share your form or embed it into your site to start collecting submissions.'}
             </p>
           </div>
         ) : (
@@ -461,16 +456,14 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
                   <th className="p-4 w-10">
                     <input
                       type="checkbox"
-                      checked={
-                        submissions.length > 0 && selectedIds.length === submissions.length
-                      }
+                      checked={submissions.length > 0 && selectedIds.length === submissions.length}
                       onChange={toggleSelectAll}
                       className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
                     />
                   </th>
                   <th className="p-4">Status</th>
                   <th className="p-4">Submitter</th>
-                  {selectedFormId === "ALL" && <th className="p-4">Form</th>}
+                  {selectedFormId === 'ALL' && <th className="p-4">Form</th>}
                   <th className="p-4">Submitted Answers</th>
                   <th className="p-4">Date</th>
                   <th className="p-4 text-right">Actions</th>
@@ -485,11 +478,11 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
                     <tr
                       key={sub.id}
                       className={`hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition cursor-pointer ${
-                        isSelected ? "bg-blue-50/40 dark:bg-blue-950/20" : ""
+                        isSelected ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''
                       }`}
                       onClick={() => {
                         setActiveSubmission(sub);
-                        setStaffNotes(sub.notes || "");
+                        setStaffNotes(sub.notes || '');
                       }}
                     >
                       <td className="p-4" onClick={(e) => e.stopPropagation()}>
@@ -521,7 +514,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
 
                       <td className="p-4">
                         <div className="font-semibold text-slate-900 dark:text-white">
-                          {sub.submitterName || "Anonymous"}
+                          {sub.submitterName || 'Anonymous'}
                         </div>
                         {sub.submitterEmail && (
                           <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
@@ -531,10 +524,10 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
                         )}
                       </td>
 
-                      {selectedFormId === "ALL" && (
+                      {selectedFormId === 'ALL' && (
                         <td className="p-4 whitespace-nowrap">
                           <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300">
-                            {sub.form?.title || "Form"}
+                            {sub.form?.title || 'Form'}
                           </span>
                         </td>
                       )}
@@ -546,7 +539,8 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
                               key={key}
                               className="inline-block px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs truncate max-w-[140px]"
                             >
-                              <strong>{key}:</strong> {typeof val === "object" ? JSON.stringify(val) : String(val)}
+                              <strong>{key}:</strong>{' '}
+                              {typeof val === 'object' ? JSON.stringify(val) : String(val)}
                             </span>
                           ))}
                           {dataEntries.length > 2 && (
@@ -558,21 +552,24 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
                       </td>
 
                       <td className="p-4 whitespace-nowrap text-xs text-slate-500">
-                        {new Date(sub.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
+                        {new Date(sub.createdAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
                         })}
                       </td>
 
-                      <td className="p-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <td
+                        className="p-4 text-right whitespace-nowrap"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => {
                               setActiveSubmission(sub);
-                              setStaffNotes(sub.notes || "");
+                              setStaffNotes(sub.notes || '');
                             }}
                             className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition"
                             title="View Details"
@@ -637,7 +634,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
                   {getStatusBadge(activeSubmission.status)}
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  ID: {activeSubmission.id} •{" "}
+                  ID: {activeSubmission.id} •{' '}
                   {new Date(activeSubmission.createdAt).toLocaleString()}
                 </p>
               </div>
@@ -656,19 +653,19 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
                 <div>
                   <span className="text-slate-400 block font-medium">Submitter Name</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
-                    {activeSubmission.submitterName || "Anonymous"}
+                    {activeSubmission.submitterName || 'Anonymous'}
                   </span>
                 </div>
                 <div>
                   <span className="text-slate-400 block font-medium">Email</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
-                    {activeSubmission.submitterEmail || "—"}
+                    {activeSubmission.submitterEmail || '—'}
                   </span>
                 </div>
                 <div>
                   <span className="text-slate-400 block font-medium">IP Address</span>
                   <span className="font-mono text-slate-700 dark:text-slate-300">
-                    {activeSubmission.submitterIp || "—"}
+                    {activeSubmission.submitterIp || '—'}
                   </span>
                 </div>
               </div>
@@ -685,7 +682,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
                       className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm"
                     >
                       <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1 capitalize">
-                        {key.replace(/([A-Z])/g, " $1")}
+                        {key.replace(/([A-Z])/g, ' $1')}
                       </span>
                       <div className="text-sm font-medium text-slate-900 dark:text-white leading-relaxed">
                         {Array.isArray(val) ? (
@@ -699,8 +696,12 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
                               </span>
                             ))}
                           </div>
-                        ) : typeof val === "boolean" ? (
-                          val ? "Yes / Agreed" : "No"
+                        ) : typeof val === 'boolean' ? (
+                          val ? (
+                            'Yes / Agreed'
+                          ) : (
+                            'No'
+                          )
                         ) : (
                           String(val)
                         )}
@@ -728,7 +729,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
                     disabled={savingNotes}
                     className="px-3.5 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-xs font-semibold shadow-sm hover:opacity-90 disabled:opacity-50"
                   >
-                    {savingNotes ? "Saving..." : "Save Note"}
+                    {savingNotes ? 'Saving...' : 'Save Note'}
                   </button>
                 </div>
               </div>
@@ -739,13 +740,13 @@ export const FormSubmissionsStudio: React.FC<Props> = ({
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-slate-500">Triage:</span>
                 <button
-                  onClick={() => handleStatusChange(activeSubmission.id, "REVIEWED")}
+                  onClick={() => handleStatusChange(activeSubmission.id, 'REVIEWED')}
                   className="px-3 py-1 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 rounded-lg text-xs font-semibold border border-amber-200 dark:border-amber-900 hover:bg-amber-100"
                 >
                   Mark Reviewed
                 </button>
                 <button
-                  onClick={() => handleStatusChange(activeSubmission.id, "RESOLVED")}
+                  onClick={() => handleStatusChange(activeSubmission.id, 'RESOLVED')}
                   className="px-3 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 rounded-lg text-xs font-semibold border border-emerald-200 dark:border-emerald-900 hover:bg-emerald-100"
                 >
                   Mark Resolved

@@ -1,4 +1,5 @@
 # Statamic — Style Reference
+
 > Warm editorial sunset over floating islands
 
 **Theme:** light
@@ -7,27 +8,28 @@ Statamic pairs a warm, editorial display serif with a clean geometric sans for a
 
 ## Tokens — Colors
 
-| Name | Value | Token | Role |
-|------|-------|-------|------|
-| Ink | `#191a1b` | `--color-ink` | Dark borders and separators for elevated surfaces and inverted UI. Do not promote it to the primary CTA color |
-| Paper White | `#ffffff` | `--color-paper-white` | Page canvas, card surfaces, button text on dark fills, list backgrounds |
-| Warm Shell | `#fdf1ef` | `--color-warm-shell` | Hero gradient base, secondary surfaces — the warm cream that gives the whole site its sunset atmosphere |
-| Driftwood | `#beb9b3` | `--color-driftwood` | Muted body text, subtle borders, image shadows — warm gray that harmonizes with the peach canvas |
-| Smoke | `#5e5a5a` | `--color-smoke` | Nav text, icon strokes, list borders, secondary text |
-| Graphite | `#4e5154` | `--color-graphite` | Body text at reduced contrast, fine borders in content blocks |
-| Iron | `#3f3f46` | `--color-iron` | Deeper secondary text, fine separator borders |
-| Mist | `#cbd5e0` | `--color-mist` | Hairline borders, light dividers between sections and cards |
-| Electric Lime | `#d4ff4c` | `--color-electric-lime` | Green accent for outlined action borders, linked labels, and lightweight interactive emphasis. Do not promote it to the primary CTA color |
-| Lavender Whisper | `#cbc2ea` | `--color-lavender-whisper` | Outlined action borders, ghost button strokes, soft decorative accents — a desaturated violet that signals interactivity without shouting |
-| Lilac Mist | `#d7e5fe` | `--color-lilac-mist` | Decorative pastel wash, soft card accents, illustration tints |
-| Blossom | `#f5ddee` | `--color-blossom` | Decorative pastel wash, hero gradient highlight, soft illustration tint |
-| Plum Shadow | `#4c305a` | `--color-plum-shadow` | Deep accent in image shadows and illustration depth — gives floating islands their grounded dimensionality |
-| Dusk Gradient | `linear-gradient(to right bottom, rgb(51, 65, 85), rgb(25, 26, 27))` | `--color-dusk-gradient` | Gradient endpoint for dark image overlays |
-| Aurora Wash | `linear-gradient(233deg, rgba(50, 197, 255, 0.08), rgba(182, 32, 224, 0.08) 51%, rgba(247, 181, 0, 0.08))` | `--color-aurora-wash` | Subtle multi-hue gradient wash on feature sections — used at 0.08 opacity for atmospheric backgrounds |
+| Name             | Value                                                                                                      | Token                      | Role                                                                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Ink              | `#191a1b`                                                                                                  | `--color-ink`              | Dark borders and separators for elevated surfaces and inverted UI. Do not promote it to the primary CTA color                             |
+| Paper White      | `#ffffff`                                                                                                  | `--color-paper-white`      | Page canvas, card surfaces, button text on dark fills, list backgrounds                                                                   |
+| Warm Shell       | `#fdf1ef`                                                                                                  | `--color-warm-shell`       | Hero gradient base, secondary surfaces — the warm cream that gives the whole site its sunset atmosphere                                   |
+| Driftwood        | `#beb9b3`                                                                                                  | `--color-driftwood`        | Muted body text, subtle borders, image shadows — warm gray that harmonizes with the peach canvas                                          |
+| Smoke            | `#5e5a5a`                                                                                                  | `--color-smoke`            | Nav text, icon strokes, list borders, secondary text                                                                                      |
+| Graphite         | `#4e5154`                                                                                                  | `--color-graphite`         | Body text at reduced contrast, fine borders in content blocks                                                                             |
+| Iron             | `#3f3f46`                                                                                                  | `--color-iron`             | Deeper secondary text, fine separator borders                                                                                             |
+| Mist             | `#cbd5e0`                                                                                                  | `--color-mist`             | Hairline borders, light dividers between sections and cards                                                                               |
+| Electric Lime    | `#d4ff4c`                                                                                                  | `--color-electric-lime`    | Green accent for outlined action borders, linked labels, and lightweight interactive emphasis. Do not promote it to the primary CTA color |
+| Lavender Whisper | `#cbc2ea`                                                                                                  | `--color-lavender-whisper` | Outlined action borders, ghost button strokes, soft decorative accents — a desaturated violet that signals interactivity without shouting |
+| Lilac Mist       | `#d7e5fe`                                                                                                  | `--color-lilac-mist`       | Decorative pastel wash, soft card accents, illustration tints                                                                             |
+| Blossom          | `#f5ddee`                                                                                                  | `--color-blossom`          | Decorative pastel wash, hero gradient highlight, soft illustration tint                                                                   |
+| Plum Shadow      | `#4c305a`                                                                                                  | `--color-plum-shadow`      | Deep accent in image shadows and illustration depth — gives floating islands their grounded dimensionality                                |
+| Dusk Gradient    | `linear-gradient(to right bottom, rgb(51, 65, 85), rgb(25, 26, 27))`                                       | `--color-dusk-gradient`    | Gradient endpoint for dark image overlays                                                                                                 |
+| Aurora Wash      | `linear-gradient(233deg, rgba(50, 197, 255, 0.08), rgba(182, 32, 224, 0.08) 51%, rgba(247, 181, 0, 0.08))` | `--color-aurora-wash`      | Subtle multi-hue gradient wash on feature sections — used at 0.08 opacity for atmospheric backgrounds                                     |
 
 ## Tokens — Typography
 
 ### p22-mackinac-pro — Display headlines and editorial accents. Weight 300-400 at 60-96px creates the signature warm, literary feel — the serif whispers rather than commands. Italic variant used for emphasis words in headlines ('actually', 'Statamic'). · `--font-p22-mackinac-pro`
+
 - **Substitute:** Fraunces, Source Serif Pro, or Lora
 - **Weights:** 100, 300, 400, 700
 - **Sizes:** 20, 24, 30, 60, 80, 96
@@ -36,6 +38,7 @@ Statamic pairs a warm, editorial display serif with a clean geometric sans for a
 - **Role:** Display headlines and editorial accents. Weight 300-400 at 60-96px creates the signature warm, literary feel — the serif whispers rather than commands. Italic variant used for emphasis words in headlines ('actually', 'Statamic').
 
 ### Lexend — Primary UI and body typeface. Nav, buttons, body text, card titles, footer. Weight 300 for nav and secondary text keeps the interface light; 500-600 for buttons and labels. The wide weight range lets it carry both quiet metadata and confident CTAs. · `--font-lexend`
+
 - **Substitute:** Inter, DM Sans, or Plus Jakarta Sans
 - **Weights:** 300, 400, 500, 600, 700
 - **Sizes:** 12, 14, 16, 18, 20, 36
@@ -44,6 +47,7 @@ Statamic pairs a warm, editorial display serif with a clean geometric sans for a
 - **Role:** Primary UI and body typeface. Nav, buttons, body text, card titles, footer. Weight 300 for nav and secondary text keeps the interface light; 500-600 for buttons and labels. The wide weight range lets it carry both quiet metadata and confident CTAs.
 
 ### code-saver — Monospace for code blocks, file tree, technical content, input fields. Weight 700 for syntax emphasis, 300 for ambient code display. · `--font-code-saver`
+
 - **Substitute:** JetBrains Mono, Fira Code, or IBM Plex Mono
 - **Weights:** 300, 700
 - **Sizes:** 12, 14, 16, 20
@@ -52,6 +56,7 @@ Statamic pairs a warm, editorial display serif with a clean geometric sans for a
 - **Role:** Monospace for code blocks, file tree, technical content, input fields. Weight 700 for syntax emphasis, 300 for ambient code display.
 
 ### Lore — Icon font — single weight at 14px for UI iconography · `--font-lore`
+
 - **Substitute:** Phosphor Icons or Lucide
 - **Weights:** 300
 - **Sizes:** 14
@@ -61,15 +66,15 @@ Statamic pairs a warm, editorial display serif with a clean geometric sans for a
 
 ### Type Scale
 
-| Role | Size | Line Height | Letter Spacing | Token |
-|------|------|-------------|----------------|-------|
-| caption | 12px | 1.5 | 0.05px | `--text-caption` |
-| body-sm | 14px | 1.43 | — | `--text-body-sm` |
-| body | 16px | 1.5 | — | `--text-body` |
-| subheading | 20px | 1.4 | -0.025px | `--text-subheading` |
-| heading | 36px | 1.25 | -0.025px | `--text-heading` |
-| display | 60px | 1.2 | -0.05px | `--text-display` |
-| display-lg | 96px | 1 | -0.05px | `--text-display-lg` |
+| Role       | Size | Line Height | Letter Spacing | Token               |
+| ---------- | ---- | ----------- | -------------- | ------------------- |
+| caption    | 12px | 1.5         | 0.05px         | `--text-caption`    |
+| body-sm    | 14px | 1.43        | —              | `--text-body-sm`    |
+| body       | 16px | 1.5         | —              | `--text-body`       |
+| subheading | 20px | 1.4         | -0.025px       | `--text-subheading` |
+| heading    | 36px | 1.25        | -0.025px       | `--text-heading`    |
+| display    | 60px | 1.2         | -0.05px        | `--text-display`    |
+| display-lg | 96px | 1           | -0.05px        | `--text-display-lg` |
 
 ## Tokens — Spacing & Shapes
 
@@ -79,41 +84,41 @@ Statamic pairs a warm, editorial display serif with a clean geometric sans for a
 
 ### Spacing Scale
 
-| Name | Value | Token |
-|------|-------|-------|
-| 8 | 8px | `--spacing-8` |
-| 16 | 16px | `--spacing-16` |
-| 24 | 24px | `--spacing-24` |
-| 32 | 32px | `--spacing-32` |
-| 40 | 40px | `--spacing-40` |
-| 48 | 48px | `--spacing-48` |
-| 64 | 64px | `--spacing-64` |
-| 96 | 96px | `--spacing-96` |
-| 128 | 128px | `--spacing-128` |
-| 208 | 208px | `--spacing-208` |
+| Name | Value | Token           |
+| ---- | ----- | --------------- |
+| 8    | 8px   | `--spacing-8`   |
+| 16   | 16px  | `--spacing-16`  |
+| 24   | 24px  | `--spacing-24`  |
+| 32   | 32px  | `--spacing-32`  |
+| 40   | 40px  | `--spacing-40`  |
+| 48   | 48px  | `--spacing-48`  |
+| 64   | 64px  | `--spacing-64`  |
+| 96   | 96px  | `--spacing-96`  |
+| 128  | 128px | `--spacing-128` |
+| 208  | 208px | `--spacing-208` |
 
 ### Border Radius
 
-| Element | Value |
-|---------|-------|
-| cards | 8px |
-| pills | 9999px |
-| images | 12px |
-| buttons | 8px |
-| largeCards | 16px |
+| Element    | Value  |
+| ---------- | ------ |
+| cards      | 8px    |
+| pills      | 9999px |
+| images     | 12px   |
+| buttons    | 8px    |
+| largeCards | 16px   |
 
 ### Shadows
 
-| Name | Value | Token |
-|------|-------|-------|
-| sm | `rgba(0, 0, 0, 0.05) 0px 2px 6px -16px, rgba(0, 0, 0, 0.25...` | `--shadow-sm` |
-| subtle | `rgba(0, 0, 0, 0.15) 0px 2px 3px -2px` | `--shadow-subtle` |
+| Name     | Value                                                          | Token               |
+| -------- | -------------------------------------------------------------- | ------------------- |
+| sm       | `rgba(0, 0, 0, 0.05) 0px 2px 6px -16px, rgba(0, 0, 0, 0.25...` | `--shadow-sm`       |
+| subtle   | `rgba(0, 0, 0, 0.15) 0px 2px 3px -2px`                         | `--shadow-subtle`   |
 | subtle-2 | `rgba(94, 90, 90, 0.1) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1)...` | `--shadow-subtle-2` |
-| subtle-3 | `rgba(0, 0, 0, 0.05) 0px 1px 2px 0px` | `--shadow-subtle-3` |
-| sm-2 | `rgba(0, 0, 0, 0.07) 0px 2px 8px 0px, rgba(0, 0, 0, 0.05) ...` | `--shadow-sm-2` |
-| xl | `rgb(76, 48, 90) 0px 11px 37px -18px` | `--shadow-xl` |
-| subtle-4 | `rgb(113, 113, 122) 0px 0px 0px 1px` | `--shadow-subtle-4` |
-| xl-2 | `rgb(190, 185, 179) 0px 24px 64px -12px` | `--shadow-xl-2` |
+| subtle-3 | `rgba(0, 0, 0, 0.05) 0px 1px 2px 0px`                          | `--shadow-subtle-3` |
+| sm-2     | `rgba(0, 0, 0, 0.07) 0px 2px 8px 0px, rgba(0, 0, 0, 0.05) ...` | `--shadow-sm-2`     |
+| xl       | `rgb(76, 48, 90) 0px 11px 37px -18px`                          | `--shadow-xl`       |
+| subtle-4 | `rgb(113, 113, 122) 0px 0px 0px 1px`                           | `--shadow-subtle-4` |
+| xl-2     | `rgb(190, 185, 179) 0px 24px 64px -12px`                       | `--shadow-xl-2`     |
 | subtle-5 | `rgba(94, 90, 90, 0.1) 0px 0px 0px 1px, rgb(190, 185, 179)...` | `--shadow-subtle-5` |
 
 ### Layout
@@ -126,61 +131,73 @@ Statamic pairs a warm, editorial display serif with a clean geometric sans for a
 ## Components
 
 ### Filled Primary Button
+
 **Role:** Primary call-to-action for conversion (Get Pro Now)
 
 Background #191a1b, text #d4ff4c (Electric Lime), Lexend 16px weight 500, 8px radius, 12px 24px padding, subtle shadow (rgba(0,0,0,0.05) 0px 1px 2px). The dark fill with lime text creates the brand's signature contrast point — the only place this color combo appears, making it unmistakable as the primary action.
 
 ### Ghost Outlined Button
+
 **Role:** Secondary action (Try the Demo)
 
 Transparent background, 1.5px border in #cbc2ea (Lavender Whisper), text #191a1b, Lexend 16px weight 500, 8px radius, 12px 24px padding. The muted lavender border signals interactivity without competing with the filled primary.
 
 ### Navigation Bar
+
 **Role:** Top-level site navigation
 
 Transparent over hero gradient, white on scroll. Lexend 14px weight 400, #191a1b text. Logo: Statamic S-mark in #d4ff4c lime block. Nav items with 16px gap, dropdown indicators as carets. Right side: user icon in circle. Sticky behavior expected.
 
 ### Display Headline
+
 **Role:** Hero and section headlines
 
 p22-mackinac-pro weight 300-400, 60-96px, line-height 1.0-1.2, letter-spacing -0.05em, color #191a1b. Italic variant for emphasis words within the line. The thin weight at large size with tight tracking is the signature editorial choice.
 
 ### Hero Section
+
 **Role:** Full-width above-the-fold area
 
 Background: linear gradient from #fdf1ef (top) through peach tones to soft pink. Floating island illustrations (palm trees, toucan, clouds) positioned at left and right edges, partially clipped. Centered text block with max-width ~800px. Two CTA buttons side by side, then a small developer note link below.
 
 ### Product UI Card
+
 **Role:** Embedded screenshot/mockup of the CMS interface
 
 Large card with 16px radius, white background, subtle dual shadow (rgba(94,90,90,0.1) 0px 0px 0px 1px + rgba(0,0,0,0.1) 0px 16px 40px -8px). Contains a simulated dark toolbar (#191a1b) with tab-like elements, white content area with sidebar + editor layout. The 1px border + large diffuse shadow is the signature card elevation.
 
 ### Code/File Editor Mockup
+
 **Role:** Technical demonstration block
 
 Split panel: left shows file tree (folders, .md files) in #fdf1ef tinted background, right shows YAML/code content with syntax highlighting (blue #0444ac keys, pink #a44185 values, dark navy #002339 text). Code-saver monospace 14px. 8px radius outer container, subtle shadow.
 
 ### Feature Section Layout
+
 **Role:** Content sections between hero and footer
 
 Centered headline at 36-60px display, max-width text block, then visual element (screenshot/code mockup) at full container width. 64px section gap. Alternating between white and warm-shell backgrounds.
 
 ### Badge/Tag
+
 **Role:** Status indicators, topic labels
 
 Small pill-shaped labels, 9999px radius, Lexend 12px weight 500, 4px 12px padding. Background varies by topic (light tints of lavender, pink, blue). Used in product UI mockup sidebar.
 
 ### Icon Circle
+
 **Role:** Nav avatar, decorative circular elements
 
 Round container, 9999px radius, 1px border in #191a1b or fill in #d4ff4c. Contains Lore icon font glyphs at 14px. 32-40px diameter.
 
 ### Ghost Link
+
 **Role:** Inline links in body text and developer notes
 
 Lexend 16px weight 400, #191a1b text, underline on hover only. No background or border. Minimal — links blend into prose until interaction.
 
 ### Input Field
+
 **Role:** Form inputs in product UI
 
 White background, 1px border in #cbd5e0 (Mist), 8px radius, 8px 12px padding. Code-saver monospace 14px for technical inputs. Focus ring: lavender #cbc2ea at 2px.
@@ -188,6 +205,7 @@ White background, 1px border in #cbd5e0 (Mist), 8px radius, 8px 12px padding. Co
 ## Do's and Don'ts
 
 ### Do
+
 - Use p22-mackinac-pro weight 300-400 at 60-96px for display headlines with -0.05em letter-spacing
 - Pair the filled dark button (#191a1b bg, #d4ff4c text, 8px radius) as the single primary action on any page
 - Use Lavender Whisper (#cbc2ea) for outlined/ghost action borders — never as a filled background
@@ -197,6 +215,7 @@ White background, 1px border in #cbd5e0 (Mist), 8px radius, 8px 12px padding. Co
 - Apply the dual shadow (1px border + 40px diffuse) to large elevated content cards
 
 ### Don't
+
 - Don't use weight 600+ for display headlines — the signature is whisper-thin serif at large size
 - Don't place #d4ff4c lime on a light background — it loses contrast; reserve it for dark fills or small accent marks
 - Don't use heavy drop shadows on buttons — the system uses barely-there 1-2px elevation
@@ -207,12 +226,12 @@ White background, 1px border in #cbd5e0 (Mist), 8px radius, 8px 12px padding. Co
 
 ## Surfaces
 
-| Level | Name | Value | Purpose |
-|-------|------|-------|---------|
-| 0 | Canvas | `#ffffff` | Base page background |
-| 1 | Warm Shell | `#fdf1ef` | Hero gradient base, warm section backgrounds |
-| 2 | Card | `#ffffff` | Product UI mockup cards, elevated content blocks with subtle 1px border + 40px shadow |
-| 3 | Dark Surface | `#191a1b` | Filled primary button, dark code editor panels |
+| Level | Name         | Value     | Purpose                                                                               |
+| ----- | ------------ | --------- | ------------------------------------------------------------------------------------- |
+| 0     | Canvas       | `#ffffff` | Base page background                                                                  |
+| 1     | Warm Shell   | `#fdf1ef` | Hero gradient base, warm section backgrounds                                          |
+| 2     | Card         | `#ffffff` | Product UI mockup cards, elevated content blocks with subtle 1px border + 40px shadow |
+| 3     | Dark Surface | `#191a1b` | Filled primary button, dark code editor panels                                        |
 
 ## Elevation
 
@@ -232,6 +251,7 @@ Max-width 1200px centered container with generous outer padding. Hero is full-bl
 ## Agent Prompt Guide
 
 **Quick Color Reference**
+
 - text: #191a1b (Ink)
 - background: #ffffff (Paper White)
 - hero/warm surface: #fdf1ef (Warm Shell)
@@ -282,13 +302,24 @@ Max-width 1200px centered container with generous outer padding. Hero is full-bl
   --color-dusk-gradient: #334155;
   --gradient-dusk-gradient: linear-gradient(to right bottom, rgb(51, 65, 85), rgb(25, 26, 27));
   --color-aurora-wash: #32c5ff;
-  --gradient-aurora-wash: linear-gradient(233deg, rgba(50, 197, 255, 0.08), rgba(182, 32, 224, 0.08) 51%, rgba(247, 181, 0, 0.08));
+  --gradient-aurora-wash: linear-gradient(
+    233deg,
+    rgba(50, 197, 255, 0.08),
+    rgba(182, 32, 224, 0.08) 51%,
+    rgba(247, 181, 0, 0.08)
+  );
 
   /* Typography — Font Families */
-  --font-p22-mackinac-pro: 'p22-mackinac-pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-lexend: 'Lexend', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-p22-mackinac-pro:
+    'p22-mackinac-pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, sans-serif;
+  --font-lexend:
+    'Lexend', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
   --font-code-saver: 'code-saver', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-lore: 'Lore', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-lore:
+    'Lore', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
 
   /* Typography — Scale */
   --text-caption: 12px;
@@ -392,10 +423,16 @@ Max-width 1200px centered container with generous outer padding. Hero is full-bl
   --color-aurora-wash: #32c5ff;
 
   /* Typography */
-  --font-p22-mackinac-pro: 'p22-mackinac-pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-lexend: 'Lexend', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-p22-mackinac-pro:
+    'p22-mackinac-pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, sans-serif;
+  --font-lexend:
+    'Lexend', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
   --font-code-saver: 'code-saver', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-lore: 'Lore', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-lore:
+    'Lore', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
 
   /* Typography — Scale */
   --text-caption: 12px;

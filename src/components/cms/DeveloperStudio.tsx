@@ -55,30 +55,135 @@ interface ApiLog {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const STOREFRONT_SCOPES = [
-  { id: 'store.read',       label: 'Store Info',       desc: 'Read public store metadata, currency, social links', icon: Globe },
-  { id: 'products.read',    label: 'Products',          desc: 'Browse products, search, filter, and pagination', icon: Package },
-  { id: 'collections.read', label: 'Collections',       desc: 'List and query collections and their products', icon: Layers },
-  { id: 'categories.read',  label: 'Categories',        desc: 'List and query store categories', icon: Layers },
-  { id: 'search.read',      label: 'Search',            desc: 'Full-text search across products, collections, categories', icon: Search },
-  { id: 'cart.read',        label: 'Cart Read',         desc: 'Retrieve cart state and item details', icon: ShoppingCart },
-  { id: 'cart.write',       label: 'Cart Write',        desc: 'Create carts, add, update, and remove items', icon: ShoppingCart },
-  { id: 'checkout.write',   label: 'Checkout',          desc: 'Initiate checkout sessions — payment handled by gateway', icon: Zap },
-  { id: 'customer.read',    label: 'Customer Read',     desc: 'Authenticated customer can read their own profile', icon: User },
-  { id: 'customer.write',   label: 'Customer Write',    desc: 'Register, login, update own customer profile', icon: User },
-  { id: 'content.read',     label: 'Content',           desc: 'Read pages, blog posts, and navigation menus', icon: BookOpen },
+  {
+    id: 'store.read',
+    label: 'Store Info',
+    desc: 'Read public store metadata, currency, social links',
+    icon: Globe,
+  },
+  {
+    id: 'products.read',
+    label: 'Products',
+    desc: 'Browse products, search, filter, and pagination',
+    icon: Package,
+  },
+  {
+    id: 'collections.read',
+    label: 'Collections',
+    desc: 'List and query collections and their products',
+    icon: Layers,
+  },
+  {
+    id: 'categories.read',
+    label: 'Categories',
+    desc: 'List and query store categories',
+    icon: Layers,
+  },
+  {
+    id: 'search.read',
+    label: 'Search',
+    desc: 'Full-text search across products, collections, categories',
+    icon: Search,
+  },
+  {
+    id: 'cart.read',
+    label: 'Cart Read',
+    desc: 'Retrieve cart state and item details',
+    icon: ShoppingCart,
+  },
+  {
+    id: 'cart.write',
+    label: 'Cart Write',
+    desc: 'Create carts, add, update, and remove items',
+    icon: ShoppingCart,
+  },
+  {
+    id: 'checkout.write',
+    label: 'Checkout',
+    desc: 'Initiate checkout sessions — payment handled by gateway',
+    icon: Zap,
+  },
+  {
+    id: 'customer.read',
+    label: 'Customer Read',
+    desc: 'Authenticated customer can read their own profile',
+    icon: User,
+  },
+  {
+    id: 'customer.write',
+    label: 'Customer Write',
+    desc: 'Register, login, update own customer profile',
+    icon: User,
+  },
+  {
+    id: 'content.read',
+    label: 'Content',
+    desc: 'Read pages, blog posts, and navigation menus',
+    icon: BookOpen,
+  },
 ];
 
 const STOREFRONT_EVENTS = [
-  { id: 'checkout.completed', label: 'checkout.completed', desc: 'Customer completes checkout and payment is captured', group: 'Order' },
-  { id: 'payment.completed',  label: 'payment.completed',  desc: 'Payment verified and captured by payment gateway', group: 'Order' },
-  { id: 'order.confirmed',    label: 'order.confirmed',    desc: 'Order confirmed and accepted by the merchant', group: 'Order' },
-  { id: 'order.fulfilled',    label: 'order.fulfilled',    desc: 'All items in the order have been packed', group: 'Order' },
-  { id: 'order.shipped',      label: 'order.shipped',      desc: 'Tracking number assigned; order dispatched', group: 'Order' },
-  { id: 'order.delivered',    label: 'order.delivered',    desc: 'Order delivered to the customer', group: 'Order' },
-  { id: 'order.cancelled',    label: 'order.cancelled',    desc: 'Order cancelled before or after fulfillment', group: 'Order' },
-  { id: 'product.updated',    label: 'product.updated',    desc: 'Product details or pricing changed — sync your cache', group: 'Catalog' },
-  { id: 'inventory.updated',  label: 'inventory.updated',  desc: 'Stock level changed — sync inventory counts', group: 'Catalog' },
-  { id: 'collection.updated', label: 'collection.updated', desc: 'Collection updated — refresh your listings', group: 'Catalog' },
+  {
+    id: 'checkout.completed',
+    label: 'checkout.completed',
+    desc: 'Customer completes checkout and payment is captured',
+    group: 'Order',
+  },
+  {
+    id: 'payment.completed',
+    label: 'payment.completed',
+    desc: 'Payment verified and captured by payment gateway',
+    group: 'Order',
+  },
+  {
+    id: 'order.confirmed',
+    label: 'order.confirmed',
+    desc: 'Order confirmed and accepted by the merchant',
+    group: 'Order',
+  },
+  {
+    id: 'order.fulfilled',
+    label: 'order.fulfilled',
+    desc: 'All items in the order have been packed',
+    group: 'Order',
+  },
+  {
+    id: 'order.shipped',
+    label: 'order.shipped',
+    desc: 'Tracking number assigned; order dispatched',
+    group: 'Order',
+  },
+  {
+    id: 'order.delivered',
+    label: 'order.delivered',
+    desc: 'Order delivered to the customer',
+    group: 'Order',
+  },
+  {
+    id: 'order.cancelled',
+    label: 'order.cancelled',
+    desc: 'Order cancelled before or after fulfillment',
+    group: 'Order',
+  },
+  {
+    id: 'product.updated',
+    label: 'product.updated',
+    desc: 'Product details or pricing changed — sync your cache',
+    group: 'Catalog',
+  },
+  {
+    id: 'inventory.updated',
+    label: 'inventory.updated',
+    desc: 'Stock level changed — sync inventory counts',
+    group: 'Catalog',
+  },
+  {
+    id: 'collection.updated',
+    label: 'collection.updated',
+    desc: 'Collection updated — refresh your listings',
+    group: 'Catalog',
+  },
 ];
 
 const API_DOCS = [
@@ -86,14 +191,22 @@ const API_DOCS = [
     group: 'Store',
     color: 'text-blue-600 bg-blue-50',
     endpoints: [
-      { method: 'GET', path: '/api/v1/store', desc: 'Public store metadata: name, currency, logo, social links, announcement banner.' },
+      {
+        method: 'GET',
+        path: '/api/v1/store',
+        desc: 'Public store metadata: name, currency, logo, social links, announcement banner.',
+      },
     ],
   },
   {
     group: 'Products',
     color: 'text-emerald-600 bg-emerald-50',
     endpoints: [
-      { method: 'GET', path: '/api/v1/products', desc: 'List products. Query: search, q, category, collection, brand, minPrice, maxPrice, availability, sort, page, limit.' },
+      {
+        method: 'GET',
+        path: '/api/v1/products',
+        desc: 'List products. Query: search, q, category, collection, brand, minPrice, maxPrice, availability, sort, page, limit.',
+      },
       { method: 'GET', path: '/api/v1/products/:id', desc: 'Get product by id or urlSlug.' },
     ],
   },
@@ -103,7 +216,11 @@ const API_DOCS = [
     endpoints: [
       { method: 'GET', path: '/api/v1/collections', desc: 'List all collections.' },
       { method: 'GET', path: '/api/v1/collections/:id', desc: 'Get collection by id or slug.' },
-      { method: 'GET', path: '/api/v1/collections/:id/products', desc: 'Get products in a collection. Supports sort, page, limit.' },
+      {
+        method: 'GET',
+        path: '/api/v1/collections/:id/products',
+        desc: 'Get products in a collection. Supports sort, page, limit.',
+      },
     ],
   },
   {
@@ -118,17 +235,33 @@ const API_DOCS = [
     group: 'Search',
     color: 'text-sky-600 bg-sky-50',
     endpoints: [
-      { method: 'GET', path: '/api/v1/search?q=shirt', desc: 'Full-text search. Returns: { products, collections, categories }.' },
+      {
+        method: 'GET',
+        path: '/api/v1/search?q=shirt',
+        desc: 'Full-text search. Returns: { products, collections, categories }.',
+      },
     ],
   },
   {
     group: 'Cart',
     color: 'text-orange-600 bg-orange-50',
     endpoints: [
-      { method: 'POST',   path: '/api/v1/cart', desc: 'Create a new empty cart. Returns cart_id.' },
-      { method: 'GET',    path: '/api/v1/cart/:id', desc: 'Retrieve cart state with real-time stock validation.' },
-      { method: 'POST',   path: '/api/v1/cart/:id/items', desc: 'Add item. Body: { product_id, variant_id?, quantity?, options? }' },
-      { method: 'PATCH',  path: '/api/v1/cart/:id/items/:itemId', desc: 'Update item quantity. Body: { quantity }. Set 0 to remove.' },
+      { method: 'POST', path: '/api/v1/cart', desc: 'Create a new empty cart. Returns cart_id.' },
+      {
+        method: 'GET',
+        path: '/api/v1/cart/:id',
+        desc: 'Retrieve cart state with real-time stock validation.',
+      },
+      {
+        method: 'POST',
+        path: '/api/v1/cart/:id/items',
+        desc: 'Add item. Body: { product_id, variant_id?, quantity?, options? }',
+      },
+      {
+        method: 'PATCH',
+        path: '/api/v1/cart/:id/items/:itemId',
+        desc: 'Update item quantity. Body: { quantity }. Set 0 to remove.',
+      },
       { method: 'DELETE', path: '/api/v1/cart/:id/items/:itemId', desc: 'Remove item from cart.' },
     ],
   },
@@ -136,28 +269,52 @@ const API_DOCS = [
     group: 'Checkout',
     color: 'text-rose-600 bg-rose-50',
     endpoints: [
-      { method: 'POST', path: '/api/v1/checkout', desc: 'Initiate checkout. Returns pricing summary + payment gateway configs (no credentials exposed). Body: { cart_id, customer, shipping_address, coupon_code? }' },
-      { method: 'GET',  path: '/api/v1/checkout/:id', desc: 'Get checkout session status and next-step guide.' },
+      {
+        method: 'POST',
+        path: '/api/v1/checkout',
+        desc: 'Initiate checkout. Returns pricing summary + payment gateway configs (no credentials exposed). Body: { cart_id, customer, shipping_address, coupon_code? }',
+      },
+      {
+        method: 'GET',
+        path: '/api/v1/checkout/:id',
+        desc: 'Get checkout session status and next-step guide.',
+      },
     ],
   },
   {
     group: 'Customers',
     color: 'text-teal-600 bg-teal-50',
     endpoints: [
-      { method: 'POST',  path: '/api/v1/customers', desc: 'Register new customer. Body: { name, email, password, phone? }. Returns customer_token.' },
-      { method: 'POST',  path: '/api/v1/customers/login', desc: 'Authenticate customer. Returns customer_token.' },
-      { method: 'GET',   path: '/api/v1/customers/me', desc: 'Get authenticated customer profile. Requires: Authorization: Bearer <customer_token>.' },
-      { method: 'PATCH', path: '/api/v1/customers/me', desc: 'Update own name, phone, or default_address. Requires customer_token.' },
+      {
+        method: 'POST',
+        path: '/api/v1/customers',
+        desc: 'Register new customer. Body: { name, email, password, phone? }. Returns customer_token.',
+      },
+      {
+        method: 'POST',
+        path: '/api/v1/customers/login',
+        desc: 'Authenticate customer. Returns customer_token.',
+      },
+      {
+        method: 'GET',
+        path: '/api/v1/customers/me',
+        desc: 'Get authenticated customer profile. Requires: Authorization: Bearer <customer_token>.',
+      },
+      {
+        method: 'PATCH',
+        path: '/api/v1/customers/me',
+        desc: 'Update own name, phone, or default_address. Requires customer_token.',
+      },
     ],
   },
 ];
 
 const METHOD_COLORS: Record<string, string> = {
-  GET:    'bg-emerald-100 text-emerald-700 border border-emerald-200',
-  POST:   'bg-blue-100 text-blue-700 border border-blue-200',
-  PATCH:  'bg-amber-100 text-amber-700 border border-amber-200',
+  GET: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
+  POST: 'bg-blue-100 text-blue-700 border border-blue-200',
+  PATCH: 'bg-amber-100 text-amber-700 border border-amber-200',
   DELETE: 'bg-rose-100 text-rose-700 border border-rose-200',
-  PUT:    'bg-violet-100 text-violet-700 border border-violet-200',
+  PUT: 'bg-violet-100 text-violet-700 border border-violet-200',
 };
 
 const STATUS_COLORS: Record<number, string> = {
@@ -178,7 +335,10 @@ export const DeveloperStudio: React.FC = () => {
   const [webhooks, setWebhooks] = useState<WebhookData[]>([]);
   const [apiLogs, setApiLogs] = useState<ApiLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [visibleKey, setVisibleKey] = useState<string | null>(null);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
@@ -186,14 +346,26 @@ export const DeveloperStudio: React.FC = () => {
   // New API Key Modal
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [keyNameInput, setKeyNameInput] = useState('');
-  const [selectedScopes, setSelectedScopes] = useState<string[]>(['store.read', 'products.read', 'collections.read', 'search.read', 'cart.read', 'cart.write', 'checkout.write']);
+  const [selectedScopes, setSelectedScopes] = useState<string[]>([
+    'store.read',
+    'products.read',
+    'collections.read',
+    'search.read',
+    'cart.read',
+    'cart.write',
+    'checkout.write',
+  ]);
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<ApiKeyData | null>(null);
   const [isCreatingKey, setIsCreatingKey] = useState(false);
 
   // New Webhook Modal
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
   const [webhookUrlInput, setWebhookUrlInput] = useState('');
-  const [selectedEvents, setSelectedEvents] = useState<string[]>(['checkout.completed', 'order.confirmed', 'order.shipped']);
+  const [selectedEvents, setSelectedEvents] = useState<string[]>([
+    'checkout.completed',
+    'order.confirmed',
+    'order.shipped',
+  ]);
   const [isCreatingWebhook, setIsCreatingWebhook] = useState(false);
 
   // Test Dispatch Modal
@@ -312,7 +484,10 @@ export const DeveloperStudio: React.FC = () => {
     if (!testWebhook) return;
     setIsTesting(true);
     try {
-      const res = await cmsService.testWebhookDispatch({ webhookId: testWebhook.id, event: testEvent });
+      const res = await cmsService.testWebhookDispatch({
+        webhookId: testWebhook.id,
+        event: testEvent,
+      });
       setTestResult(res);
       showToast('Test event dispatched!');
     } catch (err: any) {
@@ -324,13 +499,13 @@ export const DeveloperStudio: React.FC = () => {
 
   const toggleScope = (scopeId: string) => {
     setSelectedScopes((prev) =>
-      prev.includes(scopeId) ? prev.filter((s) => s !== scopeId) : [...prev, scopeId]
+      prev.includes(scopeId) ? prev.filter((s) => s !== scopeId) : [...prev, scopeId],
     );
   };
 
   const toggleEvent = (eventId: string) => {
     setSelectedEvents((prev) =>
-      prev.includes(eventId) ? prev.filter((e) => e !== eventId) : [...prev, eventId]
+      prev.includes(eventId) ? prev.filter((e) => e !== eventId) : [...prev, eventId],
     );
   };
 
@@ -370,11 +545,11 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
   // ─── Tabs ──────────────────────────────────────────────────────────────────
 
   const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
-    { id: 'API',      label: 'API Overview', icon: Terminal },
-    { id: 'API_KEYS', label: 'API Keys',     icon: Key },
-    { id: 'WEBHOOKS', label: 'Webhooks',     icon: Webhook },
-    { id: 'LOGS',     label: 'API Logs',     icon: Activity },
-    { id: 'DOCS',     label: 'Documentation', icon: BookOpen },
+    { id: 'API', label: 'API Overview', icon: Terminal },
+    { id: 'API_KEYS', label: 'API Keys', icon: Key },
+    { id: 'WEBHOOKS', label: 'Webhooks', icon: Webhook },
+    { id: 'LOGS', label: 'API Logs', icon: Activity },
+    { id: 'DOCS', label: 'Documentation', icon: BookOpen },
   ];
 
   return (
@@ -386,7 +561,11 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
             toastMessage.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
           }`}
         >
-          {toastMessage.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5" />
+          ) : (
+            <AlertCircle className="w-5 h-5" />
+          )}
           <span>{toastMessage.text}</span>
         </div>
       )}
@@ -400,7 +579,10 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Build custom storefronts and integrations on top of your store using the public{' '}
-            <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs font-mono">/api/v1</code> REST API.
+            <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs font-mono">
+              /api/v1
+            </code>{' '}
+            REST API.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -452,21 +634,31 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                 onClick={() => copyToClipboard(`${BASE_URL}/api/v1`, 'Base URL')}
                 className="ml-auto text-slate-400 hover:text-white transition"
               >
-                {copiedText === `${BASE_URL}/api/v1` ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedText === `${BASE_URL}/api/v1` ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <div className="text-xs text-indigo-300 font-mono uppercase mb-1">Public Endpoints</div>
+                <div className="text-xs text-indigo-300 font-mono uppercase mb-1">
+                  Public Endpoints
+                </div>
                 <div className="text-sm text-white font-medium">
                   <code className="text-indigo-200">X-Storefront-Key: pk_live_xxx</code>
                 </div>
                 <div className="text-xs text-slate-400 mt-1">Required on every request</div>
               </div>
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <div className="text-xs text-teal-300 font-mono uppercase mb-1">Customer Endpoints</div>
+                <div className="text-xs text-teal-300 font-mono uppercase mb-1">
+                  Customer Endpoints
+                </div>
                 <div className="text-sm text-white font-medium">
-                  <code className="text-teal-200">Authorization: Bearer &lt;customer_token&gt;</code>
+                  <code className="text-teal-200">
+                    Authorization: Bearer &lt;customer_token&gt;
+                  </code>
                 </div>
                 <div className="text-xs text-slate-400 mt-1">For /customers/me endpoints</div>
               </div>
@@ -484,18 +676,20 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                 <div className="text-xs font-mono text-slate-400 mb-2">CMS API (Admin)</div>
                 <div className="space-y-1 text-xs font-mono text-emerald-300">
                   <div>POST /api/products ← manage</div>
-                  <div>GET  /api/orders   ← manage</div>
-                  <div>GET  /api/customers← manage</div>
+                  <div>GET /api/orders ← manage</div>
+                  <div>GET /api/customers← manage</div>
                 </div>
                 <div className="mt-3 flex items-center gap-1 text-amber-400 text-xs">
                   <Lock className="w-3 h-3" /> Merchant JWT only
                 </div>
               </div>
               <div className="bg-indigo-900 text-white rounded-xl p-4">
-                <div className="text-xs font-mono text-indigo-300 mb-2">Developer API (Storefront)</div>
+                <div className="text-xs font-mono text-indigo-300 mb-2">
+                  Developer API (Storefront)
+                </div>
                 <div className="space-y-1 text-xs font-mono text-sky-300">
-                  <div>GET  /api/v1/products ← browse</div>
-                  <div>POST /api/v1/cart     ← purchase</div>
+                  <div>GET /api/v1/products ← browse</div>
+                  <div>POST /api/v1/cart ← purchase</div>
                   <div>POST /api/v1/checkout ← pay</div>
                 </div>
                 <div className="mt-3 flex items-center gap-1 text-indigo-300 text-xs">
@@ -517,14 +711,21 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                 { label: 'JavaScript / TypeScript', code: JS_EXAMPLE },
                 { label: 'Complete Cart → Checkout Flow', code: CART_FLOW },
               ].map((ex) => (
-                <div key={ex.label} className="rounded-xl border border-slate-200 dark:border-border overflow-hidden">
+                <div
+                  key={ex.label}
+                  className="rounded-xl border border-slate-200 dark:border-border overflow-hidden"
+                >
                   <div className="flex items-center justify-between bg-slate-900 px-4 py-2">
                     <span className="text-xs text-slate-400 font-mono">{ex.label}</span>
                     <button
                       onClick={() => copyToClipboard(ex.code, ex.label)}
                       className="text-slate-400 hover:text-white transition flex items-center gap-1 text-xs"
                     >
-                      {copiedText === ex.code ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      {copiedText === ex.code ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
                       {copiedText === ex.code ? 'Copied' : 'Copy'}
                     </button>
                   </div>
@@ -538,7 +739,9 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
 
           {/* Purchase Flow Diagram */}
           <div className="rounded-2xl border border-slate-200 dark:border-border p-6 space-y-3">
-            <h3 className="font-bold text-slate-900 dark:text-foreground text-base">Complete Purchase Flow</h3>
+            <h3 className="font-bold text-slate-900 dark:text-foreground text-base">
+              Complete Purchase Flow
+            </h3>
             <div className="flex flex-wrap items-center gap-2 text-xs">
               {[
                 'GET /products',
@@ -550,7 +753,9 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                 'checkout.completed webhook',
               ].map((step, i) => (
                 <React.Fragment key={step}>
-                  <span className={`px-3 py-1.5 rounded-full font-mono font-bold ${i === 5 ? 'bg-amber-100 text-amber-700' : i === 6 ? 'bg-violet-100 text-violet-700' : 'bg-indigo-100 text-indigo-700'}`}>
+                  <span
+                    className={`px-3 py-1.5 rounded-full font-mono font-bold ${i === 5 ? 'bg-amber-100 text-amber-700' : i === 6 ? 'bg-violet-100 text-violet-700' : 'bg-indigo-100 text-indigo-700'}`}
+                  >
                     {step}
                   </span>
                   {i < 6 && <ArrowRight className="w-3 h-3 text-slate-400" />}
@@ -572,89 +777,133 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
             />
           ) : (
             <>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm text-slate-500">
-                  Use <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs">pk_live_</code> keys for all <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs">/api/v1</code> requests.
-                </p>
-              </div>
-              <button
-                onClick={() => { setIsKeyModalOpen(true); setNewlyCreatedKey(null); }}
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition shadow-sm"
-              >
-                <Plus className="w-4 h-4" /> New API Key
-              </button>
-            </div>
-
-            {/* Newly created key reveal */}
-            {newlyCreatedKey && (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-emerald-900 mb-1">Key generated — copy it now, it won't be shown again.</p>
-                    <div className="flex items-center gap-2 bg-white border border-emerald-200 rounded-xl px-3 py-2 font-mono text-xs text-slate-700 overflow-x-auto">
-                      <span className="truncate">{newlyCreatedKey.fullKey}</span>
-                      <button
-                        onClick={() => copyToClipboard(newlyCreatedKey.fullKey ?? '', 'API Key')}
-                        className="ml-auto shrink-0 text-emerald-700 hover:text-emerald-900"
-                      >
-                        {copiedText === newlyCreatedKey.fullKey ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm text-slate-500">
+                    Use{' '}
+                    <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs">
+                      pk_live_
+                    </code>{' '}
+                    keys for all{' '}
+                    <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs">
+                      /api/v1
+                    </code>{' '}
+                    requests.
+                  </p>
                 </div>
+                <button
+                  onClick={() => {
+                    setIsKeyModalOpen(true);
+                    setNewlyCreatedKey(null);
+                  }}
+                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition shadow-sm"
+                >
+                  <Plus className="w-4 h-4" /> New API Key
+                </button>
               </div>
-            )}
 
-            {/* Keys List */}
-            <div className="space-y-3">
-              {apiKeys.map((key) => (
-                <div key={key.id} className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl p-5 hover:shadow-sm transition">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-                        <Key className="w-4 h-4 text-indigo-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-bold text-slate-900 dark:text-foreground text-sm">{key.name}</div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <code className="text-xs text-slate-500 font-mono">
-                            {visibleKey === key.id ? key.fullKey : key.keyMasked}
-                          </code>
-                          <button onClick={() => setVisibleKey(visibleKey === key.id ? null : key.id)} className="text-slate-400 hover:text-slate-600 transition">
-                            {visibleKey === key.id ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                          </button>
-                          <button onClick={() => copyToClipboard(key.fullKey ?? '', 'API Key')} className="text-slate-400 hover:text-slate-600 transition">
-                            {copiedText === key.fullKey ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
+              {/* Newly created key reveal */}
+              {newlyCreatedKey && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-emerald-900 mb-1">
+                        Key generated — copy it now, it won't be shown again.
+                      </p>
+                      <div className="flex items-center gap-2 bg-white border border-emerald-200 rounded-xl px-3 py-2 font-mono text-xs text-slate-700 overflow-x-auto">
+                        <span className="truncate">{newlyCreatedKey.fullKey}</span>
+                        <button
+                          onClick={() => copyToClipboard(newlyCreatedKey.fullKey ?? '', 'API Key')}
+                          className="ml-auto shrink-0 text-emerald-700 hover:text-emerald-900"
+                        >
+                          {copiedText === newlyCreatedKey.fullKey ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </button>
                       </div>
                     </div>
-                    <button onClick={() => handleDeleteApiKey(key.id)} className="text-slate-400 hover:text-rose-600 transition shrink-0">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-1.5">
-                    {key.scopes.map((scope) => (
-                      <span key={scope} className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold font-mono border border-indigo-100">
-                        {scope}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="mt-3 flex items-center gap-4 text-xs text-slate-400">
-                    <span>Last used: {key.lastUsedAt}</span>
-                    <span>Created: {new Date(key.createdAt ?? Date.now()).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              ))}
-              {apiKeys.length === 0 && !isLoading && (
-                <div className="text-center py-12 text-slate-400">
-                  <Key className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">No API keys yet. Generate one to get started.</p>
                 </div>
               )}
-            </div>
+
+              {/* Keys List */}
+              <div className="space-y-3">
+                {apiKeys.map((key) => (
+                  <div
+                    key={key.id}
+                    className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl p-5 hover:shadow-sm transition"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                          <Key className="w-4 h-4 text-indigo-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-bold text-slate-900 dark:text-foreground text-sm">
+                            {key.name}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <code className="text-xs text-slate-500 font-mono">
+                              {visibleKey === key.id ? key.fullKey : key.keyMasked}
+                            </code>
+                            <button
+                              onClick={() => setVisibleKey(visibleKey === key.id ? null : key.id)}
+                              className="text-slate-400 hover:text-slate-600 transition"
+                            >
+                              {visibleKey === key.id ? (
+                                <EyeOff className="w-3.5 h-3.5" />
+                              ) : (
+                                <Eye className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => copyToClipboard(key.fullKey ?? '', 'API Key')}
+                              className="text-slate-400 hover:text-slate-600 transition"
+                            >
+                              {copiedText === key.fullKey ? (
+                                <Check className="w-3.5 h-3.5" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteApiKey(key.id)}
+                        className="text-slate-400 hover:text-rose-600 transition shrink-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {key.scopes.map((scope) => (
+                        <span
+                          key={scope}
+                          className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold font-mono border border-indigo-100"
+                        >
+                          {scope}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-3 flex items-center gap-4 text-xs text-slate-400">
+                      <span>Last used: {key.lastUsedAt}</span>
+                      <span>
+                        Created: {new Date(key.createdAt ?? Date.now()).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {apiKeys.length === 0 && !isLoading && (
+                  <div className="text-center py-12 text-slate-400">
+                    <Key className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">No API keys yet. Generate one to get started.</p>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -671,67 +920,90 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
             />
           ) : (
             <>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm text-slate-500">
-                Your endpoint receives a POST with a signed payload and a <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs">X-Webhook-Secret</code> header.
-              </p>
-              <button
-                onClick={() => setIsWebhookModalOpen(true)}
-                className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition shadow-sm"
-              >
-                <Plus className="w-4 h-4" /> Add Endpoint
-              </button>
-            </div>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-slate-500">
+                  Your endpoint receives a POST with a signed payload and a{' '}
+                  <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs">
+                    X-Webhook-Secret
+                  </code>{' '}
+                  header.
+                </p>
+                <button
+                  onClick={() => setIsWebhookModalOpen(true)}
+                  className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition shadow-sm"
+                >
+                  <Plus className="w-4 h-4" /> Add Endpoint
+                </button>
+              </div>
 
-            <div className="space-y-3">
-              {webhooks.map((wh) => (
-                <div key={wh.id} className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl p-5 hover:shadow-sm transition">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
-                        <Webhook className="w-4 h-4 text-violet-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-mono text-xs text-slate-700 dark:text-foreground font-bold truncate">{wh.url}</div>
-                        <div className="text-xs text-slate-400 mt-0.5">
-                          {wh.totalDispatches} dispatches · {wh.successRate} success
+              <div className="space-y-3">
+                {webhooks.map((wh) => (
+                  <div
+                    key={wh.id}
+                    className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl p-5 hover:shadow-sm transition"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+                          <Webhook className="w-4 h-4 text-violet-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-mono text-xs text-slate-700 dark:text-foreground font-bold truncate">
+                            {wh.url}
+                          </div>
+                          <div className="text-xs text-slate-400 mt-0.5">
+                            {wh.totalDispatches} dispatches · {wh.successRate} success
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => {
+                            setTestWebhook(wh);
+                            setTestResult(null);
+                            setIsTestModalOpen(true);
+                          }}
+                          className="flex items-center gap-1.5 text-xs font-bold text-violet-600 bg-violet-50 hover:bg-violet-100 px-3 py-1.5 rounded-lg transition"
+                        >
+                          <Send className="w-3.5 h-3.5" /> Test
+                        </button>
+                        <button
+                          onClick={() => handleDeleteWebhook(wh.id)}
+                          className="text-slate-400 hover:text-rose-600 transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={() => { setTestWebhook(wh); setTestResult(null); setIsTestModalOpen(true); }}
-                        className="flex items-center gap-1.5 text-xs font-bold text-violet-600 bg-violet-50 hover:bg-violet-100 px-3 py-1.5 rounded-lg transition"
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {wh.events.map((ev) => (
+                        <span
+                          key={ev}
+                          className="px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-[10px] font-bold font-mono border border-violet-100"
+                        >
+                          {ev}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-3 flex items-center gap-3 text-xs text-slate-400">
+                      <span
+                        className={`px-2 py-0.5 rounded-full font-bold ${wh.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}
                       >
-                        <Send className="w-3.5 h-3.5" /> Test
-                      </button>
-                      <button onClick={() => handleDeleteWebhook(wh.id)} className="text-slate-400 hover:text-rose-600 transition">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        {wh.status}
+                      </span>
+                      <span>
+                        Created: {new Date(wh.createdAt ?? Date.now()).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {wh.events.map((ev) => (
-                      <span key={ev} className="px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-[10px] font-bold font-mono border border-violet-100">
-                        {ev}
-                      </span>
-                    ))}
+                ))}
+                {webhooks.length === 0 && !isLoading && (
+                  <div className="text-center py-12 text-slate-400">
+                    <Webhook className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">No webhook endpoints registered yet.</p>
                   </div>
-                  <div className="mt-3 flex items-center gap-3 text-xs text-slate-400">
-                    <span className={`px-2 py-0.5 rounded-full font-bold ${wh.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
-                      {wh.status}
-                    </span>
-                    <span>Created: {new Date(wh.createdAt ?? Date.now()).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              ))}
-              {webhooks.length === 0 && !isLoading && (
-                <div className="text-center py-12 text-slate-400">
-                  <Webhook className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">No webhook endpoints registered yet.</p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -741,8 +1013,15 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
       {activeTab === 'LOGS' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">Recent API requests to your <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs">/api/v1</code> endpoints.</p>
-            <button onClick={loadData} className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-bold">
+            <p className="text-sm text-slate-500">
+              Recent API requests to your{' '}
+              <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs">/api/v1</code>{' '}
+              endpoints.
+            </p>
+            <button
+              onClick={loadData}
+              className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-bold"
+            >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
             </button>
           </div>
@@ -758,25 +1037,42 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
             </div>
             <div className="divide-y divide-slate-100 dark:divide-border">
               {apiLogs.map((log) => (
-                <div key={log.id} className="px-4 py-3 grid grid-cols-12 gap-3 items-center text-xs hover:bg-slate-50 dark:hover:bg-accent/50 transition">
+                <div
+                  key={log.id}
+                  className="px-4 py-3 grid grid-cols-12 gap-3 items-center text-xs hover:bg-slate-50 dark:hover:bg-accent/50 transition"
+                >
                   <div className="col-span-1">
-                    <span className={`px-1.5 py-0.5 rounded font-mono font-bold text-[10px] ${METHOD_COLORS[log.method] || 'bg-slate-100 text-slate-600'}`}>
+                    <span
+                      className={`px-1.5 py-0.5 rounded font-mono font-bold text-[10px] ${METHOD_COLORS[log.method] || 'bg-slate-100 text-slate-600'}`}
+                    >
                       {log.method}
                     </span>
                   </div>
-                  <div className="col-span-4 font-mono text-slate-700 dark:text-foreground truncate" title={log.endpoint}>
+                  <div
+                    className="col-span-4 font-mono text-slate-700 dark:text-foreground truncate"
+                    title={log.endpoint}
+                  >
                     {log.endpoint}
                   </div>
                   <div className="col-span-2">
-                    <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${STATUS_COLORS[log.statusCode] || 'text-slate-600 bg-slate-100'}`}>
+                    <span
+                      className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${STATUS_COLORS[log.statusCode] || 'text-slate-600 bg-slate-100'}`}
+                    >
                       {log.statusCode}
                     </span>
                   </div>
                   <div className="col-span-2 text-slate-500 font-mono">{log.latencyMs}ms</div>
-                  <div className="col-span-2 font-mono text-slate-400 truncate text-[10px]">{log.apiKey}</div>
+                  <div className="col-span-2 font-mono text-slate-400 truncate text-[10px]">
+                    {log.apiKey}
+                  </div>
                   <div className="col-span-1 text-slate-400 flex items-center gap-1">
                     <Clock className="w-3 h-3 shrink-0" />
-                    <span className="truncate">{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="truncate">
+                      {new Date(log.timestamp).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -801,7 +1097,8 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                 <span>Interactive Developer API Documentation & Sandbox</span>
               </div>
               <p className="text-xs text-indigo-700 dark:text-indigo-300/80 mt-0.5">
-                Complete guide with query/body parameters, 200/201 success payloads, 400/401/404 failure responses, and code snippets.
+                Complete guide with query/body parameters, 200/201 success payloads, 400/401/404
+                failure responses, and code snippets.
               </p>
             </div>
             <a
@@ -814,35 +1111,58 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
           </div>
 
           <p className="text-sm text-slate-500">
-            Complete endpoint reference for the Developer API. All endpoints require the <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs">X-Storefront-Key</code> header.
+            Complete endpoint reference for the Developer API. All endpoints require the{' '}
+            <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs">
+              X-Storefront-Key
+            </code>{' '}
+            header.
           </p>
 
           {API_DOCS.map((group) => (
-            <div key={group.group} className="rounded-2xl border border-slate-200 dark:border-border overflow-hidden">
+            <div
+              key={group.group}
+              className="rounded-2xl border border-slate-200 dark:border-border overflow-hidden"
+            >
               <button
                 onClick={() => setExpandedDoc(expandedDoc === group.group ? null : group.group)}
                 className="w-full flex items-center justify-between px-5 py-4 bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-accent/50 transition"
               >
                 <div className="flex items-center gap-3">
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${group.color}`}>{group.group}</span>
-                  <span className="text-xs text-slate-400">{group.endpoints.length} endpoint{group.endpoints.length > 1 ? 's' : ''}</span>
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${group.color}`}>
+                    {group.group}
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    {group.endpoints.length} endpoint{group.endpoints.length > 1 ? 's' : ''}
+                  </span>
                 </div>
-                {expandedDoc === group.group ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
+                {expandedDoc === group.group ? (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                )}
               </button>
               {expandedDoc === group.group && (
                 <div className="border-t border-slate-100 dark:border-border divide-y divide-slate-100 dark:divide-border">
                   {group.endpoints.map((ep) => (
                     <div key={ep.path} className="px-5 py-4 bg-slate-50 dark:bg-accent/30">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${METHOD_COLORS[ep.method] || ''}`}>
+                        <span
+                          className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${METHOD_COLORS[ep.method] || ''}`}
+                        >
                           {ep.method}
                         </span>
-                        <code className="font-mono text-sm text-slate-800 dark:text-foreground font-medium">{ep.path}</code>
+                        <code className="font-mono text-sm text-slate-800 dark:text-foreground font-medium">
+                          {ep.path}
+                        </code>
                         <button
                           onClick={() => copyToClipboard(`${BASE_URL}${ep.path}`, ep.path)}
                           className="ml-auto text-slate-400 hover:text-slate-600 transition"
                         >
-                          {copiedText === `${BASE_URL}${ep.path}` ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                          {copiedText === `${BASE_URL}${ep.path}` ? (
+                            <Check className="w-3.5 h-3.5" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
                         </button>
                       </div>
                       <p className="text-xs text-slate-500 leading-relaxed">{ep.desc}</p>
@@ -860,18 +1180,31 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
               className="w-full flex items-center justify-between px-5 py-4 bg-white dark:bg-card hover:bg-slate-50 transition"
             >
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold px-2.5 py-1 rounded-lg text-indigo-600 bg-indigo-50">Scopes Reference</span>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-lg text-indigo-600 bg-indigo-50">
+                  Scopes Reference
+                </span>
                 <span className="text-xs text-slate-400">{STOREFRONT_SCOPES.length} scopes</span>
               </div>
-              {expandedDoc === 'SCOPES' ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
+              {expandedDoc === 'SCOPES' ? (
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              )}
             </button>
             {expandedDoc === 'SCOPES' && (
               <div className="border-t border-slate-100 dark:border-border divide-y divide-slate-100">
                 {STOREFRONT_SCOPES.map((scope) => (
-                  <div key={scope.id} className="px-5 py-3 bg-slate-50 dark:bg-accent/30 flex items-start gap-3">
-                    <code className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded shrink-0">{scope.id}</code>
+                  <div
+                    key={scope.id}
+                    className="px-5 py-3 bg-slate-50 dark:bg-accent/30 flex items-start gap-3"
+                  >
+                    <code className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded shrink-0">
+                      {scope.id}
+                    </code>
                     <div>
-                      <div className="text-xs font-bold text-slate-800 dark:text-foreground">{scope.label}</div>
+                      <div className="text-xs font-bold text-slate-800 dark:text-foreground">
+                        {scope.label}
+                      </div>
                       <div className="text-xs text-slate-500">{scope.desc}</div>
                     </div>
                   </div>
@@ -887,18 +1220,31 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
               className="w-full flex items-center justify-between px-5 py-4 bg-white dark:bg-card hover:bg-slate-50 transition"
             >
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold px-2.5 py-1 rounded-lg text-violet-600 bg-violet-50">Webhook Events</span>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-lg text-violet-600 bg-violet-50">
+                  Webhook Events
+                </span>
                 <span className="text-xs text-slate-400">{STOREFRONT_EVENTS.length} events</span>
               </div>
-              {expandedDoc === 'EVENTS' ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
+              {expandedDoc === 'EVENTS' ? (
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              )}
             </button>
             {expandedDoc === 'EVENTS' && (
               <div className="border-t border-slate-100 dark:border-border divide-y divide-slate-100">
                 {STOREFRONT_EVENTS.map((ev) => (
-                  <div key={ev.id} className="px-5 py-3 bg-slate-50 dark:bg-accent/30 flex items-start gap-3">
-                    <code className="text-xs font-mono font-bold text-violet-700 bg-violet-50 px-2 py-0.5 rounded shrink-0">{ev.label}</code>
+                  <div
+                    key={ev.id}
+                    className="px-5 py-3 bg-slate-50 dark:bg-accent/30 flex items-start gap-3"
+                  >
+                    <code className="text-xs font-mono font-bold text-violet-700 bg-violet-50 px-2 py-0.5 rounded shrink-0">
+                      {ev.label}
+                    </code>
                     <div>
-                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{ev.group}</div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
+                        {ev.group}
+                      </div>
                       <div className="text-xs text-slate-500">{ev.desc}</div>
                     </div>
                   </div>
@@ -918,11 +1264,19 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                 <h2 className="font-black text-xl text-slate-900 dark:text-foreground flex items-center gap-2">
                   <Key className="w-5 h-5 text-indigo-600" /> New Storefront API Key
                 </h2>
-                <button type="button" onClick={() => setIsKeyModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+                <button
+                  type="button"
+                  onClick={() => setIsKeyModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
+                >
+                  &times;
+                </button>
               </div>
               <div className="p-6 space-y-5">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-1.5">Key Name</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-1.5">
+                    Key Name
+                  </label>
                   <input
                     required
                     value={keyNameInput}
@@ -932,22 +1286,31 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-2">Storefront Scopes</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-2">
+                    Storefront Scopes
+                  </label>
                   <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-1">
                     {STOREFRONT_SCOPES.map((scope) => {
                       const Icon = scope.icon;
                       const checked = selectedScopes.includes(scope.id);
                       return (
-                        <label key={scope.id} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${checked ? 'border-indigo-300 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-200 dark:border-border hover:bg-slate-50'}`}>
+                        <label
+                          key={scope.id}
+                          className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${checked ? 'border-indigo-300 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-200 dark:border-border hover:bg-slate-50'}`}
+                        >
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleScope(scope.id)}
                             className="mt-0.5"
                           />
-                          <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${checked ? 'text-indigo-600' : 'text-slate-400'}`} />
+                          <Icon
+                            className={`w-4 h-4 mt-0.5 shrink-0 ${checked ? 'text-indigo-600' : 'text-slate-400'}`}
+                          />
                           <div>
-                            <div className="text-xs font-bold text-slate-800 dark:text-foreground font-mono">{scope.id}</div>
+                            <div className="text-xs font-bold text-slate-800 dark:text-foreground font-mono">
+                              {scope.id}
+                            </div>
                             <div className="text-xs text-slate-500">{scope.desc}</div>
                           </div>
                         </label>
@@ -957,13 +1320,23 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                 </div>
               </div>
               <div className="p-6 border-t border-slate-100 dark:border-border flex gap-3 justify-end">
-                <button type="button" onClick={() => setIsKeyModalOpen(false)} className="px-4 py-2.5 text-sm text-slate-600 rounded-xl hover:bg-slate-100 transition font-bold">Cancel</button>
+                <button
+                  type="button"
+                  onClick={() => setIsKeyModalOpen(false)}
+                  className="px-4 py-2.5 text-sm text-slate-600 rounded-xl hover:bg-slate-100 transition font-bold"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
                   disabled={isCreatingKey || !keyNameInput || selectedScopes.length === 0}
                   className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition"
                 >
-                  {isCreatingKey ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
+                  {isCreatingKey ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Key className="w-4 h-4" />
+                  )}
                   Generate Key
                 </button>
               </div>
@@ -981,11 +1354,19 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                 <h2 className="font-black text-xl text-slate-900 dark:text-foreground flex items-center gap-2">
                   <Webhook className="w-5 h-5 text-violet-600" /> Register Webhook Endpoint
                 </h2>
-                <button type="button" onClick={() => setIsWebhookModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+                <button
+                  type="button"
+                  onClick={() => setIsWebhookModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
+                >
+                  &times;
+                </button>
               </div>
               <div className="p-6 space-y-5">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-1.5">Endpoint URL</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-1.5">
+                    Endpoint URL
+                  </label>
                   <input
                     required
                     type="url"
@@ -996,18 +1377,32 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-2">Subscribe to Events</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-2">
+                    Subscribe to Events
+                  </label>
                   <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
                     {['Order', 'Catalog'].map((grp) => (
                       <div key={grp}>
-                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1 pt-2 pb-1">{grp} Events</div>
+                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1 pt-2 pb-1">
+                          {grp} Events
+                        </div>
                         {STOREFRONT_EVENTS.filter((e) => e.group === grp).map((ev) => {
                           const checked = selectedEvents.includes(ev.id);
                           return (
-                            <label key={ev.id} className={`flex items-start gap-3 p-2.5 rounded-lg border cursor-pointer transition ${checked ? 'border-violet-300 bg-violet-50 dark:bg-violet-900/20' : 'border-transparent hover:bg-slate-50'}`}>
-                              <input type="checkbox" checked={checked} onChange={() => toggleEvent(ev.id)} className="mt-0.5" />
+                            <label
+                              key={ev.id}
+                              className={`flex items-start gap-3 p-2.5 rounded-lg border cursor-pointer transition ${checked ? 'border-violet-300 bg-violet-50 dark:bg-violet-900/20' : 'border-transparent hover:bg-slate-50'}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleEvent(ev.id)}
+                                className="mt-0.5"
+                              />
                               <div>
-                                <div className="text-xs font-bold font-mono text-slate-800 dark:text-foreground">{ev.label}</div>
+                                <div className="text-xs font-bold font-mono text-slate-800 dark:text-foreground">
+                                  {ev.label}
+                                </div>
                                 <div className="text-xs text-slate-500">{ev.desc}</div>
                               </div>
                             </label>
@@ -1019,13 +1414,23 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                 </div>
               </div>
               <div className="p-6 border-t border-slate-100 dark:border-border flex gap-3 justify-end">
-                <button type="button" onClick={() => setIsWebhookModalOpen(false)} className="px-4 py-2.5 text-sm text-slate-600 rounded-xl hover:bg-slate-100 transition font-bold">Cancel</button>
+                <button
+                  type="button"
+                  onClick={() => setIsWebhookModalOpen(false)}
+                  className="px-4 py-2.5 text-sm text-slate-600 rounded-xl hover:bg-slate-100 transition font-bold"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
                   disabled={isCreatingWebhook || !webhookUrlInput || selectedEvents.length === 0}
                   className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition"
                 >
-                  {isCreatingWebhook ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Webhook className="w-4 h-4" />}
+                  {isCreatingWebhook ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Webhook className="w-4 h-4" />
+                  )}
                   Register
                 </button>
               </div>
@@ -1042,30 +1447,52 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
               <h2 className="font-black text-xl text-slate-900 dark:text-foreground flex items-center gap-2">
                 <Send className="w-5 h-5 text-violet-600" /> Test Webhook Dispatch
               </h2>
-              <button type="button" onClick={() => setIsTestModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+              <button
+                type="button"
+                onClick={() => setIsTestModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
+              >
+                &times;
+              </button>
             </div>
             <div className="p-6 space-y-5">
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-1.5">Target URL</label>
-                <div className="font-mono text-sm text-slate-600 bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">{testWebhook.url}</div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-1.5">
+                  Target URL
+                </label>
+                <div className="font-mono text-sm text-slate-600 bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">
+                  {testWebhook.url}
+                </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-1.5">Event</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground mb-1.5">
+                  Event
+                </label>
                 <select
                   value={testEvent}
                   onChange={(e) => setTestEvent(e.target.value)}
                   className="w-full border border-slate-200 dark:border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 dark:bg-background"
                 >
                   {STOREFRONT_EVENTS.map((ev) => (
-                    <option key={ev.id} value={ev.id}>{ev.label} — {ev.desc}</option>
+                    <option key={ev.id} value={ev.id}>
+                      {ev.label} — {ev.desc}
+                    </option>
                   ))}
                 </select>
               </div>
               {testResult && (
-                <div className={`rounded-xl p-4 border ${testResult.httpStatus === 200 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
+                <div
+                  className={`rounded-xl p-4 border ${testResult.httpStatus === 200 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}
+                >
                   <div className="flex items-center gap-2 mb-2">
-                    {testResult.httpStatus === 200 ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <AlertCircle className="w-4 h-4 text-rose-600" />}
-                    <span className="text-xs font-bold">HTTP {testResult.httpStatus} · {testResult.latencyMs}ms</span>
+                    {testResult.httpStatus === 200 ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-600" />
+                    )}
+                    <span className="text-xs font-bold">
+                      HTTP {testResult.httpStatus} · {testResult.latencyMs}ms
+                    </span>
                   </div>
                   <pre className="text-xs text-slate-700 overflow-x-auto bg-white rounded-lg p-3 max-h-48 border border-slate-200">
                     {JSON.stringify(testResult.dispatchedPayload, null, 2)}
@@ -1074,13 +1501,23 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
               )}
             </div>
             <div className="p-6 border-t border-slate-100 dark:border-border flex gap-3 justify-end">
-              <button type="button" onClick={() => setIsTestModalOpen(false)} className="px-4 py-2.5 text-sm text-slate-600 rounded-xl hover:bg-slate-100 transition font-bold">Close</button>
+              <button
+                type="button"
+                onClick={() => setIsTestModalOpen(false)}
+                className="px-4 py-2.5 text-sm text-slate-600 rounded-xl hover:bg-slate-100 transition font-bold"
+              >
+                Close
+              </button>
               <button
                 onClick={handleRunTestDispatch}
                 disabled={isTesting}
                 className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition"
               >
-                {isTesting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {isTesting ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
                 Dispatch Test Event
               </button>
             </div>

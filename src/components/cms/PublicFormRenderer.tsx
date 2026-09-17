@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   CheckCircle2,
   AlertCircle,
@@ -12,9 +12,9 @@ import {
   Send,
   Sparkles,
   ExternalLink,
-} from "lucide-react";
-import { CMSForm, FormField } from "@/src/types";
-import { cmsService } from "@/src/services/cmsService";
+} from 'lucide-react';
+import { CMSForm, FormField } from '@/src/types';
+import { cmsService } from '@/src/services/cmsService';
 
 interface Props {
   form: CMSForm;
@@ -28,15 +28,15 @@ export const PublicFormRenderer: React.FC<Props> = ({
   form,
   previewMode = false,
   onSuccess,
-  className = "",
+  className = '',
   isEmbedded = false,
 }) => {
   const fields = form.fields || (form.fieldsJson ? JSON.parse(form.fieldsJson) : []);
   const settings = form.settings || (form.settingsJson ? JSON.parse(form.settingsJson) : {});
   const theme = settings.theme || {
-    accentColor: "#3b82f6",
-    borderRadius: "md",
-    cardStyle: "bordered",
+    accentColor: '#3b82f6',
+    borderRadius: 'md',
+    cardStyle: 'bordered',
   };
 
   const [formData, setFormData] = useState<Record<string, any>>(() => {
@@ -44,14 +44,14 @@ export const PublicFormRenderer: React.FC<Props> = ({
     fields.forEach((f: FormField) => {
       if (f.defaultValue !== undefined) {
         initial[f.name || f.id] = f.defaultValue;
-      } else if (f.type === "checkbox" && f.options && f.options.length > 0) {
+      } else if (f.type === 'checkbox' && f.options && f.options.length > 0) {
         initial[f.name || f.id] = [];
-      } else if (f.type === "checkbox") {
+      } else if (f.type === 'checkbox') {
         initial[f.name || f.id] = false;
-      } else if (f.type === "rating") {
+      } else if (f.type === 'rating') {
         initial[f.name || f.id] = 0;
       } else {
-        initial[f.name || f.id] = "";
+        initial[f.name || f.id] = '';
       }
     });
     return initial;
@@ -64,35 +64,35 @@ export const PublicFormRenderer: React.FC<Props> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hoverRating, setHoverRating] = useState<Record<string, number>>({});
 
-  const accentColor = theme.accentColor || "#3b82f6";
+  const accentColor = theme.accentColor || '#3b82f6';
 
   const getBorderRadiusClass = () => {
     switch (theme.borderRadius) {
-      case "none":
-        return "rounded-none";
-      case "sm":
-        return "rounded-sm";
-      case "lg":
-        return "rounded-2xl";
-      case "full":
-        return "rounded-3xl";
-      case "md":
+      case 'none':
+        return 'rounded-none';
+      case 'sm':
+        return 'rounded-sm';
+      case 'lg':
+        return 'rounded-2xl';
+      case 'full':
+        return 'rounded-3xl';
+      case 'md':
       default:
-        return "rounded-xl";
+        return 'rounded-xl';
     }
   };
 
   const getCardStyleClass = () => {
     switch (theme.cardStyle) {
-      case "elevated":
-        return "bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800";
-      case "flat":
-        return "bg-slate-50 dark:bg-slate-900 border-0";
-      case "glass":
-        return "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 dark:border-slate-700/30 shadow-lg";
-      case "bordered":
+      case 'elevated':
+        return 'bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800';
+      case 'flat':
+        return 'bg-slate-50 dark:bg-slate-900 border-0';
+      case 'glass':
+        return 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 dark:border-slate-700/30 shadow-lg';
+      case 'bordered':
       default:
-        return "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm";
+        return 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm';
     }
   };
 
@@ -134,10 +134,11 @@ export const PublicFormRenderer: React.FC<Props> = ({
     const op = field.conditionalRule.operator;
     const expected = field.conditionalRule.value;
 
-    if (op === "filled") return Boolean(targetVal && targetVal !== "");
-    if (op === "equals") return String(targetVal) === String(expected);
-    if (op === "not_equals") return String(targetVal) !== String(expected);
-    if (op === "contains") return String(targetVal).toLowerCase().includes(String(expected).toLowerCase());
+    if (op === 'filled') return Boolean(targetVal && targetVal !== '');
+    if (op === 'equals') return String(targetVal) === String(expected);
+    if (op === 'not_equals') return String(targetVal) !== String(expected);
+    if (op === 'contains')
+      return String(targetVal).toLowerCase().includes(String(expected).toLowerCase());
     return true;
   };
 
@@ -146,7 +147,8 @@ export const PublicFormRenderer: React.FC<Props> = ({
 
     fields.forEach((field: FormField) => {
       if (!isFieldVisible(field)) return;
-      if (field.type === "heading" || field.type === "divider" || field.type === "paragraph") return;
+      if (field.type === 'heading' || field.type === 'divider' || field.type === 'paragraph')
+        return;
 
       const key = field.name || field.id;
       const val = formData[key];
@@ -155,20 +157,20 @@ export const PublicFormRenderer: React.FC<Props> = ({
         if (
           val === undefined ||
           val === null ||
-          val === "" ||
+          val === '' ||
           (Array.isArray(val) && val.length === 0) ||
-          (field.type === "checkbox" && !field.options?.length && val === false) ||
-          (field.type === "rating" && val === 0)
+          (field.type === 'checkbox' && !field.options?.length && val === false) ||
+          (field.type === 'rating' && val === 0)
         ) {
-          newErrors[key] = `${field.label || "This field"} is required.`;
+          newErrors[key] = `${field.label || 'This field'} is required.`;
           return;
         }
       }
 
-      if (val && field.type === "email") {
+      if (val && field.type === 'email') {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(String(val))) {
-          newErrors[key] = "Please enter a valid email address.";
+          newErrors[key] = 'Please enter a valid email address.';
         }
       }
 
@@ -205,8 +207,8 @@ export const PublicFormRenderer: React.FC<Props> = ({
       setTimeout(() => {
         setSubmitting(false);
         setSubmitted(true);
-        setSubmissionId("preview-test-" + Date.now());
-        if (onSuccess) onSuccess("preview-test-" + Date.now());
+        setSubmissionId('preview-test-' + Date.now());
+        if (onSuccess) onSuccess('preview-test-' + Date.now());
       }, 700);
       return;
     }
@@ -221,15 +223,15 @@ export const PublicFormRenderer: React.FC<Props> = ({
       setSubmissionId(res.submissionId);
       if (onSuccess) onSuccess(res.submissionId);
 
-      if (res.successType === "redirect" && res.redirectUrl) {
+      if (res.successType === 'redirect' && res.redirectUrl) {
         setTimeout(() => {
           window.location.href = res.redirectUrl!;
         }, 1200);
       }
     } catch (err: any) {
-      console.error("Submission failed:", err);
+      console.error('Submission failed:', err);
       setErrorMessage(
-        err.response?.data?.message || err.message || "Failed to submit form. Please try again."
+        err.response?.data?.message || err.message || 'Failed to submit form. Please try again.',
       );
     } finally {
       setSubmitting(false);
@@ -248,10 +250,10 @@ export const PublicFormRenderer: React.FC<Props> = ({
           <CheckCircle2 className="w-8 h-8 animate-bounce" />
         </div>
         <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-          {settings.successType === "redirect" ? "Redirecting..." : "Thank You!"}
+          {settings.successType === 'redirect' ? 'Redirecting...' : 'Thank You!'}
         </h3>
         <p className="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-          {settings.successMessage || "Your submission has been successfully received."}
+          {settings.successMessage || 'Your submission has been successfully received.'}
         </p>
         {submissionId && (
           <div className="inline-block px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-mono text-slate-500 mb-6">
@@ -281,7 +283,7 @@ export const PublicFormRenderer: React.FC<Props> = ({
       {/* Form Header */}
       <div className="mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-          {form.title || "Custom Form"}
+          {form.title || 'Custom Form'}
         </h2>
         {form.description && (
           <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -306,14 +308,14 @@ export const PublicFormRenderer: React.FC<Props> = ({
             const key = field.name || field.id;
             const error = errors[key];
             const colSpanClass =
-              field.width === "half"
-                ? "sm:col-span-3"
-                : field.width === "third"
-                ? "sm:col-span-2"
-                : "sm:col-span-6";
+              field.width === 'half'
+                ? 'sm:col-span-3'
+                : field.width === 'third'
+                  ? 'sm:col-span-2'
+                  : 'sm:col-span-6';
 
             // Layout Elements
-            if (field.type === "heading") {
+            if (field.type === 'heading') {
               return (
                 <div key={field.id} className="sm:col-span-6 pt-4 pb-1">
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">
@@ -326,7 +328,7 @@ export const PublicFormRenderer: React.FC<Props> = ({
               );
             }
 
-            if (field.type === "divider") {
+            if (field.type === 'divider') {
               return (
                 <div key={field.id} className="sm:col-span-6 py-2">
                   <hr className="border-slate-200 dark:border-slate-800" />
@@ -334,9 +336,12 @@ export const PublicFormRenderer: React.FC<Props> = ({
               );
             }
 
-            if (field.type === "paragraph") {
+            if (field.type === 'paragraph') {
               return (
-                <div key={field.id} className="sm:col-span-6 text-sm text-slate-600 dark:text-slate-400">
+                <div
+                  key={field.id}
+                  className="sm:col-span-6 text-sm text-slate-600 dark:text-slate-400"
+                >
                   {field.label || field.description}
                 </div>
               );
@@ -356,100 +361,100 @@ export const PublicFormRenderer: React.FC<Props> = ({
                 </label>
 
                 {/* Input Renderers */}
-                {field.type === "text" && (
+                {field.type === 'text' && (
                   <input
                     id={key}
                     type="text"
-                    placeholder={field.placeholder || ""}
-                    value={formData[key] || ""}
+                    placeholder={field.placeholder || ''}
+                    value={formData[key] || ''}
                     onChange={(e) => handleInputChange(key, e.target.value)}
                     className={`w-full px-3.5 py-2.5 rounded-lg text-sm border bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 transition ${
                       error
-                        ? "border-rose-400 focus:ring-rose-400"
-                        : "border-slate-200 dark:border-slate-700 focus:border-transparent"
+                        ? 'border-rose-400 focus:ring-rose-400'
+                        : 'border-slate-200 dark:border-slate-700 focus:border-transparent'
                     }`}
                     style={
                       !error
-                        ? ({ "--tw-ring-color": accentColor } as React.CSSProperties)
+                        ? ({ '--tw-ring-color': accentColor } as React.CSSProperties)
                         : undefined
                     }
                   />
                 )}
 
-                {field.type === "email" && (
+                {field.type === 'email' && (
                   <input
                     id={key}
                     type="email"
-                    placeholder={field.placeholder || "name@example.com"}
-                    value={formData[key] || ""}
+                    placeholder={field.placeholder || 'name@example.com'}
+                    value={formData[key] || ''}
                     onChange={(e) => handleInputChange(key, e.target.value)}
                     className={`w-full px-3.5 py-2.5 rounded-lg text-sm border bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 transition ${
                       error
-                        ? "border-rose-400 focus:ring-rose-400"
-                        : "border-slate-200 dark:border-slate-700 focus:border-transparent"
+                        ? 'border-rose-400 focus:ring-rose-400'
+                        : 'border-slate-200 dark:border-slate-700 focus:border-transparent'
                     }`}
                   />
                 )}
 
-                {field.type === "phone" && (
+                {field.type === 'phone' && (
                   <input
                     id={key}
                     type="tel"
-                    placeholder={field.placeholder || "+1 (555) 000-0000"}
-                    value={formData[key] || ""}
+                    placeholder={field.placeholder || '+1 (555) 000-0000'}
+                    value={formData[key] || ''}
                     onChange={(e) => handleInputChange(key, e.target.value)}
                     className={`w-full px-3.5 py-2.5 rounded-lg text-sm border bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 transition ${
                       error
-                        ? "border-rose-400 focus:ring-rose-400"
-                        : "border-slate-200 dark:border-slate-700 focus:border-transparent"
+                        ? 'border-rose-400 focus:ring-rose-400'
+                        : 'border-slate-200 dark:border-slate-700 focus:border-transparent'
                     }`}
                   />
                 )}
 
-                {field.type === "number" && (
+                {field.type === 'number' && (
                   <input
                     id={key}
                     type="number"
                     min={field.validation?.min}
                     max={field.validation?.max}
-                    placeholder={field.placeholder || "0"}
-                    value={formData[key] || ""}
+                    placeholder={field.placeholder || '0'}
+                    value={formData[key] || ''}
                     onChange={(e) => handleInputChange(key, e.target.value)}
                     className={`w-full px-3.5 py-2.5 rounded-lg text-sm border bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 transition ${
                       error
-                        ? "border-rose-400 focus:ring-rose-400"
-                        : "border-slate-200 dark:border-slate-700 focus:border-transparent"
+                        ? 'border-rose-400 focus:ring-rose-400'
+                        : 'border-slate-200 dark:border-slate-700 focus:border-transparent'
                     }`}
                   />
                 )}
 
-                {field.type === "textarea" && (
+                {field.type === 'textarea' && (
                   <textarea
                     id={key}
                     rows={4}
-                    placeholder={field.placeholder || "Type your response here..."}
-                    value={formData[key] || ""}
+                    placeholder={field.placeholder || 'Type your response here...'}
+                    value={formData[key] || ''}
                     onChange={(e) => handleInputChange(key, e.target.value)}
                     className={`w-full px-3.5 py-2.5 rounded-lg text-sm border bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 transition resize-y ${
                       error
-                        ? "border-rose-400 focus:ring-rose-400"
-                        : "border-slate-200 dark:border-slate-700 focus:border-transparent"
+                        ? 'border-rose-400 focus:ring-rose-400'
+                        : 'border-slate-200 dark:border-slate-700 focus:border-transparent'
                     }`}
                   />
                 )}
 
-                {field.type === "select" && (
+                {field.type === 'select' && (
                   <select
                     id={key}
-                    value={formData[key] || ""}
+                    value={formData[key] || ''}
                     onChange={(e) => handleInputChange(key, e.target.value)}
                     className={`w-full px-3.5 py-2.5 rounded-lg text-sm border bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition ${
                       error
-                        ? "border-rose-400 focus:ring-rose-400"
-                        : "border-slate-200 dark:border-slate-700 focus:border-transparent"
+                        ? 'border-rose-400 focus:ring-rose-400'
+                        : 'border-slate-200 dark:border-slate-700 focus:border-transparent'
                     }`}
                   >
-                    <option value="">{field.placeholder || "Select an option..."}</option>
+                    <option value="">{field.placeholder || 'Select an option...'}</option>
                     {field.options?.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
@@ -458,7 +463,7 @@ export const PublicFormRenderer: React.FC<Props> = ({
                   </select>
                 )}
 
-                {field.type === "radio" && (
+                {field.type === 'radio' && (
                   <div className="space-y-2 pt-1">
                     {field.options?.map((opt) => {
                       const isSelected = formData[key] === opt.value;
@@ -467,8 +472,8 @@ export const PublicFormRenderer: React.FC<Props> = ({
                           key={opt.value}
                           className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${
                             isSelected
-                              ? "bg-blue-50/50 dark:bg-blue-950/30 border-blue-400 dark:border-blue-600"
-                              : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                              ? 'bg-blue-50/50 dark:bg-blue-950/30 border-blue-400 dark:border-blue-600'
+                              : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40'
                           }`}
                         >
                           <input
@@ -488,7 +493,7 @@ export const PublicFormRenderer: React.FC<Props> = ({
                   </div>
                 )}
 
-                {field.type === "checkbox" && field.options && field.options.length > 0 && (
+                {field.type === 'checkbox' && field.options && field.options.length > 0 && (
                   <div className="space-y-2 pt-1">
                     {field.options.map((opt) => {
                       const isChecked =
@@ -498,8 +503,8 @@ export const PublicFormRenderer: React.FC<Props> = ({
                           key={opt.value}
                           className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${
                             isChecked
-                              ? "bg-blue-50/50 dark:bg-blue-950/30 border-blue-400 dark:border-blue-600"
-                              : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                              ? 'bg-blue-50/50 dark:bg-blue-950/30 border-blue-400 dark:border-blue-600'
+                              : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40'
                           }`}
                         >
                           <input
@@ -519,7 +524,7 @@ export const PublicFormRenderer: React.FC<Props> = ({
                   </div>
                 )}
 
-                {field.type === "checkbox" && (!field.options || field.options.length === 0) && (
+                {field.type === 'checkbox' && (!field.options || field.options.length === 0) && (
                   <label className="flex items-start gap-3 pt-1 cursor-pointer">
                     <input
                       id={key}
@@ -529,42 +534,42 @@ export const PublicFormRenderer: React.FC<Props> = ({
                       className="w-4 h-4 mt-0.5 rounded text-blue-600 focus:ring-blue-500"
                     />
                     <span className="text-sm text-slate-700 dark:text-slate-300">
-                      {field.placeholder || field.label || "I agree to the specified terms"}
+                      {field.placeholder || field.label || 'I agree to the specified terms'}
                     </span>
                   </label>
                 )}
 
-                {field.type === "date" && (
+                {field.type === 'date' && (
                   <div className="relative">
                     <input
                       id={key}
                       type="date"
-                      value={formData[key] || ""}
+                      value={formData[key] || ''}
                       onChange={(e) => handleInputChange(key, e.target.value)}
                       className={`w-full px-3.5 py-2.5 rounded-lg text-sm border bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition ${
                         error
-                          ? "border-rose-400 focus:ring-rose-400"
-                          : "border-slate-200 dark:border-slate-700 focus:border-transparent"
+                          ? 'border-rose-400 focus:ring-rose-400'
+                          : 'border-slate-200 dark:border-slate-700 focus:border-transparent'
                       }`}
                     />
                   </div>
                 )}
 
-                {field.type === "time" && (
+                {field.type === 'time' && (
                   <input
                     id={key}
                     type="time"
-                    value={formData[key] || ""}
+                    value={formData[key] || ''}
                     onChange={(e) => handleInputChange(key, e.target.value)}
                     className={`w-full px-3.5 py-2.5 rounded-lg text-sm border bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition ${
                       error
-                        ? "border-rose-400 focus:ring-rose-400"
-                        : "border-slate-200 dark:border-slate-700 focus:border-transparent"
+                        ? 'border-rose-400 focus:ring-rose-400'
+                        : 'border-slate-200 dark:border-slate-700 focus:border-transparent'
                     }`}
                   />
                 )}
 
-                {field.type === "rating" && (
+                {field.type === 'rating' && (
                   <div className="flex items-center gap-2 py-2">
                     {[1, 2, 3, 4, 5].map((star) => {
                       const currentVal = formData[key] || 0;
@@ -576,19 +581,15 @@ export const PublicFormRenderer: React.FC<Props> = ({
                           key={star}
                           type="button"
                           onClick={() => handleInputChange(key, star)}
-                          onMouseEnter={() =>
-                            setHoverRating((prev) => ({ ...prev, [key]: star }))
-                          }
-                          onMouseLeave={() =>
-                            setHoverRating((prev) => ({ ...prev, [key]: 0 }))
-                          }
+                          onMouseEnter={() => setHoverRating((prev) => ({ ...prev, [key]: star }))}
+                          onMouseLeave={() => setHoverRating((prev) => ({ ...prev, [key]: 0 }))}
                           className="p-1 rounded-lg hover:scale-110 transition-transform focus:outline-none"
                         >
                           <Star
                             className={`w-7 h-7 transition-colors ${
                               isFilled
-                                ? "fill-amber-400 text-amber-400"
-                                : "text-slate-300 dark:text-slate-600"
+                                ? 'fill-amber-400 text-amber-400'
+                                : 'text-slate-300 dark:text-slate-600'
                             }`}
                           />
                         </button>
@@ -602,7 +603,7 @@ export const PublicFormRenderer: React.FC<Props> = ({
                   </div>
                 )}
 
-                {field.type === "file" && (
+                {field.type === 'file' && (
                   <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-6 text-center hover:bg-slate-50 dark:hover:bg-slate-800/30 transition">
                     <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
                     <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -622,7 +623,7 @@ export const PublicFormRenderer: React.FC<Props> = ({
                       htmlFor={key}
                       className="inline-block mt-3 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-medium cursor-pointer hover:bg-slate-200"
                     >
-                      {formData[key] ? `Selected: ${formData[key]}` : "Browse Files"}
+                      {formData[key] ? `Selected: ${formData[key]}` : 'Browse Files'}
                     </label>
                   </div>
                 )}
@@ -657,12 +658,12 @@ export const PublicFormRenderer: React.FC<Props> = ({
             {submitting ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                <span>{settings.submittingButtonText || "Submitting..."}</span>
+                <span>{settings.submittingButtonText || 'Submitting...'}</span>
               </>
             ) : (
               <>
                 <Send className="w-4 h-4" />
-                <span>{settings.submitButtonText || "Submit"}</span>
+                <span>{settings.submitButtonText || 'Submit'}</span>
               </>
             )}
           </button>

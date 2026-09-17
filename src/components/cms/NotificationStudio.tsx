@@ -31,10 +31,15 @@ import {
 export const NotificationStudio: React.FC = () => {
   const [configs, setConfigs] = useState<NotificationConfigData[]>([]);
   const [selectedTrigger, setSelectedTrigger] = useState<string>('ORDER_CONFIRMATION');
-  const [activeChannelTab, setActiveChannelTab] = useState<'WHATSAPP' | 'EMAIL' | 'SMS' | 'PUSH'>('WHATSAPP');
+  const [activeChannelTab, setActiveChannelTab] = useState<'WHATSAPP' | 'EMAIL' | 'SMS' | 'PUSH'>(
+    'WHATSAPP',
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   // Test Dispatch Modal
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
@@ -73,7 +78,9 @@ export const NotificationStudio: React.FC = () => {
     }
   }, [isSmsPlatformEnabled, activeChannelTab]);
 
-  const handleToggleChannel = (channelKey: 'whatsAppEnabled' | 'emailEnabled' | 'smsEnabled' | 'pushEnabled') => {
+  const handleToggleChannel = (
+    channelKey: 'whatsAppEnabled' | 'emailEnabled' | 'smsEnabled' | 'pushEnabled',
+  ) => {
     if (!currentConfig) return;
     if (channelKey === 'smsEnabled' && !isSmsPlatformEnabled && !currentConfig.smsEnabled) {
       showToast('SMS Gateway is disabled by Master Platform Administration', 'error');
@@ -165,7 +172,11 @@ export const NotificationStudio: React.FC = () => {
               : 'bg-rose-950/90 border-rose-600 text-rose-300'
           }`}
         >
-          {toastMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4 text-rose-400" />}
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-rose-400" />
+          )}
           <span>{toastMessage.text}</span>
         </div>
       )}
@@ -178,7 +189,8 @@ export const NotificationStudio: React.FC = () => {
             <span>Automated Customer Notifications Studio</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Configure automated WhatsApp, SMS, and Email alert workflows for order confirmations, shipping updates, and abandoned cart recoveries.
+            Configure automated WhatsApp, SMS, and Email alert workflows for order confirmations,
+            shipping updates, and abandoned cart recoveries.
           </p>
         </div>
 
@@ -293,7 +305,9 @@ export const NotificationStudio: React.FC = () => {
                     <div className="flex items-center gap-1.5 text-[10px]">
                       {conf.whatsAppEnabled && <span title="WhatsApp Active">💬</span>}
                       {conf.emailEnabled && <span title="Email Active">✉️</span>}
-                      {conf.smsEnabled && isSmsPlatformEnabled && <span title="SMS Active">📱</span>}
+                      {conf.smsEnabled && isSmsPlatformEnabled && (
+                        <span title="SMS Active">📱</span>
+                      )}
                     </div>
                   </div>
                   <span className="font-mono text-[10px] text-slate-400 block mt-1">
@@ -345,7 +359,9 @@ export const NotificationStudio: React.FC = () => {
                     <span>💬</span>
                     <span>WhatsApp</span>
                   </span>
-                  <span className={`text-[10px] font-black ${currentConfig.whatsAppEnabled ? 'text-emerald-600' : 'text-slate-400'}`}>
+                  <span
+                    className={`text-[10px] font-black ${currentConfig.whatsAppEnabled ? 'text-emerald-600' : 'text-slate-400'}`}
+                  >
                     {currentConfig.whatsAppEnabled ? 'ON' : 'OFF'}
                   </span>
                 </div>
@@ -362,7 +378,9 @@ export const NotificationStudio: React.FC = () => {
                     <span>✉️</span>
                     <span>Email</span>
                   </span>
-                  <span className={`text-[10px] font-black ${currentConfig.emailEnabled ? 'text-blue-600' : 'text-slate-400'}`}>
+                  <span
+                    className={`text-[10px] font-black ${currentConfig.emailEnabled ? 'text-blue-600' : 'text-slate-400'}`}
+                  >
                     {currentConfig.emailEnabled ? 'ON' : 'OFF'}
                   </span>
                 </div>
@@ -380,7 +398,9 @@ export const NotificationStudio: React.FC = () => {
                       <span>📱</span>
                       <span>SMS</span>
                     </span>
-                    <span className={`text-[10px] font-black ${currentConfig.smsEnabled ? 'text-purple-600' : 'text-slate-400'}`}>
+                    <span
+                      className={`text-[10px] font-black ${currentConfig.smsEnabled ? 'text-purple-600' : 'text-slate-400'}`}
+                    >
                       {currentConfig.smsEnabled ? 'ON' : 'OFF'}
                     </span>
                   </div>
@@ -394,9 +414,7 @@ export const NotificationStudio: React.FC = () => {
                       <span>📱</span>
                       <span>SMS</span>
                     </span>
-                    <span className="text-[9px] font-black text-rose-500">
-                      DISABLED
-                    </span>
+                    <span className="text-[9px] font-black text-rose-500">DISABLED</span>
                   </div>
                 )}
 
@@ -412,7 +430,9 @@ export const NotificationStudio: React.FC = () => {
                     <span>🔔</span>
                     <span>Push</span>
                   </span>
-                  <span className={`text-[10px] font-black ${currentConfig.pushEnabled ? 'text-amber-600' : 'text-slate-400'}`}>
+                  <span
+                    className={`text-[10px] font-black ${currentConfig.pushEnabled ? 'text-amber-600' : 'text-slate-400'}`}
+                  >
                     {currentConfig.pushEnabled ? 'ON' : 'OFF'}
                   </span>
                 </div>
@@ -421,53 +441,57 @@ export const NotificationStudio: React.FC = () => {
               {/* Template Editor Tabs */}
               <div className="space-y-4">
                 <div className="flex border-b border-slate-100 dark:border-border gap-4">
-                  {(['WHATSAPP', 'EMAIL', ...(isSmsPlatformEnabled ? ['SMS' as const] : [])]).map((chan) => {
-                    const isChanEnabled =
-                      chan === 'WHATSAPP'
-                        ? !!currentConfig.whatsAppEnabled
-                        : chan === 'EMAIL'
-                        ? !!currentConfig.emailEnabled
-                        : !!currentConfig.smsEnabled && isSmsPlatformEnabled;
+                  {['WHATSAPP', 'EMAIL', ...(isSmsPlatformEnabled ? ['SMS' as const] : [])].map(
+                    (chan) => {
+                      const isChanEnabled =
+                        chan === 'WHATSAPP'
+                          ? !!currentConfig.whatsAppEnabled
+                          : chan === 'EMAIL'
+                            ? !!currentConfig.emailEnabled
+                            : !!currentConfig.smsEnabled && isSmsPlatformEnabled;
 
-                    return (
-                      <button
-                        key={chan}
-                        type="button"
-                        onClick={() => setActiveChannelTab(chan as any)}
-                        className={`pb-2.5 text-xs font-black transition border-b-2 flex items-center gap-1.5 ${
-                          activeChannelTab === chan
-                            ? isChanEnabled
-                              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                              : 'border-rose-500 text-rose-500 dark:text-rose-400'
-                            : isChanEnabled
-                            ? 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                            : 'border-transparent text-slate-300 dark:text-slate-600 hover:text-slate-400'
-                        }`}
-                      >
-                        <span>
-                          {chan === 'WHATSAPP' && '💬 WhatsApp Template'}
-                          {chan === 'EMAIL' && '✉️ Email Template'}
-                          {chan === 'SMS' && '📱 SMS Template'}
-                        </span>
-                        {!isChanEnabled && (
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400">
-                            OFF
+                      return (
+                        <button
+                          key={chan}
+                          type="button"
+                          onClick={() => setActiveChannelTab(chan as any)}
+                          className={`pb-2.5 text-xs font-black transition border-b-2 flex items-center gap-1.5 ${
+                            activeChannelTab === chan
+                              ? isChanEnabled
+                                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                                : 'border-rose-500 text-rose-500 dark:text-rose-400'
+                              : isChanEnabled
+                                ? 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                : 'border-transparent text-slate-300 dark:text-slate-600 hover:text-slate-400'
+                          }`}
+                        >
+                          <span>
+                            {chan === 'WHATSAPP' && '💬 WhatsApp Template'}
+                            {chan === 'EMAIL' && '✉️ Email Template'}
+                            {chan === 'SMS' && '📱 SMS Template'}
                           </span>
-                        )}
-                      </button>
-                    );
-                  })}
+                          {!isChanEnabled && (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400">
+                              OFF
+                            </span>
+                          )}
+                        </button>
+                      );
+                    },
+                  )}
                 </div>
 
                 {/* Disabled Channel Notice Banner */}
                 {((activeChannelTab === 'WHATSAPP' && !currentConfig.whatsAppEnabled) ||
                   (activeChannelTab === 'EMAIL' && !currentConfig.emailEnabled) ||
-                  (activeChannelTab === 'SMS' && (!currentConfig.smsEnabled || !isSmsPlatformEnabled))) && (
+                  (activeChannelTab === 'SMS' &&
+                    (!currentConfig.smsEnabled || !isSmsPlatformEnabled))) && (
                   <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2.5">
                     <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
                     <span>
-                      <strong>{activeChannelTab} Channel is Disabled:</strong> This channel is unselected for{' '}
-                      <em>{currentConfig.title}</em>. Toggle the switch above to enable automated dispatch.
+                      <strong>{activeChannelTab} Channel is Disabled:</strong> This channel is
+                      unselected for <em>{currentConfig.title}</em>. Toggle the switch above to
+                      enable automated dispatch.
                     </span>
                   </div>
                 )}
@@ -497,8 +521,13 @@ export const NotificationStudio: React.FC = () => {
                           <Sparkles className="w-5 h-5" />
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-slate-100">Visual Block Email Builder</div>
-                          <div className="text-[11px] text-slate-400">Design rich responsive templates with product grids, coupon codes & live mobile previews</div>
+                          <div className="text-xs font-bold text-slate-100">
+                            Visual Block Email Builder
+                          </div>
+                          <div className="text-[11px] text-slate-400">
+                            Design rich responsive templates with product grids, coupon codes & live
+                            mobile previews
+                          </div>
                         </div>
                       </div>
                       <a
@@ -560,12 +589,24 @@ export const NotificationStudio: React.FC = () => {
                     Available Dynamic Merge Tags:
                   </span>
                   <div className="flex flex-wrap gap-2 text-[11px] font-mono">
-                    <code className="bg-white dark:bg-card px-2 py-0.5 rounded border text-indigo-600">{'{{customer_name}}'}</code>
-                    <code className="bg-white dark:bg-card px-2 py-0.5 rounded border text-indigo-600">{'{{store_name}}'}</code>
-                    <code className="bg-white dark:bg-card px-2 py-0.5 rounded border text-indigo-600">{'{{order_number}}'}</code>
-                    <code className="bg-white dark:bg-card px-2 py-0.5 rounded border text-indigo-600">{'{{total_amount}}'}</code>
-                    <code className="bg-white dark:bg-card px-2 py-0.5 rounded border text-indigo-600">{'{{tracking_url}}'}</code>
-                    <code className="bg-white dark:bg-card px-2 py-0.5 rounded border text-indigo-600">{'{{recovery_url}}'}</code>
+                    <code className="bg-white dark:bg-card px-2 py-0.5 rounded border text-indigo-600">
+                      {'{{customer_name}}'}
+                    </code>
+                    <code className="bg-white dark:bg-card px-2 py-0.5 rounded border text-indigo-600">
+                      {'{{store_name}}'}
+                    </code>
+                    <code className="bg-white dark:bg-card px-2 py-0.5 rounded border text-indigo-600">
+                      {'{{order_number}}'}
+                    </code>
+                    <code className="bg-white dark:bg-card px-2 py-0.5 rounded border text-indigo-600">
+                      {'{{total_amount}}'}
+                    </code>
+                    <code className="bg-white dark:bg-card px-2 py-0.5 rounded border text-indigo-600">
+                      {'{{tracking_url}}'}
+                    </code>
+                    <code className="bg-white dark:bg-card px-2 py-0.5 rounded border text-indigo-600">
+                      {'{{recovery_url}}'}
+                    </code>
                   </div>
                 </div>
               </div>
@@ -583,16 +624,20 @@ export const NotificationStudio: React.FC = () => {
                 </span>
               </div>
 
-              {((activeChannelTab === 'WHATSAPP' && !currentConfig.whatsAppEnabled) ||
-                (activeChannelTab === 'EMAIL' && !currentConfig.emailEnabled) ||
-                (activeChannelTab === 'SMS' && (!currentConfig.smsEnabled || !isSmsPlatformEnabled))) ? (
+              {(activeChannelTab === 'WHATSAPP' && !currentConfig.whatsAppEnabled) ||
+              (activeChannelTab === 'EMAIL' && !currentConfig.emailEnabled) ||
+              (activeChannelTab === 'SMS' &&
+                (!currentConfig.smsEnabled || !isSmsPlatformEnabled)) ? (
                 <div className="p-8 rounded-2xl bg-slate-950 border border-slate-800 text-center space-y-2 max-w-md mx-auto">
                   <div className="w-10 h-10 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto">
                     <AlertCircle className="w-5 h-5" />
                   </div>
-                  <h4 className="text-sm font-bold text-slate-200">{activeChannelTab} Channel is Disabled</h4>
+                  <h4 className="text-sm font-bold text-slate-200">
+                    {activeChannelTab} Channel is Disabled
+                  </h4>
                   <p className="text-xs text-slate-500">
-                    This channel is unselected for this trigger event. Switch it ON above to activate live previews.
+                    This channel is unselected for this trigger event. Switch it ON above to
+                    activate live previews.
                   </p>
                 </div>
               ) : (
@@ -600,7 +645,9 @@ export const NotificationStudio: React.FC = () => {
                   {activeChannelTab === 'WHATSAPP' && (
                     <div className="bg-[#0b141a] p-4 sm:p-5 rounded-2xl border border-emerald-900/30 space-y-2 max-w-md mx-auto">
                       <div className="flex items-center justify-between text-[11px] text-slate-400 pb-2 border-b border-white/10">
-                        <span className="font-bold text-emerald-400">OmniStore Verified Business ✓</span>
+                        <span className="font-bold text-emerald-400">
+                          OmniStore Verified Business ✓
+                        </span>
                         <span>12:45 PM</span>
                       </div>
                       <div className="bg-[#005c4b] text-white p-3.5 rounded-2xl rounded-tl-none text-xs font-sans whitespace-pre-line shadow-md leading-relaxed">
@@ -612,8 +659,12 @@ export const NotificationStudio: React.FC = () => {
                   {activeChannelTab === 'EMAIL' && (
                     <div className="bg-white text-slate-900 p-5 rounded-2xl space-y-3 max-w-md mx-auto text-xs shadow-md">
                       <div className="border-b pb-2">
-                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Subject:</span>
-                        <strong className="text-sm font-black">{getRenderedPreview(currentConfig.subjectTemplate || '')}</strong>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                          Subject:
+                        </span>
+                        <strong className="text-sm font-black">
+                          {getRenderedPreview(currentConfig.subjectTemplate || '')}
+                        </strong>
                       </div>
                       <div className="text-slate-700 whitespace-pre-line leading-relaxed font-sans">
                         {getRenderedPreview(currentConfig.emailBodyTemplate || '')}
@@ -623,7 +674,9 @@ export const NotificationStudio: React.FC = () => {
 
                   {activeChannelTab === 'SMS' && (
                     <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-2 max-w-md mx-auto">
-                      <span className="text-[10px] text-slate-400 block font-bold">SMS Message</span>
+                      <span className="text-[10px] text-slate-400 block font-bold">
+                        SMS Message
+                      </span>
                       <div className="p-3.5 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-200 text-xs">
                         {getRenderedPreview(currentConfig.smsBodyTemplate || '')}
                       </div>
@@ -645,9 +698,7 @@ export const NotificationStudio: React.FC = () => {
                 <h3 className="text-base font-black text-slate-900 dark:text-foreground">
                   Send Test {activeChannelTab} Alert
                 </h3>
-                <p className="text-xs text-slate-400">
-                  Trigger: {currentConfig.title}
-                </p>
+                <p className="text-xs text-slate-400">Trigger: {currentConfig.title}</p>
               </div>
               <button
                 type="button"

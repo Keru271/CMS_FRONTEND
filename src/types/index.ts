@@ -1,36 +1,30 @@
-export type ProductStatus =
-  | "ACTIVE"
-  | "DRAFT"
-  | "ARCHIVED"
-  | "active"
-  | "draft"
-  | "archived";
+export type ProductStatus = 'ACTIVE' | 'DRAFT' | 'ARCHIVED' | 'active' | 'draft' | 'archived';
 export type PaymentStatus =
-  | "paid"
-  | "pending"
-  | "failed"
-  | "refunded"
-  | "partially_refunded"
-  | "PAID"
-  | "PENDING"
-  | "FAILED"
-  | "REFUNDED"
-  | "PARTIALLY_REFUNDED";
+  | 'paid'
+  | 'pending'
+  | 'failed'
+  | 'refunded'
+  | 'partially_refunded'
+  | 'PAID'
+  | 'PENDING'
+  | 'FAILED'
+  | 'REFUNDED'
+  | 'PARTIALLY_REFUNDED';
 export type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "processing"
-  | "shipped"
-  | "delivered"
-  | "cancelled"
-  | "refunded"
-  | "PENDING"
-  | "CONFIRMED"
-  | "PROCESSING"
-  | "SHIPPED"
-  | "DELIVERED"
-  | "CANCELLED"
-  | "REFUNDED";
+  | 'pending'
+  | 'confirmed'
+  | 'processing'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled'
+  | 'refunded'
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'PROCESSING'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'CANCELLED'
+  | 'REFUNDED';
 
 export interface OrderShippingAddress {
   name: string;
@@ -205,26 +199,20 @@ export interface BrandFormData {
   status?: string;
 }
 
-export type CollectionType = "MANUAL" | "AUTOMATIC";
+export type CollectionType = 'MANUAL' | 'AUTOMATIC';
 export type RuleField =
-  | "title"
-  | "category"
-  | "brand"
-  | "tag"
-  | "price"
-  | "inventory"
-  | "compareAtPrice";
+  'title' | 'category' | 'brand' | 'tag' | 'price' | 'inventory' | 'compareAtPrice';
 export type RuleOperator =
-  | "equals"
-  | "not_equals"
-  | "contains"
-  | "not_contains"
-  | "starts_with"
-  | "ends_with"
-  | "greater_than"
-  | "less_than"
-  | "is_set"
-  | "is_not_set";
+  | 'equals'
+  | 'not_equals'
+  | 'contains'
+  | 'not_contains'
+  | 'starts_with'
+  | 'ends_with'
+  | 'greater_than'
+  | 'less_than'
+  | 'is_set'
+  | 'is_not_set';
 
 export interface CollectionRule {
   id?: string;
@@ -241,7 +229,7 @@ export interface CollectionData {
   description?: string | null;
   type?: CollectionType | string;
   rules?: CollectionRule[];
-  ruleMatch?: "ALL" | "ANY" | string;
+  ruleMatch?: 'ALL' | 'ANY' | string;
   manualProductIds?: string[];
   featured?: boolean;
   metaTitle?: string | null;
@@ -277,7 +265,7 @@ export interface ProductReviewData {
   title?: string | null;
   comment: string;
   verified: boolean;
-  status: "APPROVED" | "PENDING" | "REJECTED" | "SPAM";
+  status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'SPAM';
   adminReply?: string | null;
   adminReplyAt?: string | null;
   helpfulCount?: number;
@@ -457,9 +445,9 @@ export interface UserPreferences {
   timezone?: string;
   currency?: string;
   defaultLandingView?: string;
-  interfaceDensity?: "comfortable" | "compact";
+  interfaceDensity?: 'comfortable' | 'compact';
   soundAlerts?: boolean;
-  themeMode?: "light" | "dark" | "system";
+  themeMode?: 'light' | 'dark' | 'system';
   emailOnNewOrder?: boolean;
   emailOnLowStock?: boolean;
   emailDailyDigest?: boolean;
@@ -473,7 +461,7 @@ export interface MerchantUser {
   email: string;
   phone?: string;
   password?: string;
-  login_type?: "NORMAL" | "GOOGLE";
+  login_type?: 'NORMAL' | 'GOOGLE';
   role?: StoreMemberRole | string;
   customRoleTitle?: string | null;
   storeId?: string | null;
@@ -559,8 +547,8 @@ export interface ThemeConfigData {
   footerShowPaymentBadges: boolean;
 }
 
-export type PageType = "SYSTEM" | "POLICY" | "BRAND" | "CUSTOM";
-export type PageStatus = "PUBLISHED" | "DRAFT";
+export type PageType = 'SYSTEM' | 'POLICY' | 'BRAND' | 'CUSTOM';
+export type PageStatus = 'PUBLISHED' | 'DRAFT';
 
 export interface CMSPageData {
   id: string;
@@ -728,7 +716,7 @@ export interface CMSMenuItem {
   id: string;
   label: string;
   url: string;
-  target?: "_self" | "_blank" | string;
+  target?: '_self' | '_blank' | string;
   isMegaMenu?: boolean;
   megaMenuConfig?: MegaMenuConfig;
   children?: CMSMenuItem[];
@@ -738,7 +726,7 @@ export interface CMSMenuData {
   id: string;
   title: string;
   handle: string;
-  location: "HEADER" | "FOOTER" | "MOBILE" | string;
+  location: 'HEADER' | 'FOOTER' | 'MOBILE' | string;
   items: CMSMenuItem[];
   itemsJson?: string | null;
   createdAt?: string;
@@ -759,7 +747,7 @@ export interface ResendCodeResponse {
   verificationToken?: string | null;
 }
 
-export type CustomerGroup = "NEW" | "RETURNING" | "VIP" | "WHOLESALE";
+export type CustomerGroup = 'NEW' | 'RETURNING' | 'VIP' | 'WHOLESALE';
 
 export interface CustomerAddress {
   name: string;
@@ -794,14 +782,10 @@ export interface CMSCustomer {
   createdAt: string;
 }
 
-export type DiscountType =
-  | "PERCENTAGE"
-  | "FIXED_AMOUNT"
-  | "FREE_SHIPPING"
-  | "BUY_X_GET_Y";
-export type DiscountMethod = "COUPON_CODE" | "AUTOMATIC";
-export type DiscountAppliesTo = "ALL" | "PRODUCTS" | "COLLECTIONS";
-export type DiscountCustomerEligibility = "ALL" | "GROUPS" | "SPECIFIC";
+export type DiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING' | 'BUY_X_GET_Y';
+export type DiscountMethod = 'COUPON_CODE' | 'AUTOMATIC';
+export type DiscountAppliesTo = 'ALL' | 'PRODUCTS' | 'COLLECTIONS';
+export type DiscountCustomerEligibility = 'ALL' | 'GROUPS' | 'SPECIFIC';
 
 export interface CMSDiscount {
   id: string;
@@ -823,11 +807,11 @@ export interface CMSDiscount {
   oncePerCustomer: boolean;
   startDate: string;
   endDate?: string | null;
-  status: "ACTIVE" | "EXPIRED" | "DRAFT" | string;
+  status: 'ACTIVE' | 'EXPIRED' | 'DRAFT' | string;
   createdAt?: string;
 }
 
-export type ShippingRateType = "FLAT" | "FREE" | "WEIGHT_BASED" | "PRICE_BASED";
+export type ShippingRateType = 'FLAT' | 'FREE' | 'WEIGHT_BASED' | 'PRICE_BASED';
 
 export interface ShippingRate {
   id: string;
@@ -852,7 +836,7 @@ export interface CMSShippingZone {
 export interface CMSShippingProvider {
   id: string;
   name: string;
-  carrierCode: "FEDEX" | "DHL" | "UPS" | "USPS" | string;
+  carrierCode: 'FEDEX' | 'DHL' | 'UPS' | 'USPS' | string;
   trackingUrl: string;
   isActive: boolean;
   apiKey?: string;
@@ -860,7 +844,7 @@ export interface CMSShippingProvider {
 
 export interface RateShoppingPolicy {
   id?: string;
-  priority: "CHEAPEST" | "FASTEST" | "PREFERRED";
+  priority: 'CHEAPEST' | 'FASTEST' | 'PREFERRED';
   preferredCarrierCode: string;
   fallbackEnabled: boolean;
   codEnabled: boolean;
@@ -893,13 +877,13 @@ export interface CMSShipment {
   serviceName?: string;
   awbNumber: string;
   trackingStatus:
-    | "MANIFESTED"
-    | "PICKED_UP"
-    | "IN_TRANSIT"
-    | "OUT_FOR_DELIVERY"
-    | "DELIVERED"
-    | "RTO"
-    | "CANCELLED"
+    | 'MANIFESTED'
+    | 'PICKED_UP'
+    | 'IN_TRANSIT'
+    | 'OUT_FOR_DELIVERY'
+    | 'DELIVERED'
+    | 'RTO'
+    | 'CANCELLED'
     | string;
   shippingLabelUrl?: string;
   shippingCost: number;
@@ -925,12 +909,7 @@ export interface CMSNdrRecord {
   carrierName: string;
   attemptCount: number;
   failureReason: string;
-  ndrStatus:
-    | "PENDING"
-    | "REATTEMPT_REQUESTED"
-    | "RESOLVED"
-    | "RTO_REQUESTED"
-    | string;
+  ndrStatus: 'PENDING' | 'REATTEMPT_REQUESTED' | 'RESOLVED' | 'RTO_REQUESTED' | string;
   customerPhone?: string;
   customerAddressJson?: string;
   actionHistoryJson?: string;
@@ -943,14 +922,14 @@ export interface HsnSacCode {
   code: string;
   description: string;
   taxRate: number;
-  type: "HSN" | "SAC";
+  type: 'HSN' | 'SAC';
 }
 
 export interface CMSTaxRegion {
   id: string;
   name: string;
   country: string;
-  taxName: "GST" | "VAT" | "Sales Tax" | string;
+  taxName: 'GST' | 'VAT' | 'Sales Tax' | string;
   taxNumber?: string | null;
   standardRate: number;
   reducedRate?: number | null;
@@ -958,18 +937,13 @@ export interface CMSTaxRegion {
   hsnSacCodes?: HsnSacCode[];
 }
 
-export type MarketingChannel =
-  | "EMAIL"
-  | "SMS"
-  | "WHATSAPP"
-  | "PUSH"
-  | "CAMPAIGN";
+export type MarketingChannel = 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PUSH' | 'CAMPAIGN';
 
 export interface CMSMarketingCampaign {
   id: string;
   title: string;
   channel: MarketingChannel | string;
-  status: "ACTIVE" | "SENT" | "DRAFT" | "SCHEDULED" | string;
+  status: 'ACTIVE' | 'SENT' | 'DRAFT' | 'SCHEDULED' | string;
   targetSegment: string;
   subject?: string | null;
   body?: string | null;
@@ -1001,28 +975,22 @@ export interface AbandonedCartData {
   items?: { name: string; quantity: number; price: number; image?: string }[];
   cartSubtotal: number;
   abandonedAt: string;
-  status:
-    | "ABANDONED"
-    | "RECOVERED"
-    | "EMAIL_SENT"
-    | "WHATSAPP_SENT"
-    | "SMS_SENT"
-    | string;
+  status: 'ABANDONED' | 'RECOVERED' | 'EMAIL_SENT' | 'WHATSAPP_SENT' | 'SMS_SENT' | string;
   recoveryDiscountCode?: string;
   recoveryToken?: string;
   recoveryUrl?: string;
 }
 
 export type StoreMemberRole =
-  | "OWNER"
-  | "ADMIN"
-  | "MANAGER"
-  | "STOCK_CHECKER"
-  | "FULFILLMENT"
-  | "SUPPORT"
-  | "EDITOR"
-  | "CUSTOM"
-  | "STAFF";
+  | 'OWNER'
+  | 'ADMIN'
+  | 'MANAGER'
+  | 'STOCK_CHECKER'
+  | 'FULFILLMENT'
+  | 'SUPPORT'
+  | 'EDITOR'
+  | 'CUSTOM'
+  | 'STAFF';
 
 export interface CMSStoreMember {
   id: string;
@@ -1032,7 +1000,7 @@ export interface CMSStoreMember {
   email: string;
   role: StoreMemberRole | string;
   customRoleTitle?: string | null;
-  status: "ACTIVE" | "INVITED" | "SUSPENDED" | string;
+  status: 'ACTIVE' | 'INVITED' | 'SUSPENDED' | string;
   isOwner?: boolean;
   canManageProducts: boolean;
   canManageInventory: boolean;
@@ -1053,7 +1021,7 @@ export interface CreateStoreMemberPayload {
   email: string;
   role: StoreMemberRole | string;
   customRoleTitle?: string;
-  status?: "ACTIVE" | "INVITED" | "SUSPENDED";
+  status?: 'ACTIVE' | 'INVITED' | 'SUSPENDED';
   canManageProducts?: boolean;
   canManageInventory?: boolean;
   canManageOrders?: boolean;
@@ -1127,13 +1095,7 @@ export interface RazorpayConnectStatus {
   isConnected: boolean;
   accountId?: string | null;
   merchantName?: string | null;
-  kycStatus?:
-    | "VERIFIED"
-    | "PENDING"
-    | "UNDER_REVIEW"
-    | "NOT_STARTED"
-    | string
-    | null;
+  kycStatus?: 'VERIFIED' | 'PENDING' | 'UNDER_REVIEW' | 'NOT_STARTED' | string | null;
   connectedAt?: string | null;
   mode: string;
   keyId?: string | null;
@@ -1213,9 +1175,9 @@ export interface PaymentTransactionData {
   orderId?: string | null;
   customerName?: string | null;
   customerEmail?: string | null;
-  gateway: "RAZORPAY" | "STRIPE" | "COD" | string;
+  gateway: 'RAZORPAY' | 'STRIPE' | 'COD' | string;
   paymentMethod: string;
-  status: "SUCCESS" | "PENDING" | "FAILED" | "REFUNDED" | string;
+  status: 'SUCCESS' | 'PENDING' | 'FAILED' | 'REFUNDED' | string;
   amount: number;
   currency: string;
   gatewayFee: number;
@@ -1230,7 +1192,7 @@ export interface PaymentTransactionData {
 
 export interface PaymentTestResponse {
   success: boolean;
-  gateway: "RAZORPAY" | "STRIPE";
+  gateway: 'RAZORPAY' | 'STRIPE';
   mode: string;
   message: string;
   supportedCurrencies: string[];
@@ -1248,7 +1210,7 @@ export interface PaymentTransactionsSummary {
 
 // ── Price Tiers & Store Billing Types ──────────────────────────────────────
 export interface PriceTierData {
-  id: "STARTER" | "GROWTH" | "ENTERPRISE" | "AGENCY" | "API" | string;
+  id: 'STARTER' | 'GROWTH' | 'ENTERPRISE' | 'AGENCY' | 'API' | string;
   name: string;
   badge: string;
   description: string;
@@ -1270,30 +1232,25 @@ export interface StoreBillingInvoiceData {
   id: string;
   invoiceNumber: string;
   tierName: string;
-  billingCycle: "MONTHLY" | "ANNUAL" | string;
+  billingCycle: 'MONTHLY' | 'ANNUAL' | string;
   amount: number;
   currency: string;
   paymentMethod: string;
-  paymentStatus: "PAID" | "PENDING" | "FAILED" | string;
+  paymentStatus: 'PAID' | 'PENDING' | 'FAILED' | string;
   paidAt: string;
 }
 
 export interface StoreSubscriptionData {
   storeId: string;
   storeName: string;
-  plan: "STARTER" | "GROWTH" | "ENTERPRISE" | string;
+  plan: 'STARTER' | 'GROWTH' | 'ENTERPRISE' | string;
   planConfig: PriceTierData;
-  billingCycle: "MONTHLY" | "ANNUAL";
+  billingCycle: 'MONTHLY' | 'ANNUAL';
   planStartedAt: string;
   planRenewsAt: string;
-  planPaymentMethod:
-    | "RAZORPAY_UPI"
-    | "RAZORPAY_CARD"
-    | "STRIPE_CARD"
-    | "NETBANKING"
-    | string;
+  planPaymentMethod: 'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'STRIPE_CARD' | 'NETBANKING' | string;
   planPaymentMethodDetails: string;
-  planStatus: "ACTIVE" | "TRIAL" | "PAST_DUE" | "CANCELLED" | string;
+  planStatus: 'ACTIVE' | 'TRIAL' | 'PAST_DUE' | 'CANCELLED' | string;
   planTransactionFeePercent: number;
   apiPlanActive?: boolean;
   apiPlanStatus?: string;
@@ -1325,11 +1282,11 @@ export interface StoreSubscriptionData {
 
 // ── Custom Domains, Origin DNS & Edge Theme Deployment Types ──────────────
 export interface DnsRecordData {
-  type: "A" | "CNAME" | "TXT" | "CAA" | string;
+  type: 'A' | 'CNAME' | 'TXT' | 'CAA' | string;
   name: string;
   value: string;
   ttl: number;
-  status: "VALID" | "PENDING" | "ERROR";
+  status: 'VALID' | 'PENDING' | 'ERROR';
   description: string;
 }
 
@@ -1338,12 +1295,7 @@ export interface ThemeDeploymentData {
   deployedThemeName: string;
   edgeCacheTtl: number;
   edgeCdnRegion: string;
-  edgeDeploymentStatus:
-    | "DEPLOYED"
-    | "DEPLOYING"
-    | "OUTDATED"
-    | "ERROR"
-    | string;
+  edgeDeploymentStatus: 'DEPLOYED' | 'DEPLOYING' | 'OUTDATED' | 'ERROR' | string;
   edgeDeploymentUrl: string;
   lastDeployedAt: string;
 }
@@ -1353,13 +1305,8 @@ export interface CustomDomainData {
   domain: string;
   isPrimary: boolean;
   autoRedirectWww: boolean;
-  sslStatus:
-    | "SSL_ACTIVE"
-    | "PENDING_VALIDATION"
-    | "ISSUING_CERTIFICATE"
-    | "ERROR"
-    | string;
-  dnsStatus: "VERIFIED" | "PENDING" | "PROPAGATING" | "MISCONFIGURED" | string;
+  sslStatus: 'SSL_ACTIVE' | 'PENDING_VALIDATION' | 'ISSUING_CERTIFICATE' | 'ERROR' | string;
+  dnsStatus: 'VERIFIED' | 'PENDING' | 'PROPAGATING' | 'MISCONFIGURED' | string;
   dnsRecords: DnsRecordData[];
   themeDeployment: ThemeDeploymentData;
   lastCheckedAt: string;
@@ -1414,7 +1361,7 @@ export interface WebhookData {
   url: string;
   events: string[];
   secret: string;
-  status: "ACTIVE" | "PAUSED" | "FAILED" | string;
+  status: 'ACTIVE' | 'PAUSED' | 'FAILED' | string;
   successRate: string;
   totalDispatches: number;
   createdAt: string;
@@ -1483,7 +1430,7 @@ export interface BlogPost {
   featuredImage?: string | null;
   category?: string | null;
   tags?: string | null;
-  status: "DRAFT" | "PUBLISHED" | "SCHEDULED";
+  status: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED';
   publishedAt?: string | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
@@ -1504,7 +1451,7 @@ export interface BlogPostInput {
   featuredImage?: string | null;
   category?: string | null;
   tags?: string | null;
-  status?: "DRAFT" | "PUBLISHED" | "SCHEDULED";
+  status?: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED';
   publishedAt?: string | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
@@ -1520,7 +1467,7 @@ export interface GiftCardTransaction {
   orderId?: string | null;
   orderNumber?: string | null;
   amount: number;
-  type: "REDEMPTION" | "REFUND" | "MANUAL_ADJUSTMENT" | "INITIAL_LOAD";
+  type: 'REDEMPTION' | 'REFUND' | 'MANUAL_ADJUSTMENT' | 'INITIAL_LOAD';
   note?: string | null;
   createdAt: string;
 }
@@ -1535,7 +1482,7 @@ export interface GiftCard {
   recipientName?: string | null;
   senderName?: string | null;
   message?: string | null;
-  status: "ACTIVE" | "DISABLED" | "EXPIRED" | "DEPLETED";
+  status: 'ACTIVE' | 'DISABLED' | 'EXPIRED' | 'DEPLETED';
   expiresAt?: string | null;
   storeId?: string | null;
   orderId?: string | null;
@@ -1563,23 +1510,23 @@ export interface GiftCardFormData {
   senderName?: string;
   message?: string;
   expiresAt?: string;
-  status?: "ACTIVE" | "DISABLED";
+  status?: 'ACTIVE' | 'DISABLED';
   note?: string;
 }
 
 // ─── Email Template Builder Types ──────────────────────────────────────────
 export type EmailBlockType =
-  | "header"
-  | "hero"
-  | "text"
-  | "button"
-  | "products"
-  | "coupon"
-  | "divider"
-  | "social"
-  | "footer"
-  | "order-summary"
-  | "tracking-card";
+  | 'header'
+  | 'hero'
+  | 'text'
+  | 'button'
+  | 'products'
+  | 'coupon'
+  | 'divider'
+  | 'social'
+  | 'footer'
+  | 'order-summary'
+  | 'tracking-card';
 
 export interface EmailTemplateBlock {
   id: string;
@@ -1603,7 +1550,7 @@ export interface EmailTemplateData {
   storeId?: string | null;
   name: string;
   slug: string;
-  category: "MARKETING" | "NOTIFICATION" | "CUSTOM" | string;
+  category: 'MARKETING' | 'NOTIFICATION' | 'CUSTOM' | string;
   trigger?: string | null;
   subject: string;
   previewText?: string | null;
@@ -1622,7 +1569,7 @@ export interface EmailTemplateData {
 export interface EmailTemplateFormData {
   name: string;
   slug?: string;
-  category: "MARKETING" | "NOTIFICATION" | "CUSTOM";
+  category: 'MARKETING' | 'NOTIFICATION' | 'CUSTOM';
   trigger?: string | null;
   subject: string;
   previewText?: string;
@@ -1648,34 +1595,34 @@ export interface SendTestEmailResponse {
 // ─── FORM BUILDER & SUBMISSIONS TYPES ──────────────────────────────────────
 
 export type FormFieldType =
-  | "text"
-  | "email"
-  | "phone"
-  | "number"
-  | "textarea"
-  | "select"
-  | "radio"
-  | "checkbox"
-  | "date"
-  | "time"
-  | "rating"
-  | "file"
-  | "heading"
-  | "divider"
-  | "paragraph";
+  | 'text'
+  | 'email'
+  | 'phone'
+  | 'number'
+  | 'textarea'
+  | 'select'
+  | 'radio'
+  | 'checkbox'
+  | 'date'
+  | 'time'
+  | 'rating'
+  | 'file'
+  | 'heading'
+  | 'divider'
+  | 'paragraph';
 
 export type FormCategory =
-  | "GENERAL"
-  | "CONTACT"
-  | "FEEDBACK"
-  | "LEAD_GEN"
-  | "ORDER_INQUIRY"
-  | "SURVEY"
-  | "REGISTRATION"
-  | "CUSTOM";
+  | 'GENERAL'
+  | 'CONTACT'
+  | 'FEEDBACK'
+  | 'LEAD_GEN'
+  | 'ORDER_INQUIRY'
+  | 'SURVEY'
+  | 'REGISTRATION'
+  | 'CUSTOM';
 
-export type FormStatus = "PUBLISHED" | "DRAFT" | "ARCHIVED";
-export type FormSubmissionStatus = "NEW" | "REVIEWED" | "RESOLVED" | "SPAM" | "ARCHIVED";
+export type FormStatus = 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
+export type FormSubmissionStatus = 'NEW' | 'REVIEWED' | 'RESOLVED' | 'SPAM' | 'ARCHIVED';
 
 export interface FormFieldOption {
   label: string;
@@ -1692,7 +1639,7 @@ export interface FormFieldValidation {
 
 export interface FormConditionalRule {
   fieldName: string;
-  operator: "equals" | "not_equals" | "contains" | "filled";
+  operator: 'equals' | 'not_equals' | 'contains' | 'filled';
   value?: string;
 }
 
@@ -1707,7 +1654,7 @@ export interface FormField {
   defaultValue?: any;
   options?: FormFieldOption[];
   validation?: FormFieldValidation;
-  width?: "full" | "half" | "third";
+  width?: 'full' | 'half' | 'third';
   conditionalRule?: FormConditionalRule;
 }
 
@@ -1715,14 +1662,14 @@ export interface FormThemeConfig {
   accentColor: string;
   backgroundColor?: string;
   textColor?: string;
-  borderRadius: "none" | "sm" | "md" | "lg" | "full";
-  cardStyle: "bordered" | "elevated" | "flat" | "glass";
+  borderRadius: 'none' | 'sm' | 'md' | 'lg' | 'full';
+  cardStyle: 'bordered' | 'elevated' | 'flat' | 'glass';
 }
 
 export interface FormSettings {
   submitButtonText: string;
   submittingButtonText?: string;
-  successType: "message" | "redirect";
+  successType: 'message' | 'redirect';
   successMessage: string;
   redirectUrl?: string;
   emailNotifications: boolean;
@@ -1788,7 +1735,7 @@ export interface FormSubmissionsResponse {
   };
 }
 
-export type ProductNotificationStatus = "PENDING" | "NOTIFIED" | "CANCELLED";
+export type ProductNotificationStatus = 'PENDING' | 'NOTIFIED' | 'CANCELLED';
 
 export interface ProductNotification {
   id: string;
@@ -1842,6 +1789,3 @@ export interface ProductNotificationsResponse {
   limit: number;
   totalPages: number;
 }
-
-
-

@@ -47,7 +47,9 @@ export const GiftCardManager: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'DEPLETED' | 'DISABLED' | 'EXPIRED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<
+    'ALL' | 'ACTIVE' | 'DEPLETED' | 'DISABLED' | 'EXPIRED'
+  >('ALL');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Issue Card Modal
@@ -79,7 +81,10 @@ export const GiftCardManager: React.FC = () => {
   const [isSubmittingAdjust, setIsSubmittingAdjust] = useState(false);
 
   // Toast
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
@@ -98,14 +103,16 @@ export const GiftCardManager: React.FC = () => {
         search: searchQuery,
       });
       setCards(data.cards || []);
-      setMetrics(data.metrics || {
-        totalIssuedValue: 0,
-        outstandingBalance: 0,
-        activeCount: 0,
-        depletedCount: 0,
-        disabledCount: 0,
-        totalRedemptions: 0,
-      });
+      setMetrics(
+        data.metrics || {
+          totalIssuedValue: 0,
+          outstandingBalance: 0,
+          activeCount: 0,
+          depletedCount: 0,
+          disabledCount: 0,
+          totalRedemptions: 0,
+        },
+      );
     } catch (err) {
       console.error('Error loading gift cards:', err);
       showToast('Failed to load gift cards from server', 'error');
@@ -179,7 +186,10 @@ export const GiftCardManager: React.FC = () => {
     const nextStatus = card.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
     try {
       await cmsService.updateGiftCard(card.id, { status: nextStatus });
-      showToast(`Gift card ${nextStatus === 'ACTIVE' ? 'activated' : 'disabled'} successfully.`, 'success');
+      showToast(
+        `Gift card ${nextStatus === 'ACTIVE' ? 'activated' : 'disabled'} successfully.`,
+        'success',
+      );
       loadGiftCards();
     } catch (err: any) {
       showToast('Failed to update status', 'error');
@@ -252,7 +262,11 @@ export const GiftCardManager: React.FC = () => {
               : 'bg-rose-950 text-rose-200 border-rose-800'
           }`}
         >
-          {toastMessage.type === 'success' ? <Check className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4 text-rose-400" />}
+          {toastMessage.type === 'success' ? (
+            <Check className="w-4 h-4 text-emerald-400" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-rose-400" />
+          )}
           <span>{toastMessage.text}</span>
         </div>
       )}
@@ -272,7 +286,8 @@ export const GiftCardManager: React.FC = () => {
                 </span>
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Issue customer gift vouchers, track live redemption ledgers, and manage balance liabilities
+                Issue customer gift vouchers, track live redemption ledgers, and manage balance
+                liabilities
               </p>
             </div>
           </div>
@@ -304,14 +319,19 @@ export const GiftCardManager: React.FC = () => {
         {/* Total Issued */}
         <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs space-y-2">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Value Issued</span>
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Total Value Issued
+            </span>
             <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 flex items-center justify-center">
               <CreditCard className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-foreground">
             {currencySymbol}
-            {metrics.totalIssuedValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {metrics.totalIssuedValue.toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </div>
           <p className="text-[11px] text-slate-400">Cumulative face value across all cards</p>
         </div>
@@ -319,14 +339,19 @@ export const GiftCardManager: React.FC = () => {
         {/* Outstanding Balance */}
         <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs space-y-2">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Balance</span>
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Active Balance
+            </span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
             {currencySymbol}
-            {metrics.outstandingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {metrics.outstandingBalance.toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </div>
           <div className="w-full bg-slate-100 dark:bg-accent rounded-full h-1.5 overflow-hidden">
             <div
@@ -341,7 +366,9 @@ export const GiftCardManager: React.FC = () => {
         {/* Active Cards */}
         <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs space-y-2">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Cards</span>
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Active Cards
+            </span>
             <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 flex items-center justify-center">
               <ShieldCheck className="w-4 h-4" />
             </div>
@@ -357,13 +384,16 @@ export const GiftCardManager: React.FC = () => {
         {/* Redemptions */}
         <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs space-y-2">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Redemptions</span>
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Redemptions
+            </span>
             <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 flex items-center justify-center">
               <Sparkles className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-foreground">
-            {metrics.totalRedemptions} <span className="text-xs font-normal text-slate-400">times</span>
+            {metrics.totalRedemptions}{' '}
+            <span className="text-xs font-normal text-slate-400">times</span>
           </div>
           <p className="text-[11px] text-slate-400">Used during customer storefront checkout</p>
         </div>
@@ -452,12 +482,16 @@ export const GiftCardManager: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-border">
                 {cards.map((card) => {
-                  const percentLeft = card.initialValue > 0 ? (card.currentBalance / card.initialValue) * 100 : 0;
+                  const percentLeft =
+                    card.initialValue > 0 ? (card.currentBalance / card.initialValue) * 100 : 0;
                   const isDepleted = card.currentBalance <= 0;
                   const isCopied = copiedCode === card.code;
 
                   return (
-                    <tr key={card.id} className="hover:bg-slate-50/80 dark:hover:bg-accent/20 transition-colors">
+                    <tr
+                      key={card.id}
+                      className="hover:bg-slate-50/80 dark:hover:bg-accent/20 transition-colors"
+                    >
                       {/* Code */}
                       <td className="p-4 pl-6">
                         <div className="flex items-center gap-2">
@@ -470,7 +504,11 @@ export const GiftCardManager: React.FC = () => {
                             title="Copy Gift Card Code"
                             className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg transition cursor-pointer"
                           >
-                            {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                            {isCopied ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-500" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -510,7 +548,9 @@ export const GiftCardManager: React.FC = () => {
                         {card.recipientEmail || card.recipientName ? (
                           <div className="space-y-0.5">
                             {card.recipientName && (
-                              <div className="font-bold text-slate-800 dark:text-foreground">{card.recipientName}</div>
+                              <div className="font-bold text-slate-800 dark:text-foreground">
+                                {card.recipientName}
+                              </div>
                             )}
                             {card.recipientEmail && (
                               <div className="text-[11px] text-slate-400 flex items-center gap-1 font-mono">
@@ -520,7 +560,9 @@ export const GiftCardManager: React.FC = () => {
                             )}
                           </div>
                         ) : (
-                          <span className="text-slate-400 italic text-[11px]">Unassigned (Direct code)</span>
+                          <span className="text-slate-400 italic text-[11px]">
+                            Unassigned (Direct code)
+                          </span>
                         )}
                       </td>
 
@@ -589,10 +631,16 @@ export const GiftCardManager: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleToggleCardStatus(card)}
-                            title={card.status === 'ACTIVE' ? 'Disable Gift Card' : 'Enable Gift Card'}
+                            title={
+                              card.status === 'ACTIVE' ? 'Disable Gift Card' : 'Enable Gift Card'
+                            }
                             className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 rounded-lg transition cursor-pointer"
                           >
-                            {card.status === 'ACTIVE' ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                            {card.status === 'ACTIVE' ? (
+                              <Lock className="w-4 h-4" />
+                            ) : (
+                              <Unlock className="w-4 h-4" />
+                            )}
                           </button>
                           <button
                             type="button"
@@ -623,8 +671,12 @@ export const GiftCardManager: React.FC = () => {
                   <Gift className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-slate-900 dark:text-foreground">Issue New Gift Card</h3>
-                  <p className="text-xs text-slate-400">Generate a digital card code and assign initial value</p>
+                  <h3 className="font-bold text-lg text-slate-900 dark:text-foreground">
+                    Issue New Gift Card
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Generate a digital card code and assign initial value
+                  </p>
                 </div>
               </div>
               <button
@@ -640,7 +692,9 @@ export const GiftCardManager: React.FC = () => {
               {/* Code input + Auto-gen */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">Gift Card Code</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">
+                    Gift Card Code
+                  </label>
                   <button
                     type="button"
                     onClick={generateRandomCode}
@@ -654,7 +708,9 @@ export const GiftCardManager: React.FC = () => {
                   type="text"
                   required
                   value={issueFormData.code || ''}
-                  onChange={(e) => setIssueFormData({ ...issueFormData, code: e.target.value.toUpperCase() })}
+                  onChange={(e) =>
+                    setIssueFormData({ ...issueFormData, code: e.target.value.toUpperCase() })
+                  }
                   placeholder="e.g. GC-9821-4412-8871"
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 font-mono font-black text-sm text-slate-900 dark:text-foreground tracking-wider uppercase focus:bg-white transition"
                 />
@@ -689,7 +745,10 @@ export const GiftCardManager: React.FC = () => {
                   required
                   value={issueFormData.initialValue || ''}
                   onChange={(e) =>
-                    setIssueFormData({ ...issueFormData, initialValue: parseFloat(e.target.value) || 0 })
+                    setIssueFormData({
+                      ...issueFormData,
+                      initialValue: parseFloat(e.target.value) || 0,
+                    })
                   }
                   placeholder="Or enter custom amount..."
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-bold text-slate-900 dark:text-foreground focus:bg-white transition"
@@ -699,21 +758,29 @@ export const GiftCardManager: React.FC = () => {
               {/* Recipient Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">Recipient Name (Optional)</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">
+                    Recipient Name (Optional)
+                  </label>
                   <input
                     type="text"
                     value={issueFormData.recipientName || ''}
-                    onChange={(e) => setIssueFormData({ ...issueFormData, recipientName: e.target.value })}
+                    onChange={(e) =>
+                      setIssueFormData({ ...issueFormData, recipientName: e.target.value })
+                    }
                     placeholder="e.g. Alex Johnson"
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-medium"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">Recipient Email (Optional)</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">
+                    Recipient Email (Optional)
+                  </label>
                   <input
                     type="email"
                     value={issueFormData.recipientEmail || ''}
-                    onChange={(e) => setIssueFormData({ ...issueFormData, recipientEmail: e.target.value })}
+                    onChange={(e) =>
+                      setIssueFormData({ ...issueFormData, recipientEmail: e.target.value })
+                    }
                     placeholder="alex@example.com"
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-medium"
                   />
@@ -723,17 +790,23 @@ export const GiftCardManager: React.FC = () => {
               {/* Sender & Note */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">Sender Name (Optional)</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">
+                    Sender Name (Optional)
+                  </label>
                   <input
                     type="text"
                     value={issueFormData.senderName || ''}
-                    onChange={(e) => setIssueFormData({ ...issueFormData, senderName: e.target.value })}
+                    onChange={(e) =>
+                      setIssueFormData({ ...issueFormData, senderName: e.target.value })
+                    }
                     placeholder="e.g. Store Management / Friend"
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-medium"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">Expiration Date</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">
+                    Expiration Date
+                  </label>
                   <input
                     type="date"
                     value={issueFormData.expiresAt ? issueFormData.expiresAt.split('T')[0] : ''}
@@ -750,7 +823,9 @@ export const GiftCardManager: React.FC = () => {
 
               {/* Gift Message */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 dark:text-foreground">Gift Message (Optional)</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-foreground">
+                  Gift Message (Optional)
+                </label>
                 <textarea
                   rows={2}
                   value={issueFormData.message || ''}
@@ -773,7 +848,11 @@ export const GiftCardManager: React.FC = () => {
                   disabled={isSubmittingIssue}
                   className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-600/20 transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  {isSubmittingIssue ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Gift className="w-3.5 h-3.5" />}
+                  {isSubmittingIssue ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Gift className="w-3.5 h-3.5" />
+                  )}
                   <span>Issue Gift Card</span>
                 </button>
               </div>
@@ -792,7 +871,9 @@ export const GiftCardManager: React.FC = () => {
                   <Sliders className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-slate-900 dark:text-foreground">Adjust Balance</h3>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-foreground">
+                    Adjust Balance
+                  </h3>
                   <p className="text-xs font-mono text-slate-400">{adjustCard.code}</p>
                 </div>
               </div>
@@ -861,7 +942,9 @@ export const GiftCardManager: React.FC = () => {
 
               {/* Note / Audit Reason */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 dark:text-foreground">Audit Reason / Note *</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-foreground">
+                  Audit Reason / Note *
+                </label>
                 <input
                   type="text"
                   required
@@ -902,7 +985,9 @@ export const GiftCardManager: React.FC = () => {
               {/* Drawer Header */}
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-4">
                 <div>
-                  <h3 className="font-bold text-lg text-slate-900 dark:text-foreground">Gift Card Details</h3>
+                  <h3 className="font-bold text-lg text-slate-900 dark:text-foreground">
+                    Gift Card Details
+                  </h3>
                   <p className="text-xs font-mono text-slate-400">{selectedCard.code}</p>
                 </div>
                 <button
@@ -919,7 +1004,9 @@ export const GiftCardManager: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Gift className="w-5 h-5 text-indigo-200" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-100">Digital Voucher</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-100">
+                      Digital Voucher
+                    </span>
                   </div>
                   <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase">
                     {selectedCard.status}
@@ -948,25 +1035,33 @@ export const GiftCardManager: React.FC = () => {
                 {selectedCard.recipientName && (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Recipient:</span>
-                    <span className="font-bold text-slate-800 dark:text-foreground">{selectedCard.recipientName}</span>
+                    <span className="font-bold text-slate-800 dark:text-foreground">
+                      {selectedCard.recipientName}
+                    </span>
                   </div>
                 )}
                 {selectedCard.recipientEmail && (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Email:</span>
-                    <span className="font-mono text-slate-800 dark:text-foreground">{selectedCard.recipientEmail}</span>
+                    <span className="font-mono text-slate-800 dark:text-foreground">
+                      {selectedCard.recipientEmail}
+                    </span>
                   </div>
                 )}
                 {selectedCard.senderName && (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Sender:</span>
-                    <span className="font-bold text-slate-800 dark:text-foreground">{selectedCard.senderName}</span>
+                    <span className="font-bold text-slate-800 dark:text-foreground">
+                      {selectedCard.senderName}
+                    </span>
                   </div>
                 )}
                 {selectedCard.message && (
                   <div className="pt-2 border-t border-slate-200/60 dark:border-border">
                     <span className="text-slate-400 block mb-0.5">Gift Note:</span>
-                    <p className="italic text-slate-700 dark:text-slate-300">"{selectedCard.message}"</p>
+                    <p className="italic text-slate-700 dark:text-slate-300">
+                      "{selectedCard.message}"
+                    </p>
                   </div>
                 )}
               </div>
@@ -980,7 +1075,7 @@ export const GiftCardManager: React.FC = () => {
                   </span>
                 </h4>
 
-                {(!selectedCard.transactions || selectedCard.transactions.length === 0) ? (
+                {!selectedCard.transactions || selectedCard.transactions.length === 0 ? (
                   <div className="p-4 rounded-2xl border border-dashed border-slate-200 text-center text-xs text-slate-400">
                     No transactions recorded on this card yet.
                   </div>
@@ -995,18 +1090,26 @@ export const GiftCardManager: React.FC = () => {
                           <div className="font-bold text-slate-800 dark:text-foreground flex items-center gap-1.5">
                             <span
                               className={`w-2 h-2 rounded-full ${
-                                txn.type === 'INITIAL_LOAD' || txn.amount > 0 ? 'bg-emerald-500' : 'bg-indigo-600'
+                                txn.type === 'INITIAL_LOAD' || txn.amount > 0
+                                  ? 'bg-emerald-500'
+                                  : 'bg-indigo-600'
                               }`}
                             />
                             <span>{txn.type.replace('_', ' ')}</span>
                           </div>
-                          <div className="text-[10px] text-slate-400">{txn.note || 'Checkout usage'}</div>
-                          <div className="text-[9px] text-slate-400">{new Date(txn.createdAt).toLocaleString()}</div>
+                          <div className="text-[10px] text-slate-400">
+                            {txn.note || 'Checkout usage'}
+                          </div>
+                          <div className="text-[9px] text-slate-400">
+                            {new Date(txn.createdAt).toLocaleString()}
+                          </div>
                         </div>
 
                         <div
                           className={`font-black text-sm ${
-                            txn.amount > 0 ? 'text-emerald-600' : 'text-slate-900 dark:text-foreground'
+                            txn.amount > 0
+                              ? 'text-emerald-600'
+                              : 'text-slate-900 dark:text-foreground'
                           }`}
                         >
                           {txn.amount > 0 ? '+' : ''}

@@ -70,7 +70,9 @@ export const UserPreferencesStudio: React.FC = () => {
   };
 
   // Active section tab
-  const [activeTab, setActiveTab] = useState<'profile' | 'localization' | 'interface' | 'notifications' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<
+    'profile' | 'localization' | 'interface' | 'notifications' | 'security'
+  >('profile');
 
   // Profile fields
   const [firstName, setFirstName] = useState('');
@@ -84,7 +86,9 @@ export const UserPreferencesStudio: React.FC = () => {
   const [timezone, setTimezone] = useState('Asia/Kolkata');
   const [currency, setCurrency] = useState('INR');
   const [defaultLandingView, setDefaultLandingView] = useState('dashboard');
-  const [interfaceDensity, setInterfaceDensity] = useState<'comfortable' | 'compact'>('comfortable');
+  const [interfaceDensity, setInterfaceDensity] = useState<'comfortable' | 'compact'>(
+    'comfortable',
+  );
   const [soundAlerts, setSoundAlerts] = useState(true);
 
   // Notification toggles
@@ -134,7 +138,8 @@ export const UserPreferencesStudio: React.FC = () => {
             if (p.emailOnNewOrder !== undefined) setEmailOnNewOrder(p.emailOnNewOrder);
             if (p.emailOnLowStock !== undefined) setEmailOnLowStock(p.emailOnLowStock);
             if (p.emailDailyDigest !== undefined) setEmailDailyDigest(p.emailDailyDigest);
-            if (p.emailOnCustomerReview !== undefined) setEmailOnCustomerReview(p.emailOnCustomerReview);
+            if (p.emailOnCustomerReview !== undefined)
+              setEmailOnCustomerReview(p.emailOnCustomerReview);
           }
         }
 
@@ -166,7 +171,8 @@ export const UserPreferencesStudio: React.FC = () => {
               if (prefs.emailOnNewOrder !== undefined) setEmailOnNewOrder(prefs.emailOnNewOrder);
               if (prefs.emailOnLowStock !== undefined) setEmailOnLowStock(prefs.emailOnLowStock);
               if (prefs.emailDailyDigest !== undefined) setEmailDailyDigest(prefs.emailDailyDigest);
-              if (prefs.emailOnCustomerReview !== undefined) setEmailOnCustomerReview(prefs.emailOnCustomerReview);
+              if (prefs.emailOnCustomerReview !== undefined)
+                setEmailOnCustomerReview(prefs.emailOnCustomerReview);
             } catch (err) {
               console.error('Failed to parse preferencesJson:', err);
             }
@@ -297,7 +303,9 @@ export const UserPreferencesStudio: React.FC = () => {
       showToast('Password changed successfully! Keep your credentials secure.');
     } catch (err: any) {
       console.error('Failed to change password:', err);
-      setPasswordError(err?.response?.data?.message || 'Failed to change password. Verify your current password.');
+      setPasswordError(
+        err?.response?.data?.message || 'Failed to change password. Verify your current password.',
+      );
     } finally {
       setIsChangingPassword(false);
     }
@@ -365,7 +373,11 @@ export const UserPreferencesStudio: React.FC = () => {
                       className="p-0.5 rounded hover:bg-white text-[#5e5a5a] hover:text-[#191a1b] transition-colors cursor-pointer"
                       title="Copy Store ID"
                     >
-                      {copiedStoreId ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                      {copiedStoreId ? (
+                        <Check className="w-3 h-3 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
                     </button>
                   </div>
                   {copiedStoreId && (
@@ -433,13 +445,16 @@ export const UserPreferencesStudio: React.FC = () => {
               <div>
                 <h3 className="font-serif text-lg text-[#191a1b]">Personal Identity & Contact</h3>
                 <p className="text-xs text-[#5e5a5a]">
-                  These details identify your session in the administration audit log, notifications, and team records.
+                  These details identify your session in the administration audit log,
+                  notifications, and team records.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-xs font-bold text-[#191a1b] mb-1.5">First Name</label>
+                  <label className="block text-xs font-bold text-[#191a1b] mb-1.5">
+                    First Name
+                  </label>
                   <input
                     type="text"
                     value={firstName}
@@ -479,7 +494,9 @@ export const UserPreferencesStudio: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#191a1b] mb-1.5">Contact Phone Number</label>
+                  <label className="block text-xs font-bold text-[#191a1b] mb-1.5">
+                    Contact Phone Number
+                  </label>
                   <input
                     type="tel"
                     value={phone}
@@ -509,15 +526,20 @@ export const UserPreferencesStudio: React.FC = () => {
           {activeTab === 'localization' && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-serif text-lg text-[#191a1b]">Language & Regional Localization</h3>
+                <h3 className="font-serif text-lg text-[#191a1b]">
+                  Language & Regional Localization
+                </h3>
                 <p className="text-xs text-[#5e5a5a]">
-                  Choose your native language and administrative timezone. Switching language translates the CMS immediately.
+                  Choose your native language and administrative timezone. Switching language
+                  translates the CMS immediately.
                 </p>
               </div>
 
               {/* Language Selection Cards */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-[#191a1b]">Administrative Language</label>
+                <label className="block text-xs font-bold text-[#191a1b]">
+                  Administrative Language
+                </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                   {languages.map((langItem) => {
                     const isSelected = prefLanguage === langItem.code;
@@ -538,7 +560,9 @@ export const UserPreferencesStudio: React.FC = () => {
                         <div className="flex items-center justify-between w-full mb-2">
                           <span
                             className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-mono font-bold ${
-                              isSelected ? 'bg-[#d4ff4c] text-[#191a1b]' : 'bg-emerald-100 text-emerald-800'
+                              isSelected
+                                ? 'bg-[#d4ff4c] text-[#191a1b]'
+                                : 'bg-emerald-100 text-emerald-800'
                             }`}
                           >
                             {langItem.badge}
@@ -547,7 +571,9 @@ export const UserPreferencesStudio: React.FC = () => {
                         </div>
                         <div>
                           <div className="text-xs font-bold">{langItem.nativeName}</div>
-                          <div className={`text-[10px] ${isSelected ? 'text-gray-300' : 'text-gray-500'}`}>
+                          <div
+                            className={`text-[10px] ${isSelected ? 'text-gray-300' : 'text-gray-500'}`}
+                          >
                             {langItem.name}
                           </div>
                         </div>
@@ -603,7 +629,9 @@ export const UserPreferencesStudio: React.FC = () => {
           {activeTab === 'interface' && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-serif text-lg text-[#191a1b]">Workspace & Experience Preferences</h3>
+                <h3 className="font-serif text-lg text-[#191a1b]">
+                  Workspace & Experience Preferences
+                </h3>
                 <p className="text-xs text-[#5e5a5a]">
                   Customize your default navigation landing view and interface feedback.
                 </p>
@@ -647,7 +675,9 @@ export const UserPreferencesStudio: React.FC = () => {
                         }`}
                       >
                         <div className="text-xs font-bold">{d.label}</div>
-                        <div className={`text-[10px] ${interfaceDensity === d.id ? 'text-gray-300' : 'text-gray-500'}`}>
+                        <div
+                          className={`text-[10px] ${interfaceDensity === d.id ? 'text-gray-300' : 'text-gray-500'}`}
+                        >
                           {d.desc}
                         </div>
                       </button>
@@ -660,11 +690,19 @@ export const UserPreferencesStudio: React.FC = () => {
               <div className="p-4 rounded-2xl bg-[#fdf1ef]/40 border border-[#cbd5e0] flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-xl bg-white border border-[#cbd5e0] text-[#191a1b]">
-                    {soundAlerts ? <Volume2 className="w-5 h-5 text-emerald-600" /> : <VolumeX className="w-5 h-5 text-gray-400" />}
+                    {soundAlerts ? (
+                      <Volume2 className="w-5 h-5 text-emerald-600" />
+                    ) : (
+                      <VolumeX className="w-5 h-5 text-gray-400" />
+                    )}
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-[#191a1b]">Audio Chime on Incoming Orders</h4>
-                    <p className="text-[11px] text-[#5e5a5a]">Play a subtle audio tone whenever an order is submitted in real-time.</p>
+                    <h4 className="text-xs font-bold text-[#191a1b]">
+                      Audio Chime on Incoming Orders
+                    </h4>
+                    <p className="text-[11px] text-[#5e5a5a]">
+                      Play a subtle audio tone whenever an order is submitted in real-time.
+                    </p>
                   </div>
                 </div>
 
@@ -700,7 +738,9 @@ export const UserPreferencesStudio: React.FC = () => {
           {activeTab === 'notifications' && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-serif text-lg text-[#191a1b]">Automated Email & Push Notifications</h3>
+                <h3 className="font-serif text-lg text-[#191a1b]">
+                  Automated Email & Push Notifications
+                </h3>
                 <p className="text-xs text-[#5e5a5a]">
                   Configure triggers for merchant event dispatches sent to <strong>{email}</strong>.
                 </p>
@@ -765,7 +805,9 @@ export const UserPreferencesStudio: React.FC = () => {
           {activeTab === 'security' && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-serif text-lg text-[#191a1b]">Account Password & Credentials</h3>
+                <h3 className="font-serif text-lg text-[#191a1b]">
+                  Account Password & Credentials
+                </h3>
                 <p className="text-xs text-[#5e5a5a]">
                   Update your merchant login password. Make sure it contains at least 6 characters.
                 </p>
@@ -780,7 +822,9 @@ export const UserPreferencesStudio: React.FC = () => {
 
               <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
                 <div>
-                  <label className="block text-xs font-bold text-[#191a1b] mb-1.5">Current Password</label>
+                  <label className="block text-xs font-bold text-[#191a1b] mb-1.5">
+                    Current Password
+                  </label>
                   <input
                     type="password"
                     value={currentPassword}
@@ -792,7 +836,9 @@ export const UserPreferencesStudio: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#191a1b] mb-1.5">New Password</label>
+                  <label className="block text-xs font-bold text-[#191a1b] mb-1.5">
+                    New Password
+                  </label>
                   <input
                     type="password"
                     value={newPassword}
@@ -805,7 +851,9 @@ export const UserPreferencesStudio: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#191a1b] mb-1.5">Confirm New Password</label>
+                  <label className="block text-xs font-bold text-[#191a1b] mb-1.5">
+                    Confirm New Password
+                  </label>
                   <input
                     type="password"
                     value={confirmPassword}

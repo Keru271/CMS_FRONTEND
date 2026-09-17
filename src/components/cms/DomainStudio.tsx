@@ -31,7 +31,10 @@ export const DomainStudio: React.FC = () => {
   const { isStarter, canUseCustomDomain } = usePlanAccess();
   const [data, setData] = useState<DomainListResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [expandedDnsDomainId, setExpandedDnsDomainId] = useState<string | null>(null);
 
@@ -61,10 +64,30 @@ export const DomainStudio: React.FC = () => {
   const [isVerifyingDns, setIsVerifyingDns] = useState<string | null>(null);
 
   const availableThemes = [
-    { slug: 'default', name: 'Modern Luxury Dark', badge: 'Active Theme', description: 'High-contrast dark mode with glassmorphic cards and gold accents.' },
-    { slug: 'minimal', name: 'Minimalist Clean', badge: 'High Conversion', description: 'Ultra-fast monochrome aesthetic with generous whitespace.' },
-    { slug: 'retro', name: 'Retro Artisan Warm', badge: 'Handcrafted', description: 'Earthy cream & terracotta tones for boutique lifestyle stores.' },
-    { slug: 'nova-tech', name: 'Nova Tech Futuristic', badge: 'Electronics', description: 'Sleek neon cyber theme optimized for electronics & gadgets.' },
+    {
+      slug: 'default',
+      name: 'Modern Luxury Dark',
+      badge: 'Active Theme',
+      description: 'High-contrast dark mode with glassmorphic cards and gold accents.',
+    },
+    {
+      slug: 'minimal',
+      name: 'Minimalist Clean',
+      badge: 'High Conversion',
+      description: 'Ultra-fast monochrome aesthetic with generous whitespace.',
+    },
+    {
+      slug: 'retro',
+      name: 'Retro Artisan Warm',
+      badge: 'Handcrafted',
+      description: 'Earthy cream & terracotta tones for boutique lifestyle stores.',
+    },
+    {
+      slug: 'nova-tech',
+      name: 'Nova Tech Futuristic',
+      badge: 'Electronics',
+      description: 'Sleek neon cyber theme optimized for electronics & gadgets.',
+    },
   ];
 
   useEffect(() => {
@@ -154,7 +177,8 @@ export const DomainStudio: React.FC = () => {
     e.preventDefault();
     if (!deployingDomain) return;
 
-    const themeObj = availableThemes.find((t) => t.slug === selectedThemeSlug) || availableThemes[0];
+    const themeObj =
+      availableThemes.find((t) => t.slug === selectedThemeSlug) || availableThemes[0];
     setIsDeployingTheme(true);
 
     try {
@@ -189,7 +213,11 @@ export const DomainStudio: React.FC = () => {
 
   // Delete Domain
   const handleDeleteDomain = async (domainId: string, domainName: string) => {
-    if (!confirm(`Are you sure you want to remove the domain "${domainName}"? Origin edge routing will be purged.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to remove the domain "${domainName}"? Origin edge routing will be purged.`,
+      )
+    ) {
       return;
     }
 
@@ -211,7 +239,11 @@ export const DomainStudio: React.FC = () => {
             toastMessage.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
           }`}
         >
-          {toastMessage.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5" />
+          ) : (
+            <AlertCircle className="w-5 h-5" />
+          )}
           <span>{toastMessage.text}</span>
         </div>
       )}
@@ -224,7 +256,8 @@ export const DomainStudio: React.FC = () => {
             <span>Origin DNS & Custom Domain Studio</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Configure apex and subdomain origin DNS records, provision automatic SSL certificates, and deploy your active store theme to edge CDN origins.
+            Configure apex and subdomain origin DNS records, provision automatic SSL certificates,
+            and deploy your active store theme to edge CDN origins.
           </p>
         </div>
 
@@ -288,7 +321,10 @@ export const DomainStudio: React.FC = () => {
               </h2>
 
               <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                When you point your domain’s <code className="text-amber-300 font-mono">A</code> and <code className="text-amber-300 font-mono">CNAME</code> records to our Anycast origin cluster, all visitor requests are routed with edge-cached theme assets, SSR components, and instant SSL provisioning.
+                When you point your domain’s <code className="text-amber-300 font-mono">A</code> and{' '}
+                <code className="text-amber-300 font-mono">CNAME</code> records to our Anycast
+                origin cluster, all visitor requests are routed with edge-cached theme assets, SSR
+                components, and instant SSL provisioning.
               </p>
             </div>
 
@@ -305,7 +341,9 @@ export const DomainStudio: React.FC = () => {
               <div className="space-y-1.5 pt-1">
                 {data.originConfig.globalCdnNodes.slice(0, 3).map((node) => (
                   <div key={node.code} className="flex justify-between text-[11px] text-slate-200">
-                    <span>{node.city} ({node.code})</span>
+                    <span>
+                      {node.city} ({node.code})
+                    </span>
                     <span className="font-mono text-emerald-400">{node.latencyMs}ms</span>
                   </div>
                 ))}
@@ -325,14 +363,19 @@ export const DomainStudio: React.FC = () => {
         {isLoading ? (
           <div className="py-20 text-center space-y-3 bg-white dark:bg-card rounded-3xl border border-slate-200/80 dark:border-border">
             <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
-            <p className="text-xs text-slate-500 font-bold">Loading custom domain and DNS records...</p>
+            <p className="text-xs text-slate-500 font-bold">
+              Loading custom domain and DNS records...
+            </p>
           </div>
         ) : data?.domains.length === 0 ? (
           <div className="py-16 text-center space-y-3 bg-white dark:bg-card rounded-3xl border border-slate-200/80 dark:border-border">
             <Globe className="w-12 h-12 text-slate-300 mx-auto" />
-            <h4 className="font-black text-sm text-slate-900 dark:text-foreground">No Custom Domains Connected</h4>
+            <h4 className="font-black text-sm text-slate-900 dark:text-foreground">
+              No Custom Domains Connected
+            </h4>
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              Connect your own domain (e.g. yourstore.com) to establish brand authority and deploy your selected store theme.
+              Connect your own domain (e.g. yourstore.com) to establish brand authority and deploy
+              your selected store theme.
             </p>
           </div>
         ) : (
@@ -400,8 +443,12 @@ export const DomainStudio: React.FC = () => {
                           onClick={() => handleVerifyDns(dom)}
                           className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-accent hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50"
                         >
-                          <RefreshCw className={`w-3.5 h-3.5 ${isVerifyingDns === dom.id ? 'animate-spin' : ''}`} />
-                          <span>{isVerifyingDns === dom.id ? 'Checking DNS...' : 'Verify DNS'}</span>
+                          <RefreshCw
+                            className={`w-3.5 h-3.5 ${isVerifyingDns === dom.id ? 'animate-spin' : ''}`}
+                          />
+                          <span>
+                            {isVerifyingDns === dom.id ? 'Checking DNS...' : 'Verify DNS'}
+                          </span>
                         </button>
 
                         <button
@@ -447,26 +494,33 @@ export const DomainStudio: React.FC = () => {
                             Deployed Storefront Theme
                           </span>
                           <span className="font-extrabold text-slate-900 dark:text-foreground text-sm">
-                            {dom.themeDeployment?.deployedThemeName || 'Modern Luxury Dark'} ({dom.themeDeployment?.deployedThemeSlug || 'default'})
+                            {dom.themeDeployment?.deployedThemeName || 'Modern Luxury Dark'} (
+                            {dom.themeDeployment?.deployedThemeSlug || 'default'})
                           </span>
                         </div>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-4 text-slate-500 font-medium">
                         <div>
-                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Edge PoP</span>
+                          <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                            Edge PoP
+                          </span>
                           <span className="font-mono text-slate-700 dark:text-slate-300 font-bold">
                             {dom.themeDeployment?.edgeCdnRegion || 'BOM_MUMBAI'}
                           </span>
                         </div>
                         <div>
-                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Edge Cache TTL</span>
+                          <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                            Edge Cache TTL
+                          </span>
                           <span className="font-mono text-slate-700 dark:text-slate-300 font-bold">
                             {dom.themeDeployment?.edgeCacheTtl || 3600}s
                           </span>
                         </div>
                         <div>
-                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Status</span>
+                          <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                            Status
+                          </span>
                           <span className="text-emerald-600 font-black flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                             <span>{dom.themeDeployment?.edgeDeploymentStatus || 'DEPLOYED'}</span>
@@ -482,8 +536,16 @@ export const DomainStudio: React.FC = () => {
                         onClick={() => setExpandedDnsDomainId(isExpanded ? null : dom.id)}
                         className="text-xs font-black text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
                       >
-                        <span>{isExpanded ? 'Hide Origin DNS Records' : 'View Origin DNS Configuration Records'}</span>
-                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        <span>
+                          {isExpanded
+                            ? 'Hide Origin DNS Records'
+                            : 'View Origin DNS Configuration Records'}
+                        </span>
+                        {isExpanded ? (
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        )}
                       </button>
 
                       <span className="text-[11px] text-slate-400">
@@ -500,7 +562,8 @@ export const DomainStudio: React.FC = () => {
                           Origin DNS Configuration Required for {dom.domain}
                         </h5>
                         <p className="text-xs text-slate-500">
-                          Log in to your domain registrar (GoDaddy, Namecheap, Cloudflare, Google Domains) and add the following records:
+                          Log in to your domain registrar (GoDaddy, Namecheap, Cloudflare, Google
+                          Domains) and add the following records:
                         </p>
                       </div>
 
@@ -520,7 +583,10 @@ export const DomainStudio: React.FC = () => {
                             {dom.dnsRecords.map((rec, rIdx) => {
                               const copyKey = `${dom.id}-${rec.type}-${rIdx}`;
                               return (
-                                <tr key={rIdx} className="hover:bg-slate-50/50 dark:hover:bg-accent/20">
+                                <tr
+                                  key={rIdx}
+                                  className="hover:bg-slate-50/50 dark:hover:bg-accent/20"
+                                >
                                   <td className="py-3.5 px-4 font-black">
                                     <span className="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-mono text-[11px]">
                                       {rec.type}
@@ -533,9 +599,13 @@ export const DomainStudio: React.FC = () => {
                                     <span className="font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-accent px-2 py-1 rounded-md text-[11px] select-all">
                                       {rec.value}
                                     </span>
-                                    <span className="text-[10px] text-slate-400 block mt-0.5">{rec.description}</span>
+                                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                                      {rec.description}
+                                    </span>
                                   </td>
-                                  <td className="py-3.5 px-4 text-slate-500 font-mono">{rec.ttl}s</td>
+                                  <td className="py-3.5 px-4 text-slate-500 font-mono">
+                                    {rec.ttl}s
+                                  </td>
                                   <td className="py-3.5 px-4">
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
                                       ✓ {rec.status}
@@ -718,7 +788,9 @@ export const DomainStudio: React.FC = () => {
                     >
                       <div className="flex items-center justify-between font-black text-slate-900 dark:text-foreground">
                         <div className="flex items-center gap-2">
-                          <Radio className={`w-4 h-4 ${selectedThemeSlug === theme.slug ? 'text-indigo-600' : 'text-slate-300'}`} />
+                          <Radio
+                            className={`w-4 h-4 ${selectedThemeSlug === theme.slug ? 'text-indigo-600' : 'text-slate-300'}`}
+                          />
                           <span>{theme.name}</span>
                         </div>
                         <span className="text-[10px] font-black uppercase text-indigo-600 bg-indigo-100 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md">
@@ -750,7 +822,8 @@ export const DomainStudio: React.FC = () => {
               <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-2xl border border-amber-200/50 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 shrink-0" />
                 <span>
-                  Deploying will generate fresh edge bundles and invalidate the global CDN cache within 300ms.
+                  Deploying will generate fresh edge bundles and invalidate the global CDN cache
+                  within 300ms.
                 </span>
               </div>
 
@@ -808,10 +881,17 @@ export const DomainStudio: React.FC = () => {
               </span>
               <div className="grid grid-cols-3 gap-2">
                 {diagnosticsModalData.diagnostics?.resolvers?.map((res: any, idx: number) => (
-                  <div key={idx} className="p-2.5 bg-slate-50 dark:bg-accent/40 rounded-xl border text-center">
-                    <span className="text-[10px] text-slate-400 block font-bold truncate">{res.name}</span>
+                  <div
+                    key={idx}
+                    className="p-2.5 bg-slate-50 dark:bg-accent/40 rounded-xl border text-center"
+                  >
+                    <span className="text-[10px] text-slate-400 block font-bold truncate">
+                      {res.name}
+                    </span>
                     <span className="text-emerald-600 font-black text-[11px]">✓ {res.status}</span>
-                    <span className="text-[10px] text-slate-400 font-mono block">{res.latency}</span>
+                    <span className="text-[10px] text-slate-400 font-mono block">
+                      {res.latency}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -829,7 +909,8 @@ export const DomainStudio: React.FC = () => {
                 </span>
               </div>
               <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
-                Issued by {diagnosticsModalData.diagnostics?.sslCertificate?.provider}. Auto-renews automatically every 90 days.
+                Issued by {diagnosticsModalData.diagnostics?.sslCertificate?.provider}. Auto-renews
+                automatically every 90 days.
               </p>
             </div>
 

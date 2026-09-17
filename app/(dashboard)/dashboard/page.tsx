@@ -8,7 +8,8 @@ import { DashboardOverview } from '@/src/components/cms/DashboardOverview';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { stats, setStats, orders, setOrders, products, setProducts, setCategories } = useCMSContext();
+  const { stats, setStats, orders, setOrders, products, setProducts, setCategories } =
+    useCMSContext();
   const [loading, setLoading] = useState(!stats);
   const isFetchingRef = useRef(false);
 

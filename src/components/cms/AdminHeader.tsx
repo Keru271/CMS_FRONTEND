@@ -88,9 +88,10 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
     }
   };
 
-  const filteredStores = stores.filter((st) =>
-    (st.name || '').toLowerCase().includes(storeFilterQuery.toLowerCase()) ||
-    (st.slug || '').toLowerCase().includes(storeFilterQuery.toLowerCase())
+  const filteredStores = stores.filter(
+    (st) =>
+      (st.name || '').toLowerCase().includes(storeFilterQuery.toLowerCase()) ||
+      (st.slug || '').toLowerCase().includes(storeFilterQuery.toLowerCase()),
   );
 
   return (
@@ -122,8 +123,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               {currentCurrency}
             </span>
             <ChevronDown
-              className={`w-3.5 h-3.5 text-[#5e5a5a] shrink-0 ml-0.5 transition-transform duration-200 ${isStoreMenuOpen ? 'rotate-180 text-[#191a1b]' : ''
-                }`}
+              className={`w-3.5 h-3.5 text-[#5e5a5a] shrink-0 ml-0.5 transition-transform duration-200 ${
+                isStoreMenuOpen ? 'rotate-180 text-[#191a1b]' : ''
+              }`}
             />
           </button>
 
@@ -161,7 +163,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                   <div className="py-6 text-center text-xs text-gray-500">
                     <Store className="w-8 h-8 text-gray-400 mx-auto mb-2 opacity-50" />
                     <p className="font-semibold text-gray-700">No stores created yet</p>
-                    <p className="text-[11px] text-gray-500 mt-0.5">Click below to setup and launch your store.</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      Click below to setup and launch your store.
+                    </p>
                   </div>
                 )}
                 {filteredStores.map((st) => {
@@ -171,25 +175,31 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                     <div
                       key={st.id}
                       onClick={() => handleSelectStore(st.id)}
-                      className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${isActive
+                      className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                        isActive
                           ? 'border-[#191a1b] bg-[#191a1b] text-white shadow-xs'
                           : 'border-transparent hover:border-[#cbd5e0] hover:bg-[#fdf1ef] text-[#191a1b]'
-                        }`}
+                      }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs ${isActive ? 'bg-[#d4ff4c] text-[#191a1b]' : 'bg-gray-100 text-[#191a1b]'
-                            }`}
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs ${
+                            isActive ? 'bg-[#d4ff4c] text-[#191a1b]' : 'bg-gray-100 text-[#191a1b]'
+                          }`}
                         >
                           {st.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <p className={`text-xs font-bold truncate ${isActive ? 'text-white' : 'text-[#191a1b]'}`}>
+                            <p
+                              className={`text-xs font-bold truncate ${isActive ? 'text-white' : 'text-[#191a1b]'}`}
+                            >
                               {st.name}
                             </p>
                           </div>
-                          <p className={`text-[10px] font-mono truncate ${isActive ? 'text-gray-300' : 'text-[#5e5a5a]'}`}>
+                          <p
+                            className={`text-[10px] font-mono truncate ${isActive ? 'text-gray-300' : 'text-[#5e5a5a]'}`}
+                          >
                             {st.slug}.onlinestore.io
                           </p>
                         </div>
@@ -197,8 +207,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span
-                          className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${isActive ? 'bg-white/20 text-[#d4ff4c]' : 'bg-gray-100 text-[#5e5a5a]'
-                            }`}
+                          className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                            isActive ? 'bg-white/20 text-[#d4ff4c]' : 'bg-gray-100 text-[#5e5a5a]'
+                          }`}
                         >
                           {st.currency || 'INR'}
                         </span>
@@ -276,8 +287,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               {currentLanguageOption.badge}
             </span>
             <ChevronDown
-              className={`w-3 h-3 text-[#5e5a5a] transition-transform duration-200 ${isLangMenuOpen ? 'rotate-180 text-[#191a1b]' : ''
-                }`}
+              className={`w-3 h-3 text-[#5e5a5a] transition-transform duration-200 ${
+                isLangMenuOpen ? 'rotate-180 text-[#191a1b]' : ''
+              }`}
             />
           </button>
 
@@ -310,17 +322,19 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                         setLanguage(langItem.code);
                         setIsLangMenuOpen(false);
                       }}
-                      className={`w-full px-3 py-2 rounded-xl text-left transition-all flex items-center justify-between cursor-pointer ${isCurrent
+                      className={`w-full px-3 py-2 rounded-xl text-left transition-all flex items-center justify-between cursor-pointer ${
+                        isCurrent
                           ? 'bg-[#191a1b] text-white font-bold'
                           : 'hover:bg-[#fdf1ef] text-[#191a1b]'
-                        }`}
+                      }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <span
-                          className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-mono font-bold ${isCurrent
+                          className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-mono font-bold ${
+                            isCurrent
                               ? 'bg-[#d4ff4c] text-[#191a1b]'
                               : 'bg-emerald-50 text-emerald-700'
-                            }`}
+                          }`}
                         >
                           {langItem.badge}
                         </span>
@@ -328,15 +342,17 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs font-bold">{langItem.nativeName}</span>
                             <span
-                              className={`text-[10px] ${isCurrent ? 'text-gray-300' : 'text-gray-500'
-                                }`}
+                              className={`text-[10px] ${
+                                isCurrent ? 'text-gray-300' : 'text-gray-500'
+                              }`}
                             >
                               ({langItem.name})
                             </span>
                           </div>
                           <p
-                            className={`text-[9px] ${isCurrent ? 'text-gray-300' : 'text-gray-400'
-                              }`}
+                            className={`text-[9px] ${
+                              isCurrent ? 'text-gray-300' : 'text-gray-400'
+                            }`}
                           >
                             {langItem.region}
                           </p>
@@ -367,8 +383,6 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           <ExternalLink className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
           <span>{t('header.view_storefront', 'Live Store')}</span>
         </a>
-
-
 
         {/* Quick Action Add Button */}
         {onAddProduct && (
@@ -404,7 +418,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-[#ffffff] border border-[#cbd5e0] rounded-2xl shadow-2xl p-2 z-50 space-y-1 animate-in fade-in zoom-in-95">
               <div className="px-3 py-2 border-b border-[#cbd5e0]/60">
                 <span className="text-xs font-sans font-bold text-[#191a1b] block">
-                  {merchantData?.merchant?.firstName || 'Admin'} {merchantData?.merchant?.lastName || 'Owner'}
+                  {merchantData?.merchant?.firstName || 'Admin'}{' '}
+                  {merchantData?.merchant?.lastName || 'Owner'}
                 </span>
                 <span className="text-[11px] font-sans text-[#5e5a5a] block truncate">
                   {merchantData?.merchant?.email || 'merchant@omnistore.com'}
@@ -414,7 +429,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               <div className="px-3 py-2 text-[11px] font-sans text-[#5e5a5a] space-y-1.5 border-b border-[#cbd5e0]/60">
                 <div className="flex justify-between items-center">
                   <span>Current Store:</span>
-                  <strong className="text-[#191a1b] font-bold truncate max-w-[120px]">{currentStoreName}</strong>
+                  <strong className="text-[#191a1b] font-bold truncate max-w-[120px]">
+                    {currentStoreName}
+                  </strong>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Language:</span>

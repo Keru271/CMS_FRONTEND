@@ -45,7 +45,10 @@ export const LoyaltyStudio: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -101,7 +104,11 @@ export const LoyaltyStudio: React.FC = () => {
             toastMessage.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
           }`}
         >
-          {toastMessage.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5" />
+          ) : (
+            <AlertCircle className="w-5 h-5" />
+          )}
           <span>{toastMessage.text}</span>
         </div>
       )}
@@ -114,7 +121,8 @@ export const LoyaltyStudio: React.FC = () => {
             <span>Customer Loyalty & VIP Rewards Studio</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Reward high-value repeat shoppers with point multipliers, tier progression perks, and instant checkout discounts.
+            Reward high-value repeat shoppers with point multipliers, tier progression perks, and
+            instant checkout discounts.
           </p>
         </div>
 
@@ -151,7 +159,9 @@ export const LoyaltyStudio: React.FC = () => {
         </div>
 
         <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-1">
-          <span className="text-[11px] font-black uppercase text-slate-400">Total Points Issued</span>
+          <span className="text-[11px] font-black uppercase text-slate-400">
+            Total Points Issued
+          </span>
           <div className="text-2xl font-black text-slate-900 dark:text-foreground flex items-center gap-2">
             <Coins className="w-6 h-6 text-amber-500" />
             <span>{stats.totalPointsIssued.toLocaleString()}</span>
@@ -187,11 +197,14 @@ export const LoyaltyStudio: React.FC = () => {
               key={t.id}
               className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4 relative overflow-hidden"
             >
-              <div className={`h-2 w-full bg-gradient-to-r ${t.badgeColor} absolute top-0 left-0`} />
+              <div
+                className={`h-2 w-full bg-gradient-to-r ${t.badgeColor} absolute top-0 left-0`}
+              />
 
               <div className="space-y-1">
                 <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-accent text-[10px] font-extrabold text-slate-600 dark:text-slate-300 inline-block">
-                  Min Spend: {t.minSpend === 0 ? '₹0 (Free Entry)' : `₹${t.minSpend.toLocaleString()}+`}
+                  Min Spend:{' '}
+                  {t.minSpend === 0 ? '₹0 (Free Entry)' : `₹${t.minSpend.toLocaleString()}+`}
                 </span>
                 <h3 className="text-lg font-black text-slate-900 dark:text-foreground">{t.name}</h3>
                 <div className="text-xs font-black text-indigo-600 dark:text-indigo-400">
@@ -200,7 +213,9 @@ export const LoyaltyStudio: React.FC = () => {
               </div>
 
               <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-border">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Tier Perks:</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                  Tier Perks:
+                </span>
                 <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
                   {t.perks.map((p, idx) => (
                     <li key={idx} className="flex items-start gap-1.5">
@@ -219,7 +234,10 @@ export const LoyaltyStudio: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left: Points Configuration Form */}
         <div className="lg:col-span-5 space-y-6">
-          <form onSubmit={handleSaveConfig} className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5">
+          <form
+            onSubmit={handleSaveConfig}
+            className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5"
+          >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-border">
               <h3 className="font-black text-base text-slate-900 dark:text-foreground flex items-center gap-2">
                 <Coins className="w-5 h-5 text-amber-500" />
@@ -236,7 +254,9 @@ export const LoyaltyStudio: React.FC = () => {
                   type="number"
                   min="1"
                   value={config.pointsPerHundredSpent}
-                  onChange={(e) => setConfig({ ...config, pointsPerHundredSpent: parseInt(e.target.value) || 1 })}
+                  onChange={(e) =>
+                    setConfig({ ...config, pointsPerHundredSpent: parseInt(e.target.value) || 1 })
+                  }
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent font-bold text-xs"
                 />
                 <span className="text-[10px] text-slate-400 mt-1 block">
@@ -251,7 +271,9 @@ export const LoyaltyStudio: React.FC = () => {
                 <input
                   type="number"
                   value={config.welcomeBonusPoints}
-                  onChange={(e) => setConfig({ ...config, welcomeBonusPoints: parseInt(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setConfig({ ...config, welcomeBonusPoints: parseInt(e.target.value) || 0 })
+                  }
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent font-bold text-xs"
                 />
               </div>
@@ -263,7 +285,9 @@ export const LoyaltyStudio: React.FC = () => {
                 <input
                   type="number"
                   value={config.reviewBonusPoints}
-                  onChange={(e) => setConfig({ ...config, reviewBonusPoints: parseInt(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setConfig({ ...config, reviewBonusPoints: parseInt(e.target.value) || 0 })
+                  }
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent font-bold text-xs"
                 />
               </div>
@@ -275,7 +299,9 @@ export const LoyaltyStudio: React.FC = () => {
                 <input
                   type="number"
                   value={config.minPointsToRedeem}
-                  onChange={(e) => setConfig({ ...config, minPointsToRedeem: parseInt(e.target.value) || 50 })}
+                  onChange={(e) =>
+                    setConfig({ ...config, minPointsToRedeem: parseInt(e.target.value) || 50 })
+                  }
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent font-bold text-xs"
                 />
               </div>
@@ -315,7 +341,9 @@ export const LoyaltyStudio: React.FC = () => {
                   {members.map((m) => (
                     <tr key={m.id} className="hover:bg-slate-50 dark:hover:bg-accent/40">
                       <td className="py-3.5">
-                        <span className="font-bold text-slate-900 dark:text-foreground block">{m.customerName}</span>
+                        <span className="font-bold text-slate-900 dark:text-foreground block">
+                          {m.customerName}
+                        </span>
                         <span className="text-[11px] text-slate-400 font-mono">{m.email}</span>
                       </td>
                       <td className="py-3.5">

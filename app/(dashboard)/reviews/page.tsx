@@ -4,7 +4,8 @@ import { ReviewStudio } from '@/src/components/cms/ReviewStudio';
 
 export const metadata: Metadata = {
   title: 'Product Reviews & Customer Feedback | Store Studio',
-  description: 'Manage, moderate, edit, and reply to customer product reviews and ratings across your store.',
+  description:
+    'Manage, moderate, edit, and reply to customer product reviews and ratings across your store.',
 };
 
 export default function ReviewsPage() {

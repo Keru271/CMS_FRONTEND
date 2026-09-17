@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
-import { useParams, useRouter } from "next/navigation";
-import { FormSubmissionsStudio } from "@/src/components/cms/FormSubmissionsStudio";
+import React from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { FormSubmissionsStudio } from '@/src/components/cms/FormSubmissionsStudio';
 
 export default function FormSpecificSubmissionsPage() {
   const params = useParams();

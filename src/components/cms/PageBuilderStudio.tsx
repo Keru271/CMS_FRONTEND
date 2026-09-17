@@ -2,14 +2,58 @@
 
 import React, { useState, useCallback, useRef, useEffect, useReducer } from 'react';
 import {
-  X, Plus, Trash2, Copy, Eye, EyeOff, Laptop, Tablet, Smartphone,
-  CheckCircle2, Save, Layers, Settings, LayoutTemplate, Undo2, Redo2,
-  GripVertical, ChevronDown, ChevronRight, Grid3X3, Palette, Type,
-  Image as ImageIcon, Video, Star, HelpCircle, Mail, ArrowRight, Zap,
-  Quote, BarChart3, Columns, GalleryHorizontal, Package, Hash, AlignLeft,
-  Search, Sparkles, AlertCircle, ExternalLink, Globe, SlidersHorizontal,
-  Box, MousePointer, ShieldCheck, ShoppingCart, Percent,
-  Clock, DollarSign, Minus, ChevronLeft, ArrowUpRight
+  X,
+  Plus,
+  Trash2,
+  Copy,
+  Eye,
+  EyeOff,
+  Laptop,
+  Tablet,
+  Smartphone,
+  CheckCircle2,
+  Save,
+  Layers,
+  Settings,
+  LayoutTemplate,
+  Undo2,
+  Redo2,
+  GripVertical,
+  ChevronDown,
+  ChevronRight,
+  Grid3X3,
+  Palette,
+  Type,
+  Image as ImageIcon,
+  Video,
+  Star,
+  HelpCircle,
+  Mail,
+  ArrowRight,
+  Zap,
+  Quote,
+  BarChart3,
+  Columns,
+  GalleryHorizontal,
+  Package,
+  Hash,
+  AlignLeft,
+  Search,
+  Sparkles,
+  AlertCircle,
+  ExternalLink,
+  Globe,
+  SlidersHorizontal,
+  Box,
+  MousePointer,
+  ShieldCheck,
+  ShoppingCart,
+  Percent,
+  Clock,
+  DollarSign,
+  Minus,
+  ChevronLeft,
+  ArrowUpRight,
 } from 'lucide-react';
 import { CMSPageData, PageFormData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
@@ -17,7 +61,15 @@ import DragDropUpload from '@/src/components/ui/DragDropUpload';
 
 function InstagramIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
       <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
       <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
@@ -131,7 +183,8 @@ const BLOCK_LIBRARY: {
     defaultData: {
       layout: 'flex_col',
       title: 'Custom Content Box',
-      content: '<p class="text-slate-600">Place any text, promotion message, or nested component content inside this customizable container box.</p>',
+      content:
+        '<p class="text-slate-600">Place any text, promotion message, or nested component content inside this customizable container box.</p>',
       bgColor: '#f8fafc',
       padding: 'lg',
       borderRadius: '2xl',
@@ -168,8 +221,20 @@ const BLOCK_LIBRARY: {
       align: 'center',
       gap: 'md',
       buttons: [
-        { text: 'Shop All Products', url: '/products', variant: 'primary', size: 'md', icon: 'shopping-bag' },
-        { text: 'Explore Collections', url: '/collections', variant: 'secondary', size: 'md', icon: 'arrow-right' },
+        {
+          text: 'Shop All Products',
+          url: '/products',
+          variant: 'primary',
+          size: 'md',
+          icon: 'shopping-bag',
+        },
+        {
+          text: 'Explore Collections',
+          url: '/collections',
+          variant: 'secondary',
+          size: 'md',
+          icon: 'arrow-right',
+        },
       ],
     },
   },
@@ -338,7 +403,13 @@ const BLOCK_LIBRARY: {
           period: '/ month',
           description: 'For passionate enthusiasts seeking fastest shipping and perks.',
           isPopular: true,
-          features: ['Free Express Overnight Shipping', '20% Off All Accessories', 'Early Access to Drops (24h Ahead)', 'Dedicated VIP Concierge Support', 'Free Gift with Every Order'],
+          features: [
+            'Free Express Overnight Shipping',
+            '20% Off All Accessories',
+            'Early Access to Drops (24h Ahead)',
+            'Dedicated VIP Concierge Support',
+            'Free Gift with Every Order',
+          ],
           buttonText: 'Join VIP Club',
           buttonUrl: '/checkout',
         },
@@ -348,7 +419,12 @@ const BLOCK_LIBRARY: {
           period: '/ year',
           description: 'Best value for frequent shoppers with maximum savings.',
           isPopular: false,
-          features: ['Everything in VIP Club', 'Exclusive Annual Mystery Box ($100 Value)', 'Free Personalized Monogramming', 'Lifetime Warranty on Select Gear'],
+          features: [
+            'Everything in VIP Club',
+            'Exclusive Annual Mystery Box ($100 Value)',
+            'Free Personalized Monogramming',
+            'Lifetime Warranty on Select Gear',
+          ],
           buttonText: 'Get Annual Pass',
           buttonUrl: '/checkout',
         },
@@ -420,10 +496,30 @@ const BLOCK_LIBRARY: {
       handle: '@store_official',
       subtitle: 'Tag your photos with #MyStyle to be featured on our official feed',
       items: [
-        { imageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80', likes: '1.4k', comments: '98', caption: 'Summer drop styling ✨' },
-        { imageUrl: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&q=80', likes: '2.8k', comments: '142', caption: 'Everyday essentials curated.' },
-        { imageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=500&q=80', likes: '980', comments: '64', caption: 'Crafted with premium cotton.' },
-        { imageUrl: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=500&q=80', likes: '3.1k', comments: '210', caption: 'Minimal silhouettes in motion.' },
+        {
+          imageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
+          likes: '1.4k',
+          comments: '98',
+          caption: 'Summer drop styling ✨',
+        },
+        {
+          imageUrl: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&q=80',
+          likes: '2.8k',
+          comments: '142',
+          caption: 'Everyday essentials curated.',
+        },
+        {
+          imageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=500&q=80',
+          likes: '980',
+          comments: '64',
+          caption: 'Crafted with premium cotton.',
+        },
+        {
+          imageUrl: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=500&q=80',
+          likes: '3.1k',
+          comments: '210',
+          caption: 'Minimal silhouettes in motion.',
+        },
       ],
     },
   },
@@ -491,7 +587,8 @@ const BLOCK_LIBRARY: {
     defaultData: {
       tagline: 'OUR CRAFT',
       title: 'Precision Without Compromise',
-      description: 'Every detail is crafted with purpose. Stress-tested for durability, refined for beauty.',
+      description:
+        'Every detail is crafted with purpose. Stress-tested for durability, refined for beauty.',
       buttonText: 'Discover Our Story',
       buttonUrl: '/pages/about',
       imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=1000&q=80',
@@ -507,9 +604,24 @@ const BLOCK_LIBRARY: {
     defaultData: {
       heading: 'What Our Customers Say',
       reviews: [
-        { author: 'Sarah M.', role: 'Verified Buyer', rating: 5, quote: 'Absolutely love the quality. Worth every penny!' },
-        { author: 'James K.', role: 'Verified Buyer', rating: 5, quote: 'Arrived in 2 days. Packaging was premium.' },
-        { author: 'Priya L.', role: 'Verified Buyer', rating: 5, quote: 'Customer support was exceptional.' },
+        {
+          author: 'Sarah M.',
+          role: 'Verified Buyer',
+          rating: 5,
+          quote: 'Absolutely love the quality. Worth every penny!',
+        },
+        {
+          author: 'James K.',
+          role: 'Verified Buyer',
+          rating: 5,
+          quote: 'Arrived in 2 days. Packaging was premium.',
+        },
+        {
+          author: 'Priya L.',
+          role: 'Verified Buyer',
+          rating: 5,
+          quote: 'Customer support was exceptional.',
+        },
       ],
     },
   },
@@ -523,9 +635,19 @@ const BLOCK_LIBRARY: {
       heading: 'Frequently Asked Questions',
       subtitle: 'Got questions? We have answers.',
       items: [
-        { question: 'How long does shipping take?', answer: 'Standard orders arrive in 3–5 business days. Express overnight is also available.' },
-        { question: 'What is your return policy?', answer: 'We offer 30-day hassle-free returns with prepaid labels on all orders.' },
-        { question: 'Do you offer a warranty?', answer: 'All products carry a 2-year manufacturer warranty against defects.' },
+        {
+          question: 'How long does shipping take?',
+          answer:
+            'Standard orders arrive in 3–5 business days. Express overnight is also available.',
+        },
+        {
+          question: 'What is your return policy?',
+          answer: 'We offer 30-day hassle-free returns with prepaid labels on all orders.',
+        },
+        {
+          question: 'Do you offer a warranty?',
+          answer: 'All products carry a 2-year manufacturer warranty against defects.',
+        },
       ],
     },
   },
@@ -605,10 +727,22 @@ const BLOCK_LIBRARY: {
     defaultData: {
       heading: 'Trusted By Top Brands',
       logos: [
-        { name: 'Apple', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg' },
-        { name: 'Google', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg' },
-        { name: 'Nike', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg' },
-        { name: 'Adidas', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/20/Adidas_Logo.svg' },
+        {
+          name: 'Apple',
+          imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg',
+        },
+        {
+          name: 'Google',
+          imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
+        },
+        {
+          name: 'Nike',
+          imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg',
+        },
+        {
+          name: 'Adidas',
+          imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/20/Adidas_Logo.svg',
+        },
       ],
     },
   },
@@ -625,9 +759,24 @@ const BLOCK_LIBRARY: {
       ctaText: 'View All Products',
       ctaUrl: '/products',
       products: [
-        { name: 'Premium Wireless Earbuds', price: '₹4,999', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80', url: '/products' },
-        { name: 'Ultra-Slim Smart Watch', price: '₹12,999', image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80', url: '/products' },
-        { name: 'Noise-Canceling Headphones', price: '₹8,499', image: 'https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=400&q=80', url: '/products' },
+        {
+          name: 'Premium Wireless Earbuds',
+          price: '₹4,999',
+          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80',
+          url: '/products',
+        },
+        {
+          name: 'Ultra-Slim Smart Watch',
+          price: '₹12,999',
+          image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80',
+          url: '/products',
+        },
+        {
+          name: 'Noise-Canceling Headphones',
+          price: '₹8,499',
+          image: 'https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=400&q=80',
+          url: '/products',
+        },
       ],
     },
   },
@@ -655,8 +804,16 @@ const BLOCK_LIBRARY: {
     icon: <Columns className="w-4 h-4" />,
     defaultData: {
       columns: [
-        { heading: 'Our Mission', content: '<p>We are committed to bringing you the finest curated products from around the world, delivered with exceptional care and speed.</p>' },
-        { heading: 'Our Vision', content: '<p>To become the most trusted and beloved destination for quality-conscious shoppers everywhere.</p>' },
+        {
+          heading: 'Our Mission',
+          content:
+            '<p>We are committed to bringing you the finest curated products from around the world, delivered with exceptional care and speed.</p>',
+        },
+        {
+          heading: 'Our Vision',
+          content:
+            '<p>To become the most trusted and beloved destination for quality-conscious shoppers everywhere.</p>',
+        },
       ],
     },
   },
@@ -670,12 +827,30 @@ const BLOCK_LIBRARY: {
       heading: 'Gallery',
       columns: 3,
       images: [
-        { url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80', alt: 'Product 1' },
-        { url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80', alt: 'Product 2' },
-        { url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80', alt: 'Product 3' },
-        { url: 'https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=600&q=80', alt: 'Product 4' },
-        { url: 'https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=600&q=80', alt: 'Product 5' },
-        { url: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&q=80', alt: 'Product 6' },
+        {
+          url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80',
+          alt: 'Product 1',
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80',
+          alt: 'Product 2',
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80',
+          alt: 'Product 3',
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=600&q=80',
+          alt: 'Product 4',
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=600&q=80',
+          alt: 'Product 5',
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&q=80',
+          alt: 'Product 6',
+        },
       ],
     },
   },
@@ -706,22 +881,21 @@ function parseContentToBlocks(content?: string | null): PageBlock[] {
   }
   // Wrap HTML/text in a rich_text block
   if (trimmed) {
-    return [{
-      id: `block-rich_text-${Date.now()}`,
-      type: 'rich_text',
-      isVisible: true,
-      data: { html: trimmed },
-    }];
+    return [
+      {
+        id: `block-rich_text-${Date.now()}`,
+        type: 'rich_text',
+        isVisible: true,
+        data: { html: trimmed },
+      },
+    ];
   }
   return [];
 }
 
 // ─── Undo/Redo Reducer ──────────────────────────────────────────────────────
 
-type HistoryAction =
-  | { type: 'SET'; blocks: PageBlock[] }
-  | { type: 'UNDO' }
-  | { type: 'REDO' };
+type HistoryAction = { type: 'SET'; blocks: PageBlock[] } | { type: 'UNDO' } | { type: 'REDO' };
 
 interface HistoryState {
   past: PageBlock[][];
@@ -762,13 +936,16 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">{label}</label>
+      <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+        {label}
+      </label>
       {children}
     </div>
   );
 }
 
-const inputCls = "w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:border-indigo-500 transition placeholder:text-slate-600";
+const inputCls =
+  'w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:border-indigo-500 transition placeholder:text-slate-600';
 
 // ─── Inspector Panel ────────────────────────────────────────────────────────
 
@@ -813,13 +990,32 @@ function BlockInspector({
           {type.replace(/_/g, ' ')} Settings
         </span>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={onToggleVisible} title={block.isVisible ? 'Hide' : 'Show'} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
-            {block.isVisible ? <Eye className="w-3.5 h-3.5 text-emerald-400" /> : <EyeOff className="w-3.5 h-3.5 text-rose-400" />}
+          <button
+            type="button"
+            onClick={onToggleVisible}
+            title={block.isVisible ? 'Hide' : 'Show'}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          >
+            {block.isVisible ? (
+              <Eye className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <EyeOff className="w-3.5 h-3.5 text-rose-400" />
+            )}
           </button>
-          <button type="button" onClick={onDuplicate} title="Duplicate" className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <button
+            type="button"
+            onClick={onDuplicate}
+            title="Duplicate"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          >
             <Copy className="w-3.5 h-3.5" />
           </button>
-          <button type="button" onClick={onDelete} title="Delete" className="p-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 transition">
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Delete"
+            className="p-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 transition"
+          >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -830,13 +1026,15 @@ function BlockInspector({
         <>
           <Field label="Heading Tag Level">
             <div className="grid grid-cols-6 gap-1">
-              {(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as const).map(lvl => (
+              {(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as const).map((lvl) => (
                 <button
                   key={lvl}
                   type="button"
                   onClick={() => set('level', lvl)}
                   className={`py-1.5 rounded-lg font-black text-xs uppercase border transition ${
-                    data.level === lvl ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
+                    data.level === lvl
+                      ? 'bg-indigo-600 border-indigo-500 text-white'
+                      : 'bg-slate-950 border-slate-800 text-slate-400'
                   }`}
                 >
                   {lvl}
@@ -845,23 +1043,41 @@ function BlockInspector({
             </div>
           </Field>
           <Field label="Heading Text">
-            <input className={inputCls} value={data.text || ''} onChange={e => set('text', e.target.value)} placeholder="Main heading text..." />
+            <input
+              className={inputCls}
+              value={data.text || ''}
+              onChange={(e) => set('text', e.target.value)}
+              placeholder="Main heading text..."
+            />
           </Field>
           <Field label="Eyebrow / Top Tag (optional)">
-            <input className={inputCls} value={data.eyebrow || ''} onChange={e => set('eyebrow', e.target.value)} placeholder="e.g. SUMMER 2026" />
+            <input
+              className={inputCls}
+              value={data.eyebrow || ''}
+              onChange={(e) => set('eyebrow', e.target.value)}
+              placeholder="e.g. SUMMER 2026"
+            />
           </Field>
           <Field label="Subtitle / Description (optional)">
-            <textarea className={inputCls} rows={2} value={data.subtitle || ''} onChange={e => set('subtitle', e.target.value)} placeholder="Subordinate supporting text..." />
+            <textarea
+              className={inputCls}
+              rows={2}
+              value={data.subtitle || ''}
+              onChange={(e) => set('subtitle', e.target.value)}
+              placeholder="Subordinate supporting text..."
+            />
           </Field>
           <Field label="Text Alignment">
             <div className="flex gap-2">
-              {['left', 'center', 'right'].map(a => (
+              {['left', 'center', 'right'].map((a) => (
                 <button
                   key={a}
                   type="button"
                   onClick={() => set('textAlign', a)}
                   className={`flex-1 py-1.5 rounded-lg font-bold capitalize border transition ${
-                    data.textAlign === a ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
+                    data.textAlign === a
+                      ? 'bg-indigo-600 border-indigo-500 text-white'
+                      : 'bg-slate-950 border-slate-800 text-slate-400'
                   }`}
                 >
                   {a}
@@ -870,7 +1086,11 @@ function BlockInspector({
             </div>
           </Field>
           <Field label="Font Size">
-            <select className={inputCls} value={data.fontSize || '3xl'} onChange={e => set('fontSize', e.target.value)}>
+            <select
+              className={inputCls}
+              value={data.fontSize || '3xl'}
+              onChange={(e) => set('fontSize', e.target.value)}
+            >
               <option value="xl">Extra Large (XL)</option>
               <option value="2xl">2X Large (2XL)</option>
               <option value="3xl">3X Large (3XL)</option>
@@ -882,24 +1102,28 @@ function BlockInspector({
           <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/80 border border-slate-800">
             <div>
               <span className="font-bold text-white block">Gradient Text Effect</span>
-              <span className="text-[10px] text-slate-400">Apply vibrant gradient colors across heading</span>
+              <span className="text-[10px] text-slate-400">
+                Apply vibrant gradient colors across heading
+              </span>
             </div>
             <input
               type="checkbox"
               checked={Boolean(data.isGradient)}
-              onChange={e => set('isGradient', e.target.checked)}
+              onChange={(e) => set('isGradient', e.target.checked)}
               className="w-4 h-4 accent-indigo-600 rounded"
             />
           </div>
           <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/80 border border-slate-800">
             <div>
               <span className="font-bold text-white block">Decorative Bottom Accent</span>
-              <span className="text-[10px] text-slate-400">Show subtle center accent underline</span>
+              <span className="text-[10px] text-slate-400">
+                Show subtle center accent underline
+              </span>
             </div>
             <input
               type="checkbox"
               checked={Boolean(data.hasUnderline)}
-              onChange={e => set('hasUnderline', e.target.checked)}
+              onChange={(e) => set('hasUnderline', e.target.checked)}
               className="w-4 h-4 accent-indigo-600 rounded"
             />
           </div>
@@ -910,20 +1134,32 @@ function BlockInspector({
       {type === 'span_badge' && (
         <>
           <Field label="Badge Text">
-            <input className={inputCls} value={data.text || ''} onChange={e => set('text', e.target.value)} placeholder="e.g. FLASH SALE 50% OFF" />
+            <input
+              className={inputCls}
+              value={data.text || ''}
+              onChange={(e) => set('text', e.target.value)}
+              placeholder="e.g. FLASH SALE 50% OFF"
+            />
           </Field>
           <Field label="Icon / Emoji">
-            <input className={inputCls} value={data.iconEmoji || ''} onChange={e => set('iconEmoji', e.target.value)} placeholder="✨ or 🔥 or ⚡" />
+            <input
+              className={inputCls}
+              value={data.iconEmoji || ''}
+              onChange={(e) => set('iconEmoji', e.target.value)}
+              placeholder="✨ or 🔥 or ⚡"
+            />
           </Field>
           <Field label="Color Theme">
             <div className="grid grid-cols-3 gap-2">
-              {['violet', 'emerald', 'rose', 'amber', 'blue', 'slate'].map(cp => (
+              {['violet', 'emerald', 'rose', 'amber', 'blue', 'slate'].map((cp) => (
                 <button
                   key={cp}
                   type="button"
                   onClick={() => set('colorPreset', cp)}
                   className={`py-1.5 rounded-lg font-bold capitalize border transition ${
-                    data.colorPreset === cp ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
+                    data.colorPreset === cp
+                      ? 'bg-indigo-600 border-indigo-500 text-white'
+                      : 'bg-slate-950 border-slate-800 text-slate-400'
                   }`}
                 >
                   {cp}
@@ -933,13 +1169,15 @@ function BlockInspector({
           </Field>
           <Field label="Shape Style">
             <div className="grid grid-cols-3 gap-2">
-              {['pill', 'rounded', 'square'].map(v => (
+              {['pill', 'rounded', 'square'].map((v) => (
                 <button
                   key={v}
                   type="button"
                   onClick={() => set('variant', v)}
                   className={`py-1.5 rounded-lg font-bold capitalize border transition ${
-                    data.variant === v ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
+                    data.variant === v
+                      ? 'bg-indigo-600 border-indigo-500 text-white'
+                      : 'bg-slate-950 border-slate-800 text-slate-400'
                   }`}
                 >
                   {v}
@@ -948,7 +1186,12 @@ function BlockInspector({
             </div>
           </Field>
           <Field label="Target Link URL (optional)">
-            <input className={`${inputCls} font-mono`} value={data.linkUrl || ''} onChange={e => set('linkUrl', e.target.value)} placeholder="/products or /collections" />
+            <input
+              className={`${inputCls} font-mono`}
+              value={data.linkUrl || ''}
+              onChange={(e) => set('linkUrl', e.target.value)}
+              placeholder="/products or /collections"
+            />
           </Field>
         </>
       )}
@@ -957,7 +1200,11 @@ function BlockInspector({
       {type === 'container_box' && (
         <>
           <Field label="Container Layout">
-            <select className={inputCls} value={data.layout || 'flex_col'} onChange={e => set('layout', e.target.value)}>
+            <select
+              className={inputCls}
+              value={data.layout || 'flex_col'}
+              onChange={(e) => set('layout', e.target.value)}
+            >
               <option value="flex_col">Vertical Column (Flex Col)</option>
               <option value="flex_row">Horizontal Row (Flex Row)</option>
               <option value="grid_2">2-Column Grid</option>
@@ -966,17 +1213,36 @@ function BlockInspector({
             </select>
           </Field>
           <Field label="Inner HTML / Text Content">
-            <textarea className={inputCls} rows={4} value={data.content || ''} onChange={e => set('content', e.target.value)} placeholder="<p>HTML or text content...</p>" />
+            <textarea
+              className={inputCls}
+              rows={4}
+              value={data.content || ''}
+              onChange={(e) => set('content', e.target.value)}
+              placeholder="<p>HTML or text content...</p>"
+            />
           </Field>
           <Field label="Background Color (Hex)">
             <div className="flex items-center gap-2">
-              <input type="color" value={data.bgColor?.startsWith('#') ? data.bgColor : '#f8fafc'} onChange={e => set('bgColor', e.target.value)} className="w-8 h-8 rounded border border-slate-700 bg-transparent cursor-pointer" />
-              <input className={`${inputCls} font-mono flex-1`} value={data.bgColor || '#f8fafc'} onChange={e => set('bgColor', e.target.value)} />
+              <input
+                type="color"
+                value={data.bgColor?.startsWith('#') ? data.bgColor : '#f8fafc'}
+                onChange={(e) => set('bgColor', e.target.value)}
+                className="w-8 h-8 rounded border border-slate-700 bg-transparent cursor-pointer"
+              />
+              <input
+                className={`${inputCls} font-mono flex-1`}
+                value={data.bgColor || '#f8fafc'}
+                onChange={(e) => set('bgColor', e.target.value)}
+              />
             </div>
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Padding">
-              <select className={inputCls} value={data.padding || 'lg'} onChange={e => set('padding', e.target.value)}>
+              <select
+                className={inputCls}
+                value={data.padding || 'lg'}
+                onChange={(e) => set('padding', e.target.value)}
+              >
                 <option value="none">None (0)</option>
                 <option value="sm">Small (12px)</option>
                 <option value="md">Medium (20px)</option>
@@ -985,7 +1251,11 @@ function BlockInspector({
               </select>
             </Field>
             <Field label="Border Radius">
-              <select className={inputCls} value={data.borderRadius || '2xl'} onChange={e => set('borderRadius', e.target.value)}>
+              <select
+                className={inputCls}
+                value={data.borderRadius || '2xl'}
+                onChange={(e) => set('borderRadius', e.target.value)}
+              >
                 <option value="none">Square (0)</option>
                 <option value="md">Medium (8px)</option>
                 <option value="xl">Large (16px)</option>
@@ -996,13 +1266,15 @@ function BlockInspector({
           </div>
           <Field label="Border Style">
             <div className="flex gap-2">
-              {['none', 'solid', 'dashed'].map(b => (
+              {['none', 'solid', 'dashed'].map((b) => (
                 <button
                   key={b}
                   type="button"
                   onClick={() => set('borderStyle', b)}
                   className={`flex-1 py-1.5 rounded-lg font-bold capitalize border transition ${
-                    data.borderStyle === b ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
+                    data.borderStyle === b
+                      ? 'bg-indigo-600 border-indigo-500 text-white'
+                      : 'bg-slate-950 border-slate-800 text-slate-400'
                   }`}
                 >
                   {b}
@@ -1017,10 +1289,20 @@ function BlockInspector({
       {type === 'paragraph' && (
         <>
           <Field label="Paragraph Content">
-            <textarea className={inputCls} rows={4} value={data.text || ''} onChange={e => set('text', e.target.value)} placeholder="Write your paragraph..." />
+            <textarea
+              className={inputCls}
+              rows={4}
+              value={data.text || ''}
+              onChange={(e) => set('text', e.target.value)}
+              placeholder="Write your paragraph..."
+            />
           </Field>
           <Field label="Font Size">
-            <select className={inputCls} value={data.fontSize || 'base'} onChange={e => set('fontSize', e.target.value)}>
+            <select
+              className={inputCls}
+              value={data.fontSize || 'base'}
+              onChange={(e) => set('fontSize', e.target.value)}
+            >
               <option value="xs">Small (XS)</option>
               <option value="sm">Medium (SM)</option>
               <option value="base">Standard (Base)</option>
@@ -1030,13 +1312,15 @@ function BlockInspector({
           </Field>
           <Field label="Text Alignment">
             <div className="flex gap-2">
-              {['left', 'center', 'right', 'justify'].map(a => (
+              {['left', 'center', 'right', 'justify'].map((a) => (
                 <button
                   key={a}
                   type="button"
                   onClick={() => set('textAlign', a)}
                   className={`flex-1 py-1.5 rounded-lg font-bold capitalize border transition ${
-                    data.textAlign === a ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
+                    data.textAlign === a
+                      ? 'bg-indigo-600 border-indigo-500 text-white'
+                      : 'bg-slate-950 border-slate-800 text-slate-400'
                   }`}
                 >
                   {a}
@@ -1052,13 +1336,15 @@ function BlockInspector({
         <>
           <Field label="Buttons Alignment">
             <div className="flex gap-2">
-              {['left', 'center', 'right'].map(a => (
+              {['left', 'center', 'right'].map((a) => (
                 <button
                   key={a}
                   type="button"
                   onClick={() => set('align', a)}
                   className={`flex-1 py-1.5 rounded-lg font-bold capitalize border transition ${
-                    data.align === a ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
+                    data.align === a
+                      ? 'bg-indigo-600 border-indigo-500 text-white'
+                      : 'bg-slate-950 border-slate-800 text-slate-400'
                   }`}
                 >
                   {a}
@@ -1067,22 +1353,51 @@ function BlockInspector({
             </div>
           </Field>
           <div className="space-y-3">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">Buttons List</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+              Buttons List
+            </label>
             {(data.buttons || []).map((btn: any, i: number) => (
-              <div key={i} className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div
+                key={i}
+                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+              >
                 <div className="flex items-center gap-2">
-                  <input className={inputCls} value={btn.text || ''} onChange={e => updateListItem('buttons', i, 'text', e.target.value)} placeholder="Button Text" />
-                  <button type="button" onClick={() => removeListItem('buttons', i)} className="p-1 text-rose-400 hover:text-rose-300 shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <input
+                    className={inputCls}
+                    value={btn.text || ''}
+                    onChange={(e) => updateListItem('buttons', i, 'text', e.target.value)}
+                    placeholder="Button Text"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeListItem('buttons', i)}
+                    className="p-1 text-rose-400 hover:text-rose-300 shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <input className={`${inputCls} font-mono`} value={btn.url || ''} onChange={e => updateListItem('buttons', i, 'url', e.target.value)} placeholder="/products" />
+                <input
+                  className={`${inputCls} font-mono`}
+                  value={btn.url || ''}
+                  onChange={(e) => updateListItem('buttons', i, 'url', e.target.value)}
+                  placeholder="/products"
+                />
                 <div className="grid grid-cols-2 gap-2">
-                  <select className={inputCls} value={btn.variant || 'primary'} onChange={e => updateListItem('buttons', i, 'variant', e.target.value)}>
+                  <select
+                    className={inputCls}
+                    value={btn.variant || 'primary'}
+                    onChange={(e) => updateListItem('buttons', i, 'variant', e.target.value)}
+                  >
                     <option value="primary">Primary Dark</option>
                     <option value="secondary">Secondary Light</option>
                     <option value="outline">Outline Border</option>
                     <option value="glow">Vibrant Violet</option>
                   </select>
-                  <select className={inputCls} value={btn.size || 'md'} onChange={e => updateListItem('buttons', i, 'size', e.target.value)}>
+                  <select
+                    className={inputCls}
+                    value={btn.size || 'md'}
+                    onChange={(e) => updateListItem('buttons', i, 'size', e.target.value)}
+                  >
                     <option value="sm">Small</option>
                     <option value="md">Medium</option>
                     <option value="lg">Large</option>
@@ -1092,7 +1407,14 @@ function BlockInspector({
             ))}
             <button
               type="button"
-              onClick={() => addListItem('buttons', { text: 'New Button', url: '/products', variant: 'primary', size: 'md' })}
+              onClick={() =>
+                addListItem('buttons', {
+                  text: 'New Button',
+                  url: '/products',
+                  variant: 'primary',
+                  size: 'md',
+                })
+              }
               className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" /> Add CTA Button
@@ -1106,14 +1428,22 @@ function BlockInspector({
         <>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Banner Height">
-              <select className={inputCls} value={data.height || '520px'} onChange={e => set('height', e.target.value)}>
+              <select
+                className={inputCls}
+                value={data.height || '520px'}
+                onChange={(e) => set('height', e.target.value)}
+              >
                 <option value="420px">Compact (420px)</option>
                 <option value="520px">Standard (520px)</option>
                 <option value="620px">Immersive (620px)</option>
               </select>
             </Field>
             <Field label="Auto Slide Interval">
-              <select className={inputCls} value={data.interval || 5000} onChange={e => set('interval', Number(e.target.value))}>
+              <select
+                className={inputCls}
+                value={data.interval || 5000}
+                onChange={(e) => set('interval', Number(e.target.value))}
+              >
                 <option value={3000}>3 Seconds</option>
                 <option value={5000}>5 Seconds</option>
                 <option value={7000}>7 Seconds</option>
@@ -1121,42 +1451,80 @@ function BlockInspector({
             </Field>
           </div>
           <div className="space-y-4">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">Carousel Slides</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+              Carousel Slides
+            </label>
             {(data.slides || []).map((s: any, i: number) => (
-              <div key={i} className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2.5">
+              <div
+                key={i}
+                className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2.5"
+              >
                 <div className="flex items-center justify-between pb-1 border-b border-slate-800">
                   <span className="font-bold text-white text-xs">Slide #{i + 1}</span>
-                  <button type="button" onClick={() => removeListItem('slides', i)} className="text-rose-400 hover:text-rose-300 p-1"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <button
+                    type="button"
+                    onClick={() => removeListItem('slides', i)}
+                    className="text-rose-400 hover:text-rose-300 p-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
                 <Field label="Slide Headline">
-                  <input className={inputCls} value={s.title || ''} onChange={e => updateListItem('slides', i, 'title', e.target.value)} placeholder="Headline..." />
+                  <input
+                    className={inputCls}
+                    value={s.title || ''}
+                    onChange={(e) => updateListItem('slides', i, 'title', e.target.value)}
+                    placeholder="Headline..."
+                  />
                 </Field>
                 <Field label="Slide Subtitle">
-                  <textarea className={inputCls} rows={2} value={s.subtitle || ''} onChange={e => updateListItem('slides', i, 'subtitle', e.target.value)} placeholder="Subtitle..." />
+                  <textarea
+                    className={inputCls}
+                    rows={2}
+                    value={s.subtitle || ''}
+                    onChange={(e) => updateListItem('slides', i, 'subtitle', e.target.value)}
+                    placeholder="Subtitle..."
+                  />
                 </Field>
                 <Field label="Background Image URL">
-                  <input className={`${inputCls} font-mono`} value={s.imageUrl || ''} onChange={e => updateListItem('slides', i, 'imageUrl', e.target.value)} placeholder="https://images.unsplash.com/..." />
+                  <input
+                    className={`${inputCls} font-mono`}
+                    value={s.imageUrl || ''}
+                    onChange={(e) => updateListItem('slides', i, 'imageUrl', e.target.value)}
+                    placeholder="https://images.unsplash.com/..."
+                  />
                 </Field>
                 <div className="grid grid-cols-2 gap-2">
                   <Field label="CTA Button Text">
-                    <input className={inputCls} value={s.buttonText || ''} onChange={e => updateListItem('slides', i, 'buttonText', e.target.value)} />
+                    <input
+                      className={inputCls}
+                      value={s.buttonText || ''}
+                      onChange={(e) => updateListItem('slides', i, 'buttonText', e.target.value)}
+                    />
                   </Field>
                   <Field label="CTA URL">
-                    <input className={`${inputCls} font-mono`} value={s.buttonUrl || ''} onChange={e => updateListItem('slides', i, 'buttonUrl', e.target.value)} />
+                    <input
+                      className={`${inputCls} font-mono`}
+                      value={s.buttonUrl || ''}
+                      onChange={(e) => updateListItem('slides', i, 'buttonUrl', e.target.value)}
+                    />
                   </Field>
                 </div>
               </div>
             ))}
             <button
               type="button"
-              onClick={() => addListItem('slides', {
-                title: 'New Promotional Slide',
-                subtitle: 'Add compelling subtitle and calls to action.',
-                imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&q=80',
-                buttonText: 'Shop Now',
-                buttonUrl: '/products',
-                textAlign: 'center',
-              })}
+              onClick={() =>
+                addListItem('slides', {
+                  title: 'New Promotional Slide',
+                  subtitle: 'Add compelling subtitle and calls to action.',
+                  imageUrl:
+                    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&q=80',
+                  buttonText: 'Shop Now',
+                  buttonUrl: '/products',
+                  textAlign: 'center',
+                })
+              }
               className="w-full py-2.5 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1.5"
             >
               <Plus className="w-4 h-4" /> Add Slide to Carousel
@@ -1169,37 +1537,78 @@ function BlockInspector({
       {type === 'product_slider' && (
         <>
           <Field label="Section Heading">
-            <input className={inputCls} value={data.heading || ''} onChange={e => set('heading', e.target.value)} />
+            <input
+              className={inputCls}
+              value={data.heading || ''}
+              onChange={(e) => set('heading', e.target.value)}
+            />
           </Field>
           <Field label="Subtitle">
-            <input className={inputCls} value={data.subtitle || ''} onChange={e => set('subtitle', e.target.value)} />
+            <input
+              className={inputCls}
+              value={data.subtitle || ''}
+              onChange={(e) => set('subtitle', e.target.value)}
+            />
           </Field>
           <div className="space-y-3">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">Products In Slider</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+              Products In Slider
+            </label>
             {(data.items || []).map((p: any, i: number) => (
-              <div key={i} className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div
+                key={i}
+                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+              >
                 <div className="flex items-center justify-between">
-                  <input className={inputCls} value={p.name || ''} onChange={e => updateListItem('items', i, 'name', e.target.value)} placeholder="Product Name" />
-                  <button type="button" onClick={() => removeListItem('items', i)} className="p-1 text-rose-400 ml-2 shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <input
+                    className={inputCls}
+                    value={p.name || ''}
+                    onChange={(e) => updateListItem('items', i, 'name', e.target.value)}
+                    placeholder="Product Name"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeListItem('items', i)}
+                    className="p-1 text-rose-400 ml-2 shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <input className={inputCls} value={p.price || ''} onChange={e => updateListItem('items', i, 'price', e.target.value)} placeholder="Price e.g. $99" />
-                  <input className={inputCls} value={p.badge || ''} onChange={e => updateListItem('items', i, 'badge', e.target.value)} placeholder="Badge e.g. HOT" />
+                  <input
+                    className={inputCls}
+                    value={p.price || ''}
+                    onChange={(e) => updateListItem('items', i, 'price', e.target.value)}
+                    placeholder="Price e.g. $99"
+                  />
+                  <input
+                    className={inputCls}
+                    value={p.badge || ''}
+                    onChange={(e) => updateListItem('items', i, 'badge', e.target.value)}
+                    placeholder="Badge e.g. HOT"
+                  />
                 </div>
-                <input className={`${inputCls} font-mono`} value={p.image || ''} onChange={e => updateListItem('items', i, 'image', e.target.value)} placeholder="Image URL" />
+                <input
+                  className={`${inputCls} font-mono`}
+                  value={p.image || ''}
+                  onChange={(e) => updateListItem('items', i, 'image', e.target.value)}
+                  placeholder="Image URL"
+                />
               </div>
             ))}
             <button
               type="button"
-              onClick={() => addListItem('items', {
-                name: 'New Featured Product',
-                price: '$129.00',
-                compareAtPrice: '$169.00',
-                image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
-                badge: 'NEW',
-                rating: 5,
-                url: '/products',
-              })}
+              onClick={() =>
+                addListItem('items', {
+                  name: 'New Featured Product',
+                  price: '$129.00',
+                  compareAtPrice: '$169.00',
+                  image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
+                  badge: 'NEW',
+                  rating: 5,
+                  url: '/products',
+                })
+              }
               className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" /> Add Product Card
@@ -1212,20 +1621,43 @@ function BlockInspector({
       {type === 'announcement_bar' && (
         <>
           <Field label="Badge Text">
-            <input className={inputCls} value={data.badge || ''} onChange={e => set('badge', e.target.value)} placeholder="FLASH SALE" />
+            <input
+              className={inputCls}
+              value={data.badge || ''}
+              onChange={(e) => set('badge', e.target.value)}
+              placeholder="FLASH SALE"
+            />
           </Field>
           <Field label="Message Text">
-            <input className={inputCls} value={data.message || ''} onChange={e => set('message', e.target.value)} placeholder="Save 20% on all orders" />
+            <input
+              className={inputCls}
+              value={data.message || ''}
+              onChange={(e) => set('message', e.target.value)}
+              placeholder="Save 20% on all orders"
+            />
           </Field>
           <Field label="Promo / Coupon Code (optional)">
-            <input className={`${inputCls} font-mono font-bold uppercase`} value={data.couponCode || ''} onChange={e => set('couponCode', e.target.value.toUpperCase())} placeholder="SAVE20" />
+            <input
+              className={`${inputCls} font-mono font-bold uppercase`}
+              value={data.couponCode || ''}
+              onChange={(e) => set('couponCode', e.target.value.toUpperCase())}
+              placeholder="SAVE20"
+            />
           </Field>
           <div className="grid grid-cols-2 gap-2">
             <Field label="CTA Button Text">
-              <input className={inputCls} value={data.ctaText || ''} onChange={e => set('ctaText', e.target.value)} />
+              <input
+                className={inputCls}
+                value={data.ctaText || ''}
+                onChange={(e) => set('ctaText', e.target.value)}
+              />
             </Field>
             <Field label="CTA URL">
-              <input className={`${inputCls} font-mono`} value={data.ctaUrl || ''} onChange={e => set('ctaUrl', e.target.value)} />
+              <input
+                className={`${inputCls} font-mono`}
+                value={data.ctaUrl || ''}
+                onChange={(e) => set('ctaUrl', e.target.value)}
+              />
             </Field>
           </div>
         </>
@@ -1235,42 +1667,92 @@ function BlockInspector({
       {type === 'pricing_table' && (
         <>
           <Field label="Section Heading">
-            <input className={inputCls} value={data.heading || ''} onChange={e => set('heading', e.target.value)} />
+            <input
+              className={inputCls}
+              value={data.heading || ''}
+              onChange={(e) => set('heading', e.target.value)}
+            />
           </Field>
           <Field label="Subtitle">
-            <input className={inputCls} value={data.subtitle || ''} onChange={e => set('subtitle', e.target.value)} />
+            <input
+              className={inputCls}
+              value={data.subtitle || ''}
+              onChange={(e) => set('subtitle', e.target.value)}
+            />
           </Field>
           <Field label="Display Layout">
             <select
               className={inputCls}
               value={data.layout || 'grid'}
-              onChange={e => set('layout', e.target.value)}
+              onChange={(e) => set('layout', e.target.value)}
             >
               <option value="grid">Multi-Column Grid</option>
               <option value="swiper">Interactive Swiper / Carousel</option>
             </select>
           </Field>
           <div className="space-y-4">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">Pricing Plans</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+              Pricing Plans
+            </label>
             {(data.plans || []).map((plan: any, i: number) => (
-              <div key={i} className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div
+                key={i}
+                className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2"
+              >
                 <div className="flex items-center justify-between pb-1 border-b border-slate-800">
-                  <input className={inputCls} value={plan.name || ''} onChange={e => updateListItem('plans', i, 'name', e.target.value)} placeholder="Plan Name" />
-                  <button type="button" onClick={() => removeListItem('plans', i)} className="text-rose-400 hover:text-rose-300 ml-2 p-1"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <input
+                    className={inputCls}
+                    value={plan.name || ''}
+                    onChange={(e) => updateListItem('plans', i, 'name', e.target.value)}
+                    placeholder="Plan Name"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeListItem('plans', i)}
+                    className="text-rose-400 hover:text-rose-300 ml-2 p-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <input className={inputCls} value={plan.price || ''} onChange={e => updateListItem('plans', i, 'price', e.target.value)} placeholder="Price e.g. $29" />
-                  <input className={inputCls} value={plan.period || ''} onChange={e => updateListItem('plans', i, 'period', e.target.value)} placeholder="/ month" />
+                  <input
+                    className={inputCls}
+                    value={plan.price || ''}
+                    onChange={(e) => updateListItem('plans', i, 'price', e.target.value)}
+                    placeholder="Price e.g. $29"
+                  />
+                  <input
+                    className={inputCls}
+                    value={plan.period || ''}
+                    onChange={(e) => updateListItem('plans', i, 'period', e.target.value)}
+                    placeholder="/ month"
+                  />
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-[11px] text-slate-300 font-medium">Highlight / Popular</span>
-                  <input type="checkbox" checked={Boolean(plan.isPopular)} onChange={e => updateListItem('plans', i, 'isPopular', e.target.checked)} className="accent-indigo-600 rounded" />
+                  <span className="text-[11px] text-slate-300 font-medium">
+                    Highlight / Popular
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(plan.isPopular)}
+                    onChange={(e) => updateListItem('plans', i, 'isPopular', e.target.checked)}
+                    className="accent-indigo-600 rounded"
+                  />
                 </div>
                 <Field label="Features (comma separated)">
                   <input
                     className={inputCls}
-                    value={Array.isArray(plan.features) ? plan.features.join(', ') : plan.features || ''}
-                    onChange={e => updateListItem('plans', i, 'features', e.target.value.split(',').map((s: string) => s.trim()))}
+                    value={
+                      Array.isArray(plan.features) ? plan.features.join(', ') : plan.features || ''
+                    }
+                    onChange={(e) =>
+                      updateListItem(
+                        'plans',
+                        i,
+                        'features',
+                        e.target.value.split(',').map((s: string) => s.trim()),
+                      )
+                    }
                     placeholder="Free Shipping, 24/7 Support, VIP Perks"
                   />
                 </Field>
@@ -1278,15 +1760,17 @@ function BlockInspector({
             ))}
             <button
               type="button"
-              onClick={() => addListItem('plans', {
-                name: 'New Tier',
-                price: '$49',
-                period: '/ month',
-                description: 'Tier description here.',
-                features: ['Feature 1', 'Feature 2', 'Feature 3'],
-                buttonText: 'Select Plan',
-                buttonUrl: '/checkout',
-              })}
+              onClick={() =>
+                addListItem('plans', {
+                  name: 'New Tier',
+                  price: '$49',
+                  period: '/ month',
+                  description: 'Tier description here.',
+                  features: ['Feature 1', 'Feature 2', 'Feature 3'],
+                  buttonText: 'Select Plan',
+                  buttonUrl: '/checkout',
+                })
+              }
               className="w-full py-2.5 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1.5"
             >
               <Plus className="w-4 h-4" /> Add Pricing Tier
@@ -1299,23 +1783,59 @@ function BlockInspector({
       {type === 'trust_badges' && (
         <>
           <Field label="Section Heading">
-            <input className={inputCls} value={data.heading || ''} onChange={e => set('heading', e.target.value)} />
+            <input
+              className={inputCls}
+              value={data.heading || ''}
+              onChange={(e) => set('heading', e.target.value)}
+            />
           </Field>
           <div className="space-y-3">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">Trust Badges</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+              Trust Badges
+            </label>
             {(data.badges || []).map((b: any, i: number) => (
-              <div key={i} className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div
+                key={i}
+                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+              >
                 <div className="flex items-center gap-2">
-                  <input className={`${inputCls} w-14 text-center text-lg p-1`} value={b.icon || ''} onChange={e => updateListItem('badges', i, 'icon', e.target.value)} placeholder="🛡️" />
-                  <input className={inputCls} value={b.title || ''} onChange={e => updateListItem('badges', i, 'title', e.target.value)} placeholder="Badge Title" />
-                  <button type="button" onClick={() => removeListItem('badges', i)} className="p-1 text-rose-400 shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <input
+                    className={`${inputCls} w-14 text-center text-lg p-1`}
+                    value={b.icon || ''}
+                    onChange={(e) => updateListItem('badges', i, 'icon', e.target.value)}
+                    placeholder="🛡️"
+                  />
+                  <input
+                    className={inputCls}
+                    value={b.title || ''}
+                    onChange={(e) => updateListItem('badges', i, 'title', e.target.value)}
+                    placeholder="Badge Title"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeListItem('badges', i)}
+                    className="p-1 text-rose-400 shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <input className={inputCls} value={b.desc || ''} onChange={e => updateListItem('badges', i, 'desc', e.target.value)} placeholder="Description..." />
+                <input
+                  className={inputCls}
+                  value={b.desc || ''}
+                  onChange={(e) => updateListItem('badges', i, 'desc', e.target.value)}
+                  placeholder="Description..."
+                />
               </div>
             ))}
             <button
               type="button"
-              onClick={() => addListItem('badges', { icon: '⭐', title: 'Quality Guarantee', desc: 'Verified 5-star customer experience' })}
+              onClick={() =>
+                addListItem('badges', {
+                  icon: '⭐',
+                  title: 'Quality Guarantee',
+                  desc: 'Verified 5-star customer experience',
+                })
+              }
               className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" /> Add Trust Badge
@@ -1328,17 +1848,23 @@ function BlockInspector({
       {type === 'banner_grid' && (
         <>
           <Field label="Section Heading">
-            <input className={inputCls} value={data.heading || ''} onChange={e => set('heading', e.target.value)} />
+            <input
+              className={inputCls}
+              value={data.heading || ''}
+              onChange={(e) => set('heading', e.target.value)}
+            />
           </Field>
           <Field label="Columns (2, 3, or 4)">
             <div className="flex gap-2">
-              {[2, 3, 4].map(c => (
+              {[2, 3, 4].map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => set('columns', c)}
                   className={`flex-1 py-1.5 rounded-lg font-bold border transition ${
-                    data.columns === c ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
+                    data.columns === c
+                      ? 'bg-indigo-600 border-indigo-500 text-white'
+                      : 'bg-slate-950 border-slate-800 text-slate-400'
                   }`}
                 >
                   {c} Columns
@@ -1348,28 +1874,64 @@ function BlockInspector({
           </Field>
           <div className="space-y-3">
             {(data.banners || []).map((b: any, i: number) => (
-              <div key={i} className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div
+                key={i}
+                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+              >
                 <div className="flex items-center justify-between">
-                  <input className={inputCls} value={b.title || ''} onChange={e => updateListItem('banners', i, 'title', e.target.value)} placeholder="Category Title" />
-                  <button type="button" onClick={() => removeListItem('banners', i)} className="p-1 text-rose-400 ml-2 shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <input
+                    className={inputCls}
+                    value={b.title || ''}
+                    onChange={(e) => updateListItem('banners', i, 'title', e.target.value)}
+                    placeholder="Category Title"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeListItem('banners', i)}
+                    className="p-1 text-rose-400 ml-2 shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <input className={inputCls} value={b.subtitle || ''} onChange={e => updateListItem('banners', i, 'subtitle', e.target.value)} placeholder="Subtitle" />
-                  <input className={inputCls} value={b.badge || ''} onChange={e => updateListItem('banners', i, 'badge', e.target.value)} placeholder="Badge e.g. NEW" />
+                  <input
+                    className={inputCls}
+                    value={b.subtitle || ''}
+                    onChange={(e) => updateListItem('banners', i, 'subtitle', e.target.value)}
+                    placeholder="Subtitle"
+                  />
+                  <input
+                    className={inputCls}
+                    value={b.badge || ''}
+                    onChange={(e) => updateListItem('banners', i, 'badge', e.target.value)}
+                    placeholder="Badge e.g. NEW"
+                  />
                 </div>
-                <input className={`${inputCls} font-mono`} value={b.imageUrl || ''} onChange={e => updateListItem('banners', i, 'imageUrl', e.target.value)} placeholder="Banner Image URL" />
-                <input className={`${inputCls} font-mono`} value={b.url || ''} onChange={e => updateListItem('banners', i, 'url', e.target.value)} placeholder="Target URL e.g. /collections/women" />
+                <input
+                  className={`${inputCls} font-mono`}
+                  value={b.imageUrl || ''}
+                  onChange={(e) => updateListItem('banners', i, 'imageUrl', e.target.value)}
+                  placeholder="Banner Image URL"
+                />
+                <input
+                  className={`${inputCls} font-mono`}
+                  value={b.url || ''}
+                  onChange={(e) => updateListItem('banners', i, 'url', e.target.value)}
+                  placeholder="Target URL e.g. /collections/women"
+                />
               </div>
             ))}
             <button
               type="button"
-              onClick={() => addListItem('banners', {
-                title: 'New Collection',
-                subtitle: 'Discover more styles',
-                badge: 'TRENDING',
-                imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80',
-                url: '/collections',
-              })}
+              onClick={() =>
+                addListItem('banners', {
+                  title: 'New Collection',
+                  subtitle: 'Discover more styles',
+                  badge: 'TRENDING',
+                  imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80',
+                  url: '/collections',
+                })
+              }
               className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" /> Add Category Banner
@@ -1382,35 +1944,75 @@ function BlockInspector({
       {type === 'instagram_feed' && (
         <>
           <Field label="Section Heading">
-            <input className={inputCls} value={data.heading || ''} onChange={e => set('heading', e.target.value)} />
+            <input
+              className={inputCls}
+              value={data.heading || ''}
+              onChange={(e) => set('heading', e.target.value)}
+            />
           </Field>
           <Field label="Instagram Handle">
-            <input className={inputCls} value={data.handle || ''} onChange={e => set('handle', e.target.value)} placeholder="@brand_official" />
+            <input
+              className={inputCls}
+              value={data.handle || ''}
+              onChange={(e) => set('handle', e.target.value)}
+              placeholder="@brand_official"
+            />
           </Field>
           <Field label="Subtitle / Tagline">
-            <input className={inputCls} value={data.subtitle || ''} onChange={e => set('subtitle', e.target.value)} />
+            <input
+              className={inputCls}
+              value={data.subtitle || ''}
+              onChange={(e) => set('subtitle', e.target.value)}
+            />
           </Field>
           <div className="space-y-3">
             {(data.items || []).map((it: any, i: number) => (
-              <div key={i} className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div
+                key={i}
+                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+              >
                 <div className="flex items-center justify-between">
-                  <input className={`${inputCls} font-mono`} value={it.imageUrl || ''} onChange={e => updateListItem('items', i, 'imageUrl', e.target.value)} placeholder="Image URL" />
-                  <button type="button" onClick={() => removeListItem('items', i)} className="p-1 text-rose-400 ml-2 shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <input
+                    className={`${inputCls} font-mono`}
+                    value={it.imageUrl || ''}
+                    onChange={(e) => updateListItem('items', i, 'imageUrl', e.target.value)}
+                    placeholder="Image URL"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeListItem('items', i)}
+                    className="p-1 text-rose-400 ml-2 shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <input className={inputCls} value={it.likes || ''} onChange={e => updateListItem('items', i, 'likes', e.target.value)} placeholder="Likes count e.g. 1.2k" />
-                  <input className={inputCls} value={it.comments || ''} onChange={e => updateListItem('items', i, 'comments', e.target.value)} placeholder="Comments e.g. 48" />
+                  <input
+                    className={inputCls}
+                    value={it.likes || ''}
+                    onChange={(e) => updateListItem('items', i, 'likes', e.target.value)}
+                    placeholder="Likes count e.g. 1.2k"
+                  />
+                  <input
+                    className={inputCls}
+                    value={it.comments || ''}
+                    onChange={(e) => updateListItem('items', i, 'comments', e.target.value)}
+                    placeholder="Comments e.g. 48"
+                  />
                 </div>
               </div>
             ))}
             <button
               type="button"
-              onClick={() => addListItem('items', {
-                imageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
-                likes: '1.2k',
-                comments: '56',
-                caption: 'Community lookbook',
-              })}
+              onClick={() =>
+                addListItem('items', {
+                  imageUrl:
+                    'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
+                  likes: '1.2k',
+                  comments: '56',
+                  caption: 'Community lookbook',
+                })
+              }
               className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" /> Add Social Photo
@@ -1423,23 +2025,48 @@ function BlockInspector({
       {type === 'countdown_timer' && (
         <>
           <Field label="Urgency Badge">
-            <input className={inputCls} value={data.badge || ''} onChange={e => set('badge', e.target.value)} />
+            <input
+              className={inputCls}
+              value={data.badge || ''}
+              onChange={(e) => set('badge', e.target.value)}
+            />
           </Field>
           <Field label="Sale Title">
-            <input className={inputCls} value={data.title || ''} onChange={e => set('title', e.target.value)} />
+            <input
+              className={inputCls}
+              value={data.title || ''}
+              onChange={(e) => set('title', e.target.value)}
+            />
           </Field>
           <Field label="Subtitle">
-            <textarea className={inputCls} rows={2} value={data.subtitle || ''} onChange={e => set('subtitle', e.target.value)} />
+            <textarea
+              className={inputCls}
+              rows={2}
+              value={data.subtitle || ''}
+              onChange={(e) => set('subtitle', e.target.value)}
+            />
           </Field>
           <Field label="Promo Code">
-            <input className={`${inputCls} font-mono font-bold uppercase`} value={data.discountCode || ''} onChange={e => set('discountCode', e.target.value.toUpperCase())} />
+            <input
+              className={`${inputCls} font-mono font-bold uppercase`}
+              value={data.discountCode || ''}
+              onChange={(e) => set('discountCode', e.target.value.toUpperCase())}
+            />
           </Field>
           <div className="grid grid-cols-2 gap-2">
             <Field label="CTA Button Text">
-              <input className={inputCls} value={data.buttonText || ''} onChange={e => set('buttonText', e.target.value)} />
+              <input
+                className={inputCls}
+                value={data.buttonText || ''}
+                onChange={(e) => set('buttonText', e.target.value)}
+              />
             </Field>
             <Field label="CTA URL">
-              <input className={`${inputCls} font-mono`} value={data.buttonUrl || ''} onChange={e => set('buttonUrl', e.target.value)} />
+              <input
+                className={`${inputCls} font-mono`}
+                value={data.buttonUrl || ''}
+                onChange={(e) => set('buttonUrl', e.target.value)}
+              />
             </Field>
           </div>
         </>
@@ -1448,10 +2075,25 @@ function BlockInspector({
       {/* ── HERO ── */}
       {type === 'hero' && (
         <>
-          <Field label="Headline"><input className={inputCls} value={data.headline || ''} onChange={e => set('headline', e.target.value)} /></Field>
-          <Field label="Subtitle"><textarea className={inputCls} rows={3} value={data.subtitle || ''} onChange={e => set('subtitle', e.target.value)} /></Field>
+          <Field label="Headline">
+            <input
+              className={inputCls}
+              value={data.headline || ''}
+              onChange={(e) => set('headline', e.target.value)}
+            />
+          </Field>
+          <Field label="Subtitle">
+            <textarea
+              className={inputCls}
+              rows={3}
+              value={data.subtitle || ''}
+              onChange={(e) => set('subtitle', e.target.value)}
+            />
+          </Field>
           <div className="space-y-1.5 pt-1 pb-1">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">Hero Background Image</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+              Hero Background Image
+            </label>
             <DragDropUpload
               folder="hero"
               fileType="IMAGE"
@@ -1462,54 +2104,148 @@ function BlockInspector({
               maxSizeMB={10}
             />
             <div className="pt-1">
-              <label className="block text-[10px] text-slate-500 font-medium mb-1">Or direct image URL</label>
-              <input className={`${inputCls} font-mono`} value={data.backgroundImage || ''} onChange={e => set('backgroundImage', e.target.value)} placeholder="https://images.unsplash.com/..." />
+              <label className="block text-[10px] text-slate-500 font-medium mb-1">
+                Or direct image URL
+              </label>
+              <input
+                className={`${inputCls} font-mono`}
+                value={data.backgroundImage || ''}
+                onChange={(e) => set('backgroundImage', e.target.value)}
+                placeholder="https://images.unsplash.com/..."
+              />
             </div>
           </div>
           <Field label="Dark Overlay (0–100%)">
             <div className="flex items-center gap-2">
-              <input type="range" min={0} max={100} value={data.overlayOpacity ?? 50} onChange={e => set('overlayOpacity', Number(e.target.value))} className="flex-1 accent-indigo-500" />
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={data.overlayOpacity ?? 50}
+                onChange={(e) => set('overlayOpacity', Number(e.target.value))}
+                className="flex-1 accent-indigo-500"
+              />
               <span className="text-slate-400 w-8">{data.overlayOpacity ?? 50}%</span>
             </div>
           </Field>
           <Field label="Text Alignment">
             <div className="flex gap-2">
-              {['left', 'center', 'right'].map(a => (
-                <button key={a} type="button" onClick={() => set('textAlign', a)} className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.textAlign === a ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>{a}</button>
+              {['left', 'center', 'right'].map((a) => (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => set('textAlign', a)}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.textAlign === a ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+                >
+                  {a}
+                </button>
               ))}
             </div>
           </Field>
-          <Field label="Primary Button Text"><input className={inputCls} value={data.buttonText || ''} onChange={e => set('buttonText', e.target.value)} /></Field>
-          <Field label="Primary Button URL"><input className={`${inputCls} font-mono`} value={data.buttonUrl || ''} onChange={e => set('buttonUrl', e.target.value)} /></Field>
-          <Field label="Secondary Button Text"><input className={inputCls} value={data.secondaryButtonText || ''} onChange={e => set('secondaryButtonText', e.target.value)} /></Field>
-          <Field label="Secondary Button URL"><input className={`${inputCls} font-mono`} value={data.secondaryButtonUrl || ''} onChange={e => set('secondaryButtonUrl', e.target.value)} /></Field>
+          <Field label="Primary Button Text">
+            <input
+              className={inputCls}
+              value={data.buttonText || ''}
+              onChange={(e) => set('buttonText', e.target.value)}
+            />
+          </Field>
+          <Field label="Primary Button URL">
+            <input
+              className={`${inputCls} font-mono`}
+              value={data.buttonUrl || ''}
+              onChange={(e) => set('buttonUrl', e.target.value)}
+            />
+          </Field>
+          <Field label="Secondary Button Text">
+            <input
+              className={inputCls}
+              value={data.secondaryButtonText || ''}
+              onChange={(e) => set('secondaryButtonText', e.target.value)}
+            />
+          </Field>
+          <Field label="Secondary Button URL">
+            <input
+              className={`${inputCls} font-mono`}
+              value={data.secondaryButtonUrl || ''}
+              onChange={(e) => set('secondaryButtonUrl', e.target.value)}
+            />
+          </Field>
         </>
       )}
 
       {/* ── VALUE PROPS ── */}
       {type === 'value_props' && (
         <>
-          <Field label="Section Heading"><input className={inputCls} value={data.heading || ''} onChange={e => set('heading', e.target.value)} /></Field>
+          <Field label="Section Heading">
+            <input
+              className={inputCls}
+              value={data.heading || ''}
+              onChange={(e) => set('heading', e.target.value)}
+            />
+          </Field>
           <Field label="Columns (2–4)">
             <div className="flex gap-2">
-              {[2, 3, 4].map(c => (
-                <button key={c} type="button" onClick={() => set('columns', c)} className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.columns === c ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>{c}</button>
+              {[2, 3, 4].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => set('columns', c)}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.columns === c ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+                >
+                  {c}
+                </button>
               ))}
             </div>
           </Field>
           <div className="space-y-3">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">Feature Cards</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+              Feature Cards
+            </label>
             {(data.features || []).map((f: any, i: number) => (
-              <div key={i} className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div
+                key={i}
+                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+              >
                 <div className="flex items-center gap-2">
-                  <input className={`${inputCls} w-14 text-center text-lg p-1`} value={f.icon || ''} onChange={e => updateListItem('features', i, 'icon', e.target.value)} placeholder="🚀" />
-                  <input className={inputCls} value={f.title || ''} onChange={e => updateListItem('features', i, 'title', e.target.value)} placeholder="Title" />
-                  <button type="button" onClick={() => removeListItem('features', i)} className="p-1 text-rose-400 hover:text-rose-300 shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <input
+                    className={`${inputCls} w-14 text-center text-lg p-1`}
+                    value={f.icon || ''}
+                    onChange={(e) => updateListItem('features', i, 'icon', e.target.value)}
+                    placeholder="🚀"
+                  />
+                  <input
+                    className={inputCls}
+                    value={f.title || ''}
+                    onChange={(e) => updateListItem('features', i, 'title', e.target.value)}
+                    placeholder="Title"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeListItem('features', i)}
+                    className="p-1 text-rose-400 hover:text-rose-300 shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <input className={inputCls} value={f.desc || ''} onChange={e => updateListItem('features', i, 'desc', e.target.value)} placeholder="Description" />
+                <input
+                  className={inputCls}
+                  value={f.desc || ''}
+                  onChange={(e) => updateListItem('features', i, 'desc', e.target.value)}
+                  placeholder="Description"
+                />
               </div>
             ))}
-            <button type="button" onClick={() => addListItem('features', { icon: '✨', title: 'New Feature', desc: 'Feature description.' })} className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1">
+            <button
+              type="button"
+              onClick={() =>
+                addListItem('features', {
+                  icon: '✨',
+                  title: 'New Feature',
+                  desc: 'Feature description.',
+                })
+              }
+              className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
+            >
               <Plus className="w-3.5 h-3.5" /> Add Feature Card
             </button>
           </div>
@@ -1519,11 +2255,32 @@ function BlockInspector({
       {/* ── IMAGE & TEXT ── */}
       {type === 'image_text' && (
         <>
-          <Field label="Tagline (optional)"><input className={inputCls} value={data.tagline || ''} onChange={e => set('tagline', e.target.value)} /></Field>
-          <Field label="Heading"><input className={inputCls} value={data.title || ''} onChange={e => set('title', e.target.value)} /></Field>
-          <Field label="Description"><textarea className={inputCls} rows={4} value={data.description || ''} onChange={e => set('description', e.target.value)} /></Field>
+          <Field label="Tagline (optional)">
+            <input
+              className={inputCls}
+              value={data.tagline || ''}
+              onChange={(e) => set('tagline', e.target.value)}
+            />
+          </Field>
+          <Field label="Heading">
+            <input
+              className={inputCls}
+              value={data.title || ''}
+              onChange={(e) => set('title', e.target.value)}
+            />
+          </Field>
+          <Field label="Description">
+            <textarea
+              className={inputCls}
+              rows={4}
+              value={data.description || ''}
+              onChange={(e) => set('description', e.target.value)}
+            />
+          </Field>
           <div className="space-y-1.5 pt-1 pb-1">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">Section Image</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+              Section Image
+            </label>
             <DragDropUpload
               folder="pages"
               fileType="IMAGE"
@@ -1534,45 +2291,127 @@ function BlockInspector({
               maxSizeMB={10}
             />
             <div className="pt-1">
-              <label className="block text-[10px] text-slate-500 font-medium mb-1">Or direct image URL</label>
-              <input className={`${inputCls} font-mono`} value={data.imageUrl || ''} onChange={e => set('imageUrl', e.target.value)} placeholder="https://images.unsplash.com/..." />
+              <label className="block text-[10px] text-slate-500 font-medium mb-1">
+                Or direct image URL
+              </label>
+              <input
+                className={`${inputCls} font-mono`}
+                value={data.imageUrl || ''}
+                onChange={(e) => set('imageUrl', e.target.value)}
+                placeholder="https://images.unsplash.com/..."
+              />
             </div>
           </div>
           <Field label="Image Position">
             <div className="flex gap-2">
-              <button type="button" onClick={() => set('imagePosition', 'left')} className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.imagePosition === 'left' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>Left</button>
-              <button type="button" onClick={() => set('imagePosition', 'right')} className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.imagePosition === 'right' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>Right</button>
+              <button
+                type="button"
+                onClick={() => set('imagePosition', 'left')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.imagePosition === 'left' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+              >
+                Left
+              </button>
+              <button
+                type="button"
+                onClick={() => set('imagePosition', 'right')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.imagePosition === 'right' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+              >
+                Right
+              </button>
             </div>
           </Field>
-          <Field label="Button Text"><input className={inputCls} value={data.buttonText || ''} onChange={e => set('buttonText', e.target.value)} /></Field>
-          <Field label="Button URL"><input className={`${inputCls} font-mono`} value={data.buttonUrl || ''} onChange={e => set('buttonUrl', e.target.value)} /></Field>
+          <Field label="Button Text">
+            <input
+              className={inputCls}
+              value={data.buttonText || ''}
+              onChange={(e) => set('buttonText', e.target.value)}
+            />
+          </Field>
+          <Field label="Button URL">
+            <input
+              className={`${inputCls} font-mono`}
+              value={data.buttonUrl || ''}
+              onChange={(e) => set('buttonUrl', e.target.value)}
+            />
+          </Field>
         </>
       )}
 
       {/* ── TESTIMONIALS ── */}
       {type === 'testimonials' && (
         <>
-          <Field label="Section Heading"><input className={inputCls} value={data.heading || ''} onChange={e => set('heading', e.target.value)} /></Field>
+          <Field label="Section Heading">
+            <input
+              className={inputCls}
+              value={data.heading || ''}
+              onChange={(e) => set('heading', e.target.value)}
+            />
+          </Field>
           <div className="space-y-3">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">Reviews</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+              Reviews
+            </label>
             {(data.reviews || []).map((r: any, i: number) => (
-              <div key={i} className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div
+                key={i}
+                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+              >
                 <div className="flex items-center gap-2">
-                  <input className={inputCls} value={r.author || ''} onChange={e => updateListItem('reviews', i, 'author', e.target.value)} placeholder="Author Name" />
-                  <button type="button" onClick={() => removeListItem('reviews', i)} className="p-1 text-rose-400 shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <input
+                    className={inputCls}
+                    value={r.author || ''}
+                    onChange={(e) => updateListItem('reviews', i, 'author', e.target.value)}
+                    placeholder="Author Name"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeListItem('reviews', i)}
+                    className="p-1 text-rose-400 shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <input className={inputCls} value={r.role || ''} onChange={e => updateListItem('reviews', i, 'role', e.target.value)} placeholder="Role (e.g. Verified Buyer)" />
+                <input
+                  className={inputCls}
+                  value={r.role || ''}
+                  onChange={(e) => updateListItem('reviews', i, 'role', e.target.value)}
+                  placeholder="Role (e.g. Verified Buyer)"
+                />
                 <Field label="Rating">
                   <div className="flex gap-1">
-                    {[1,2,3,4,5].map(s => (
-                      <button key={s} type="button" onClick={() => updateListItem('reviews', i, 'rating', s)} className={`text-lg transition ${s <= (r.rating || 5) ? 'text-amber-400' : 'text-slate-700'}`}>★</button>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => updateListItem('reviews', i, 'rating', s)}
+                        className={`text-lg transition ${s <= (r.rating || 5) ? 'text-amber-400' : 'text-slate-700'}`}
+                      >
+                        ★
+                      </button>
                     ))}
                   </div>
                 </Field>
-                <textarea className={inputCls} rows={2} value={r.quote || ''} onChange={e => updateListItem('reviews', i, 'quote', e.target.value)} placeholder="Review text..." />
+                <textarea
+                  className={inputCls}
+                  rows={2}
+                  value={r.quote || ''}
+                  onChange={(e) => updateListItem('reviews', i, 'quote', e.target.value)}
+                  placeholder="Review text..."
+                />
               </div>
             ))}
-            <button type="button" onClick={() => addListItem('reviews', { author: 'New Customer', role: 'Verified Buyer', rating: 5, quote: 'Great product!' })} className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1">
+            <button
+              type="button"
+              onClick={() =>
+                addListItem('reviews', {
+                  author: 'New Customer',
+                  role: 'Verified Buyer',
+                  rating: 5,
+                  quote: 'Great product!',
+                })
+              }
+              className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
+            >
               <Plus className="w-3.5 h-3.5" /> Add Review
             </button>
           </div>
@@ -1582,20 +2421,61 @@ function BlockInspector({
       {/* ── FAQ ── */}
       {type === 'faq' && (
         <>
-          <Field label="Section Heading"><input className={inputCls} value={data.heading || ''} onChange={e => set('heading', e.target.value)} /></Field>
-          <Field label="Subtitle"><input className={inputCls} value={data.subtitle || ''} onChange={e => set('subtitle', e.target.value)} /></Field>
+          <Field label="Section Heading">
+            <input
+              className={inputCls}
+              value={data.heading || ''}
+              onChange={(e) => set('heading', e.target.value)}
+            />
+          </Field>
+          <Field label="Subtitle">
+            <input
+              className={inputCls}
+              value={data.subtitle || ''}
+              onChange={(e) => set('subtitle', e.target.value)}
+            />
+          </Field>
           <div className="space-y-3">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">FAQ Items</label>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+              FAQ Items
+            </label>
             {(data.items || []).map((item: any, i: number) => (
-              <div key={i} className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div
+                key={i}
+                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+              >
                 <div className="flex items-start gap-2">
-                  <textarea className={`${inputCls} flex-1`} rows={2} value={item.question || ''} onChange={e => updateListItem('items', i, 'question', e.target.value)} placeholder="Question..." />
-                  <button type="button" onClick={() => removeListItem('items', i)} className="p-1 text-rose-400 shrink-0 mt-1"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <textarea
+                    className={`${inputCls} flex-1`}
+                    rows={2}
+                    value={item.question || ''}
+                    onChange={(e) => updateListItem('items', i, 'question', e.target.value)}
+                    placeholder="Question..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeListItem('items', i)}
+                    className="p-1 text-rose-400 shrink-0 mt-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <textarea className={inputCls} rows={3} value={item.answer || ''} onChange={e => updateListItem('items', i, 'answer', e.target.value)} placeholder="Answer..." />
+                <textarea
+                  className={inputCls}
+                  rows={3}
+                  value={item.answer || ''}
+                  onChange={(e) => updateListItem('items', i, 'answer', e.target.value)}
+                  placeholder="Answer..."
+                />
               </div>
             ))}
-            <button type="button" onClick={() => addListItem('items', { question: 'New Question?', answer: 'Answer here.' })} className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1">
+            <button
+              type="button"
+              onClick={() =>
+                addListItem('items', { question: 'New Question?', answer: 'Answer here.' })
+              }
+              className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
+            >
               <Plus className="w-3.5 h-3.5" /> Add FAQ Item
             </button>
           </div>
@@ -1605,13 +2485,42 @@ function BlockInspector({
       {/* ── NEWSLETTER ── */}
       {type === 'newsletter' && (
         <>
-          <Field label="Heading"><input className={inputCls} value={data.heading || ''} onChange={e => set('heading', e.target.value)} /></Field>
-          <Field label="Subtitle"><input className={inputCls} value={data.subtitle || ''} onChange={e => set('subtitle', e.target.value)} /></Field>
-          <Field label="Input Placeholder"><input className={inputCls} value={data.placeholder || ''} onChange={e => set('placeholder', e.target.value)} /></Field>
-          <Field label="Button Text"><input className={inputCls} value={data.buttonText || ''} onChange={e => set('buttonText', e.target.value)} /></Field>
+          <Field label="Heading">
+            <input
+              className={inputCls}
+              value={data.heading || ''}
+              onChange={(e) => set('heading', e.target.value)}
+            />
+          </Field>
+          <Field label="Subtitle">
+            <input
+              className={inputCls}
+              value={data.subtitle || ''}
+              onChange={(e) => set('subtitle', e.target.value)}
+            />
+          </Field>
+          <Field label="Input Placeholder">
+            <input
+              className={inputCls}
+              value={data.placeholder || ''}
+              onChange={(e) => set('placeholder', e.target.value)}
+            />
+          </Field>
+          <Field label="Button Text">
+            <input
+              className={inputCls}
+              value={data.buttonText || ''}
+              onChange={(e) => set('buttonText', e.target.value)}
+            />
+          </Field>
           <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/80 border border-slate-800">
             <span className="font-bold text-white">Dark Background Style</span>
-            <input type="checkbox" checked={Boolean(data.bgDark)} onChange={e => set('bgDark', e.target.checked)} className="w-4 h-4 accent-indigo-600 rounded" />
+            <input
+              type="checkbox"
+              checked={Boolean(data.bgDark)}
+              onChange={(e) => set('bgDark', e.target.checked)}
+              className="w-4 h-4 accent-indigo-600 rounded"
+            />
           </div>
         </>
       )}
@@ -1619,27 +2528,81 @@ function BlockInspector({
       {/* ── CTA BANNER ── */}
       {type === 'cta_banner' && (
         <>
-          <Field label="Headline"><input className={inputCls} value={data.headline || ''} onChange={e => set('headline', e.target.value)} /></Field>
-          <Field label="Subtitle"><textarea className={inputCls} rows={2} value={data.subtitle || ''} onChange={e => set('subtitle', e.target.value)} /></Field>
-          <Field label="Primary Button Text"><input className={inputCls} value={data.primaryButtonText || ''} onChange={e => set('primaryButtonText', e.target.value)} /></Field>
-          <Field label="Primary Button URL"><input className={`${inputCls} font-mono`} value={data.primaryButtonUrl || ''} onChange={e => set('primaryButtonUrl', e.target.value)} /></Field>
-          <Field label="Secondary Button Text"><input className={inputCls} value={data.secondaryButtonText || ''} onChange={e => set('secondaryButtonText', e.target.value)} /></Field>
-          <Field label="Secondary Button URL"><input className={`${inputCls} font-mono`} value={data.secondaryButtonUrl || ''} onChange={e => set('secondaryButtonUrl', e.target.value)} /></Field>
+          <Field label="Headline">
+            <input
+              className={inputCls}
+              value={data.headline || ''}
+              onChange={(e) => set('headline', e.target.value)}
+            />
+          </Field>
+          <Field label="Subtitle">
+            <textarea
+              className={inputCls}
+              rows={2}
+              value={data.subtitle || ''}
+              onChange={(e) => set('subtitle', e.target.value)}
+            />
+          </Field>
+          <Field label="Primary Button Text">
+            <input
+              className={inputCls}
+              value={data.primaryButtonText || ''}
+              onChange={(e) => set('primaryButtonText', e.target.value)}
+            />
+          </Field>
+          <Field label="Primary Button URL">
+            <input
+              className={`${inputCls} font-mono`}
+              value={data.primaryButtonUrl || ''}
+              onChange={(e) => set('primaryButtonUrl', e.target.value)}
+            />
+          </Field>
+          <Field label="Secondary Button Text">
+            <input
+              className={inputCls}
+              value={data.secondaryButtonText || ''}
+              onChange={(e) => set('secondaryButtonText', e.target.value)}
+            />
+          </Field>
+          <Field label="Secondary Button URL">
+            <input
+              className={`${inputCls} font-mono`}
+              value={data.secondaryButtonUrl || ''}
+              onChange={(e) => set('secondaryButtonUrl', e.target.value)}
+            />
+          </Field>
         </>
       )}
 
       {/* ── RICH TEXT ── */}
       {type === 'rich_text' && (
         <Field label="HTML Content">
-          <textarea className={`${inputCls} font-mono`} rows={8} value={data.html || ''} onChange={e => set('html', e.target.value)} />
+          <textarea
+            className={`${inputCls} font-mono`}
+            rows={8}
+            value={data.html || ''}
+            onChange={(e) => set('html', e.target.value)}
+          />
         </Field>
       )}
 
       {/* ── VIDEO EMBED ── */}
       {type === 'video' && (
         <>
-          <Field label="Heading (optional)"><input className={inputCls} value={data.heading || ''} onChange={e => set('heading', e.target.value)} /></Field>
-          <Field label="Embed URL (YouTube / Vimeo / MP4)"><input className={`${inputCls} font-mono`} value={data.videoUrl || ''} onChange={e => set('videoUrl', e.target.value)} /></Field>
+          <Field label="Heading (optional)">
+            <input
+              className={inputCls}
+              value={data.heading || ''}
+              onChange={(e) => set('heading', e.target.value)}
+            />
+          </Field>
+          <Field label="Embed URL (YouTube / Vimeo / MP4)">
+            <input
+              className={`${inputCls} font-mono`}
+              value={data.videoUrl || ''}
+              onChange={(e) => set('videoUrl', e.target.value)}
+            />
+          </Field>
         </>
       )}
     </div>
@@ -1654,15 +2617,17 @@ function BlockPreview({ block }: { block: PageBlock }) {
 
   // 1. HEADING TAG (H1-H6)
   if (type === 'heading') {
-    const Tag = (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(data.level) ? data.level : 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-    const sizeCls = {
-      xl: 'text-xl',
-      '2xl': 'text-2xl sm:text-3xl',
-      '3xl': 'text-3xl sm:text-4xl',
-      '4xl': 'text-4xl sm:text-5xl',
-      '5xl': 'text-5xl sm:text-6xl',
-      '6xl': 'text-6xl sm:text-7xl',
-    }[data.fontSize as string] || 'text-3xl sm:text-4xl';
+    const Tag = (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(data.level) ? data.level : 'h2') as
+      'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+    const sizeCls =
+      {
+        xl: 'text-xl',
+        '2xl': 'text-2xl sm:text-3xl',
+        '3xl': 'text-3xl sm:text-4xl',
+        '4xl': 'text-4xl sm:text-5xl',
+        '5xl': 'text-5xl sm:text-6xl',
+        '6xl': 'text-6xl sm:text-7xl',
+      }[data.fontSize as string] || 'text-3xl sm:text-4xl';
 
     return (
       <div className={`py-6 px-4 text-${data.textAlign || 'center'} space-y-2`}>
@@ -1686,7 +2651,9 @@ function BlockPreview({ block }: { block: PageBlock }) {
           </p>
         )}
         {data.hasUnderline && (
-          <div className={`w-16 h-1 rounded-full bg-indigo-600 mt-3 ${data.textAlign === 'left' ? '' : data.textAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} />
+          <div
+            className={`w-16 h-1 rounded-full bg-indigo-600 mt-3 ${data.textAlign === 'left' ? '' : data.textAlign === 'right' ? 'ml-auto' : 'mx-auto'}`}
+          />
         )}
       </div>
     );
@@ -1711,8 +2678,12 @@ function BlockPreview({ block }: { block: PageBlock }) {
     const activeShape = shapeClasses[data.variant || 'pill'] || shapeClasses.pill;
 
     return (
-      <div className={`p-4 flex justify-${data.align === 'left' ? 'start' : data.align === 'right' ? 'end' : 'center'}`}>
-        <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-black tracking-wide uppercase border shadow-xs ${activeColor} ${activeShape}`}>
+      <div
+        className={`p-4 flex justify-${data.align === 'left' ? 'start' : data.align === 'right' ? 'end' : 'center'}`}
+      >
+        <span
+          className={`inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-black tracking-wide uppercase border shadow-xs ${activeColor} ${activeShape}`}
+        >
           {data.iconEmoji && <span>{data.iconEmoji}</span>}
           <span>{data.text || 'PROMOTIONAL BADGE'}</span>
         </span>
@@ -1733,7 +2704,12 @@ function BlockPreview({ block }: { block: PageBlock }) {
           }}
         >
           {data.title && <h3 className="text-base font-bold text-slate-900 mb-2">{data.title}</h3>}
-          <div className="prose prose-slate prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: data.content || '<p class="text-slate-500">Container text...</p>' }} />
+          <div
+            className="prose prose-slate prose-sm max-w-none"
+            dangerouslySetInnerHTML={{
+              __html: data.content || '<p class="text-slate-500">Container text...</p>',
+            }}
+          />
         </div>
       </div>
     );
@@ -1743,7 +2719,9 @@ function BlockPreview({ block }: { block: PageBlock }) {
   if (type === 'paragraph') {
     return (
       <div className={`p-4 text-${data.textAlign || 'center'}`}>
-        <p className={`text-${data.fontSize || 'base'} text-slate-600 leading-${data.lineHeight || 'relaxed'} max-w-3xl mx-auto font-medium`}>
+        <p
+          className={`text-${data.fontSize || 'base'} text-slate-600 leading-${data.lineHeight || 'relaxed'} max-w-3xl mx-auto font-medium`}
+        >
           {data.text || 'Write your paragraph text here...'}
         </p>
       </div>
@@ -1753,15 +2731,25 @@ function BlockPreview({ block }: { block: PageBlock }) {
   // 5. BUTTON GROUP
   if (type === 'button_group') {
     return (
-      <div className={`p-4 flex flex-wrap gap-3 justify-${data.align === 'left' ? 'start' : data.align === 'right' ? 'end' : 'center'}`}>
+      <div
+        className={`p-4 flex flex-wrap gap-3 justify-${data.align === 'left' ? 'start' : data.align === 'right' ? 'end' : 'center'}`}
+      >
         {(data.buttons || []).map((b: any, i: number) => {
           let styleClass = 'bg-slate-900 text-white hover:bg-slate-800';
-          if (b.variant === 'secondary') styleClass = 'bg-slate-100 text-slate-900 hover:bg-slate-200 border border-slate-300';
-          if (b.variant === 'outline') styleClass = 'bg-transparent text-slate-900 border-2 border-slate-900 hover:bg-slate-900 hover:text-white';
-          if (b.variant === 'glow') styleClass = 'bg-violet-600 text-white shadow-lg shadow-violet-500/30 hover:bg-violet-700';
+          if (b.variant === 'secondary')
+            styleClass = 'bg-slate-100 text-slate-900 hover:bg-slate-200 border border-slate-300';
+          if (b.variant === 'outline')
+            styleClass =
+              'bg-transparent text-slate-900 border-2 border-slate-900 hover:bg-slate-900 hover:text-white';
+          if (b.variant === 'glow')
+            styleClass =
+              'bg-violet-600 text-white shadow-lg shadow-violet-500/30 hover:bg-violet-700';
 
           return (
-            <span key={i} className={`inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl font-bold text-xs cursor-pointer transition ${styleClass}`}>
+            <span
+              key={i}
+              className={`inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl font-bold text-xs cursor-pointer transition ${styleClass}`}
+            >
               <span>{b.text || 'Button'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </span>
@@ -1774,7 +2762,10 @@ function BlockPreview({ block }: { block: PageBlock }) {
   // 6. DIVIDER / SPACER
   if (type === 'divider_spacer') {
     return (
-      <div className="px-6 flex items-center justify-center relative" style={{ height: `${data.height || 48}px` }}>
+      <div
+        className="px-6 flex items-center justify-center relative"
+        style={{ height: `${data.height || 48}px` }}
+      >
         <div className="w-full border-t border-slate-200" />
         {data.showIcon && (
           <span className="absolute px-3 bg-white text-slate-400 text-xs font-bold">
@@ -1791,15 +2782,25 @@ function BlockPreview({ block }: { block: PageBlock }) {
     const activeSlide = slides[activeSlideIdx] || slides[0] || {};
 
     return (
-      <div className="relative rounded-3xl overflow-hidden shadow-lg" style={{ height: data.height || '460px' }}>
+      <div
+        className="relative rounded-3xl overflow-hidden shadow-lg"
+        style={{ height: data.height || '460px' }}
+      >
         <div
           className="absolute inset-0 bg-cover bg-center transition-all duration-700"
-          style={{ backgroundImage: `url(${activeSlide.imageUrl || 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1600&q=80'})` }}
+          style={{
+            backgroundImage: `url(${activeSlide.imageUrl || 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1600&q=80'})`,
+          }}
         />
-        <div className="absolute inset-0 bg-black" style={{ opacity: (activeSlide.overlayOpacity ?? 45) / 100 }} />
+        <div
+          className="absolute inset-0 bg-black"
+          style={{ opacity: (activeSlide.overlayOpacity ?? 45) / 100 }}
+        />
 
         {/* Slide Content */}
-        <div className={`relative z-10 h-full flex flex-col justify-center p-8 sm:p-14 text-white text-${activeSlide.textAlign || 'center'} items-${activeSlide.textAlign === 'left' ? 'start' : activeSlide.textAlign === 'right' ? 'end' : 'center'}`}>
+        <div
+          className={`relative z-10 h-full flex flex-col justify-center p-8 sm:p-14 text-white text-${activeSlide.textAlign || 'center'} items-${activeSlide.textAlign === 'left' ? 'start' : activeSlide.textAlign === 'right' ? 'end' : 'center'}`}
+        >
           <div className="max-w-2xl space-y-4">
             <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
               {activeSlide.title || 'Featured Drop'}
@@ -1807,7 +2808,9 @@ function BlockPreview({ block }: { block: PageBlock }) {
             <p className="text-sm sm:text-base text-white/85 max-w-xl mx-auto leading-relaxed">
               {activeSlide.subtitle}
             </p>
-            <div className={`pt-2 flex flex-wrap gap-3 justify-${activeSlide.textAlign === 'left' ? 'start' : activeSlide.textAlign === 'right' ? 'end' : 'center'}`}>
+            <div
+              className={`pt-2 flex flex-wrap gap-3 justify-${activeSlide.textAlign === 'left' ? 'start' : activeSlide.textAlign === 'right' ? 'end' : 'center'}`}
+            >
               {activeSlide.buttonText && (
                 <span className="px-6 py-3 rounded-xl bg-white text-slate-950 font-bold text-xs shadow-lg">
                   {activeSlide.buttonText}
@@ -1827,7 +2830,9 @@ function BlockPreview({ block }: { block: PageBlock }) {
           <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 z-20 flex justify-between pointer-events-none">
             <button
               type="button"
-              onClick={() => setActiveSlideIdx((activeSlideIdx - 1 + slides.length) % slides.length)}
+              onClick={() =>
+                setActiveSlideIdx((activeSlideIdx - 1 + slides.length) % slides.length)
+              }
               className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white hover:text-black flex items-center justify-center pointer-events-auto transition"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -1865,27 +2870,46 @@ function BlockPreview({ block }: { block: PageBlock }) {
       <div className="p-6 space-y-5 bg-slate-50/50 rounded-3xl border border-slate-200/60">
         <div className="flex items-end justify-between">
           <div>
-            <h3 className="text-xl font-black text-slate-900">{data.heading || 'Trending Bestsellers'}</h3>
+            <h3 className="text-xl font-black text-slate-900">
+              {data.heading || 'Trending Bestsellers'}
+            </h3>
             <p className="text-xs text-slate-500 mt-0.5">{data.subtitle}</p>
           </div>
           <div className="flex gap-2">
-            <span className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center text-slate-600 bg-white">‹</span>
-            <span className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center text-slate-600 bg-white">›</span>
+            <span className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center text-slate-600 bg-white">
+              ‹
+            </span>
+            <span className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center text-slate-600 bg-white">
+              ›
+            </span>
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {(data.items || []).map((p: any, i: number) => (
-            <div key={i} className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs hover:shadow-md transition">
+            <div
+              key={i}
+              className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs hover:shadow-md transition"
+            >
               <div className="relative aspect-square bg-slate-100">
-                {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : null}
-                {p.badge && <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-slate-900 text-white font-black text-[9px] uppercase tracking-wider">{p.badge}</span>}
+                {p.image ? (
+                  <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                ) : null}
+                {p.badge && (
+                  <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-slate-900 text-white font-black text-[9px] uppercase tracking-wider">
+                    {p.badge}
+                  </span>
+                )}
               </div>
               <div className="p-3.5 space-y-1">
                 <div className="flex text-amber-400 text-xs">★★★★★</div>
                 <h4 className="font-bold text-xs text-slate-900 truncate">{p.name}</h4>
                 <div className="flex items-center gap-2 pt-0.5">
                   <span className="font-black text-xs text-slate-900">{p.price}</span>
-                  {p.compareAtPrice && <span className="text-[10px] text-slate-400 line-through">{p.compareAtPrice}</span>}
+                  {p.compareAtPrice && (
+                    <span className="text-[10px] text-slate-400 line-through">
+                      {p.compareAtPrice}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -1899,10 +2923,20 @@ function BlockPreview({ block }: { block: PageBlock }) {
   if (type === 'announcement_bar') {
     return (
       <div className="p-3 rounded-2xl bg-indigo-950 text-white flex flex-wrap items-center justify-center gap-3 text-xs shadow-md">
-        {data.badge && <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase">{data.badge}</span>}
+        {data.badge && (
+          <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase">
+            {data.badge}
+          </span>
+        )}
         <span className="font-bold">{data.message}</span>
-        {data.couponCode && <span className="px-2 py-0.5 rounded-md bg-white/20 font-mono font-black text-amber-300">{data.couponCode}</span>}
-        {data.ctaText && <span className="underline font-bold text-amber-300 ml-1">{data.ctaText} →</span>}
+        {data.couponCode && (
+          <span className="px-2 py-0.5 rounded-md bg-white/20 font-mono font-black text-amber-300">
+            {data.couponCode}
+          </span>
+        )}
+        {data.ctaText && (
+          <span className="underline font-bold text-amber-300 ml-1">{data.ctaText} →</span>
+        )}
       </div>
     );
   }
@@ -1946,7 +2980,9 @@ function BlockPreview({ block }: { block: PageBlock }) {
                     <div>
                       <div className="flex items-center justify-between">
                         <h4 className="font-extrabold text-base text-slate-900">{p.name}</h4>
-                        <span className="text-[10px] font-bold text-slate-400">Plan {i + 1}/{plans.length}</span>
+                        <span className="text-[10px] font-bold text-slate-400">
+                          Plan {i + 1}/{plans.length}
+                        </span>
                       </div>
                       <p className="text-xs text-slate-500 mt-1">{p.description}</p>
                     </div>
@@ -1955,12 +2991,17 @@ function BlockPreview({ block }: { block: PageBlock }) {
                       <span className="text-xs text-slate-500">{p.period}</span>
                     </div>
                     <div className="space-y-2 pt-2 border-t border-slate-100">
-                      {(Array.isArray(p.features) ? p.features : []).map((f: string, fIdx: number) => (
-                        <div key={fIdx} className="flex items-center gap-2 text-xs text-slate-700">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                          <span>{f}</span>
-                        </div>
-                      ))}
+                      {(Array.isArray(p.features) ? p.features : []).map(
+                        (f: string, fIdx: number) => (
+                          <div
+                            key={fIdx}
+                            className="flex items-center gap-2 text-xs text-slate-700"
+                          >
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                            <span>{f}</span>
+                          </div>
+                        ),
+                      )}
                     </div>
                   </div>
                   <button
@@ -1979,7 +3020,10 @@ function BlockPreview({ block }: { block: PageBlock }) {
             {/* Swiper Pagination Indicator Dots */}
             <div className="flex items-center justify-center gap-1.5 pt-2">
               {plans.map((_: any, i: number) => (
-                <div key={i} className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-indigo-600 w-5' : 'bg-slate-300'}`} />
+                <div
+                  key={i}
+                  className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-indigo-600 w-5' : 'bg-slate-300'}`}
+                />
               ))}
             </div>
           </div>
@@ -1989,7 +3033,9 @@ function BlockPreview({ block }: { block: PageBlock }) {
               <div
                 key={i}
                 className={`p-6 rounded-3xl border flex flex-col justify-between ${
-                  p.isPopular ? 'border-indigo-600 bg-indigo-50/20 shadow-xl relative' : 'border-slate-200 bg-white'
+                  p.isPopular
+                    ? 'border-indigo-600 bg-indigo-50/20 shadow-xl relative'
+                    : 'border-slate-200 bg-white'
                 }`}
               >
                 {p.isPopular && (
@@ -2007,12 +3053,14 @@ function BlockPreview({ block }: { block: PageBlock }) {
                     <span className="text-xs text-slate-500">{p.period}</span>
                   </div>
                   <div className="space-y-2 pt-2 border-t border-slate-100">
-                    {(Array.isArray(p.features) ? p.features : []).map((f: string, fIdx: number) => (
-                      <div key={fIdx} className="flex items-center gap-2 text-xs text-slate-700">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>{f}</span>
-                      </div>
-                    ))}
+                    {(Array.isArray(p.features) ? p.features : []).map(
+                      (f: string, fIdx: number) => (
+                        <div key={fIdx} className="flex items-center gap-2 text-xs text-slate-700">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span>{f}</span>
+                        </div>
+                      ),
+                    )}
                   </div>
                 </div>
                 <button
@@ -2037,7 +3085,11 @@ function BlockPreview({ block }: { block: PageBlock }) {
   if (type === 'trust_badges') {
     return (
       <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200/80 space-y-5">
-        {data.heading && <h4 className="text-sm font-black text-center text-slate-900 uppercase tracking-wider">{data.heading}</h4>}
+        {data.heading && (
+          <h4 className="text-sm font-black text-center text-slate-900 uppercase tracking-wider">
+            {data.heading}
+          </h4>
+        )}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           {(data.badges || []).map((b: any, i: number) => (
             <div key={i} className="p-3 space-y-1">
@@ -2058,10 +3110,23 @@ function BlockPreview({ block }: { block: PageBlock }) {
         {data.heading && <h3 className="text-xl font-black text-slate-900">{data.heading}</h3>}
         <div className={`grid grid-cols-1 sm:grid-cols-${data.columns || 3} gap-4`}>
           {(data.banners || []).map((b: any, i: number) => (
-            <div key={i} className="relative rounded-2xl overflow-hidden aspect-4/3 group shadow-xs">
-              {b.imageUrl ? <img src={b.imageUrl} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" /> : null}
+            <div
+              key={i}
+              className="relative rounded-2xl overflow-hidden aspect-4/3 group shadow-xs"
+            >
+              {b.imageUrl ? (
+                <img
+                  src={b.imageUrl}
+                  alt={b.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                />
+              ) : null}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
-                {b.badge && <span className="self-start px-2 py-0.5 rounded bg-white text-slate-900 font-black text-[9px] uppercase mb-1">{b.badge}</span>}
+                {b.badge && (
+                  <span className="self-start px-2 py-0.5 rounded bg-white text-slate-900 font-black text-[9px] uppercase mb-1">
+                    {b.badge}
+                  </span>
+                )}
                 <h4 className="font-extrabold text-base text-white">{b.title}</h4>
                 <p className="text-xs text-white/80">{b.subtitle}</p>
               </div>
@@ -2078,12 +3143,18 @@ function BlockPreview({ block }: { block: PageBlock }) {
       <div className="p-6 space-y-4 text-center">
         <div>
           <h3 className="text-xl font-black text-slate-900">{data.heading || 'Follow Us'}</h3>
-          <p className="text-xs text-indigo-600 font-bold mt-0.5">{data.handle || '@store_official'}</p>
+          <p className="text-xs text-indigo-600 font-bold mt-0.5">
+            {data.handle || '@store_official'}
+          </p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {(data.items || []).map((it: any, i: number) => (
             <div key={i} className="relative rounded-2xl overflow-hidden aspect-square group">
-              <img src={it.imageUrl} alt="Instagram post" className="w-full h-full object-cover group-hover:scale-105 transition" />
+              <img
+                src={it.imageUrl}
+                alt="Instagram post"
+                className="w-full h-full object-cover group-hover:scale-105 transition"
+              />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-3 text-white text-xs font-bold">
                 <span>❤️ {it.likes || '1k'}</span>
                 <span>💬 {it.comments || '24'}</span>
@@ -2098,163 +3169,279 @@ function BlockPreview({ block }: { block: PageBlock }) {
   // 14. COUNTDOWN TIMER
   if (type === 'countdown_timer') {
     return (
-      <div className={`p-8 rounded-3xl bg-gradient-to-r ${data.bgGradient || 'from-violet-950 via-indigo-900 to-slate-950'} text-white space-y-4 shadow-xl`}>
+      <div
+        className={`p-8 rounded-3xl bg-gradient-to-r ${data.bgGradient || 'from-violet-950 via-indigo-900 to-slate-950'} text-white space-y-4 shadow-xl`}
+      >
         <div className="text-center space-y-2">
-          {data.badge && <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase tracking-wider">{data.badge}</span>}
+          {data.badge && (
+            <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase tracking-wider">
+              {data.badge}
+            </span>
+          )}
           <h3 className="text-2xl sm:text-3xl font-black">{data.title}</h3>
           <p className="text-xs text-slate-300 max-w-md mx-auto">{data.subtitle}</p>
         </div>
         {/* Urgency Clock Blocks */}
         <div className="flex justify-center gap-3 py-2">
-          {[{ v: '18', l: 'HOURS' }, { v: '44', l: 'MINUTES' }, { v: '29', l: 'SECONDS' }].map((t, idx) => (
-            <div key={idx} className="w-20 p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center">
+          {[
+            { v: '18', l: 'HOURS' },
+            { v: '44', l: 'MINUTES' },
+            { v: '29', l: 'SECONDS' },
+          ].map((t, idx) => (
+            <div
+              key={idx}
+              className="w-20 p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center"
+            >
               <div className="text-2xl font-black text-amber-400 font-mono">{t.v}</div>
               <div className="text-[9px] font-bold text-slate-300 tracking-wider mt-0.5">{t.l}</div>
             </div>
           ))}
         </div>
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-          {data.discountCode && <span className="px-4 py-2 rounded-xl bg-white/15 border border-white/30 font-mono font-black text-amber-300 text-xs">CODE: {data.discountCode}</span>}
-          {data.buttonText && <span className="px-6 py-2.5 rounded-xl bg-amber-400 text-slate-950 font-black text-xs shadow-lg">{data.buttonText}</span>}
+          {data.discountCode && (
+            <span className="px-4 py-2 rounded-xl bg-white/15 border border-white/30 font-mono font-black text-amber-300 text-xs">
+              CODE: {data.discountCode}
+            </span>
+          )}
+          {data.buttonText && (
+            <span className="px-6 py-2.5 rounded-xl bg-amber-400 text-slate-950 font-black text-xs shadow-lg">
+              {data.buttonText}
+            </span>
+          )}
         </div>
       </div>
     );
   }
 
   // 15. HERO
-  if (type === 'hero') return (
-    <div className="relative rounded-2xl overflow-hidden text-white" style={{ minHeight: '280px', backgroundImage: `url(${data.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <div className="absolute inset-0 bg-black" style={{ opacity: (data.overlayOpacity ?? 50) / 100 }} />
-      <div className={`relative z-10 flex flex-col items-${data.textAlign === 'left' ? 'start' : data.textAlign === 'right' ? 'end' : 'center'} justify-center h-full min-h-[280px] p-8 text-${data.textAlign || 'center'}`}>
-        <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight mb-3">{data.headline}</h1>
-        <p className="text-sm text-slate-200 max-w-lg leading-relaxed mb-5">{data.subtitle}</p>
-        <div className="flex flex-wrap gap-3">
-          {data.buttonText && <span className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold shadow-lg">{data.buttonText}</span>}
-          {data.secondaryButtonText && <span className="px-5 py-2.5 rounded-xl bg-white/20 text-white text-xs font-bold backdrop-blur-sm">{data.secondaryButtonText}</span>}
+  if (type === 'hero')
+    return (
+      <div
+        className="relative rounded-2xl overflow-hidden text-white"
+        style={{
+          minHeight: '280px',
+          backgroundImage: `url(${data.backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div
+          className="absolute inset-0 bg-black"
+          style={{ opacity: (data.overlayOpacity ?? 50) / 100 }}
+        />
+        <div
+          className={`relative z-10 flex flex-col items-${data.textAlign === 'left' ? 'start' : data.textAlign === 'right' ? 'end' : 'center'} justify-center h-full min-h-[280px] p-8 text-${data.textAlign || 'center'}`}
+        >
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight mb-3">
+            {data.headline}
+          </h1>
+          <p className="text-sm text-slate-200 max-w-lg leading-relaxed mb-5">{data.subtitle}</p>
+          <div className="flex flex-wrap gap-3">
+            {data.buttonText && (
+              <span className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold shadow-lg">
+                {data.buttonText}
+              </span>
+            )}
+            {data.secondaryButtonText && (
+              <span className="px-5 py-2.5 rounded-xl bg-white/20 text-white text-xs font-bold backdrop-blur-sm">
+                {data.secondaryButtonText}
+              </span>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
 
   // 16. VALUE PROPS
-  if (type === 'value_props') return (
-    <div className="p-4 space-y-4">
-      {data.heading && <h2 className="text-xl font-black text-center text-slate-900">{data.heading}</h2>}
-      <div className={`grid grid-cols-${data.columns || 4} gap-4`}>
-        {(data.features || []).map((f: any, i: number) => (
-          <div key={i} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1 text-center">
-            <div className="text-2xl">{f.icon}</div>
-            <h4 className="font-black text-xs text-slate-900">{f.title}</h4>
-            <p className="text-[10px] text-slate-500 leading-relaxed">{f.desc}</p>
-          </div>
-        ))}
+  if (type === 'value_props')
+    return (
+      <div className="p-4 space-y-4">
+        {data.heading && (
+          <h2 className="text-xl font-black text-center text-slate-900">{data.heading}</h2>
+        )}
+        <div className={`grid grid-cols-${data.columns || 4} gap-4`}>
+          {(data.features || []).map((f: any, i: number) => (
+            <div
+              key={i}
+              className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1 text-center"
+            >
+              <div className="text-2xl">{f.icon}</div>
+              <h4 className="font-black text-xs text-slate-900">{f.title}</h4>
+              <p className="text-[10px] text-slate-500 leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
 
   // 17. IMAGE & TEXT
-  if (type === 'image_text') return (
-    <div className={`grid grid-cols-2 gap-6 items-center p-4`}>
-      <div className={`${data.imagePosition === 'left' ? 'order-1' : 'order-2'} rounded-2xl overflow-hidden h-48`}>
-        {data.imageUrl ? <img src={data.imageUrl} alt={data.title} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs">No image set</div>}
+  if (type === 'image_text')
+    return (
+      <div className={`grid grid-cols-2 gap-6 items-center p-4`}>
+        <div
+          className={`${data.imagePosition === 'left' ? 'order-1' : 'order-2'} rounded-2xl overflow-hidden h-48`}
+        >
+          {data.imageUrl ? (
+            <img src={data.imageUrl} alt={data.title} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs">
+              No image set
+            </div>
+          )}
+        </div>
+        <div className={`${data.imagePosition === 'left' ? 'order-2' : 'order-1'} space-y-2`}>
+          {data.tagline && (
+            <span className="text-[10px] font-black tracking-widest text-indigo-600 uppercase">
+              {data.tagline}
+            </span>
+          )}
+          <h2 className="text-xl font-black text-slate-900">{data.title}</h2>
+          <p className="text-xs text-slate-600 leading-relaxed">{data.description}</p>
+          {data.buttonText && (
+            <span className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs">
+              {data.buttonText} →
+            </span>
+          )}
+        </div>
       </div>
-      <div className={`${data.imagePosition === 'left' ? 'order-2' : 'order-1'} space-y-2`}>
-        {data.tagline && <span className="text-[10px] font-black tracking-widest text-indigo-600 uppercase">{data.tagline}</span>}
-        <h2 className="text-xl font-black text-slate-900">{data.title}</h2>
-        <p className="text-xs text-slate-600 leading-relaxed">{data.description}</p>
-        {data.buttonText && <span className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs">{data.buttonText} →</span>}
-      </div>
-    </div>
-  );
+    );
 
   // 18. TESTIMONIALS
-  if (type === 'testimonials') return (
-    <div className="p-4 space-y-4">
-      {data.heading && <h2 className="text-xl font-black text-center text-slate-900">{data.heading}</h2>}
-      <div className="grid grid-cols-3 gap-4">
-        {(data.reviews || []).map((r: any, i: number) => (
-          <div key={i} className="p-4 rounded-2xl border border-slate-200 bg-white space-y-2">
-            <div className="flex">{Array.from({ length: r.rating || 5 }).map((_, s) => <span key={s} className="text-amber-400 text-sm">★</span>)}</div>
-            <p className="text-[10px] text-slate-600 italic">"{r.quote}"</p>
-            <div className="pt-1 border-t border-slate-100">
-              <strong className="text-xs text-slate-900">{r.author}</strong>
-              <span className="text-[10px] text-slate-400 block">{r.role}</span>
+  if (type === 'testimonials')
+    return (
+      <div className="p-4 space-y-4">
+        {data.heading && (
+          <h2 className="text-xl font-black text-center text-slate-900">{data.heading}</h2>
+        )}
+        <div className="grid grid-cols-3 gap-4">
+          {(data.reviews || []).map((r: any, i: number) => (
+            <div key={i} className="p-4 rounded-2xl border border-slate-200 bg-white space-y-2">
+              <div className="flex">
+                {Array.from({ length: r.rating || 5 }).map((_, s) => (
+                  <span key={s} className="text-amber-400 text-sm">
+                    ★
+                  </span>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-600 italic">"{r.quote}"</p>
+              <div className="pt-1 border-t border-slate-100">
+                <strong className="text-xs text-slate-900">{r.author}</strong>
+                <span className="text-[10px] text-slate-400 block">{r.role}</span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
 
   // 19. FAQ
-  if (type === 'faq') return (
-    <div className="p-4 max-w-2xl mx-auto space-y-3">
-      {data.heading && <h2 className="text-xl font-black text-center text-slate-900">{data.heading}</h2>}
-      {data.subtitle && <p className="text-xs text-center text-slate-500">{data.subtitle}</p>}
-      <div className="space-y-2">
-        {(data.items || []).map((item: any, i: number) => (
-          <div key={i} className="p-4 rounded-2xl border border-slate-200 bg-white">
-            <h4 className="font-bold text-xs text-slate-900 mb-1">{item.question}</h4>
-            <p className="text-[10px] text-slate-600">{item.answer}</p>
-          </div>
-        ))}
+  if (type === 'faq')
+    return (
+      <div className="p-4 max-w-2xl mx-auto space-y-3">
+        {data.heading && (
+          <h2 className="text-xl font-black text-center text-slate-900">{data.heading}</h2>
+        )}
+        {data.subtitle && <p className="text-xs text-center text-slate-500">{data.subtitle}</p>}
+        <div className="space-y-2">
+          {(data.items || []).map((item: any, i: number) => (
+            <div key={i} className="p-4 rounded-2xl border border-slate-200 bg-white">
+              <h4 className="font-bold text-xs text-slate-900 mb-1">{item.question}</h4>
+              <p className="text-[10px] text-slate-600">{item.answer}</p>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
 
   // 20. NEWSLETTER
-  if (type === 'newsletter') return (
-    <div className={`p-8 rounded-2xl text-center space-y-3 ${data.bgDark ? 'bg-slate-900 text-white' : 'bg-slate-50 border border-slate-200'}`}>
-      <h3 className="text-lg font-black">{data.heading}</h3>
-      <p className="text-xs opacity-70">{data.subtitle}</p>
-      <div className="flex items-center gap-2 max-w-sm mx-auto">
-        <div className={`flex-1 px-3 py-2 rounded-xl text-xs border ${data.bgDark ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-300 text-slate-400'}`}>{data.placeholder || 'Enter email...'}</div>
-        <span className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold">{data.buttonText || 'Subscribe'}</span>
+  if (type === 'newsletter')
+    return (
+      <div
+        className={`p-8 rounded-2xl text-center space-y-3 ${data.bgDark ? 'bg-slate-900 text-white' : 'bg-slate-50 border border-slate-200'}`}
+      >
+        <h3 className="text-lg font-black">{data.heading}</h3>
+        <p className="text-xs opacity-70">{data.subtitle}</p>
+        <div className="flex items-center gap-2 max-w-sm mx-auto">
+          <div
+            className={`flex-1 px-3 py-2 rounded-xl text-xs border ${data.bgDark ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-300 text-slate-400'}`}
+          >
+            {data.placeholder || 'Enter email...'}
+          </div>
+          <span className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold">
+            {data.buttonText || 'Subscribe'}
+          </span>
+        </div>
       </div>
-    </div>
-  );
+    );
 
   // 21. CTA BANNER
-  if (type === 'cta_banner') return (
-    <div
-      className="p-8 rounded-2xl text-white text-center space-y-4 relative overflow-hidden"
-      style={{
-        backgroundColor: data.bgColor || '#0F172A',
-        backgroundImage: data.backgroundImage ? `linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.65)), url(${data.backgroundImage})` : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
-      <h3 className="text-xl font-black relative z-10">{data.headline}</h3>
-      <p className="text-xs opacity-80 max-w-md mx-auto relative z-10">{data.subtitle}</p>
-      <div className="flex flex-wrap items-center justify-center gap-3 relative z-10">
-        {data.primaryButtonText && <span className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold shadow-lg">{data.primaryButtonText}</span>}
-        {data.secondaryButtonText && <span className="px-5 py-2.5 rounded-xl bg-white/10 text-white text-xs font-bold">{data.secondaryButtonText}</span>}
+  if (type === 'cta_banner')
+    return (
+      <div
+        className="p-8 rounded-2xl text-white text-center space-y-4 relative overflow-hidden"
+        style={{
+          backgroundColor: data.bgColor || '#0F172A',
+          backgroundImage: data.backgroundImage
+            ? `linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.65)), url(${data.backgroundImage})`
+            : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <h3 className="text-xl font-black relative z-10">{data.headline}</h3>
+        <p className="text-xs opacity-80 max-w-md mx-auto relative z-10">{data.subtitle}</p>
+        <div className="flex flex-wrap items-center justify-center gap-3 relative z-10">
+          {data.primaryButtonText && (
+            <span className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold shadow-lg">
+              {data.primaryButtonText}
+            </span>
+          )}
+          {data.secondaryButtonText && (
+            <span className="px-5 py-2.5 rounded-xl bg-white/10 text-white text-xs font-bold">
+              {data.secondaryButtonText}
+            </span>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
 
   // 22. RICH TEXT
-  if (type === 'rich_text') return (
-    <div className="p-4 prose prose-slate max-w-none prose-headings:font-black prose-sm" dangerouslySetInnerHTML={{ __html: data.html || '<p class="text-slate-400 text-xs italic">No content yet. Edit in the inspector →</p>' }} />
-  );
+  if (type === 'rich_text')
+    return (
+      <div
+        className="p-4 prose prose-slate max-w-none prose-headings:font-black prose-sm"
+        dangerouslySetInnerHTML={{
+          __html:
+            data.html ||
+            '<p class="text-slate-400 text-xs italic">No content yet. Edit in the inspector →</p>',
+        }}
+      />
+    );
 
   // 23. VIDEO
-  if (type === 'video') return (
-    <div className="p-4 space-y-3">
-      {data.heading && <h2 className="text-xl font-black text-center text-slate-900">{data.heading}</h2>}
-      <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
-        {data.videoUrl ? (
-          <iframe src={data.videoUrl} className="w-full h-full" allowFullScreen title={data.heading} />
-        ) : (
-          <div className="flex items-center justify-center h-full text-slate-400 space-y-1 flex-col">
-            <Video className="w-8 h-8" />
-            <span className="text-xs">Paste embed URL in inspector</span>
-          </div>
+  if (type === 'video')
+    return (
+      <div className="p-4 space-y-3">
+        {data.heading && (
+          <h2 className="text-xl font-black text-center text-slate-900">{data.heading}</h2>
         )}
+        <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
+          {data.videoUrl ? (
+            <iframe
+              src={data.videoUrl}
+              className="w-full h-full"
+              allowFullScreen
+              title={data.heading}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-slate-400 space-y-1 flex-col">
+              <Video className="w-8 h-8" />
+              <span className="text-xs">Paste embed URL in inspector</span>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return <div className="p-4 text-xs text-slate-400 italic">Unknown block type: {type}</div>;
 }
@@ -2263,7 +3450,12 @@ function BlockPreview({ block }: { block: PageBlock }) {
 
 const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
 
-export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPage, isOpen, onClose, onSaved }) => {
+export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
+  initialPage,
+  isOpen,
+  onClose,
+  onSaved,
+}) => {
   const [pageTitle, setPageTitle] = useState(initialPage?.title || 'New Page');
   const [pageSlug, setPageSlug] = useState(initialPage?.slug || '/pages/new-page');
   const [pageType, setPageType] = useState(initialPage?.pageType || 'CUSTOM');
@@ -2292,7 +3484,9 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
   const [libSearch, setLibSearch] = useState('');
   const [leftPanel, setLeftPanel] = useState<'library' | 'layers'>('library');
   const [showPageSettings, setShowPageSettings] = useState(false);
-  const [mobileWorkspaceView, setMobileWorkspaceView] = useState<'blocks' | 'canvas' | 'inspector'>('canvas');
+  const [mobileWorkspaceView, setMobileWorkspaceView] = useState<'blocks' | 'canvas' | 'inspector'>(
+    'canvas',
+  );
 
   // Sync state whenever initialPage changes or modal opens
   useEffect(() => {
@@ -2333,30 +3527,39 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
     if (!isOpen) return;
     const handle = (e: KeyboardEvent) => {
       const meta = e.ctrlKey || e.metaKey;
-      if (meta && e.key === 'z' && !e.shiftKey) { e.preventDefault(); dispatch({ type: 'UNDO' }); }
-      if (meta && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); dispatch({ type: 'REDO' }); }
-      if (meta && e.key === 's') { e.preventDefault(); handleSavePage(); }
+      if (meta && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        dispatch({ type: 'UNDO' });
+      }
+      if (meta && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        dispatch({ type: 'REDO' });
+      }
+      if (meta && e.key === 's') {
+        e.preventDefault();
+        handleSavePage();
+      }
     };
     window.addEventListener('keydown', handle);
     return () => window.removeEventListener('keydown', handle);
   }, [isOpen, blocks, pageTitle, pageSlug]);
 
-  const selectedBlock = blocks.find(b => b.id === activeBlockId) || null;
+  const selectedBlock = blocks.find((b) => b.id === activeBlockId) || null;
 
   const updateBlock = (id: string, data: Record<string, any>) => {
-    setBlocks(blocks.map(b => b.id === id ? { ...b, data } : b));
+    setBlocks(blocks.map((b) => (b.id === id ? { ...b, data } : b)));
   };
 
   const deleteBlock = (id: string) => {
-    const next = blocks.filter(b => b.id !== id);
+    const next = blocks.filter((b) => b.id !== id);
     setBlocks(next);
     if (activeBlockId === id) setActiveBlockId(next[0]?.id || null);
   };
 
   const duplicateBlock = (id: string) => {
-    const target = blocks.find(b => b.id === id);
+    const target = blocks.find((b) => b.id === id);
     if (!target) return;
-    const idx = blocks.findIndex(b => b.id === id);
+    const idx = blocks.findIndex((b) => b.id === id);
     const newBlock: PageBlock = {
       id: `block-${target.type}-${Date.now()}`,
       type: target.type,
@@ -2370,10 +3573,10 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
   };
 
   const toggleBlockVisibility = (id: string) => {
-    setBlocks(blocks.map(b => b.id === id ? { ...b, isVisible: !b.isVisible } : b));
+    setBlocks(blocks.map((b) => (b.id === id ? { ...b, isVisible: !b.isVisible } : b)));
   };
 
-  const addBlock = (def: typeof BLOCK_LIBRARY[0]) => {
+  const addBlock = (def: (typeof BLOCK_LIBRARY)[0]) => {
     const newBlock: PageBlock = {
       id: `block-${def.type}-${Date.now()}`,
       type: def.type,
@@ -2386,8 +3589,13 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
   };
 
   // Drag and drop reordering
-  const handleDragStart = (idx: number) => { dragIndexRef.current = idx; };
-  const handleDragOver = (e: React.DragEvent, idx: number) => { e.preventDefault(); setDropIndex(idx); };
+  const handleDragStart = (idx: number) => {
+    dragIndexRef.current = idx;
+  };
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    setDropIndex(idx);
+  };
   const handleDrop = (idx: number) => {
     const dragIdx = dragIndexRef.current;
     if (dragIdx === null || dragIdx === idx) {
@@ -2405,8 +3613,14 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
 
   // Save Page
   const handleSavePage = async () => {
-    if (!pageTitle.trim()) { showToast('Page title is required', 'error'); return; }
-    if (!pageSlug.trim()) { showToast('Page slug is required', 'error'); return; }
+    if (!pageTitle.trim()) {
+      showToast('Page title is required', 'error');
+      return;
+    }
+    if (!pageSlug.trim()) {
+      showToast('Page slug is required', 'error');
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -2435,9 +3649,12 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
     }
   };
 
-  const filteredLibrary = BLOCK_LIBRARY.filter(b => {
+  const filteredLibrary = BLOCK_LIBRARY.filter((b) => {
     const matchCat = libCategory === 'all' || b.category === libCategory;
-    const matchSearch = !libSearch || b.label.toLowerCase().includes(libSearch.toLowerCase()) || b.desc.toLowerCase().includes(libSearch.toLowerCase());
+    const matchSearch =
+      !libSearch ||
+      b.label.toLowerCase().includes(libSearch.toLowerCase()) ||
+      b.desc.toLowerCase().includes(libSearch.toLowerCase());
     return matchCat && matchSearch;
   });
 
@@ -2447,10 +3664,18 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
     <div className="fixed inset-0 z-50 bg-slate-950 text-slate-100 flex flex-col select-none font-sans">
       {/* Toast Notification */}
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold border transition-all animate-bounce ${
-          toast.type === 'success' ? 'bg-emerald-950 border-emerald-800 text-emerald-300' : 'bg-rose-950 border-rose-800 text-rose-300'
-        }`}>
-          {toast.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4 text-rose-400" />}
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold border transition-all animate-bounce ${
+            toast.type === 'success'
+              ? 'bg-emerald-950 border-emerald-800 text-emerald-300'
+              : 'bg-rose-950 border-rose-800 text-rose-300'
+          }`}
+        >
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-rose-400" />
+          )}
           <span>{toast.text}</span>
         </div>
       )}
@@ -2469,11 +3694,14 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
             <input
               type="text"
               value={pageTitle}
-              onChange={e => {
+              onChange={(e) => {
                 const val = e.target.value;
                 setPageTitle(val);
                 if (!initialPage?.id && (!pageSlug || pageSlug === '/pages/new-page')) {
-                  const slugified = `/pages/${val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+                  const slugified = `/pages/${val
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-|-$/g, '')}`;
                   setPageSlug(slugified);
                 }
               }}
@@ -2485,7 +3713,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
             <input
               type="text"
               value={pageSlug}
-              onChange={e => setPageSlug(e.target.value)}
+              onChange={(e) => setPageSlug(e.target.value)}
               className="bg-transparent border-none text-indigo-400 font-bold focus:outline-none w-36"
             />
           </div>
@@ -2494,17 +3722,41 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
         {/* Center: Viewport + Undo/Redo */}
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
-            <button type="button" onClick={() => dispatch({ type: 'UNDO' })} disabled={historyState.past.length === 0} title="Undo (Ctrl+Z)" className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition">
+            <button
+              type="button"
+              onClick={() => dispatch({ type: 'UNDO' })}
+              disabled={historyState.past.length === 0}
+              title="Undo (Ctrl+Z)"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition"
+            >
               <Undo2 className="w-4 h-4" />
             </button>
-            <button type="button" onClick={() => dispatch({ type: 'REDO' })} disabled={historyState.future.length === 0} title="Redo (Ctrl+Y)" className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition">
+            <button
+              type="button"
+              onClick={() => dispatch({ type: 'REDO' })}
+              disabled={historyState.future.length === 0}
+              title="Redo (Ctrl+Y)"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition"
+            >
               <Redo2 className="w-4 h-4" />
             </button>
           </div>
 
           <div className="flex items-center gap-0.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
-            {([['desktop', Laptop], ['tablet', Tablet], ['mobile', Smartphone]] as const).map(([vp, Icon]) => (
-              <button key={vp} type="button" onClick={() => setViewport(vp)} title={vp} className={`p-1.5 rounded-lg transition-all ${viewport === vp ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>
+            {(
+              [
+                ['desktop', Laptop],
+                ['tablet', Tablet],
+                ['mobile', Smartphone],
+              ] as const
+            ).map(([vp, Icon]) => (
+              <button
+                key={vp}
+                type="button"
+                onClick={() => setViewport(vp)}
+                title={vp}
+                className={`p-1.5 rounded-lg transition-all ${viewport === vp ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+              >
                 <Icon className="w-3.5 h-3.5" />
               </button>
             ))}
@@ -2523,15 +3775,28 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
             <ExternalLink className="w-3.5 h-3.5" />
             <span>Live Site</span>
           </a>
-          <button type="button" onClick={() => setShowPageSettings(s => !s)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition ${showPageSettings ? 'bg-slate-800 border-slate-700 text-white' : 'text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}>
+          <button
+            type="button"
+            onClick={() => setShowPageSettings((s) => !s)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition ${showPageSettings ? 'bg-slate-800 border-slate-700 text-white' : 'text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+          >
             <Settings className="w-3.5 h-3.5" />
             <span className="hidden sm:block">Settings</span>
           </button>
-          <button type="button" onClick={handleSavePage} disabled={isSaving} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 transition disabled:opacity-50">
+          <button
+            type="button"
+            onClick={handleSavePage}
+            disabled={isSaving}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 transition disabled:opacity-50"
+          >
             <Save className="w-3.5 h-3.5" />
             <span>{isSaving ? 'Saving…' : 'Save & Publish'}</span>
           </button>
-          <button type="button" onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -2583,8 +3848,14 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
       {showPageSettings && (
         <div className="bg-slate-900/95 border-b border-slate-800 px-6 py-4 flex flex-wrap items-start gap-4 shrink-0">
           <div className="space-y-1 min-w-40">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Page Type</label>
-            <select className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:border-indigo-500" value={pageType} onChange={e => setPageType(e.target.value)}>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Page Type
+            </label>
+            <select
+              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:border-indigo-500"
+              value={pageType}
+              onChange={(e) => setPageType(e.target.value)}
+            >
               <option value="CUSTOM">Custom Page</option>
               <option value="BRAND">Brand Page</option>
               <option value="POLICY">Policy Page</option>
@@ -2592,34 +3863,63 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
             </select>
           </div>
           <div className="space-y-1 min-w-40">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status</label>
-            <select className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:border-indigo-500" value={pageStatus} onChange={e => setPageStatus(e.target.value)}>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Status
+            </label>
+            <select
+              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:border-indigo-500"
+              value={pageStatus}
+              onChange={(e) => setPageStatus(e.target.value)}
+            >
               <option value="PUBLISHED">Published</option>
               <option value="DRAFT">Draft</option>
             </select>
           </div>
           <div className="space-y-1 flex-1 min-w-48">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">SEO Title</label>
-            <input className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500" value={metaTitle} onChange={e => setMetaTitle(e.target.value)} placeholder="SEO page title..." />
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              SEO Title
+            </label>
+            <input
+              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+              value={metaTitle}
+              onChange={(e) => setMetaTitle(e.target.value)}
+              placeholder="SEO page title..."
+            />
           </div>
           <div className="space-y-1 flex-1 min-w-48">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">SEO Description</label>
-            <input className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500" value={metaDescription} onChange={e => setMetaDescription(e.target.value)} placeholder="SEO meta description..." />
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              SEO Description
+            </label>
+            <input
+              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+              value={metaDescription}
+              onChange={(e) => setMetaDescription(e.target.value)}
+              placeholder="SEO meta description..."
+            />
           </div>
         </div>
       )}
 
       {/* ── MAIN 3-PANEL WORKSPACE ────────────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden">
-
         {/* LEFT PANEL: Library + Layers */}
-        <aside className={`w-full xl:w-80 border-r border-slate-800 bg-slate-900/90 flex flex-col shrink-0 overflow-hidden ${mobileWorkspaceView === 'blocks' ? 'flex' : 'hidden xl:flex'}`}>
+        <aside
+          className={`w-full xl:w-80 border-r border-slate-800 bg-slate-900/90 flex flex-col shrink-0 overflow-hidden ${mobileWorkspaceView === 'blocks' ? 'flex' : 'hidden xl:flex'}`}
+        >
           {/* Panel tabs */}
           <div className="flex border-b border-slate-800 shrink-0">
-            <button type="button" onClick={() => setLeftPanel('library')} className={`flex-1 py-3 text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition ${leftPanel === 'library' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-slate-800/50' : 'text-slate-500 hover:text-slate-300'}`}>
+            <button
+              type="button"
+              onClick={() => setLeftPanel('library')}
+              className={`flex-1 py-3 text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition ${leftPanel === 'library' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-slate-800/50' : 'text-slate-500 hover:text-slate-300'}`}
+            >
               <Grid3X3 className="w-3.5 h-3.5" /> Blocks
             </button>
-            <button type="button" onClick={() => setLeftPanel('layers')} className={`flex-1 py-3 text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition ${leftPanel === 'layers' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-slate-800/50' : 'text-slate-500 hover:text-slate-300'}`}>
+            <button
+              type="button"
+              onClick={() => setLeftPanel('layers')}
+              className={`flex-1 py-3 text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition ${leftPanel === 'layers' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-slate-800/50' : 'text-slate-500 hover:text-slate-300'}`}
+            >
               <Layers className="w-3.5 h-3.5" /> Layers ({blocks.length})
             </button>
           </div>
@@ -2630,25 +3930,41 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
               <div className="p-3 border-b border-slate-800 shrink-0">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-                  <input type="text" value={libSearch} onChange={e => setLibSearch(e.target.value)} placeholder="Search elements & blocks..." className="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500" />
+                  <input
+                    type="text"
+                    value={libSearch}
+                    onChange={(e) => setLibSearch(e.target.value)}
+                    placeholder="Search elements & blocks..."
+                    className="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                  />
                 </div>
               </div>
 
               {/* Category filter */}
               <div className="flex gap-1 p-2 border-b border-slate-800 flex-wrap shrink-0">
-                {BLOCK_CATEGORIES.map(cat => (
-                  <button key={cat.id} type="button" onClick={() => setLibCategory(cat.id)} className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition ${libCategory === cat.id ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>{cat.label}</button>
+                {BLOCK_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setLibCategory(cat.id)}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition ${libCategory === cat.id ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+                  >
+                    {cat.label}
+                  </button>
                 ))}
               </div>
 
               {/* Block grid */}
               <div className="flex-1 overflow-y-auto p-3 space-y-2 no-scrollbar">
                 <div className="grid grid-cols-1 gap-2">
-                  {filteredLibrary.map(def => (
+                  {filteredLibrary.map((def) => (
                     <button
                       key={def.type}
                       type="button"
-                      onClick={() => { addBlock(def); setMobileWorkspaceView('canvas'); }}
+                      onClick={() => {
+                        addBlock(def);
+                        setMobileWorkspaceView('canvas');
+                      }}
                       title={def.desc}
                       className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-indigo-500 hover:bg-indigo-950/30 text-left transition-all group flex items-start gap-3"
                     >
@@ -2657,10 +3973,16 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-xs text-white group-hover:text-indigo-300 truncate">{def.label}</span>
-                          <span className="text-[9px] font-black uppercase text-slate-500 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">{def.category}</span>
+                          <span className="font-bold text-xs text-white group-hover:text-indigo-300 truncate">
+                            {def.label}
+                          </span>
+                          <span className="text-[9px] font-black uppercase text-slate-500 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">
+                            {def.category}
+                          </span>
                         </div>
-                        <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5 leading-relaxed">{def.desc}</p>
+                        <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5 leading-relaxed">
+                          {def.desc}
+                        </p>
                       </div>
                     </button>
                   ))}
@@ -2673,7 +3995,9 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
             <div className="flex-1 overflow-y-auto p-3 space-y-1.5 no-scrollbar">
               {blocks.length === 0 && (
                 <div className="text-center py-12 text-slate-600 text-xs">
-                  No blocks on page.<br />Add some from the library.
+                  No blocks on page.
+                  <br />
+                  Add some from the library.
                 </div>
               )}
               {blocks.map((block, idx) => (
@@ -2681,9 +4005,12 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
                   key={block.id}
                   draggable
                   onDragStart={() => handleDragStart(idx)}
-                  onDragOver={e => handleDragOver(e, idx)}
+                  onDragOver={(e) => handleDragOver(e, idx)}
                   onDrop={() => handleDrop(idx)}
-                  onClick={() => { setActiveBlockId(block.id); setMobileWorkspaceView('inspector'); }}
+                  onClick={() => {
+                    setActiveBlockId(block.id);
+                    setMobileWorkspaceView('inspector');
+                  }}
                   className={`group flex items-center gap-2 p-2.5 rounded-xl border text-xs cursor-pointer transition ${
                     activeBlockId === block.id
                       ? 'bg-indigo-950/80 border-indigo-500 text-white shadow-sm'
@@ -2691,13 +4018,35 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
                   } ${dropIndex === idx ? 'border-t-2 border-t-indigo-400' : ''}`}
                 >
                   <GripVertical className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-400 cursor-grab shrink-0" />
-                  <span className="w-4 text-[10px] text-slate-600 font-mono shrink-0">{idx + 1}</span>
-                  <span className="font-bold truncate flex-1 capitalize">{block.type.replace(/_/g, ' ')}</span>
+                  <span className="w-4 text-[10px] text-slate-600 font-mono shrink-0">
+                    {idx + 1}
+                  </span>
+                  <span className="font-bold truncate flex-1 capitalize">
+                    {block.type.replace(/_/g, ' ')}
+                  </span>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                    <button type="button" onClick={e => { e.stopPropagation(); toggleBlockVisibility(block.id); }} className="p-1 hover:text-white">
-                      {block.isVisible ? <Eye className="w-3 h-3 text-emerald-400" /> : <EyeOff className="w-3 h-3 text-rose-400" />}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleBlockVisibility(block.id);
+                      }}
+                      className="p-1 hover:text-white"
+                    >
+                      {block.isVisible ? (
+                        <Eye className="w-3 h-3 text-emerald-400" />
+                      ) : (
+                        <EyeOff className="w-3 h-3 text-rose-400" />
+                      )}
                     </button>
-                    <button type="button" onClick={e => { e.stopPropagation(); deleteBlock(block.id); }} className="p-1 hover:text-rose-400">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteBlock(block.id);
+                      }}
+                      className="p-1 hover:text-rose-400"
+                    >
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
@@ -2708,10 +4057,16 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
         </aside>
 
         {/* CENTER PANEL: Visual Canvas */}
-        <main className={`flex-1 bg-slate-950 overflow-y-auto flex flex-col items-center p-4 sm:p-8 no-scrollbar ${mobileWorkspaceView === 'canvas' ? 'flex' : 'hidden xl:flex'}`}>
+        <main
+          className={`flex-1 bg-slate-950 overflow-y-auto flex flex-col items-center p-4 sm:p-8 no-scrollbar ${mobileWorkspaceView === 'canvas' ? 'flex' : 'hidden xl:flex'}`}
+        >
           <div
             className={`w-full transition-all duration-300 ${
-              viewport === 'mobile' ? 'max-w-[390px]' : viewport === 'tablet' ? 'max-w-[768px]' : 'max-w-5xl'
+              viewport === 'mobile'
+                ? 'max-w-[390px]'
+                : viewport === 'tablet'
+                  ? 'max-w-[768px]'
+                  : 'max-w-5xl'
             }`}
           >
             {/* Canvas Container Shell */}
@@ -2724,7 +4079,8 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
                   <div>
                     <h3 className="text-lg font-black text-slate-900">Start Building Your Page</h3>
                     <p className="text-xs text-slate-500 max-w-sm mt-1">
-                      Choose headings, sliders, div containers, product carousels, or trust badges from the left sidebar.
+                      Choose headings, sliders, div containers, product carousels, or trust badges
+                      from the left sidebar.
                     </p>
                   </div>
                   <button
@@ -2744,7 +4100,9 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
                     return (
                       <div
                         key={block.id}
-                        onClick={() => { setActiveBlockId(block.id); }}
+                        onClick={() => {
+                          setActiveBlockId(block.id);
+                        }}
                         className={`relative transition-all cursor-pointer ${
                           isSelected
                             ? 'ring-2 ring-indigo-500 ring-inset z-10 bg-indigo-50/5'
@@ -2780,9 +4138,13 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
         </main>
 
         {/* RIGHT PANEL: Inspector / Settings */}
-        <aside className={`w-full xl:w-80 border-l border-slate-800 bg-slate-900/90 flex flex-col shrink-0 overflow-hidden ${mobileWorkspaceView === 'inspector' ? 'flex' : 'hidden xl:flex'}`}>
+        <aside
+          className={`w-full xl:w-80 border-l border-slate-800 bg-slate-900/90 flex flex-col shrink-0 overflow-hidden ${mobileWorkspaceView === 'inspector' ? 'flex' : 'hidden xl:flex'}`}
+        >
           <div className="p-3 border-b border-slate-800 flex items-center justify-between shrink-0">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">Block Inspector</span>
+            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+              Block Inspector
+            </span>
             {selectedBlock && (
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-950 text-indigo-400 border border-slate-800 uppercase">
                 {selectedBlock.type}
@@ -2802,12 +4164,13 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({ initialPag
             ) : (
               <div className="text-center py-20 text-slate-600 text-xs space-y-2">
                 <Settings className="w-8 h-8 mx-auto text-slate-700" />
-                <p>Select any block on the canvas or layers list to inspect and edit its properties.</p>
+                <p>
+                  Select any block on the canvas or layers list to inspect and edit its properties.
+                </p>
               </div>
             )}
           </div>
         </aside>
-
       </div>
     </div>
   );

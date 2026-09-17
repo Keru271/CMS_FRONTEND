@@ -55,7 +55,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   // Metric & Filter States
   const [dateRange, setDateRange] = useState('Last 7 days');
   const [chartMetric, setChartMetric] = useState<'revenue' | 'orders' | 'items' | 'aov'>('revenue');
-  const [topProductSort, setTopProductSort] = useState<'sales' | 'revenue' | 'orders' | 'views'>('revenue');
+  const [topProductSort, setTopProductSort] = useState<'sales' | 'revenue' | 'orders' | 'views'>(
+    'revenue',
+  );
   const [currencySymbol, setCurrencySymbol] = useState('₹');
 
   // Format currency Helper
@@ -72,24 +74,59 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
   // 13. Quick Actions Bar Data
   const quickActions = [
-    { label: `+ ${t('header.add_product', 'Add Product')}`, action: () => onNavigateProducts(), bg: 'bg-[#191a1b] text-[#d4ff4c] hover:bg-[#000000]' },
-    { label: t('nav.orders', 'View Orders'), action: () => onNavigateOrders(), bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]' },
-    { label: t('nav.discounts', 'Discounts'), action: () => router.push('/discounts'), bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]' },
-    { label: t('nav.themes', 'Customize Store'), action: () => router.push('/themes'), bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]' },
-    { label: t('nav.categories', 'Categories'), action: () => router.push('/categories'), bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]' },
+    {
+      label: `+ ${t('header.add_product', 'Add Product')}`,
+      action: () => onNavigateProducts(),
+      bg: 'bg-[#191a1b] text-[#d4ff4c] hover:bg-[#000000]',
+    },
+    {
+      label: t('nav.orders', 'View Orders'),
+      action: () => onNavigateOrders(),
+      bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]',
+    },
+    {
+      label: t('nav.discounts', 'Discounts'),
+      action: () => router.push('/discounts'),
+      bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]',
+    },
+    {
+      label: t('nav.themes', 'Customize Store'),
+      action: () => router.push('/themes'),
+      bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]',
+    },
+    {
+      label: t('nav.categories', 'Categories'),
+      action: () => router.push('/categories'),
+      bg: 'bg-[#ffffff] text-[#191a1b] border border-[#cbd5e0] hover:bg-[#fdf1ef]',
+    },
   ];
 
   // REAL Pipeline counts calculated from DB orders
-  const pendingCount = recentOrders.filter((o) => (o.orderStatus || '').toLowerCase() === 'pending').length;
-  const processingCount = recentOrders.filter((o) => (o.orderStatus || '').toLowerCase() === 'processing').length;
-  const shippedCount = recentOrders.filter((o) => (o.orderStatus || '').toLowerCase() === 'shipped').length;
-  const deliveredCount = recentOrders.filter((o) => (o.orderStatus || '').toLowerCase() === 'delivered').length;
-  const cancelledCount = recentOrders.filter((o) => (o.orderStatus || '').toLowerCase() === 'cancelled').length;
-  const failedPaymentsCount = recentOrders.filter((o) => (o.paymentStatus || '').toLowerCase() === 'failed').length;
+  const pendingCount = recentOrders.filter(
+    (o) => (o.orderStatus || '').toLowerCase() === 'pending',
+  ).length;
+  const processingCount = recentOrders.filter(
+    (o) => (o.orderStatus || '').toLowerCase() === 'processing',
+  ).length;
+  const shippedCount = recentOrders.filter(
+    (o) => (o.orderStatus || '').toLowerCase() === 'shipped',
+  ).length;
+  const deliveredCount = recentOrders.filter(
+    (o) => (o.orderStatus || '').toLowerCase() === 'delivered',
+  ).length;
+  const cancelledCount = recentOrders.filter(
+    (o) => (o.orderStatus || '').toLowerCase() === 'cancelled',
+  ).length;
+  const failedPaymentsCount = recentOrders.filter(
+    (o) => (o.paymentStatus || '').toLowerCase() === 'failed',
+  ).length;
 
   // Real Top Products calculated from DB order items
   const topProductsFromRealData = useMemo(() => {
-    const productMap: Record<string, { name: string; units: number; revenue: number; orders: number }> = {};
+    const productMap: Record<
+      string,
+      { name: string; units: number; revenue: number; orders: number }
+    > = {};
 
     recentOrders.forEach((ord) => {
       if (ord.items && Array.isArray(ord.items)) {
@@ -129,7 +166,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       return {
         total: `${stats.totalOrders || 0} Orders`,
         label: 'Total Orders',
-        points: points.map((p) => ({ day: p.day, val: Math.round((stats.totalOrders || 0) / 7), label: `${Math.round((stats.totalOrders || 0) / 7)}` })),
+        points: points.map((p) => ({
+          day: p.day,
+          val: Math.round((stats.totalOrders || 0) / 7),
+          label: `${Math.round((stats.totalOrders || 0) / 7)}`,
+        })),
         pathD: 'M 0,60 Q 50,55 100,50 T 200,45 T 300,50',
       };
     }
@@ -138,7 +179,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       return {
         total: `${stats.totalOrders || 0} Items Sold`,
         label: 'Total Items Sold',
-        points: points.map((p) => ({ day: p.day, val: Math.round((stats.totalOrders || 0) * 1.5 / 7), label: `${Math.round((stats.totalOrders || 0) * 1.5 / 7)}` })),
+        points: points.map((p) => ({
+          day: p.day,
+          val: Math.round(((stats.totalOrders || 0) * 1.5) / 7),
+          label: `${Math.round(((stats.totalOrders || 0) * 1.5) / 7)}`,
+        })),
         pathD: 'M 0,55 Q 50,45 100,40 T 200,30 T 300,45',
       };
     }
@@ -147,7 +192,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       return {
         total: fmtCurrency(stats.averageOrderValue || 0),
         label: 'Average Order Value',
-        points: points.map((p) => ({ day: p.day, val: stats.averageOrderValue || 0, label: fmtCurrency(stats.averageOrderValue || 0) })),
+        points: points.map((p) => ({
+          day: p.day,
+          val: stats.averageOrderValue || 0,
+          label: fmtCurrency(stats.averageOrderValue || 0),
+        })),
         pathD: 'M 0,40 Q 50,40 100,40 T 200,40 T 300,40',
       };
     }
@@ -165,7 +214,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     percentage: stats.totalProducts > 0 ? 80 : 50,
     items: [
       { id: '1', label: 'Store information', completed: true, actionUrl: '/store-setup' },
-      { id: '2', label: 'Add products', completed: (stats.totalProducts || 0) > 0, actionUrl: '/products' },
+      {
+        id: '2',
+        label: 'Add products',
+        completed: (stats.totalProducts || 0) > 0,
+        actionUrl: '/products',
+      },
       { id: '3', label: 'Choose template', completed: true, actionUrl: '/themes' },
       { id: '4', label: 'Configure payment', completed: true, actionUrl: '/payments' },
       { id: '5', label: 'Configure shipping', completed: true, actionUrl: '/shipping' },
@@ -184,7 +238,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               Store Performance & Command Center
             </span>
             <h1 className="text-3xl sm:text-4xl font-serif font-normal tracking-tight text-[#191a1b]">
-              Merchant Dashboard <em className="font-serif italic font-light text-[#4c305a]">& real-time analytics</em>
+              Merchant Dashboard{' '}
+              <em className="font-serif italic font-light text-[#4c305a]">& real-time analytics</em>
             </h1>
           </div>
 
@@ -234,9 +289,13 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           >
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
             <div>
-              <strong className="font-bold block">{lowStockProducts.length} Products Low Stock</strong>
+              <strong className="font-bold block">
+                {lowStockProducts.length} Products Low Stock
+              </strong>
               <span className="text-[11px] text-amber-700">
-                {lowStockProducts.length > 0 ? 'Reorder threshold reached' : 'Healthy inventory levels'}
+                {lowStockProducts.length > 0
+                  ? 'Reorder threshold reached'
+                  : 'Healthy inventory levels'}
               </span>
             </div>
           </div>
@@ -341,7 +400,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   <span className="w-3.5 h-3.5 rounded-full border-2 border-[#cbd5e0]" />
                 )}
               </div>
-              <span className={`font-medium ${item.completed ? 'line-through text-[#8a8a80]' : ''}`}>
+              <span
+                className={`font-medium ${item.completed ? 'line-through text-[#8a8a80]' : ''}`}
+              >
                 {item.label}
               </span>
             </div>
@@ -401,21 +462,23 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           {/* Card 1: Total Sales */}
           <div className="p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic space-y-2">
             <div className="flex items-center justify-between text-xs text-[#5e5a5a] font-sans">
-              <span className="font-semibold uppercase tracking-wider">{t('dashboard.total_revenue', 'Total Sales')}</span>
+              <span className="font-semibold uppercase tracking-wider">
+                {t('dashboard.total_revenue', 'Total Sales')}
+              </span>
               <DollarSign className="w-4 h-4 text-[#191a1b]" />
             </div>
             <div className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b]">
               {fmtCurrency(stats.totalSales || stats.totalRevenue || 0)}
             </div>
-            <div className="text-[11px] font-sans text-[#5e5a5a]">
-              Calculated from store DB
-            </div>
+            <div className="text-[11px] font-sans text-[#5e5a5a]">Calculated from store DB</div>
           </div>
 
           {/* Card 2: Orders */}
           <div className="p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic space-y-2">
             <div className="flex items-center justify-between text-xs text-[#5e5a5a] font-sans">
-              <span className="font-semibold uppercase tracking-wider">{t('dashboard.total_orders', 'Orders')}</span>
+              <span className="font-semibold uppercase tracking-wider">
+                {t('dashboard.total_orders', 'Orders')}
+              </span>
               <ShoppingBag className="w-4 h-4 text-[#191a1b]" />
             </div>
             <div className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b]">
@@ -429,29 +492,29 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           {/* Card 3: AOV */}
           <div className="p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic space-y-2">
             <div className="flex items-center justify-between text-xs text-[#5e5a5a] font-sans">
-              <span className="font-semibold uppercase tracking-wider">{t('dashboard.average_order', 'Avg Order Value')}</span>
+              <span className="font-semibold uppercase tracking-wider">
+                {t('dashboard.average_order', 'Avg Order Value')}
+              </span>
               <DollarSign className="w-4 h-4 text-[#191a1b]" />
             </div>
             <div className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b]">
               {fmtCurrency(stats.averageOrderValue || 0)}
             </div>
-            <div className="text-[11px] font-sans text-[#5e5a5a]">
-              Average spend per order
-            </div>
+            <div className="text-[11px] font-sans text-[#5e5a5a]">Average spend per order</div>
           </div>
 
           {/* Card 4: Customers */}
           <div className="p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic space-y-2">
             <div className="flex items-center justify-between text-xs text-[#5e5a5a] font-sans">
-              <span className="font-semibold uppercase tracking-wider">{t('nav.customers', 'Total Customers')}</span>
+              <span className="font-semibold uppercase tracking-wider">
+                {t('nav.customers', 'Total Customers')}
+              </span>
               <Users className="w-4 h-4 text-[#191a1b]" />
             </div>
             <div className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b]">
               {(stats.totalCustomers || 0).toLocaleString()}
             </div>
-            <div className="text-[11px] font-sans text-[#5e5a5a]">
-              Registered store buyers
-            </div>
+            <div className="text-[11px] font-sans text-[#5e5a5a]">Registered store buyers</div>
           </div>
 
           {/* Card 5: Products */}
@@ -464,7 +527,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               {stats.totalProducts || 0}
             </div>
             <div className="text-[11px] font-sans text-[#5e5a5a]">
-              {stats.inventoryHealth?.activeProducts || 0} Active • {stats.inventoryHealth?.draftProducts || 0} Drafts
+              {stats.inventoryHealth?.activeProducts || 0} Active •{' '}
+              {stats.inventoryHealth?.draftProducts || 0} Drafts
             </div>
           </div>
 
@@ -477,9 +541,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <div className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b]">
               {stats.conversionRate || 0}%
             </div>
-            <div className="text-[11px] font-sans text-[#5e5a5a]">
-              Checkout completion rate
-            </div>
+            <div className="text-[11px] font-sans text-[#5e5a5a]">Checkout completion rate</div>
           </div>
 
           {/* Card 7: Refunds */}
@@ -491,9 +553,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <div className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b]">
               {fmtCurrency(stats.refundsTotal || 0)}
             </div>
-            <div className="text-[11px] font-sans text-[#5e5a5a]">
-              Total order refunds issued
-            </div>
+            <div className="text-[11px] font-sans text-[#5e5a5a]">Total order refunds issued</div>
           </div>
 
           {/* Card 8: Pending Payments */}
@@ -505,9 +565,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <div className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b]">
               {fmtCurrency(stats.pendingPaymentsTotal || 0)}
             </div>
-            <div className="text-[11px] font-sans text-[#5e5a5a]">
-              Awaiting payment collection
-            </div>
+            <div className="text-[11px] font-sans text-[#5e5a5a]">Awaiting payment collection</div>
           </div>
         </div>
       </div>
@@ -529,7 +587,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <button
               onClick={() => setChartMetric('revenue')}
               className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 ${
-                chartMetric === 'revenue' ? 'bg-[#191a1b] text-[#ffffff]' : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                chartMetric === 'revenue'
+                  ? 'bg-[#191a1b] text-[#ffffff]'
+                  : 'text-[#5e5a5a] hover:text-[#191a1b]'
               }`}
             >
               Revenue
@@ -537,7 +597,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <button
               onClick={() => setChartMetric('orders')}
               className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 ${
-                chartMetric === 'orders' ? 'bg-[#191a1b] text-[#ffffff]' : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                chartMetric === 'orders'
+                  ? 'bg-[#191a1b] text-[#ffffff]'
+                  : 'text-[#5e5a5a] hover:text-[#191a1b]'
               }`}
             >
               Orders
@@ -545,7 +607,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <button
               onClick={() => setChartMetric('items')}
               className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 ${
-                chartMetric === 'items' ? 'bg-[#191a1b] text-[#ffffff]' : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                chartMetric === 'items'
+                  ? 'bg-[#191a1b] text-[#ffffff]'
+                  : 'text-[#5e5a5a] hover:text-[#191a1b]'
               }`}
             >
               Items Sold
@@ -553,7 +617,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <button
               onClick={() => setChartMetric('aov')}
               className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 ${
-                chartMetric === 'aov' ? 'bg-[#191a1b] text-[#ffffff]' : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                chartMetric === 'aov'
+                  ? 'bg-[#191a1b] text-[#ffffff]'
+                  : 'text-[#5e5a5a] hover:text-[#191a1b]'
               }`}
             >
               Avg Order Value
@@ -565,7 +631,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         <div className="flex items-center justify-between border-b border-[#cbd5e0]/60 pb-3">
           <div>
             <span className="text-xs font-sans text-[#5e5a5a] block">{activeChart.label}</span>
-            <span className="text-3xl font-serif font-normal text-[#191a1b]">{activeChart.total}</span>
+            <span className="text-3xl font-serif font-normal text-[#191a1b]">
+              {activeChart.total}
+            </span>
           </div>
           {stats.totalRevenue > 0 ? (
             <span className="text-xs font-sans font-semibold text-[#10b981] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
@@ -610,7 +678,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <h2 className="text-2xl font-serif font-normal text-[#191a1b]">
               Recent Orders & Status Pipeline
             </h2>
-            <p className="text-xs font-sans text-[#5e5a5a]">Manage store order processing and fulfillment status</p>
+            <p className="text-xs font-sans text-[#5e5a5a]">
+              Manage store order processing and fulfillment status
+            </p>
           </div>
 
           <button
@@ -650,7 +720,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <div className="py-12 text-center text-[#8a8a80] flex flex-col items-center justify-center gap-2 bg-[#fdf1ef] rounded-xl border border-[#cbd5e0]">
             <Inbox className="w-10 h-10 text-[#8a8a80]" />
             <span className="font-serif text-lg text-[#191a1b]">No Recent Orders</span>
-            <span className="text-xs font-sans text-[#5e5a5a]">Orders will appear here as soon as customers complete checkout.</span>
+            <span className="text-xs font-sans text-[#5e5a5a]">
+              Orders will appear here as soon as customers complete checkout.
+            </span>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -668,10 +740,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <tbody className="divide-y divide-[#cbd5e0]/60">
                 {recentOrders.map((ord) => (
                   <tr key={ord.id} className="hover:bg-[#fdf1ef]/60 transition-colors">
-                    <td className="py-3.5 px-3 font-mono font-bold text-[#191a1b]">{ord.orderNumber}</td>
+                    <td className="py-3.5 px-3 font-mono font-bold text-[#191a1b]">
+                      {ord.orderNumber}
+                    </td>
                     <td className="py-3.5 px-3">
-                      <span className="font-sans font-medium text-[#191a1b] block">{ord.customerName}</span>
-                      <span className="text-[10px] font-sans text-[#5e5a5a] block">{ord.customerEmail}</span>
+                      <span className="font-sans font-medium text-[#191a1b] block">
+                        {ord.customerName}
+                      </span>
+                      <span className="text-[10px] font-sans text-[#5e5a5a] block">
+                        {ord.customerEmail}
+                      </span>
                     </td>
                     <td className="py-3.5 px-3 font-mono font-bold text-[#191a1b]">
                       {fmtCurrency(ord.totalAmount)}
@@ -701,13 +779,17 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                           View
                         </button>
                         <button
-                          onClick={() => onUpdateOrderStatus && onUpdateOrderStatus(ord.id, 'processing')}
+                          onClick={() =>
+                            onUpdateOrderStatus && onUpdateOrderStatus(ord.id, 'processing')
+                          }
                           className="px-2 py-1 rounded-lg border border-[#cbd5e0] hover:bg-[#191a1b] hover:text-[#ffffff] text-[#191a1b] text-[11px] font-medium transition-colors"
                         >
                           Process
                         </button>
                         <button
-                          onClick={() => onUpdateOrderStatus && onUpdateOrderStatus(ord.id, 'shipped')}
+                          onClick={() =>
+                            onUpdateOrderStatus && onUpdateOrderStatus(ord.id, 'shipped')
+                          }
                           className="px-2 py-1 rounded-lg border border-[#cbd5e0] hover:bg-[#191a1b] hover:text-[#ffffff] text-[#191a1b] text-[11px] font-medium transition-colors"
                         >
                           Ship
@@ -729,14 +811,18 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <h2 className="text-2xl font-serif font-normal text-[#191a1b] flex items-center gap-2">
               <Package className="w-5 h-5 text-[#191a1b]" /> Inventory Health & Catalog
             </h2>
-            <p className="text-xs font-sans text-[#5e5a5a]">Stock counts, draft items, and inventory action alerts</p>
+            <p className="text-xs font-sans text-[#5e5a5a]">
+              Stock counts, draft items, and inventory action alerts
+            </p>
           </div>
 
           <button
             onClick={onNavigateProducts}
             className="px-4 py-2 bg-[#191a1b] text-[#d4ff4c] text-xs font-sans font-medium rounded-xl hover:bg-[#000000] transition-colors shrink-0 flex items-center gap-1.5"
           >
-            <span>Manage Catalog ({stats.inventoryHealth?.totalProducts || stats.totalProducts || 0})</span>
+            <span>
+              Manage Catalog ({stats.inventoryHealth?.totalProducts || stats.totalProducts || 0})
+            </span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -747,7 +833,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <div className="flex items-center gap-2.5">
               <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
               <span>
-                <strong>⚠️ {lowStockProducts.length} product(s) are running low on inventory.</strong> Reorder stock to prevent lost sales.
+                <strong>
+                  ⚠️ {lowStockProducts.length} product(s) are running low on inventory.
+                </strong>{' '}
+                Reorder stock to prevent lost sales.
               </span>
             </div>
 
@@ -762,7 +851,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center gap-2.5 text-xs font-sans">
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             <span>
-              <strong>✓ Inventory levels healthy.</strong> No low-stock alerts detected for your catalog items.
+              <strong>✓ Inventory levels healthy.</strong> No low-stock alerts detected for your
+              catalog items.
             </span>
           </div>
         )}
@@ -771,35 +861,55 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 text-xs font-sans">
           <div className="p-3.5 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
             <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">Total</span>
-            <strong className="text-xl font-serif text-[#191a1b]">{stats.inventoryHealth?.totalProducts || 0}</strong>
+            <strong className="text-xl font-serif text-[#191a1b]">
+              {stats.inventoryHealth?.totalProducts || 0}
+            </strong>
           </div>
           <div className="p-3.5 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
             <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">Active</span>
-            <strong className="text-xl font-serif text-[#10b981]">{stats.inventoryHealth?.activeProducts || 0}</strong>
+            <strong className="text-xl font-serif text-[#10b981]">
+              {stats.inventoryHealth?.activeProducts || 0}
+            </strong>
           </div>
           <div className="p-3.5 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
             <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">Draft</span>
-            <strong className="text-xl font-serif text-[#191a1b]">{stats.inventoryHealth?.draftProducts || 0}</strong>
+            <strong className="text-xl font-serif text-[#191a1b]">
+              {stats.inventoryHealth?.draftProducts || 0}
+            </strong>
           </div>
           <div className="p-3.5 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
-            <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">Out of Stock</span>
-            <strong className="text-xl font-serif text-[#ef4444]">{stats.inventoryHealth?.outOfStockProducts || 0}</strong>
+            <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">
+              Out of Stock
+            </span>
+            <strong className="text-xl font-serif text-[#ef4444]">
+              {stats.inventoryHealth?.outOfStockProducts || 0}
+            </strong>
           </div>
           <div className="p-3.5 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
             <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">Low Stock</span>
-            <strong className="text-xl font-serif text-[#f59e0b]">{stats.inventoryHealth?.lowStockProducts || lowStockProducts.length}</strong>
+            <strong className="text-xl font-serif text-[#f59e0b]">
+              {stats.inventoryHealth?.lowStockProducts || lowStockProducts.length}
+            </strong>
           </div>
           <div className="p-3.5 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
             <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">No Images</span>
-            <strong className="text-xl font-serif text-[#191a1b]">{stats.inventoryHealth?.noImagesProducts || 0}</strong>
+            <strong className="text-xl font-serif text-[#191a1b]">
+              {stats.inventoryHealth?.noImagesProducts || 0}
+            </strong>
           </div>
           <div className="p-3.5 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
             <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">No Price</span>
-            <strong className="text-xl font-serif text-[#191a1b]">{stats.inventoryHealth?.noPriceProducts || 0}</strong>
+            <strong className="text-xl font-serif text-[#191a1b]">
+              {stats.inventoryHealth?.noPriceProducts || 0}
+            </strong>
           </div>
           <div className="p-3.5 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
-            <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">No Inventory</span>
-            <strong className="text-xl font-serif text-[#191a1b]">{stats.inventoryHealth?.noInventoryProducts || 0}</strong>
+            <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">
+              No Inventory
+            </span>
+            <strong className="text-xl font-serif text-[#191a1b]">
+              {stats.inventoryHealth?.noInventoryProducts || 0}
+            </strong>
           </div>
         </div>
       </div>
@@ -812,45 +922,65 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <h2 className="text-2xl font-serif font-normal text-[#191a1b] flex items-center gap-2">
               <Users className="w-5 h-5 text-[#191a1b]" /> Customer Analytics
             </h2>
-            <p className="text-xs font-sans text-[#5e5a5a]">Acquisition, retention, and repeat purchases</p>
+            <p className="text-xs font-sans text-[#5e5a5a]">
+              Acquisition, retention, and repeat purchases
+            </p>
           </div>
 
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
               <span className="text-[10px] text-[#5e5a5a] block uppercase font-bold">Total</span>
-              <strong className="text-xl font-serif text-[#191a1b]">{stats.customerAnalytics?.totalCustomers || stats.totalCustomers || 0}</strong>
+              <strong className="text-xl font-serif text-[#191a1b]">
+                {stats.customerAnalytics?.totalCustomers || stats.totalCustomers || 0}
+              </strong>
             </div>
             <div className="p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
               <span className="text-[10px] text-[#5e5a5a] block uppercase font-bold">New</span>
-              <strong className="text-xl font-serif text-[#10b981]">{stats.customerAnalytics?.newCustomers || 0}</strong>
+              <strong className="text-xl font-serif text-[#10b981]">
+                {stats.customerAnalytics?.newCustomers || 0}
+              </strong>
             </div>
             <div className="p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
-              <span className="text-[10px] text-[#5e5a5a] block uppercase font-bold">Returning</span>
-              <strong className="text-xl font-serif text-[#191a1b]">{stats.customerAnalytics?.returningCustomers || 0}</strong>
+              <span className="text-[10px] text-[#5e5a5a] block uppercase font-bold">
+                Returning
+              </span>
+              <strong className="text-xl font-serif text-[#191a1b]">
+                {stats.customerAnalytics?.returningCustomers || 0}
+              </strong>
             </div>
           </div>
 
           <div className="p-4 rounded-xl border border-[#cbd5e0] bg-emerald-50 text-emerald-900 flex items-center justify-between text-xs font-sans">
             <span>Repeat Purchase Rate</span>
-            <strong className="text-lg font-serif">{stats.customerAnalytics?.repeatPurchaseRate || 0}%</strong>
+            <strong className="text-lg font-serif">
+              {stats.customerAnalytics?.repeatPurchaseRate || 0}%
+            </strong>
           </div>
 
           {/* Top Customers List OR Alt Text */}
           <div className="space-y-3 pt-2">
-            <span className="text-xs font-sans font-bold uppercase text-[#5e5a5a]">Top Customers</span>
-            {!stats.customerAnalytics?.topCustomers || stats.customerAnalytics.topCustomers.length === 0 ? (
+            <span className="text-xs font-sans font-bold uppercase text-[#5e5a5a]">
+              Top Customers
+            </span>
+            {!stats.customerAnalytics?.topCustomers ||
+            stats.customerAnalytics.topCustomers.length === 0 ? (
               <div className="p-4 rounded-xl border border-[#cbd5e0] bg-[#fdf1ef] text-center text-xs font-sans text-[#5e5a5a]">
                 No customer purchase records recorded yet.
               </div>
             ) : (
               <div className="space-y-2 text-xs font-sans">
                 {stats.customerAnalytics.topCustomers.map((c, i) => (
-                  <div key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-[#cbd5e0] bg-[#fdf1ef]">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2.5 rounded-xl border border-[#cbd5e0] bg-[#fdf1ef]"
+                  >
                     <div>
                       <strong className="text-[#191a1b] font-medium block">{c.name}</strong>
                       <span className="text-[10px] text-[#5e5a5a]">{c.orders} orders placed</span>
                     </div>
-                    <strong className="font-mono text-[#191a1b]">{fmtCurrency(c.totalSpent)}</strong>
+                    <strong className="font-mono text-[#191a1b]">
+                      {fmtCurrency(c.totalSpent)}
+                    </strong>
                   </div>
                 ))}
               </div>
@@ -865,7 +995,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <h2 className="text-2xl font-serif font-normal text-[#191a1b]">
                 Best-Selling Products
               </h2>
-              <p className="text-xs font-sans text-[#5e5a5a]">Ranked product performance and revenue</p>
+              <p className="text-xs font-sans text-[#5e5a5a]">
+                Ranked product performance and revenue
+              </p>
             </div>
 
             {/* Sort Controls */}
@@ -900,8 +1032,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           {topProductsFromRealData.length === 0 ? (
             <div className="py-12 text-center text-[#8a8a80] flex flex-col items-center justify-center gap-2 bg-[#fdf1ef] rounded-xl border border-[#cbd5e0]">
               <Package className="w-10 h-10 text-[#8a8a80]" />
-              <span className="font-serif text-lg text-[#191a1b]">No Best-Selling Product Data</span>
-              <span className="text-xs font-sans text-[#5e5a5a]">Product sales data will populate as items are purchased.</span>
+              <span className="font-serif text-lg text-[#191a1b]">
+                No Best-Selling Product Data
+              </span>
+              <span className="text-xs font-sans text-[#5e5a5a]">
+                Product sales data will populate as items are purchased.
+              </span>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -921,8 +1057,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                       <td className="py-3 px-3">
                         <span className="font-medium text-[#191a1b] block">{tp.name}</span>
                       </td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-[#191a1b]">{tp.units}</td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-[#191a1b]">{fmtCurrency(tp.revenue)}</td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-[#191a1b]">
+                        {tp.units}
+                      </td>
+                      <td className="py-3 px-3 text-right font-mono font-bold text-[#191a1b]">
+                        {fmtCurrency(tp.revenue)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -940,7 +1080,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <h2 className="text-2xl font-serif font-normal text-[#191a1b] flex items-center gap-2">
               <Eye className="w-5 h-5 text-[#191a1b]" /> Storefront Traffic & Conversion Funnel
             </h2>
-            <p className="text-xs font-sans text-[#5e5a5a]">Visitor journey from page view to completed order</p>
+            <p className="text-xs font-sans text-[#5e5a5a]">
+              Visitor journey from page view to completed order
+            </p>
           </div>
 
           <div className="grid grid-cols-4 gap-2 text-center text-xs font-sans">
@@ -957,13 +1099,17 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </strong>
             </div>
             <div className="p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
-              <span className="text-[10px] text-[#5e5a5a] block uppercase font-bold">Page Views</span>
+              <span className="text-[10px] text-[#5e5a5a] block uppercase font-bold">
+                Page Views
+              </span>
               <strong className="text-lg font-serif text-[#191a1b]">
                 {(stats.storeFunnel?.pageViews || 0).toLocaleString()}
               </strong>
             </div>
             <div className="p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
-              <span className="text-[10px] text-[#5e5a5a] block uppercase font-bold">Conversion</span>
+              <span className="text-[10px] text-[#5e5a5a] block uppercase font-bold">
+                Conversion
+              </span>
               <strong className="text-lg font-serif text-[#10b981]">
                 {stats.storeFunnel?.conversionRate || 0}%
               </strong>
@@ -975,23 +1121,33 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <div className="space-y-2 pt-2 text-xs font-sans">
               <div className="p-3 rounded-xl bg-[#191a1b] text-[#ffffff] flex justify-between items-center">
                 <span>1. Visitors</span>
-                <strong className="font-serif">{(stats.storeFunnel?.visitors || 0).toLocaleString()}</strong>
+                <strong className="font-serif">
+                  {(stats.storeFunnel?.visitors || 0).toLocaleString()}
+                </strong>
               </div>
               <div className="p-3 rounded-xl bg-[#334155] text-[#ffffff] flex justify-between items-center ml-4">
                 <span>2. Product Views</span>
-                <strong className="font-serif">{(stats.storeFunnel?.productViews || 0).toLocaleString()}</strong>
+                <strong className="font-serif">
+                  {(stats.storeFunnel?.productViews || 0).toLocaleString()}
+                </strong>
               </div>
               <div className="p-3 rounded-xl bg-[#475569] text-[#ffffff] flex justify-between items-center ml-8">
                 <span>3. Add to Cart</span>
-                <strong className="font-serif">{(stats.storeFunnel?.addToCart || 0).toLocaleString()}</strong>
+                <strong className="font-serif">
+                  {(stats.storeFunnel?.addToCart || 0).toLocaleString()}
+                </strong>
               </div>
               <div className="p-3 rounded-xl bg-[#64748b] text-[#ffffff] flex justify-between items-center ml-12">
                 <span>4. Checkout Started</span>
-                <strong className="font-serif">{(stats.storeFunnel?.checkoutStarted || 0).toLocaleString()}</strong>
+                <strong className="font-serif">
+                  {(stats.storeFunnel?.checkoutStarted || 0).toLocaleString()}
+                </strong>
               </div>
               <div className="p-3 rounded-xl bg-[#034f46] text-[#ffffeb] flex justify-between items-center ml-16">
                 <span>5. Orders Purchased</span>
-                <strong className="font-serif">{(stats.storeFunnel?.purchases || 0).toLocaleString()}</strong>
+                <strong className="font-serif">
+                  {(stats.storeFunnel?.purchases || 0).toLocaleString()}
+                </strong>
               </div>
             </div>
           )}
@@ -1003,12 +1159,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <h2 className="text-2xl font-serif font-normal text-[#191a1b] flex items-center gap-2">
               <Megaphone className="w-5 h-5 text-[#191a1b]" /> Marketing & Growth
             </h2>
-            <p className="text-xs font-sans text-[#5e5a5a]">Coupons, abandoned carts, and campaign stats</p>
+            <p className="text-xs font-sans text-[#5e5a5a]">
+              Coupons, abandoned carts, and campaign stats
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-xs font-sans">
             <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
-              <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">Active Discounts</span>
+              <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">
+                Active Discounts
+              </span>
               <strong className="text-2xl font-serif text-[#191a1b]">
                 {stats.marketingSummary?.activeDiscounts || 0} Coupons
               </strong>
@@ -1018,7 +1178,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
 
             <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
-              <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">Abandoned Carts</span>
+              <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">
+                Abandoned Carts
+              </span>
               <strong className="text-2xl font-serif text-[#ef4444]">
                 {stats.marketingSummary?.abandonedCartsCount || 0} Carts
               </strong>
@@ -1028,7 +1190,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
 
             <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
-              <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">Email/WhatsApp</span>
+              <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">
+                Email/WhatsApp
+              </span>
               <strong className="text-2xl font-serif text-[#191a1b]">
                 {stats.marketingSummary?.emailCampaignsCount || 0} Campaigns
               </strong>
@@ -1036,7 +1200,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
 
             <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
-              <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">Referral Sales</span>
+              <span className="text-[10px] text-[#5e5a5a] uppercase font-bold block">
+                Referral Sales
+              </span>
               <strong className="text-2xl font-serif text-[#10b981]">
                 {stats.marketingSummary?.referralOrdersCount || 0} Orders
               </strong>
@@ -1054,12 +1220,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <h2 className="text-2xl font-serif font-normal text-[#191a1b] flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-[#191a1b]" /> Payments Breakdown
             </h2>
-            <p className="text-xs font-sans text-[#5e5a5a]">Payment methods, success rates, and volume</p>
+            <p className="text-xs font-sans text-[#5e5a5a]">
+              Payment methods, success rates, and volume
+            </p>
           </div>
 
           <div className="grid grid-cols-4 gap-2 text-center text-xs font-sans">
             <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
-              <span className="text-[10px] text-emerald-800 uppercase font-bold block">Success</span>
+              <span className="text-[10px] text-emerald-800 uppercase font-bold block">
+                Success
+              </span>
               <strong className="text-sm font-serif text-emerald-900">
                 {fmtCurrency(stats.paymentMetrics?.successfulAmount || 0)}
               </strong>
@@ -1086,7 +1256,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
           {/* Payment Method Progress Bars OR Alt Text */}
           <div className="space-y-3 pt-2 text-xs font-sans">
-            {!stats.paymentMetrics?.breakdown || (stats.paymentMetrics.breakdown.razorpay === 0 && stats.paymentMetrics.breakdown.stripe === 0 && stats.paymentMetrics.breakdown.upi === 0 && stats.paymentMetrics.breakdown.cod === 0) ? (
+            {!stats.paymentMetrics?.breakdown ||
+            (stats.paymentMetrics.breakdown.razorpay === 0 &&
+              stats.paymentMetrics.breakdown.stripe === 0 &&
+              stats.paymentMetrics.breakdown.upi === 0 &&
+              stats.paymentMetrics.breakdown.cod === 0) ? (
               <div className="p-4 rounded-xl border border-[#cbd5e0] bg-[#fdf1ef] text-center text-[#5e5a5a]">
                 No payment method transactions recorded yet.
               </div>
@@ -1095,7 +1269,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 <div className="space-y-1">
                   <div className="flex justify-between">
                     <span>Razorpay</span>
-                    <strong className="font-bold">{fmtCurrency(stats.paymentMetrics.breakdown.razorpay)}</strong>
+                    <strong className="font-bold">
+                      {fmtCurrency(stats.paymentMetrics.breakdown.razorpay)}
+                    </strong>
                   </div>
                   <div className="w-full bg-[#fdf1ef] h-2 rounded-full border border-[#cbd5e0]">
                     <div className="bg-[#191a1b] h-full rounded-full w-[40%]" />
@@ -1105,7 +1281,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 <div className="space-y-1">
                   <div className="flex justify-between">
                     <span>UPI</span>
-                    <strong className="font-bold">{fmtCurrency(stats.paymentMetrics.breakdown.upi)}</strong>
+                    <strong className="font-bold">
+                      {fmtCurrency(stats.paymentMetrics.breakdown.upi)}
+                    </strong>
                   </div>
                   <div className="w-full bg-[#fdf1ef] h-2 rounded-full border border-[#cbd5e0]">
                     <div className="bg-[#034f46] h-full rounded-full w-[30%]" />
@@ -1115,7 +1293,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 <div className="space-y-1">
                   <div className="flex justify-between">
                     <span>Stripe</span>
-                    <strong className="font-bold">{fmtCurrency(stats.paymentMetrics.breakdown.stripe)}</strong>
+                    <strong className="font-bold">
+                      {fmtCurrency(stats.paymentMetrics.breakdown.stripe)}
+                    </strong>
                   </div>
                   <div className="w-full bg-[#fdf1ef] h-2 rounded-full border border-[#cbd5e0]">
                     <div className="bg-[#334155] h-full rounded-full w-[20%]" />
@@ -1125,7 +1305,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 <div className="space-y-1">
                   <div className="flex justify-between">
                     <span>Cash On Delivery (COD)</span>
-                    <strong className="font-bold">{fmtCurrency(stats.paymentMetrics.breakdown.cod)}</strong>
+                    <strong className="font-bold">
+                      {fmtCurrency(stats.paymentMetrics.breakdown.cod)}
+                    </strong>
                   </div>
                   <div className="w-full bg-[#fdf1ef] h-2 rounded-full border border-[#cbd5e0]">
                     <div className="bg-[#f59e0b] h-full rounded-full w-[10%]" />
@@ -1142,12 +1324,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <h2 className="text-2xl font-serif font-normal text-[#191a1b] flex items-center gap-2">
               <Truck className="w-5 h-5 text-[#191a1b]" /> Shipping & Logistics Operations
             </h2>
-            <p className="text-xs font-sans text-[#5e5a5a]">Shipment tracking, courier status, and returns</p>
+            <p className="text-xs font-sans text-[#5e5a5a]">
+              Shipment tracking, courier status, and returns
+            </p>
           </div>
 
           <div className="grid grid-cols-3 gap-3 text-center text-xs font-sans">
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200">
-              <span className="text-[10px] text-amber-800 uppercase font-bold block">Awaiting Shipment</span>
+              <span className="text-[10px] text-amber-800 uppercase font-bold block">
+                Awaiting Shipment
+              </span>
               <strong className="text-xl font-serif text-amber-900">
                 {stats.shippingOperations?.awaitingShipment || 0} Orders
               </strong>
@@ -1159,7 +1345,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </strong>
             </div>
             <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
-              <span className="text-[10px] text-emerald-800 uppercase font-bold block">Delivered</span>
+              <span className="text-[10px] text-emerald-800 uppercase font-bold block">
+                Delivered
+              </span>
               <strong className="text-xl font-serif text-emerald-900">
                 {stats.shippingOperations?.delivered || 0} Orders
               </strong>
@@ -1168,7 +1356,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
           <div className="grid grid-cols-4 gap-2 text-center text-xs font-sans pt-1">
             <div className="p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
-              <span className="text-[10px] text-[#5e5a5a] block uppercase font-bold">Failed Delivery</span>
+              <span className="text-[10px] text-[#5e5a5a] block uppercase font-bold">
+                Failed Delivery
+              </span>
               <strong className="text-lg font-serif text-[#ef4444]">
                 {stats.shippingOperations?.failedDeliveries || 0}
               </strong>
@@ -1186,7 +1376,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </strong>
             </div>
             <div className="p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
-              <span className="text-[10px] text-[#5e5a5a] block uppercase font-bold">Ship Cost</span>
+              <span className="text-[10px] text-[#5e5a5a] block uppercase font-bold">
+                Ship Cost
+              </span>
               <strong className="text-lg font-serif text-[#191a1b]">
                 {fmtCurrency(stats.shippingOperations?.shippingCostTotal || 0)}
               </strong>

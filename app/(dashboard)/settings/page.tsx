@@ -4,7 +4,17 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { UserPreferencesStudio } from '@/src/components/cms/UserPreferencesStudio';
-import { Store, Sliders, ArrowRight, ShieldCheck, Palette, Building2, Copy, Check, Hash } from 'lucide-react';
+import {
+  Store,
+  Sliders,
+  ArrowRight,
+  ShieldCheck,
+  Palette,
+  Building2,
+  Copy,
+  Check,
+  Hash,
+} from 'lucide-react';
 
 import { cmsService } from '@/src/services/cmsService';
 
@@ -44,9 +54,12 @@ export default function SettingsPage() {
       {/* Top Header & Tab Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#cbd5e0] pb-4">
         <div>
-          <h1 className="font-serif text-3xl font-normal text-[#191a1b]">Account & Store Settings</h1>
+          <h1 className="font-serif text-3xl font-normal text-[#191a1b]">
+            Account & Store Settings
+          </h1>
           <p className="text-xs font-sans text-[#5e5a5a] mt-0.5">
-            Manage your personal administrative preferences, regional localization, and store brand identity.
+            Manage your personal administrative preferences, regional localization, and store brand
+            identity.
           </p>
 
           {/* Store ID Badge */}
@@ -54,8 +67,12 @@ export default function SettingsPage() {
             <div className="flex flex-wrap items-center gap-2 mt-2.5">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#cbd5e0] shadow-xs text-xs">
                 <Hash className="w-3 h-3 text-[#5e5a5a]" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#5e5a5a]">Store ID:</span>
-                <code className="font-mono font-bold text-[#191a1b] text-xs selection:bg-[#d4ff4c]">{storeId}</code>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#5e5a5a]">
+                  Store ID:
+                </span>
+                <code className="font-mono font-bold text-[#191a1b] text-xs selection:bg-[#d4ff4c]">
+                  {storeId}
+                </code>
                 <button
                   type="button"
                   onClick={handleCopyStoreId}
@@ -129,7 +146,8 @@ export default function SettingsPage() {
                 <span>Active Store Identity & Theme Settings</span>
               </h3>
               <p className="text-xs font-sans text-[#5e5a5a]">
-                Configured brand identity, chosen storefront design specifications, and merchant contact parameters.
+                Configured brand identity, chosen storefront design specifications, and merchant
+                contact parameters.
               </p>
             </div>
 
@@ -157,8 +175,12 @@ export default function SettingsPage() {
                   </div>
 
                   <div>
-                    <p className="text-base font-serif font-normal text-[#191a1b]">{merchantData.store.storeName}</p>
-                    <p className="text-xs font-sans text-[#5e5a5a] italic">"{merchantData.store.tagline || 'Official Store'}"</p>
+                    <p className="text-base font-serif font-normal text-[#191a1b]">
+                      {merchantData.store.storeName}
+                    </p>
+                    <p className="text-xs font-sans text-[#5e5a5a] italic">
+                      "{merchantData.store.tagline || 'Official Store'}"
+                    </p>
                   </div>
 
                   {/* Store ID in Card */}
@@ -177,7 +199,11 @@ export default function SettingsPage() {
                           className="px-2 py-1 rounded-lg bg-[#fdf1ef] hover:bg-[#191a1b] text-[#191a1b] hover:text-[#d4ff4c] text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
                           title="Copy Store ID"
                         >
-                          {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                          {copied ? (
+                            <Check className="w-3 h-3 text-emerald-600" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
                           <span>{copied ? 'Copied' : 'Copy'}</span>
                         </button>
                       </div>
@@ -200,7 +226,9 @@ export default function SettingsPage() {
                       {merchantData.selectedTemplate.name}
                     </p>
                   </div>
-                  <p className="text-xs font-sans text-[#5e5a5a]">{merchantData.selectedTemplate.tagline}</p>
+                  <p className="text-xs font-sans text-[#5e5a5a]">
+                    {merchantData.selectedTemplate.tagline}
+                  </p>
                   <button
                     type="button"
                     onClick={() => router.push('/themes')}
@@ -219,9 +247,7 @@ export default function SettingsPage() {
                 <p className="text-base font-serif font-normal text-[#191a1b]">
                   {merchantData.merchant.firstName} {merchantData.merchant.lastName}
                 </p>
-                <p className="text-xs font-sans text-[#5e5a5a]">
-                  {merchantData.merchant.email}
-                </p>
+                <p className="text-xs font-sans text-[#5e5a5a]">{merchantData.merchant.email}</p>
                 <button
                   type="button"
                   onClick={() => setActiveMainTab('preferences')}

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { CMSForm } from "@/src/types";
-import { cmsService } from "@/src/services/cmsService";
-import { PublicFormRenderer } from "@/src/components/cms/PublicFormRenderer";
-import { Loader2, FileQuestion, Store } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { CMSForm } from '@/src/types';
+import { cmsService } from '@/src/services/cmsService';
+import { PublicFormRenderer } from '@/src/components/cms/PublicFormRenderer';
+import { Loader2, FileQuestion, Store } from 'lucide-react';
 
 export default function PublicFormPage() {
   const params = useParams();
@@ -21,12 +21,12 @@ export default function PublicFormPage() {
       try {
         const data = await cmsService.getForm(slug);
         if (!data) {
-          setError("Form not found or has been closed.");
+          setError('Form not found or has been closed.');
         } else {
           setForm(data);
         }
       } catch (err: any) {
-        setError("Failed to load form. Please check the URL.");
+        setError('Failed to load form. Please check the URL.');
       } finally {
         setLoading(false);
       }
@@ -49,11 +49,9 @@ export default function PublicFormPage() {
         <div className="w-14 h-14 rounded-2xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500 mb-4">
           <FileQuestion className="w-7 h-7" />
         </div>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
-          Form Unavailable
-        </h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Form Unavailable</h2>
         <p className="text-sm text-slate-500 max-w-sm">
-          {error || "The requested form does not exist or is no longer accepting responses."}
+          {error || 'The requested form does not exist or is no longer accepting responses.'}
         </p>
       </div>
     );

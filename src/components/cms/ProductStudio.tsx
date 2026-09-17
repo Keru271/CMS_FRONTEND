@@ -86,7 +86,13 @@ export const ProductStudio: React.FC = () => {
 
   // Sub-Navigation Tabs
   const [activeSubTab, setActiveSubTab] = useState<
-    'all-products' | 'add-product' | 'categories' | 'collections' | 'brands' | 'inventory' | 'reviews'
+    | 'all-products'
+    | 'add-product'
+    | 'categories'
+    | 'collections'
+    | 'brands'
+    | 'inventory'
+    | 'reviews'
   >('all-products');
 
   // Filter & Search
@@ -100,12 +106,17 @@ export const ProductStudio: React.FC = () => {
   // Form State for Add / Edit Product (All 23 options)
   const [editingProduct, setEditingProduct] = useState<CMSProduct | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     description: '',
-    images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
+    ],
     sku: '',
     price: '',
     compareAtPrice: '',
@@ -131,15 +142,32 @@ export const ProductStudio: React.FC = () => {
 
   // Quick Add Taxonomy Modal States (Direct Privilege from Storefront Organization)
   const [isQuickCategoryModalOpen, setIsQuickCategoryModalOpen] = useState(false);
-  const [quickCategoryData, setQuickCategoryData] = useState({ name: '', slug: '', icon: '📦', description: '' });
+  const [quickCategoryData, setQuickCategoryData] = useState({
+    name: '',
+    slug: '',
+    icon: '📦',
+    description: '',
+  });
   const [isSavingQuickCategory, setIsSavingQuickCategory] = useState(false);
 
   const [isQuickBrandModalOpen, setIsQuickBrandModalOpen] = useState(false);
-  const [quickBrandData, setQuickBrandData] = useState({ name: '', slug: '', logo: '', website: '', description: '' });
+  const [quickBrandData, setQuickBrandData] = useState({
+    name: '',
+    slug: '',
+    logo: '',
+    website: '',
+    description: '',
+  });
   const [isSavingQuickBrand, setIsSavingQuickBrand] = useState(false);
 
   const [isQuickCollectionModalOpen, setIsQuickCollectionModalOpen] = useState(false);
-  const [quickCollectionData, setQuickCollectionData] = useState({ name: '', slug: '', type: 'MANUAL' as 'MANUAL' | 'AUTOMATIC', image: '', description: '' });
+  const [quickCollectionData, setQuickCollectionData] = useState({
+    name: '',
+    slug: '',
+    type: 'MANUAL' as 'MANUAL' | 'AUTOMATIC',
+    image: '',
+    description: '',
+  });
   const [isSavingQuickCollection, setIsSavingQuickCollection] = useState(false);
 
   // Search Filters for Existing Taxonomy Pickers in Product Form
@@ -193,8 +221,11 @@ export const ProductStudio: React.FC = () => {
     setEditingProduct(null);
     setFormData({
       name: '',
-      description: '<h2>Product Overview</h2>\n<p>Engineered for maximum performance and luxury aesthetic.</p>',
-      images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80'],
+      description:
+        '<h2>Product Overview</h2>\n<p>Engineered for maximum performance and luxury aesthetic.</p>',
+      images: [
+        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
+      ],
       sku: `SKU-${Math.floor(100000 + Math.random() * 900000)}`,
       price: 199.99,
       compareAtPrice: 249.99,
@@ -240,7 +271,10 @@ export const ProductStudio: React.FC = () => {
       Array.isArray(prod.categories) && prod.categories.length > 0
         ? prod.categories
         : prod.categoryName
-          ? prod.categoryName.split(',').map((s) => s.trim()).filter(Boolean)
+          ? prod.categoryName
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
           : prod.category
             ? [prod.category]
             : ['General'];
@@ -249,13 +283,22 @@ export const ProductStudio: React.FC = () => {
       Array.isArray(prod.collections) && prod.collections.length > 0
         ? prod.collections
         : prod.collectionName
-          ? prod.collectionName.split(',').map((s) => s.trim()).filter(Boolean)
+          ? prod.collectionName
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
           : [];
 
     setFormData({
       name: prod.name,
       description: prod.description,
-      images: prod.images && prod.images.length > 0 ? prod.images : [prod.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80'],
+      images:
+        prod.images && prod.images.length > 0
+          ? prod.images
+          : [
+              prod.image ||
+                'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
+            ],
       sku: prod.sku,
       price: prod.price,
       compareAtPrice: prod.compareAtPrice || '',
@@ -385,7 +428,13 @@ export const ProductStudio: React.FC = () => {
     if (!quickCategoryData.name.trim()) return;
     setIsSavingQuickCategory(true);
     try {
-      const generatedSlug = (quickCategoryData.slug || quickCategoryData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')).toLowerCase();
+      const generatedSlug = (
+        quickCategoryData.slug ||
+        quickCategoryData.name
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+      ).toLowerCase();
       const payload = {
         name: quickCategoryData.name.trim(),
         slug: generatedSlug,
@@ -396,7 +445,9 @@ export const ProductStudio: React.FC = () => {
       const updatedCats = await cmsService.getCategories(true);
       setCategories(updatedCats);
       const currentCats = formData.categories || [];
-      const nextCats = currentCats.includes(payload.name) ? currentCats : [...currentCats, payload.name];
+      const nextCats = currentCats.includes(payload.name)
+        ? currentCats
+        : [...currentCats, payload.name];
       setFormData({
         ...formData,
         categories: nextCats,
@@ -419,7 +470,13 @@ export const ProductStudio: React.FC = () => {
     if (!quickBrandData.name.trim()) return;
     setIsSavingQuickBrand(true);
     try {
-      const generatedSlug = (quickBrandData.slug || quickBrandData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')).toLowerCase();
+      const generatedSlug = (
+        quickBrandData.slug ||
+        quickBrandData.name
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+      ).toLowerCase();
       const payload = {
         name: quickBrandData.name.trim(),
         slug: generatedSlug,
@@ -451,7 +508,13 @@ export const ProductStudio: React.FC = () => {
     if (!quickCollectionData.name.trim()) return;
     setIsSavingQuickCollection(true);
     try {
-      const generatedSlug = (quickCollectionData.slug || quickCollectionData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')).toLowerCase();
+      const generatedSlug = (
+        quickCollectionData.slug ||
+        quickCollectionData.name
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+      ).toLowerCase();
       const payload = {
         name: quickCollectionData.name.trim(),
         slug: generatedSlug,
@@ -464,7 +527,9 @@ export const ProductStudio: React.FC = () => {
       const updatedCols = await cmsService.getCollections();
       setCollections(updatedCols);
       const currentCols = formData.collections || [];
-      const nextCols = currentCols.includes(payload.name) ? currentCols : [...currentCols, payload.name];
+      const nextCols = currentCols.includes(payload.name)
+        ? currentCols
+        : [...currentCols, payload.name];
       setFormData({
         ...formData,
         collections: nextCols,
@@ -514,8 +579,14 @@ export const ProductStudio: React.FC = () => {
 
   // ── Variant Management Handlers ─────────────────────────────────────
   const handleGenerateVariantMatrix = () => {
-    const list1 = option1Values.split(',').map((v) => v.trim()).filter(Boolean);
-    const list2 = option2Values.split(',').map((v) => v.trim()).filter(Boolean);
+    const list1 = option1Values
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+    const list2 = option2Values
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
 
     const generated: CMSProductVariant[] = [];
     const basePrice = Number(formData.price) || 199.99;
@@ -663,7 +734,10 @@ export const ProductStudio: React.FC = () => {
     showToast(`Distributed stock evenly across all variants`, 'success');
   };
 
-  const handleToggleReviewStatus = async (id: string, newStatus: 'APPROVED' | 'PENDING' | 'REJECTED') => {
+  const handleToggleReviewStatus = async (
+    id: string,
+    newStatus: 'APPROVED' | 'PENDING' | 'REJECTED',
+  ) => {
     try {
       await cmsService.updateReviewStatus(id, newStatus);
       showToast(`Review status updated to ${newStatus}`, 'success');
@@ -678,7 +752,8 @@ export const ProductStudio: React.FC = () => {
   const sellingPriceNum = parseFloat(String(formData.price)) || 0;
   const costPriceNum = parseFloat(String(formData.costPrice)) || 0;
   const profitMarginNum = sellingPriceNum - costPriceNum;
-  const profitMarginPercent = sellingPriceNum > 0 ? ((profitMarginNum / sellingPriceNum) * 100).toFixed(1) : 0;
+  const profitMarginPercent =
+    sellingPriceNum > 0 ? ((profitMarginNum / sellingPriceNum) * 100).toFixed(1) : 0;
 
   // Filtered Products List
   const filteredProducts = products.filter((p) => {
@@ -697,7 +772,9 @@ export const ProductStudio: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-slate-500 animate-pulse">Loading Product Studio...</span>
+        <span className="text-xs font-bold text-slate-500 animate-pulse">
+          Loading Product Studio...
+        </span>
       </div>
     );
   }
@@ -733,7 +810,8 @@ export const ProductStudio: React.FC = () => {
               </span>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                {products.length} / {maxProducts >= 999999 ? 'Unlimited' : maxProducts} Products ({planName})
+                {products.length} / {maxProducts >= 999999 ? 'Unlimited' : maxProducts} Products (
+                {planName})
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
@@ -741,7 +819,8 @@ export const ProductStudio: React.FC = () => {
               <span>Products Management Studio</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              Complete catalog suite with 7 sub-modules: All Products, Add Product (23 Options), Categories, Collections, Brands, Inventory Control, and Reviews.
+              Complete catalog suite with 7 sub-modules: All Products, Add Product (23 Options),
+              Categories, Collections, Brands, Inventory Control, and Reviews.
             </p>
           </div>
 
@@ -793,7 +872,11 @@ export const ProductStudio: React.FC = () => {
         <div className="flex items-center gap-2 pt-6 mt-6 border-t border-slate-700/60 overflow-x-auto no-scrollbar">
           {[
             { id: 'all-products', label: 'All Products', icon: Package, badge: products.length },
-            { id: 'add-product', label: editingProduct ? 'Edit Product' : 'Add Product (23 Options)', icon: Plus },
+            {
+              id: 'add-product',
+              label: editingProduct ? 'Edit Product' : 'Add Product (23 Options)',
+              icon: Plus,
+            },
             { id: 'categories', label: 'Categories', icon: FolderTree, badge: categories.length },
             { id: 'collections', label: 'Collections', icon: Layers, badge: collections.length },
             { id: 'brands', label: 'Brands', icon: Building2, badge: brands.length },
@@ -839,9 +922,18 @@ export const ProductStudio: React.FC = () => {
             <div className="flex items-center gap-1 overflow-x-auto w-full md:w-auto no-scrollbar">
               {[
                 { id: 'ALL', label: `All (${products.length})` },
-                { id: 'ACTIVE', label: `Active (${products.filter((p) => (p.status || '').toUpperCase() === 'ACTIVE').length})` },
-                { id: 'DRAFT', label: `Draft (${products.filter((p) => (p.status || '').toUpperCase() === 'DRAFT').length})` },
-                { id: 'ARCHIVED', label: `Archived (${products.filter((p) => (p.status || '').toUpperCase() === 'ARCHIVED').length})` },
+                {
+                  id: 'ACTIVE',
+                  label: `Active (${products.filter((p) => (p.status || '').toUpperCase() === 'ACTIVE').length})`,
+                },
+                {
+                  id: 'DRAFT',
+                  label: `Draft (${products.filter((p) => (p.status || '').toUpperCase() === 'DRAFT').length})`,
+                },
+                {
+                  id: 'ARCHIVED',
+                  label: `Archived (${products.filter((p) => (p.status || '').toUpperCase() === 'ARCHIVED').length})`,
+                },
               ].map((st) => (
                 <button
                   key={st.id}
@@ -908,15 +1000,23 @@ export const ProductStudio: React.FC = () => {
                     const imgUrl =
                       prod.images && prod.images.length > 0
                         ? prod.images[0]
-                        : prod.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=200&q=80';
+                        : prod.image ||
+                          'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=200&q=80';
 
                     return (
-                      <tr key={prod.id} className="hover:bg-slate-50/50 dark:hover:bg-accent/30 transition-colors">
+                      <tr
+                        key={prod.id}
+                        className="hover:bg-slate-50/50 dark:hover:bg-accent/30 transition-colors"
+                      >
                         {/* Product info */}
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-                              <img src={imgUrl} alt={prod.name} className="w-full h-full object-cover" />
+                              <img
+                                src={imgUrl}
+                                alt={prod.name}
+                                className="w-full h-full object-cover"
+                              />
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
@@ -954,14 +1054,20 @@ export const ProductStudio: React.FC = () => {
                         <td className="py-4 px-4 font-black text-slate-900 dark:text-foreground text-sm">
                           {(() => {
                             if (prod.variants && prod.variants.length > 0) {
-                              const prices = prod.variants.map((v) => Number(v.price) || 0).filter((p) => p > 0);
+                              const prices = prod.variants
+                                .map((v) => Number(v.price) || 0)
+                                .filter((p) => p > 0);
                               if (prices.length > 0) {
                                 const min = Math.min(...prices);
                                 const max = Math.max(...prices);
                                 if (min !== max) {
                                   return (
                                     <>
-                                      <span>{currencySymbol}{min.toFixed(2)} – {currencySymbol}{max.toFixed(2)}</span>
+                                      <span>
+                                        {currencySymbol}
+                                        {min.toFixed(2)} – {currencySymbol}
+                                        {max.toFixed(2)}
+                                      </span>
                                       <span className="text-[10px] text-indigo-600 block font-bold">
                                         Multi-price
                                       </span>
@@ -972,10 +1078,14 @@ export const ProductStudio: React.FC = () => {
                             }
                             return (
                               <>
-                                {currencySymbol}{typeof prod.price === 'number' ? prod.price.toFixed(2) : prod.price}
+                                {currencySymbol}
+                                {typeof prod.price === 'number'
+                                  ? prod.price.toFixed(2)
+                                  : prod.price}
                                 {prod.compareAtPrice && (
                                   <span className="text-[10px] text-slate-400 line-through block font-normal">
-                                    {currencySymbol}{prod.compareAtPrice}
+                                    {currencySymbol}
+                                    {prod.compareAtPrice}
                                   </span>
                                 )}
                               </>
@@ -1055,9 +1165,14 @@ export const ProductStudio: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-black text-slate-900 dark:text-foreground">
-                {editingProduct ? `Edit Product: ${editingProduct.name}` : 'Create Product (23 Options Form)'}
+                {editingProduct
+                  ? `Edit Product: ${editingProduct.name}`
+                  : 'Create Product (23 Options Form)'}
               </h2>
-              <p className="text-xs text-slate-500">Configure name, pricing, SKU, profit margins, taxes, inventory, dimensions, variants, size/color options, SEO, and status.</p>
+              <p className="text-xs text-slate-500">
+                Configure name, pricing, SKU, profit margins, taxes, inventory, dimensions,
+                variants, size/color options, SEO, and status.
+              </p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -1114,7 +1229,9 @@ export const ProductStudio: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">Description (HTML / Markdown)</label>
+                    <label className="block text-xs font-bold text-slate-700">
+                      Description (HTML / Markdown)
+                    </label>
                     <textarea
                       rows={5}
                       value={formData.description}
@@ -1137,7 +1254,9 @@ export const ProductStudio: React.FC = () => {
                       maxSizeMB={5}
                     />
                     <div className="space-y-1">
-                      <label className="block text-[11px] font-bold text-slate-500">Or paste image URL</label>
+                      <label className="block text-[11px] font-bold text-slate-500">
+                        Or paste image URL
+                      </label>
                       <input
                         type="text"
                         value={(formData.images && formData.images[0]) || ''}
@@ -1173,7 +1292,9 @@ export const ProductStudio: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">Compare-at Price ({currencySymbol})</label>
+                    <label className="block text-xs font-bold text-slate-700">
+                      Compare-at Price ({currencySymbol})
+                    </label>
                     <input
                       type="number"
                       step="0.01"
@@ -1185,7 +1306,9 @@ export const ProductStudio: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">Cost Price ({currencySymbol})</label>
+                    <label className="block text-xs font-bold text-slate-700">
+                      Cost Price ({currencySymbol})
+                    </label>
                     <input
                       type="number"
                       step="0.01"
@@ -1202,11 +1325,18 @@ export const ProductStudio: React.FC = () => {
                   <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <TrendingUp className="w-5 h-5 text-emerald-600" />
-                      <span className="text-xs font-bold text-emerald-900">Estimated Profit per Unit</span>
+                      <span className="text-xs font-bold text-emerald-900">
+                        Estimated Profit per Unit
+                      </span>
                     </div>
                     <div className="text-right">
-                      <span className="text-sm font-black text-emerald-700 block">{currencySymbol}{profitMarginNum.toFixed(2)}</span>
-                      <span className="text-[10px] font-extrabold text-emerald-600">{profitMarginPercent}% Margin</span>
+                      <span className="text-sm font-black text-emerald-700 block">
+                        {currencySymbol}
+                        {profitMarginNum.toFixed(2)}
+                      </span>
+                      <span className="text-[10px] font-extrabold text-emerald-600">
+                        {profitMarginPercent}% Margin
+                      </span>
                     </div>
                   </div>
                 )}
@@ -1234,7 +1364,9 @@ export const ProductStudio: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">Current Stock Quantity</label>
+                    <label className="block text-xs font-bold text-slate-700">
+                      Current Stock Quantity
+                    </label>
                     <input
                       type="number"
                       value={formData.inventory}
@@ -1256,7 +1388,9 @@ export const ProductStudio: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">Dimensions (L x W x H)</label>
+                    <label className="block text-xs font-bold text-slate-700">
+                      Dimensions (L x W x H)
+                    </label>
                     <input
                       type="text"
                       value={formData.dimensions || ''}
@@ -1285,7 +1419,8 @@ export const ProductStudio: React.FC = () => {
                         </span>
                       </div>
                       <p className="text-xs text-slate-500">
-                        Configure n number of variants with individual prices, compare prices, cost prices, SKUs, and stock quantities.
+                        Configure n number of variants with individual prices, compare prices, cost
+                        prices, SKUs, and stock quantities.
                       </p>
                     </div>
                   </div>
@@ -1318,12 +1453,16 @@ export const ProductStudio: React.FC = () => {
                         <Wand2 className="w-4 h-4 text-indigo-600" />
                         Quick Combinations Matrix Generator
                       </span>
-                      <span className="text-[11px] text-indigo-600 font-medium">Auto-crosses Option 1 × Option 2</span>
+                      <span className="text-[11px] text-indigo-600 font-medium">
+                        Auto-crosses Option 1 × Option 2
+                      </span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-700">Option 1 Name (e.g. Size)</label>
+                        <label className="block text-xs font-bold text-slate-700">
+                          Option 1 Name (e.g. Size)
+                        </label>
                         <input
                           type="text"
                           value={option1Name}
@@ -1342,7 +1481,9 @@ export const ProductStudio: React.FC = () => {
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-700">Option 2 Name (e.g. Color)</label>
+                        <label className="block text-xs font-bold text-slate-700">
+                          Option 2 Name (e.g. Color)
+                        </label>
                         <input
                           type="text"
                           value={option2Name}
@@ -1390,7 +1531,11 @@ export const ProductStudio: React.FC = () => {
                         <div>
                           <span className="text-slate-500 font-medium">Total Stock:</span>{' '}
                           <span className="font-black text-slate-900">
-                            {formData.variants.reduce((acc, curr) => acc + (Number(curr.inventory) || 0), 0)} units
+                            {formData.variants.reduce(
+                              (acc, curr) => acc + (Number(curr.inventory) || 0),
+                              0,
+                            )}{' '}
+                            units
                           </span>
                         </div>
                         <div className="hidden sm:block text-slate-300">|</div>
@@ -1401,7 +1546,9 @@ export const ProductStudio: React.FC = () => {
                               const prices = formData.variants.map((v) => Number(v.price) || 0);
                               const min = Math.min(...prices);
                               const max = Math.max(...prices);
-                              return min === max ? `${currencySymbol}${min.toFixed(2)}` : `${currencySymbol}${min.toFixed(2)} – ${currencySymbol}${max.toFixed(2)}`;
+                              return min === max
+                                ? `${currencySymbol}${min.toFixed(2)}`
+                                : `${currencySymbol}${min.toFixed(2)} – ${currencySymbol}${max.toFixed(2)}`;
                             })()}
                           </span>
                         </div>
@@ -1447,14 +1594,19 @@ export const ProductStudio: React.FC = () => {
                             {formData.variants.map((variant, idx) => {
                               const qty = Number(variant.inventory) || 0;
                               return (
-                                <tr key={variant.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                                <tr
+                                  key={variant.id || idx}
+                                  className="hover:bg-slate-50/80 transition-colors"
+                                >
                                   {/* Variant Name */}
                                   <td className="p-2.5">
                                     <input
                                       type="text"
                                       required
                                       value={variant.name}
-                                      onChange={(e) => handleUpdateVariantField(variant.id, 'name', e.target.value)}
+                                      onChange={(e) =>
+                                        handleUpdateVariantField(variant.id, 'name', e.target.value)
+                                      }
                                       placeholder="e.g. Small / Red"
                                       className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-bold text-slate-900 focus:bg-white"
                                     />
@@ -1466,7 +1618,9 @@ export const ProductStudio: React.FC = () => {
                                       type="text"
                                       required
                                       value={variant.sku}
-                                      onChange={(e) => handleUpdateVariantField(variant.id, 'sku', e.target.value)}
+                                      onChange={(e) =>
+                                        handleUpdateVariantField(variant.id, 'sku', e.target.value)
+                                      }
                                       placeholder="SKU"
                                       className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-mono font-bold text-slate-700 focus:bg-white"
                                     />
@@ -1479,7 +1633,13 @@ export const ProductStudio: React.FC = () => {
                                       step="0.01"
                                       required
                                       value={variant.price}
-                                      onChange={(e) => handleUpdateVariantField(variant.id, 'price', parseFloat(e.target.value) || 0)}
+                                      onChange={(e) =>
+                                        handleUpdateVariantField(
+                                          variant.id,
+                                          'price',
+                                          parseFloat(e.target.value) || 0,
+                                        )
+                                      }
                                       className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-black text-slate-900 focus:bg-white"
                                     />
                                   </td>
@@ -1494,7 +1654,7 @@ export const ProductStudio: React.FC = () => {
                                         handleUpdateVariantField(
                                           variant.id,
                                           'compareAtPrice',
-                                          e.target.value ? parseFloat(e.target.value) : null
+                                          e.target.value ? parseFloat(e.target.value) : null,
                                         )
                                       }
                                       placeholder="Optional"
@@ -1512,7 +1672,7 @@ export const ProductStudio: React.FC = () => {
                                         handleUpdateVariantField(
                                           variant.id,
                                           'costPrice',
-                                          e.target.value ? parseFloat(e.target.value) : null
+                                          e.target.value ? parseFloat(e.target.value) : null,
                                         )
                                       }
                                       placeholder="Cost"
@@ -1529,7 +1689,11 @@ export const ProductStudio: React.FC = () => {
                                         required
                                         value={variant.inventory}
                                         onChange={(e) =>
-                                          handleUpdateVariantField(variant.id, 'inventory', parseInt(e.target.value, 10) || 0)
+                                          handleUpdateVariantField(
+                                            variant.id,
+                                            'inventory',
+                                            parseInt(e.target.value, 10) || 0,
+                                          )
                                         }
                                         className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-bold text-slate-900 focus:bg-white"
                                       />
@@ -1556,7 +1720,13 @@ export const ProductStudio: React.FC = () => {
                                     <input
                                       type="text"
                                       value={variant.image || ''}
-                                      onChange={(e) => handleUpdateVariantField(variant.id, 'image', e.target.value)}
+                                      onChange={(e) =>
+                                        handleUpdateVariantField(
+                                          variant.id,
+                                          'image',
+                                          e.target.value,
+                                        )
+                                      }
                                       placeholder="https://..."
                                       className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-[11px] font-mono text-slate-500 focus:bg-white"
                                     />
@@ -1601,7 +1771,8 @@ export const ProductStudio: React.FC = () => {
                         Single SKU Product (No Variants Defined)
                       </h4>
                       <p className="text-xs text-slate-400 max-w-md mx-auto mt-0.5">
-                        This product currently has one flat price ({currencySymbol}{formData.price || 0}) and stock quantity ({formData.inventory || 0} units).
+                        This product currently has one flat price ({currencySymbol}
+                        {formData.price || 0}) and stock quantity ({formData.inventory || 0} units).
                       </p>
                     </div>
                     <div className="flex items-center justify-center gap-3 pt-1">
@@ -1652,7 +1823,9 @@ export const ProductStudio: React.FC = () => {
                     <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground">
                       Storefront Organization
                     </h3>
-                    <p className="text-[11px] text-slate-400">Choose primary & multi-categories, brand, and collections</p>
+                    <p className="text-[11px] text-slate-400">
+                      Choose primary & multi-categories, brand, and collections
+                    </p>
                   </div>
                   <span className="text-[10px] text-indigo-600 font-bold bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full">
                     Multi-Taxonomy
@@ -1664,7 +1837,9 @@ export const ProductStudio: React.FC = () => {
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
-                        <label className="text-xs font-bold text-slate-800 dark:text-foreground">Primary Category</label>
+                        <label className="text-xs font-bold text-slate-800 dark:text-foreground">
+                          Primary Category
+                        </label>
                         <span className="text-[10px] text-rose-500 font-black">*</span>
                       </div>
                       <button
@@ -1682,7 +1857,12 @@ export const ProductStudio: React.FC = () => {
 
                     {/* Choose Primary Category from Existing Categories Dropdown */}
                     <select
-                      value={formData.categoryName || formData.category || (categories[0]?.name || 'General')}
+                      value={
+                        formData.categoryName ||
+                        formData.category ||
+                        categories[0]?.name ||
+                        'General'
+                      }
                       onChange={(e) => handlePrimaryCategoryChange(e.target.value)}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-bold text-slate-900 dark:text-foreground"
                     >
@@ -1691,7 +1871,8 @@ export const ProductStudio: React.FC = () => {
                       ) : (
                         categories.map((cat) => (
                           <option key={cat.id} value={cat.name}>
-                            {cat.icon ? `${cat.icon} ` : ''}{cat.name}
+                            {cat.icon ? `${cat.icon} ` : ''}
+                            {cat.name}
                           </option>
                         ))
                       )}
@@ -1746,13 +1927,15 @@ export const ProductStudio: React.FC = () => {
                           </div>
                         ) : (
                           categories
-                            .filter((cat) =>
-                              !categorySearchTerm ||
-                              cat.name.toLowerCase().includes(categorySearchTerm.toLowerCase())
+                            .filter(
+                              (cat) =>
+                                !categorySearchTerm ||
+                                cat.name.toLowerCase().includes(categorySearchTerm.toLowerCase()),
                             )
                             .map((cat) => {
                               const isSelected = (formData.categories || []).includes(cat.name);
-                              const isPrimary = (formData.categoryName || formData.category) === cat.name;
+                              const isPrimary =
+                                (formData.categoryName || formData.category) === cat.name;
                               return (
                                 <button
                                   key={cat.id}
@@ -1787,11 +1970,19 @@ export const ProductStudio: React.FC = () => {
                   {/* 2. BRAND SELECTION (Choose from Existing Brands + Inline Quick Add) */}
                   <div className="space-y-1.5 pt-1">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-800 dark:text-foreground">Brand / Manufacturer</label>
+                      <label className="text-xs font-bold text-slate-800 dark:text-foreground">
+                        Brand / Manufacturer
+                      </label>
                       <button
                         type="button"
                         onClick={() => {
-                          setQuickBrandData({ name: '', slug: '', logo: '', website: '', description: '' });
+                          setQuickBrandData({
+                            name: '',
+                            slug: '',
+                            logo: '',
+                            website: '',
+                            description: '',
+                          });
                           setIsQuickBrandModalOpen(true);
                         }}
                         className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 px-2.5 py-1 rounded-lg transition cursor-pointer"
@@ -1819,12 +2010,20 @@ export const ProductStudio: React.FC = () => {
                   <div className="space-y-2.5 pt-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
-                        <label className="text-xs font-bold text-slate-800 dark:text-foreground">Primary Collection</label>
+                        <label className="text-xs font-bold text-slate-800 dark:text-foreground">
+                          Primary Collection
+                        </label>
                       </div>
                       <button
                         type="button"
                         onClick={() => {
-                          setQuickCollectionData({ name: '', slug: '', type: 'MANUAL', image: '', description: '' });
+                          setQuickCollectionData({
+                            name: '',
+                            slug: '',
+                            type: 'MANUAL',
+                            image: '',
+                            description: '',
+                          });
                           setIsQuickCollectionModalOpen(true);
                         }}
                         className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 px-2.5 py-1 rounded-lg transition cursor-pointer"
@@ -1897,9 +2096,10 @@ export const ProductStudio: React.FC = () => {
                           </div>
                         ) : (
                           collections
-                            .filter((col) =>
-                              !collectionSearchTerm ||
-                              col.name.toLowerCase().includes(collectionSearchTerm.toLowerCase())
+                            .filter(
+                              (col) =>
+                                !collectionSearchTerm ||
+                                col.name.toLowerCase().includes(collectionSearchTerm.toLowerCase()),
                             )
                             .map((col) => {
                               const isSelected = (formData.collections || []).includes(col.name);
@@ -1937,7 +2137,9 @@ export const ProductStudio: React.FC = () => {
 
                   {/* 4. MATERIAL SPEC */}
                   <div className="space-y-1 pt-1">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Material Specification</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                      Material Specification
+                    </label>
                     <input
                       type="text"
                       value={formData.material || ''}
@@ -1949,7 +2151,9 @@ export const ProductStudio: React.FC = () => {
 
                   {/* 5. PRODUCT TAGS */}
                   <div className="space-y-1 pt-1">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Search Tags (comma separated)</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                      Search Tags (comma separated)
+                    </label>
                     <input
                       type="text"
                       value={formData.tags || ''}
@@ -2048,7 +2252,10 @@ export const ProductStudio: React.FC = () => {
       {activeSubTab === 'reviews' && (
         <div className="space-y-4">
           {reviews.map((rev) => (
-            <div key={rev.id} className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div
+              key={rev.id}
+              className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
+            >
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="flex items-center text-amber-400">
@@ -2165,8 +2372,12 @@ export const ProductStudio: React.FC = () => {
                   <FolderPlus className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">Quick Add Category</h3>
-                  <p className="text-[11px] text-slate-400">Creates and assigns to current product</p>
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">
+                    Quick Add Category
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Creates and assigns to current product
+                  </p>
                 </div>
               </div>
               <button
@@ -2180,7 +2391,9 @@ export const ProductStudio: React.FC = () => {
 
             <form onSubmit={handleSaveQuickCategory} className="space-y-4">
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Category Name *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                  Category Name *
+                </label>
                 <input
                   type="text"
                   required
@@ -2188,7 +2401,10 @@ export const ProductStudio: React.FC = () => {
                   value={quickCategoryData.name}
                   onChange={(e) => {
                     const nameVal = e.target.value;
-                    const slugVal = nameVal.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+                    const slugVal = nameVal
+                      .toLowerCase()
+                      .trim()
+                      .replace(/[^a-z0-9]+/g, '-');
                     setQuickCategoryData({ ...quickCategoryData, name: nameVal, slug: slugVal });
                   }}
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-bold"
@@ -2197,31 +2413,43 @@ export const ProductStudio: React.FC = () => {
 
               <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-2 space-y-1">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">URL Slug</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                    URL Slug
+                  </label>
                   <input
                     type="text"
                     value={quickCategoryData.slug}
-                    onChange={(e) => setQuickCategoryData({ ...quickCategoryData, slug: e.target.value })}
+                    onChange={(e) =>
+                      setQuickCategoryData({ ...quickCategoryData, slug: e.target.value })
+                    }
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Icon</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                    Icon
+                  </label>
                   <input
                     type="text"
                     value={quickCategoryData.icon}
-                    onChange={(e) => setQuickCategoryData({ ...quickCategoryData, icon: e.target.value })}
+                    onChange={(e) =>
+                      setQuickCategoryData({ ...quickCategoryData, icon: e.target.value })
+                    }
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs text-center font-bold"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Description (Optional)</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                  Description (Optional)
+                </label>
                 <textarea
                   rows={2}
                   value={quickCategoryData.description}
-                  onChange={(e) => setQuickCategoryData({ ...quickCategoryData, description: e.target.value })}
+                  onChange={(e) =>
+                    setQuickCategoryData({ ...quickCategoryData, description: e.target.value })
+                  }
                   placeholder="Brief summary of category..."
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs"
                 />
@@ -2240,7 +2468,11 @@ export const ProductStudio: React.FC = () => {
                   disabled={isSavingQuickCategory}
                   className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  {isSavingQuickCategory ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  {isSavingQuickCategory ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Check className="w-3.5 h-3.5" />
+                  )}
                   <span>Save & Assign</span>
                 </button>
               </div>
@@ -2259,8 +2491,12 @@ export const ProductStudio: React.FC = () => {
                   <Building2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">Quick Add Brand</h3>
-                  <p className="text-[11px] text-slate-400">Creates and assigns to current product</p>
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">
+                    Quick Add Brand
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Creates and assigns to current product
+                  </p>
                 </div>
               </div>
               <button
@@ -2274,7 +2510,9 @@ export const ProductStudio: React.FC = () => {
 
             <form onSubmit={handleSaveQuickBrand} className="space-y-4">
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Brand Name *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                  Brand Name *
+                </label>
                 <input
                   type="text"
                   required
@@ -2282,7 +2520,10 @@ export const ProductStudio: React.FC = () => {
                   value={quickBrandData.name}
                   onChange={(e) => {
                     const nameVal = e.target.value;
-                    const slugVal = nameVal.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+                    const slugVal = nameVal
+                      .toLowerCase()
+                      .trim()
+                      .replace(/[^a-z0-9]+/g, '-');
                     setQuickBrandData({ ...quickBrandData, name: nameVal, slug: slugVal });
                   }}
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-bold"
@@ -2290,7 +2531,9 @@ export const ProductStudio: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Brand Logo URL (Optional)</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                  Brand Logo URL (Optional)
+                </label>
                 <input
                   type="text"
                   value={quickBrandData.logo}
@@ -2301,11 +2544,15 @@ export const ProductStudio: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Official Website (Optional)</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                  Official Website (Optional)
+                </label>
                 <input
                   type="text"
                   value={quickBrandData.website}
-                  onChange={(e) => setQuickBrandData({ ...quickBrandData, website: e.target.value })}
+                  onChange={(e) =>
+                    setQuickBrandData({ ...quickBrandData, website: e.target.value })
+                  }
                   placeholder="https://brand.com"
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
                 />
@@ -2324,7 +2571,11 @@ export const ProductStudio: React.FC = () => {
                   disabled={isSavingQuickBrand}
                   className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  {isSavingQuickBrand ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  {isSavingQuickBrand ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Check className="w-3.5 h-3.5" />
+                  )}
                   <span>Save & Select Brand</span>
                 </button>
               </div>
@@ -2343,8 +2594,12 @@ export const ProductStudio: React.FC = () => {
                   <BookmarkPlus className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">Quick Add Collection</h3>
-                  <p className="text-[11px] text-slate-400">Creates and assigns to current product</p>
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">
+                    Quick Add Collection
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Creates and assigns to current product
+                  </p>
                 </div>
               </div>
               <button
@@ -2358,7 +2613,9 @@ export const ProductStudio: React.FC = () => {
 
             <form onSubmit={handleSaveQuickCollection} className="space-y-4">
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Collection Title *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                  Collection Title *
+                </label>
                 <input
                   type="text"
                   required
@@ -2366,8 +2623,15 @@ export const ProductStudio: React.FC = () => {
                   value={quickCollectionData.name}
                   onChange={(e) => {
                     const nameVal = e.target.value;
-                    const slugVal = nameVal.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
-                    setQuickCollectionData({ ...quickCollectionData, name: nameVal, slug: slugVal });
+                    const slugVal = nameVal
+                      .toLowerCase()
+                      .trim()
+                      .replace(/[^a-z0-9]+/g, '-');
+                    setQuickCollectionData({
+                      ...quickCollectionData,
+                      name: nameVal,
+                      slug: slugVal,
+                    });
                   }}
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-bold"
                 />
@@ -2375,19 +2639,30 @@ export const ProductStudio: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">URL Slug</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                    URL Slug
+                  </label>
                   <input
                     type="text"
                     value={quickCollectionData.slug}
-                    onChange={(e) => setQuickCollectionData({ ...quickCollectionData, slug: e.target.value })}
+                    onChange={(e) =>
+                      setQuickCollectionData({ ...quickCollectionData, slug: e.target.value })
+                    }
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Type</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                    Type
+                  </label>
                   <select
                     value={quickCollectionData.type}
-                    onChange={(e) => setQuickCollectionData({ ...quickCollectionData, type: e.target.value as 'MANUAL' | 'AUTOMATIC' })}
+                    onChange={(e) =>
+                      setQuickCollectionData({
+                        ...quickCollectionData,
+                        type: e.target.value as 'MANUAL' | 'AUTOMATIC',
+                      })
+                    }
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-bold"
                   >
                     <option value="MANUAL">Manual</option>
@@ -2397,11 +2672,15 @@ export const ProductStudio: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">Cover Image URL (Optional)</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                  Cover Image URL (Optional)
+                </label>
                 <input
                   type="text"
                   value={quickCollectionData.image}
-                  onChange={(e) => setQuickCollectionData({ ...quickCollectionData, image: e.target.value })}
+                  onChange={(e) =>
+                    setQuickCollectionData({ ...quickCollectionData, image: e.target.value })
+                  }
                   placeholder="https://..."
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
                 />
@@ -2420,7 +2699,11 @@ export const ProductStudio: React.FC = () => {
                   disabled={isSavingQuickCollection}
                   className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  {isSavingQuickCollection ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  {isSavingQuickCollection ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Check className="w-3.5 h-3.5" />
+                  )}
                   <span>Save & Assign</span>
                 </button>
               </div>

@@ -42,15 +42,17 @@ export function usePlanAccess(): PlanAccess {
   }, []);
 
   const rawPlan = (subscription?.plan || 'STARTER').toUpperCase();
-  const plan = (rawPlan === 'API'
-    ? 'API'
-    : rawPlan === 'AGENCY' || rawPlan.includes('VIP')
-    ? 'AGENCY'
-    : rawPlan === 'ENTERPRISE' || rawPlan.includes('SCALE')
-    ? 'ENTERPRISE'
-    : rawPlan === 'GROWTH' || rawPlan.includes('PRO')
-    ? 'GROWTH'
-    : 'STARTER') as 'STARTER' | 'GROWTH' | 'ENTERPRISE' | 'AGENCY' | 'API';
+  const plan = (
+    rawPlan === 'API'
+      ? 'API'
+      : rawPlan === 'AGENCY' || rawPlan.includes('VIP')
+        ? 'AGENCY'
+        : rawPlan === 'ENTERPRISE' || rawPlan.includes('SCALE')
+          ? 'ENTERPRISE'
+          : rawPlan === 'GROWTH' || rawPlan.includes('PRO')
+            ? 'GROWTH'
+            : 'STARTER'
+  ) as 'STARTER' | 'GROWTH' | 'ENTERPRISE' | 'AGENCY' | 'API';
 
   const isStarter = plan === 'STARTER';
   const isGrowth = plan === 'GROWTH';
@@ -72,12 +74,12 @@ export function usePlanAccess(): PlanAccess {
       plan === 'API'
         ? 'API Tier (Developer)'
         : plan === 'AGENCY'
-        ? 'VIP Agency & Enterprise Plus'
-        : plan === 'ENTERPRISE'
-        ? 'Scale Enterprise'
-        : plan === 'GROWTH'
-        ? 'Growth Pro'
-        : 'Starter Tier',
+          ? 'VIP Agency & Enterprise Plus'
+          : plan === 'ENTERPRISE'
+            ? 'Scale Enterprise'
+            : plan === 'GROWTH'
+              ? 'Growth Pro'
+              : 'Starter Tier',
     isStarter,
     isGrowth,
     isEnterprise,

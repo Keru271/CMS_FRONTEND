@@ -17,7 +17,7 @@ import {
 interface CMSContextType {
   merchantData: MerchantOnboardingData | null;
   setMerchantData: React.Dispatch<React.SetStateAction<MerchantOnboardingData | null>>;
-  
+
   // Multi-Store Portfolio Management
   stores: CMSStore[];
   activeStore: CMSStore | null;
@@ -38,7 +38,7 @@ interface CMSContextType {
   isLoading: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   fetchDashboardDetails: () => Promise<void>;
-  
+
   // Store Suspension State
   isSuspended: boolean;
   storeStatus: string;
@@ -52,7 +52,7 @@ interface CMSContextType {
   setEditingProduct: (product: CMSProduct | null) => void;
   openAddProductModal: () => void;
   openEditProductModal: (product: CMSProduct) => void;
-  
+
   // Currency & Formatting
   currency: string;
   currencySymbol: string;
@@ -60,7 +60,7 @@ interface CMSContextType {
 
   // Actions
   handleLogout: () => void;
-  
+
   // Sidebar State
   sidebarCollapsed: boolean;
   setSidebarCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
@@ -153,7 +153,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       // Determine active store from in-memory cmsService, or default to first store
       const storedStoreId = cmsService.getActiveStoreId();
-      let currentActiveStore = allStores.find((s) => s.id === storedStoreId) || allStores[0] || null;
+      let currentActiveStore =
+        allStores.find((s) => s.id === storedStoreId) || allStores[0] || null;
 
       if (currentActiveStore) {
         cmsService.setActiveStoreId(currentActiveStore.id);
@@ -164,55 +165,58 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         // Determine the user's role and permissions for currentActiveStore
         const isOwner = ownedStores.some((s) => s.id === currentActiveStore.id);
-        const activeMembership = (backendUser.storeMemberships || []).find(
-          (m) => m.storeId === currentActiveStore.id || m.store?.id === currentActiveStore.id
-        ) || (backendUser.storeMemberships && backendUser.storeMemberships[0]);
+        const activeMembership =
+          (backendUser.storeMemberships || []).find(
+            (m) => m.storeId === currentActiveStore.id || m.store?.id === currentActiveStore.id,
+          ) ||
+          (backendUser.storeMemberships && backendUser.storeMemberships[0]);
 
         let effectiveRole = isOwner
           ? 'OWNER'
           : activeMembership
-          ? (activeMembership.role || 'STAFF').toUpperCase()
-          : (backendUser.role || 'STAFF').toUpperCase();
+            ? (activeMembership.role || 'STAFF').toUpperCase()
+            : (backendUser.role || 'STAFF').toUpperCase();
 
         let effectiveTitle = isOwner
           ? 'Store Owner'
           : activeMembership?.customRoleTitle || backendUser.customRoleTitle || effectiveRole;
 
-        let effectivePermissions = isOwner || effectiveRole === 'ADMIN'
-          ? {
-              canManageProducts: true,
-              canManageInventory: true,
-              canManageOrders: true,
-              canManageCustomers: true,
-              canManageThemes: true,
-              canManageSettings: true,
-              canManagePayments: true,
-              canManageLogistics: true,
-              canManageAnalytics: true,
-            }
-          : activeMembership
-          ? {
-              canManageProducts: !!activeMembership.canManageProducts,
-              canManageInventory: !!activeMembership.canManageInventory,
-              canManageOrders: !!activeMembership.canManageOrders,
-              canManageCustomers: !!activeMembership.canManageCustomers,
-              canManageThemes: !!activeMembership.canManageThemes,
-              canManageSettings: !!activeMembership.canManageSettings,
-              canManagePayments: !!activeMembership.canManagePayments,
-              canManageLogistics: !!activeMembership.canManageLogistics,
-              canManageAnalytics: !!activeMembership.canManageAnalytics,
-            }
-          : {
-              canManageProducts: !!(backendUser as any).permissionsProducts,
-              canManageInventory: !!(backendUser as any).permissionsProducts,
-              canManageOrders: !!(backendUser as any).permissionsOrders,
-              canManageCustomers: !!(backendUser as any).permissionsCustomers,
-              canManageThemes: !!(backendUser as any).permissionsThemes,
-              canManageSettings: !!(backendUser as any).permissionsSettings,
-              canManagePayments: !!(backendUser as any).permissionsPayments,
-              canManageLogistics: false,
-              canManageAnalytics: !!(backendUser as any).permissionsAnalytics,
-            };
+        let effectivePermissions =
+          isOwner || effectiveRole === 'ADMIN'
+            ? {
+                canManageProducts: true,
+                canManageInventory: true,
+                canManageOrders: true,
+                canManageCustomers: true,
+                canManageThemes: true,
+                canManageSettings: true,
+                canManagePayments: true,
+                canManageLogistics: true,
+                canManageAnalytics: true,
+              }
+            : activeMembership
+              ? {
+                  canManageProducts: !!activeMembership.canManageProducts,
+                  canManageInventory: !!activeMembership.canManageInventory,
+                  canManageOrders: !!activeMembership.canManageOrders,
+                  canManageCustomers: !!activeMembership.canManageCustomers,
+                  canManageThemes: !!activeMembership.canManageThemes,
+                  canManageSettings: !!activeMembership.canManageSettings,
+                  canManagePayments: !!activeMembership.canManagePayments,
+                  canManageLogistics: !!activeMembership.canManageLogistics,
+                  canManageAnalytics: !!activeMembership.canManageAnalytics,
+                }
+              : {
+                  canManageProducts: !!(backendUser as any).permissionsProducts,
+                  canManageInventory: !!(backendUser as any).permissionsProducts,
+                  canManageOrders: !!(backendUser as any).permissionsOrders,
+                  canManageCustomers: !!(backendUser as any).permissionsCustomers,
+                  canManageThemes: !!(backendUser as any).permissionsThemes,
+                  canManageSettings: !!(backendUser as any).permissionsSettings,
+                  canManagePayments: !!(backendUser as any).permissionsPayments,
+                  canManageLogistics: false,
+                  canManageAnalytics: !!(backendUser as any).permissionsAnalytics,
+                };
 
         const session = cmsService.getMerchantSession();
         const updatedSession: MerchantOnboardingData = {
@@ -363,7 +367,6 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setIsLoading(false);
     };
 
-
     initCMS();
   }, [syncUserAndStoreStatus, fetchDashboardDetails]);
 
@@ -393,7 +396,6 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     router.push('/login');
   };
 
-
   const openAddProductModal = () => {
     setEditingProduct(null);
     setIsProductModalOpen(true);
@@ -408,7 +410,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const currencySymbol = getCurrencySymbol(storeCurrency);
   const formatCurrency = useCallback(
     (amount: number | string | undefined | null) => formatPrice(amount, storeCurrency),
-    [storeCurrency]
+    [storeCurrency],
   );
 
   return (

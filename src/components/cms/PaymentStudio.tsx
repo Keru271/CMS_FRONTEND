@@ -81,7 +81,8 @@ export const PaymentStudio: React.FC = () => {
   const [stripeConnectMode, setStripeConnectMode] = useState<'OAUTH' | 'MANUAL'>('OAUTH');
   const [stripeConnectSubmitting, setStripeConnectSubmitting] = useState(false);
   const [disconnectingStripe, setDisconnectingStripe] = useState(false);
-  const [stripePartnerMerchantName, setStripePartnerMerchantName] = useState('OmniStore Global Direct');
+  const [stripePartnerMerchantName, setStripePartnerMerchantName] =
+    useState('OmniStore Global Direct');
   const [stripePartnerPk, setStripePartnerPk] = useState('');
   const [stripePartnerSk, setStripePartnerSk] = useState('');
   const [stripePartnerCountry, setStripePartnerCountry] = useState('US');
@@ -99,7 +100,9 @@ export const PaymentStudio: React.FC = () => {
   const [stripeTestResult, setStripeTestResult] = useState<PaymentTestResponse | null>(null);
 
   // Active Tab: 'gateways' | 'transactions' | 'calculator'
-  const [activeTab, setActiveTab] = useState<'gateways' | 'transactions' | 'calculator'>('gateways');
+  const [activeTab, setActiveTab] = useState<'gateways' | 'transactions' | 'calculator'>(
+    'gateways',
+  );
   const [filterGateway, setFilterGateway] = useState<string>('ALL');
 
   // Fee Calculator State
@@ -169,8 +172,14 @@ export const PaymentStudio: React.FC = () => {
         merchantName: stripePartnerMerchantName,
         country: stripePartnerCountry,
         testMode: stripePartnerTestMode,
-        publishableKey: stripePartnerPk || (stripePartnerTestMode ? 'pk_test_standardDemoStripe2026' : `pk_live_${Date.now()}`),
-        secretKey: stripePartnerSk || (stripePartnerTestMode ? 'sk_test_standardSecretStripe2026' : `sk_live_sec_${Date.now()}`),
+        publishableKey:
+          stripePartnerPk ||
+          (stripePartnerTestMode ? 'pk_test_standardDemoStripe2026' : `pk_live_${Date.now()}`),
+        secretKey:
+          stripePartnerSk ||
+          (stripePartnerTestMode
+            ? 'sk_test_standardSecretStripe2026'
+            : `sk_live_sec_${Date.now()}`),
       });
 
       setStripeConnectStep(3);
@@ -185,7 +194,12 @@ export const PaymentStudio: React.FC = () => {
   };
 
   const handleDisconnectStripe = async () => {
-    if (!confirm('Are you sure you want to disconnect your linked Stripe Connect account? International checkout will be paused.')) return;
+    if (
+      !confirm(
+        'Are you sure you want to disconnect your linked Stripe Connect account? International checkout will be paused.',
+      )
+    )
+      return;
     setDisconnectingStripe(true);
     try {
       await cmsService.disconnectStripeConnect('Merchant disconnected from CMS');
@@ -217,8 +231,12 @@ export const PaymentStudio: React.FC = () => {
         merchantName: partnerMerchantName,
         testMode: partnerTestMode,
         autoCapture: partnerAutoCapture,
-        keyId: partnerKeyId || (partnerTestMode ? 'rzp_test_standardDemo2026' : `rzp_live_${Date.now()}`),
-        keySecret: partnerKeySecret || (partnerTestMode ? 'rzp_test_secret_demo2026' : `rzp_live_sec_${Date.now()}`),
+        keyId:
+          partnerKeyId ||
+          (partnerTestMode ? 'rzp_test_standardDemo2026' : `rzp_live_${Date.now()}`),
+        keySecret:
+          partnerKeySecret ||
+          (partnerTestMode ? 'rzp_test_secret_demo2026' : `rzp_live_sec_${Date.now()}`),
       });
 
       setConnectStep(3);
@@ -233,7 +251,12 @@ export const PaymentStudio: React.FC = () => {
   };
 
   const handleDisconnectRzp = async () => {
-    if (!confirm('Are you sure you want to disconnect your linked Razorpay Connect account? Domestic checkout will be paused.')) return;
+    if (
+      !confirm(
+        'Are you sure you want to disconnect your linked Razorpay Connect account? Domestic checkout will be paused.',
+      )
+    )
+      return;
     setDisconnectingRzp(true);
     try {
       await cmsService.disconnectRazorpayConnect('Merchant disconnected from CMS');
@@ -280,9 +303,15 @@ export const PaymentStudio: React.FC = () => {
         setVerificationError(null);
         setVerificationCountdown(60);
         setShowVerificationModal(true);
-        showToast(res.message || 'Security authorization code sent to your registered email.', 'success');
+        showToast(
+          res.message || 'Security authorization code sent to your registered email.',
+          'success',
+        );
       } else {
-        showToast('Payment gateway configuration and encrypted credentials saved successfully!', 'success');
+        showToast(
+          'Payment gateway configuration and encrypted credentials saved successfully!',
+          'success',
+        );
         loadData();
       }
     } catch (err: any) {
@@ -314,11 +343,16 @@ export const PaymentStudio: React.FC = () => {
         setShowVerificationModal(false);
         setPendingPayload(null);
         setVerificationOtp('');
-        showToast('🔐 Payment credentials verified, encrypted (AES-256), and saved successfully!', 'success');
+        showToast(
+          '🔐 Payment credentials verified, encrypted (AES-256), and saved successfully!',
+          'success',
+        );
         loadData();
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Invalid or expired authorization code. Please check and try again.';
+      const msg =
+        err?.response?.data?.message ||
+        'Invalid or expired authorization code. Please check and try again.';
       setVerificationError(msg);
     } finally {
       setIsVerifyingOtp(false);
@@ -332,7 +366,10 @@ export const PaymentStudio: React.FC = () => {
     try {
       const res = await cmsService.requestPaymentVerification();
       setVerificationCountdown(60);
-      showToast(res.message || 'A new verification code has been dispatched to your email.', 'success');
+      showToast(
+        res.message || 'A new verification code has been dispatched to your email.',
+        'success',
+      );
     } catch (err: any) {
       showToast(err?.response?.data?.message || 'Failed to resend verification code.', 'error');
     } finally {
@@ -373,7 +410,10 @@ export const PaymentStudio: React.FC = () => {
     try {
       const res = await cmsService.testPaymentGateway({
         gateway: 'STRIPE',
-        publishableKey: formData.stripePublishableKey || settings?.stripePublishableKey || 'pk_test_standardDemoStripe2026',
+        publishableKey:
+          formData.stripePublishableKey ||
+          settings?.stripePublishableKey ||
+          'pk_test_standardDemoStripe2026',
         secretKey: formData.stripeSecretKey || 'sk_test_secret_demo',
         testMode: formData.paymentTestMode,
       });
@@ -419,7 +459,9 @@ export const PaymentStudio: React.FC = () => {
       <div className="flex items-center justify-center min-h-[450px]">
         <div className="flex flex-col items-center gap-3">
           <RefreshCw className="w-8 h-8 animate-spin text-[#191a1b]" />
-          <p className="text-sm font-sans text-[#5e5a5a]">Loading Payment Studio configuration...</p>
+          <p className="text-sm font-sans text-[#5e5a5a]">
+            Loading Payment Studio configuration...
+          </p>
         </div>
       </div>
     );
@@ -434,7 +476,11 @@ export const PaymentStudio: React.FC = () => {
             toast.type === 'success' ? 'bg-[#191a1b] text-[#d4ff4c]' : 'bg-rose-600 text-white'
           }`}
         >
-          {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-[#d4ff4c]" /> : <AlertCircle className="w-5 h-5" />}
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-[#d4ff4c]" />
+          ) : (
+            <AlertCircle className="w-5 h-5" />
+          )}
           <span>{toast.message}</span>
         </div>
       )}
@@ -455,7 +501,10 @@ export const PaymentStudio: React.FC = () => {
                   </span>
                 </h2>
                 <p className="text-xs font-sans text-[#5e5a5a] mt-0.5">
-                  Configure Indian domestic checkout with <strong className="text-[#191a1b]">Razorpay</strong> (UPI & NetBanking) and international cross-border processing with <strong className="text-[#191a1b]">Stripe</strong>.
+                  Configure Indian domestic checkout with{' '}
+                  <strong className="text-[#191a1b]">Razorpay</strong> (UPI & NetBanking) and
+                  international cross-border processing with{' '}
+                  <strong className="text-[#191a1b]">Stripe</strong>.
                 </p>
               </div>
             </div>
@@ -467,7 +516,9 @@ export const PaymentStudio: React.FC = () => {
               <span className="text-xs font-medium text-[#5e5a5a]">Sandbox Mode:</span>
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, paymentTestMode: !formData.paymentTestMode })}
+                onClick={() =>
+                  setFormData({ ...formData, paymentTestMode: !formData.paymentTestMode })
+                }
                 className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
                   formData.paymentTestMode ? 'bg-[#191a1b]' : 'bg-emerald-600'
                 }`}
@@ -478,7 +529,9 @@ export const PaymentStudio: React.FC = () => {
                   }`}
                 />
               </button>
-              <span className={`text-[10px] font-bold uppercase tracking-wider ${formData.paymentTestMode ? 'text-amber-700' : 'text-emerald-700'}`}>
+              <span
+                className={`text-[10px] font-bold uppercase tracking-wider ${formData.paymentTestMode ? 'text-amber-700' : 'text-emerald-700'}`}
+              >
                 {formData.paymentTestMode ? 'TEST' : 'LIVE'}
               </span>
             </div>
@@ -488,7 +541,11 @@ export const PaymentStudio: React.FC = () => {
               disabled={isSaving}
               className="px-4 py-2 bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] text-xs font-sans font-semibold rounded-xl shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50"
             >
-              {isSaving ? <RefreshCw className="w-4 h-4 animate-spin text-[#d4ff4c]" /> : <Save className="w-4 h-4 text-[#d4ff4c]" />}
+              {isSaving ? (
+                <RefreshCw className="w-4 h-4 animate-spin text-[#d4ff4c]" />
+              ) : (
+                <Save className="w-4 h-4 text-[#d4ff4c]" />
+              )}
               <span>Save Configuration</span>
             </button>
           </div>
@@ -548,7 +605,13 @@ export const PaymentStudio: React.FC = () => {
               </p>
               <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>₹{(summary.razorpayEstimatedSavings ?? Math.round((summary.inrVolume ?? 0) * 0.015)).toLocaleString('en-IN')} saved via 0% UPI</span>
+                <span>
+                  ₹
+                  {(
+                    summary.razorpayEstimatedSavings ?? Math.round((summary.inrVolume ?? 0) * 0.015)
+                  ).toLocaleString('en-IN')}{' '}
+                  saved via 0% UPI
+                </span>
               </p>
             </div>
 
@@ -562,16 +625,16 @@ export const PaymentStudio: React.FC = () => {
               <p className="text-xl font-serif font-bold text-[#191a1b]">
                 ${(summary.usdVolume ?? 0).toLocaleString('en-US')}
               </p>
-              <p className="text-[11px] text-[#5e5a5a]">
-                Global Cards, Apple Pay & 135+ FX
-              </p>
+              <p className="text-[11px] text-[#5e5a5a]">Global Cards, Apple Pay & 135+ FX</p>
             </div>
 
             <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
               <span className="text-[11px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider block">
                 Total Orders Processed
               </span>
-              <p className="text-xl font-serif font-bold text-[#191a1b]">{(summary.totalOrdersCount ?? (summary as any).settledCount ?? 0)}</p>
+              <p className="text-xl font-serif font-bold text-[#191a1b]">
+                {summary.totalOrdersCount ?? (summary as any).settledCount ?? 0}
+              </p>
               <p className="text-[11px] text-[#5e5a5a]">Seamless instant checkout</p>
             </div>
 
@@ -579,8 +642,12 @@ export const PaymentStudio: React.FC = () => {
               <span className="text-[11px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider block">
                 Payment Success Rate
               </span>
-              <p className="text-xl font-serif font-bold text-emerald-700">{(summary.successRatePercentage ?? 99.2)}%</p>
-              <p className="text-[11px] text-emerald-700 font-semibold">Industry leading conversion</p>
+              <p className="text-xl font-serif font-bold text-emerald-700">
+                {summary.successRatePercentage ?? 99.2}%
+              </p>
+              <p className="text-[11px] text-emerald-700 font-semibold">
+                Industry leading conversion
+              </p>
             </div>
           </div>
         )}
@@ -599,7 +666,9 @@ export const PaymentStudio: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-white tracking-wide">Razorpay Partner Connect</span>
+                    <span className="text-xs font-bold text-white tracking-wide">
+                      Razorpay Partner Connect
+                    </span>
                     <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-[#00bafe] text-[#0c2340]">
                       {rzpConnect?.isConnected ? 'ACTIVE' : 'READY'}
                     </span>
@@ -642,7 +711,8 @@ export const PaymentStudio: React.FC = () => {
                       )}
                     </div>
                     <p className="text-xs text-[#5e5a5a]">
-                      UPI (Google Pay, PhonePe, Paytm), NetBanking (50+ Banks), Debit/Credit Cards & EMI.
+                      UPI (Google Pay, PhonePe, Paytm), NetBanking (50+ Banks), Debit/Credit Cards &
+                      EMI.
                     </p>
                   </div>
                 </div>
@@ -651,7 +721,9 @@ export const PaymentStudio: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={formData.paymentRazorpayActive}
-                    onChange={(e) => setFormData({ ...formData, paymentRazorpayActive: e.target.checked })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, paymentRazorpayActive: e.target.checked })
+                    }
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0c2340]"></div>
@@ -686,9 +758,7 @@ export const PaymentStudio: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-[#191a1b]">
-                      Razorpay Key ID
-                    </label>
+                    <label className="text-xs font-semibold text-[#191a1b]">Razorpay Key ID</label>
                     {rzpConnect?.keyId && (
                       <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
                         <Check className="w-3 h-3" /> Auto-Configured via Connect
@@ -703,7 +773,8 @@ export const PaymentStudio: React.FC = () => {
                     className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
                   />
                   <p className="text-[10px] text-[#5e5a5a] mt-1">
-                    Managed automatically via Razorpay Connect or entered manually from Razorpay Dashboard.
+                    Managed automatically via Razorpay Connect or entered manually from Razorpay
+                    Dashboard.
                   </p>
                 </div>
 
@@ -724,7 +795,9 @@ export const PaymentStudio: React.FC = () => {
                   <input
                     type={showRzpSecret ? 'text' : 'password'}
                     value={formData.razorpayKeySecret ?? ''}
-                    onChange={(e) => setFormData({ ...formData, razorpayKeySecret: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, razorpayKeySecret: e.target.value })
+                    }
                     placeholder={settings?.razorpayKeySecretMasked || 'Enter key secret...'}
                     className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
                   />
@@ -738,16 +811,25 @@ export const PaymentStudio: React.FC = () => {
                     <input
                       type="text"
                       readOnly
-                      value={settings?.webhookUrls?.razorpay || 'http://localhost:5001/api/storefront/checkout/razorpay/webhook'}
+                      value={
+                        settings?.webhookUrls?.razorpay ||
+                        'http://localhost:5001/api/storefront/checkout/razorpay/webhook'
+                      }
                       className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-gray-50 border border-[#cbd5e0] text-[#5e5a5a]"
                     />
                     <button
                       type="button"
-                      onClick={() => handleCopy(settings?.webhookUrls?.razorpay || '', 'rzp_webhook')}
+                      onClick={() =>
+                        handleCopy(settings?.webhookUrls?.razorpay || '', 'rzp_webhook')
+                      }
                       className="p-2 bg-[#fdf1ef] hover:bg-[#cbd5e0]/40 rounded-xl border border-[#cbd5e0] transition text-xs cursor-pointer"
                       title="Copy webhook URL"
                     >
-                      {copiedField === 'rzp_webhook' ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-[#5e5a5a]" />}
+                      {copiedField === 'rzp_webhook' ? (
+                        <Check className="w-4 h-4 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-[#5e5a5a]" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -755,25 +837,39 @@ export const PaymentStudio: React.FC = () => {
                 <div className="flex items-center justify-between p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
                   <div>
                     <p className="text-xs font-semibold text-[#191a1b]">Auto-Capture Payments</p>
-                    <p className="text-[10px] text-[#5e5a5a]">Automatically capture authorized payments immediately upon order</p>
+                    <p className="text-[10px] text-[#5e5a5a]">
+                      Automatically capture authorized payments immediately upon order
+                    </p>
                   </div>
                   <input
                     type="checkbox"
                     checked={formData.razorpayAutoCapture ?? true}
-                    onChange={(e) => setFormData({ ...formData, razorpayAutoCapture: e.target.checked })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, razorpayAutoCapture: e.target.checked })
+                    }
                     className="w-4 h-4 rounded text-[#191a1b] focus:ring-[#191a1b] cursor-pointer"
                   />
                 </div>
 
                 {rzpTestResult && (
-                  <div className={`p-3 rounded-xl text-xs flex items-start gap-2 border ${
-                    rzpTestResult.success ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'
-                  }`}>
-                    {rzpTestResult.success ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> : <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />}
+                  <div
+                    className={`p-3 rounded-xl text-xs flex items-start gap-2 border ${
+                      rzpTestResult.success
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        : 'bg-rose-50 text-rose-800 border-rose-200'
+                    }`}
+                  >
+                    {rzpTestResult.success ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    )}
                     <div>
                       <p className="font-semibold">{rzpTestResult.message}</p>
                       {rzpTestResult.success && (
-                        <p className="text-[10px] text-emerald-700 mt-0.5 font-mono">Status: {rzpTestResult.mode}</p>
+                        <p className="text-[10px] text-emerald-700 mt-0.5 font-mono">
+                          Status: {rzpTestResult.mode}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -782,7 +878,9 @@ export const PaymentStudio: React.FC = () => {
             </div>
 
             <div className="pt-4 border-t border-[#cbd5e0]/60 flex items-center justify-between gap-2">
-              <span className="text-[11px] text-[#5e5a5a]">Settlements: {rzpConnect?.settlementCycle || 'T+1 Instant'}</span>
+              <span className="text-[11px] text-[#5e5a5a]">
+                Settlements: {rzpConnect?.settlementCycle || 'T+1 Instant'}
+              </span>
               <div className="flex items-center gap-2">
                 {rzpConnect?.isConnected && (
                   <button
@@ -800,7 +898,11 @@ export const PaymentStudio: React.FC = () => {
                   disabled={testingRzp}
                   className="px-3.5 py-1.5 bg-[#0c2340] hover:bg-[#000000] text-[#00bafe] text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
                 >
-                  {testingRzp ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                  {testingRzp ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                  )}
                   <span>Test Gateway</span>
                 </button>
               </div>
@@ -823,7 +925,8 @@ export const PaymentStudio: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-xs text-[#5e5a5a]">
-                      Global Visa, Mastercard, Amex, Apple Pay, Google Pay & 135+ native currencies with lowest cross-border overheads.
+                      Global Visa, Mastercard, Amex, Apple Pay, Google Pay & 135+ native currencies
+                      with lowest cross-border overheads.
                     </p>
                   </div>
                 </div>
@@ -832,7 +935,9 @@ export const PaymentStudio: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={formData.paymentStripeActive}
-                    onChange={(e) => setFormData({ ...formData, paymentStripeActive: e.target.checked })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, paymentStripeActive: e.target.checked })
+                    }
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#635bff]"></div>
@@ -847,7 +952,9 @@ export const PaymentStudio: React.FC = () => {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-[#191a1b]">Stripe Connect Direct Flow</span>
+                      <span className="text-xs font-bold text-[#191a1b]">
+                        Stripe Connect Direct Flow
+                      </span>
                       {stripeConnect?.isConnected ? (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
                           <Check className="w-2.5 h-2.5" /> Active & Verified
@@ -872,7 +979,9 @@ export const PaymentStudio: React.FC = () => {
                   className="px-3.5 py-1.5 bg-[#635bff] hover:bg-[#5349e0] text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 shrink-0 cursor-pointer"
                 >
                   <Zap className="w-3.5 h-3.5" />
-                  <span>{stripeConnect?.isConnected ? 'Manage Connect' : '1-Click Stripe Connect'}</span>
+                  <span>
+                    {stripeConnect?.isConnected ? 'Manage Connect' : '1-Click Stripe Connect'}
+                  </span>
                 </button>
               </div>
 
@@ -916,12 +1025,15 @@ export const PaymentStudio: React.FC = () => {
                   <input
                     type="text"
                     value={formData.stripePublishableKey || ''}
-                    onChange={(e) => setFormData({ ...formData, stripePublishableKey: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, stripePublishableKey: e.target.value })
+                    }
                     placeholder="pk_test_..."
                     className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
                   />
                   <p className="text-[10px] text-[#5e5a5a] mt-1">
-                    Managed automatically via Stripe Connect or entered manually from Stripe Dashboard.
+                    Managed automatically via Stripe Connect or entered manually from Stripe
+                    Dashboard.
                   </p>
                 </div>
 
@@ -935,7 +1047,11 @@ export const PaymentStudio: React.FC = () => {
                       onClick={() => setShowStripeSecret(!showStripeSecret)}
                       className="text-[10px] text-[#5e5a5a] hover:text-[#191a1b] flex items-center gap-1"
                     >
-                      {showStripeSecret ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                      {showStripeSecret ? (
+                        <EyeOff className="w-3 h-3" />
+                      ) : (
+                        <Eye className="w-3 h-3" />
+                      )}
                       <span>{showStripeSecret ? 'Hide' : 'Show/Edit'}</span>
                     </button>
                   </div>
@@ -943,7 +1059,9 @@ export const PaymentStudio: React.FC = () => {
                     type={showStripeSecret ? 'text' : 'password'}
                     value={formData.stripeSecretKey ?? ''}
                     onChange={(e) => setFormData({ ...formData, stripeSecretKey: e.target.value })}
-                    placeholder={settings?.stripeSecretKeyMasked || 'Enter stripe secret key (sk_test_...)'}
+                    placeholder={
+                      settings?.stripeSecretKeyMasked || 'Enter stripe secret key (sk_test_...)'
+                    }
                     className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
                   />
                 </div>
@@ -956,16 +1074,25 @@ export const PaymentStudio: React.FC = () => {
                     <input
                       type="text"
                       readOnly
-                      value={settings?.webhookUrls?.stripe || 'http://localhost:5001/api/storefront/checkout/stripe/webhook'}
+                      value={
+                        settings?.webhookUrls?.stripe ||
+                        'http://localhost:5001/api/storefront/checkout/stripe/webhook'
+                      }
                       className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-gray-50 border border-[#cbd5e0] text-[#5e5a5a]"
                     />
                     <button
                       type="button"
-                      onClick={() => handleCopy(settings?.webhookUrls?.stripe || '', 'stripe_webhook')}
+                      onClick={() =>
+                        handleCopy(settings?.webhookUrls?.stripe || '', 'stripe_webhook')
+                      }
                       className="p-2 bg-[#fdf1ef] hover:bg-[#cbd5e0]/40 rounded-xl border border-[#cbd5e0] transition text-xs cursor-pointer"
                       title="Copy webhook URL"
                     >
-                      {copiedField === 'stripe_webhook' ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-[#5e5a5a]" />}
+                      {copiedField === 'stripe_webhook' ? (
+                        <Check className="w-4 h-4 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-[#5e5a5a]" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -973,19 +1100,31 @@ export const PaymentStudio: React.FC = () => {
                 <div className="p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
                   <p className="text-xs font-semibold text-[#191a1b]">Smart Cross-Border Routing</p>
                   <p className="text-[10px] text-[#5e5a5a]">
-                    Non-INR currency checkouts (USD, EUR, GBP, AUD, CAD) are automatically routed through Stripe for maximum international authorization rates and lower currency conversion charges.
+                    Non-INR currency checkouts (USD, EUR, GBP, AUD, CAD) are automatically routed
+                    through Stripe for maximum international authorization rates and lower currency
+                    conversion charges.
                   </p>
                 </div>
 
                 {stripeTestResult && (
-                  <div className={`p-3 rounded-xl text-xs flex items-start gap-2 border ${
-                    stripeTestResult.success ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'
-                  }`}>
-                    {stripeTestResult.success ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> : <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />}
+                  <div
+                    className={`p-3 rounded-xl text-xs flex items-start gap-2 border ${
+                      stripeTestResult.success
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        : 'bg-rose-50 text-rose-800 border-rose-200'
+                    }`}
+                  >
+                    {stripeTestResult.success ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    )}
                     <div>
                       <p className="font-semibold">{stripeTestResult.message}</p>
                       {stripeTestResult.success && (
-                        <p className="text-[10px] text-emerald-700 mt-0.5 font-mono">Mode: {stripeTestResult.mode}</p>
+                        <p className="text-[10px] text-emerald-700 mt-0.5 font-mono">
+                          Mode: {stripeTestResult.mode}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -994,7 +1133,9 @@ export const PaymentStudio: React.FC = () => {
             </div>
 
             <div className="pt-4 border-t border-[#cbd5e0]/60 flex items-center justify-between gap-2">
-              <span className="text-[11px] text-[#5e5a5a]">Settlements: {stripeConnect?.settlementCycle || 'Rolling 2-day'}</span>
+              <span className="text-[11px] text-[#5e5a5a]">
+                Settlements: {stripeConnect?.settlementCycle || 'Rolling 2-day'}
+              </span>
               <div className="flex items-center gap-2">
                 {stripeConnect?.isConnected && (
                   <button
@@ -1012,7 +1153,11 @@ export const PaymentStudio: React.FC = () => {
                   disabled={testingStripe}
                   className="px-3.5 py-1.5 bg-[#635bff] hover:bg-[#5349e0] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
                 >
-                  {testingStripe ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                  {testingStripe ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                  )}
                   <span>Test Gateway</span>
                 </button>
               </div>
@@ -1027,7 +1172,9 @@ export const PaymentStudio: React.FC = () => {
                   💵
                 </div>
                 <div>
-                  <h3 className="font-serif font-bold text-base text-[#191a1b]">Cash on Delivery (COD)</h3>
+                  <h3 className="font-serif font-bold text-base text-[#191a1b]">
+                    Cash on Delivery (COD)
+                  </h3>
                   <p className="text-xs text-[#5e5a5a]">
                     Allow customers in India to pay in cash upon package delivery.
                   </p>
@@ -1053,11 +1200,15 @@ export const PaymentStudio: React.FC = () => {
                 <input
                   type="number"
                   value={formData.codFee ?? 0}
-                  onChange={(e) => setFormData({ ...formData, codFee: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, codFee: parseFloat(e.target.value) || 0 })
+                  }
                   placeholder="0.00"
                   className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none"
                 />
-                <p className="text-[10px] text-[#5e5a5a] mt-1">Extra handling charge added at checkout.</p>
+                <p className="text-[10px] text-[#5e5a5a] mt-1">
+                  Extra handling charge added at checkout.
+                </p>
               </div>
 
               <div>
@@ -1067,7 +1218,9 @@ export const PaymentStudio: React.FC = () => {
                 <input
                   type="number"
                   value={formData.codMinLimit ?? 0}
-                  onChange={(e) => setFormData({ ...formData, codMinLimit: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, codMinLimit: parseFloat(e.target.value) || 0 })
+                  }
                   placeholder="0"
                   className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none"
                 />
@@ -1080,7 +1233,9 @@ export const PaymentStudio: React.FC = () => {
                 <input
                   type="number"
                   value={formData.codMaxLimit ?? 50000}
-                  onChange={(e) => setFormData({ ...formData, codMaxLimit: parseFloat(e.target.value) || 50000 })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, codMaxLimit: parseFloat(e.target.value) || 50000 })
+                  }
                   placeholder="50000"
                   className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none"
                 />
@@ -1095,9 +1250,12 @@ export const PaymentStudio: React.FC = () => {
         <div className="p-6 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#cbd5e0]/60">
             <div>
-              <h3 className="font-serif font-bold text-lg text-[#191a1b]">Gateway Payment Transactions</h3>
+              <h3 className="font-serif font-bold text-lg text-[#191a1b]">
+                Gateway Payment Transactions
+              </h3>
               <p className="text-xs text-[#5e5a5a]">
-                Live record of orders processed through Razorpay and Stripe with MDR fee calculations and settlement status.
+                Live record of orders processed through Razorpay and Stripe with MDR fee
+                calculations and settlement status.
               </p>
             </div>
 
@@ -1142,10 +1300,16 @@ export const PaymentStudio: React.FC = () => {
                     <tr key={t.id} className="hover:bg-gray-50/80 transition">
                       <td className="py-3.5 px-4 font-mono font-bold text-[#191a1b]">
                         <div>{t.transactionNumber}</div>
-                        {t.orderId && <div className="text-[10px] text-gray-400 font-sans">Ref: {t.orderId}</div>}
+                        {t.orderId && (
+                          <div className="text-[10px] text-gray-400 font-sans">
+                            Ref: {t.orderId}
+                          </div>
+                        )}
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="font-semibold text-gray-900">{t.customerName || 'Anonymous Customer'}</div>
+                        <div className="font-semibold text-gray-900">
+                          {t.customerName || 'Anonymous Customer'}
+                        </div>
                         <div className="text-gray-400 text-[10px]">{t.customerEmail}</div>
                       </td>
                       <td className="py-3.5 px-4">
@@ -1154,15 +1318,16 @@ export const PaymentStudio: React.FC = () => {
                             t.gateway === 'RAZORPAY'
                               ? 'bg-blue-50 text-blue-700 border border-blue-200'
                               : t.gateway === 'STRIPE'
-                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                : 'bg-amber-50 text-amber-700 border border-amber-200'
                           }`}
                         >
                           {t.gateway} • {t.paymentMethod}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 font-bold text-gray-900">
-                        {t.currency === 'INR' ? '₹' : '$'}{t.amount.toFixed(2)}
+                        {t.currency === 'INR' ? '₹' : '$'}
+                        {t.amount.toFixed(2)}
                       </td>
                       <td className="py-3.5 px-4 text-gray-500 font-mono">
                         {t.gatewayFee === 0 ? (
@@ -1172,7 +1337,8 @@ export const PaymentStudio: React.FC = () => {
                         )}
                       </td>
                       <td className="py-3.5 px-4 font-bold text-emerald-700">
-                        {t.currency === 'INR' ? '₹' : '$'}{t.netAmount.toFixed(2)}
+                        {t.currency === 'INR' ? '₹' : '$'}
+                        {t.netAmount.toFixed(2)}
                       </td>
                       <td className="py-3.5 px-4">
                         <span
@@ -1180,8 +1346,8 @@ export const PaymentStudio: React.FC = () => {
                             t.status === 'SUCCESS'
                               ? 'bg-emerald-100 text-emerald-800'
                               : t.status === 'REFUNDED'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-amber-100 text-amber-800'
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-amber-100 text-amber-800'
                           }`}
                         >
                           {t.status}
@@ -1210,9 +1376,12 @@ export const PaymentStudio: React.FC = () => {
       {activeTab === 'calculator' && (
         <div className="p-6 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-sm space-y-6">
           <div className="max-w-xl space-y-2">
-            <h3 className="font-serif font-bold text-xl text-[#191a1b]">MDR Transaction Fee Comparison</h3>
+            <h3 className="font-serif font-bold text-xl text-[#191a1b]">
+              MDR Transaction Fee Comparison
+            </h3>
             <p className="text-xs text-[#5e5a5a]">
-              See how our automatic multi-gateway routing minimizes your payment processing costs for domestic India sales vs international orders.
+              See how our automatic multi-gateway routing minimizes your payment processing costs
+              for domestic India sales vs international orders.
             </p>
           </div>
 
@@ -1255,7 +1424,8 @@ export const PaymentStudio: React.FC = () => {
                 {calcCurrency === 'INR' ? '₹0.00' : '$0.00'}
               </p>
               <p className="text-[11px] text-emerald-700">
-                Zero processing fee on UPI P2M payments. You receive 100% of order value ({calcCurrency === 'INR' ? `₹${calcAmount}` : `$${calcAmount}`}).
+                Zero processing fee on UPI P2M payments. You receive 100% of order value (
+                {calcCurrency === 'INR' ? `₹${calcAmount}` : `$${calcAmount}`}).
               </p>
             </div>
 
@@ -1292,7 +1462,9 @@ export const PaymentStudio: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-serif font-bold text-lg text-white">Razorpay Partner Connect</h3>
+                    <h3 className="font-serif font-bold text-lg text-white">
+                      Razorpay Partner Connect
+                    </h3>
                     <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-[#00bafe] text-[#0c2340]">
                       OFFICIAL PARTNER
                     </span>
@@ -1314,18 +1486,36 @@ export const PaymentStudio: React.FC = () => {
 
             {/* Stepper Progress */}
             <div className="px-6 py-3 bg-[#fdf1ef] border-b border-[#cbd5e0] flex items-center justify-between text-xs">
-              <div className={`flex items-center gap-1.5 font-bold ${connectStep >= 1 ? 'text-[#0c2340]' : 'text-slate-400'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${connectStep >= 1 ? 'bg-[#0c2340] text-white' : 'bg-slate-200 text-slate-500'}`}>1</span>
+              <div
+                className={`flex items-center gap-1.5 font-bold ${connectStep >= 1 ? 'text-[#0c2340]' : 'text-slate-400'}`}
+              >
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${connectStep >= 1 ? 'bg-[#0c2340] text-white' : 'bg-slate-200 text-slate-500'}`}
+                >
+                  1
+                </span>
                 <span>Authorization</span>
               </div>
               <div className="w-8 h-0.5 bg-[#cbd5e0]"></div>
-              <div className={`flex items-center gap-1.5 font-bold ${connectStep >= 2 ? 'text-[#0c2340]' : 'text-slate-400'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${connectStep >= 2 ? 'bg-[#0c2340] text-white' : 'bg-slate-200 text-slate-500'}`}>2</span>
+              <div
+                className={`flex items-center gap-1.5 font-bold ${connectStep >= 2 ? 'text-[#0c2340]' : 'text-slate-400'}`}
+              >
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${connectStep >= 2 ? 'bg-[#0c2340] text-white' : 'bg-slate-200 text-slate-500'}`}
+                >
+                  2
+                </span>
                 <span>Handshake</span>
               </div>
               <div className="w-8 h-0.5 bg-[#cbd5e0]"></div>
-              <div className={`flex items-center gap-1.5 font-bold ${connectStep >= 3 ? 'text-emerald-700' : 'text-slate-400'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${connectStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'}`}>3</span>
+              <div
+                className={`flex items-center gap-1.5 font-bold ${connectStep >= 3 ? 'text-emerald-700' : 'text-slate-400'}`}
+              >
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${connectStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'}`}
+                >
+                  3
+                </span>
                 <span>Live & Ready</span>
               </div>
             </div>
@@ -1371,13 +1561,17 @@ export const PaymentStudio: React.FC = () => {
                           <span>Instant OAuth Authorization</span>
                         </div>
                         <p className="text-xs text-sky-800 leading-relaxed">
-                          Link your existing Razorpay Merchant Dashboard or create a new account in seconds. Razorpay Connect automatically configures API keys, webhook endpoints, and KYC verification without manual copy-pasting.
+                          Link your existing Razorpay Merchant Dashboard or create a new account in
+                          seconds. Razorpay Connect automatically configures API keys, webhook
+                          endpoints, and KYC verification without manual copy-pasting.
                         </p>
                       </div>
 
                       {/* Scopes Overview Checklist */}
                       <div className="p-4 rounded-2xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-2">
-                        <p className="text-xs font-bold text-[#191a1b]">Included Merchant Capabilities:</p>
+                        <p className="text-xs font-bold text-[#191a1b]">
+                          Included Merchant Capabilities:
+                        </p>
                         <div className="grid grid-cols-2 gap-2 text-[11px] text-[#5e5a5a]">
                           <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -1414,8 +1608,12 @@ export const PaymentStudio: React.FC = () => {
 
                         <div className="flex items-center justify-between p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
                           <div>
-                            <p className="text-xs font-semibold text-[#191a1b]">Sandbox Test Mode</p>
-                            <p className="text-[10px] text-[#5e5a5a]">Connect using Razorpay Sandbox for safe end-to-end test orders</p>
+                            <p className="text-xs font-semibold text-[#191a1b]">
+                              Sandbox Test Mode
+                            </p>
+                            <p className="text-[10px] text-[#5e5a5a]">
+                              Connect using Razorpay Sandbox for safe end-to-end test orders
+                            </p>
                           </div>
                           <input
                             type="checkbox"
@@ -1456,8 +1654,12 @@ export const PaymentStudio: React.FC = () => {
 
                       <div className="flex items-center justify-between p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
                         <div>
-                          <p className="text-xs font-semibold text-[#191a1b]">Auto-Capture Order Payments</p>
-                          <p className="text-[10px] text-[#5e5a5a]">Immediate capture of authorized charges</p>
+                          <p className="text-xs font-semibold text-[#191a1b]">
+                            Auto-Capture Order Payments
+                          </p>
+                          <p className="text-[10px] text-[#5e5a5a]">
+                            Immediate capture of authorized charges
+                          </p>
                         </div>
                         <input
                           type="checkbox"
@@ -1482,7 +1684,8 @@ export const PaymentStudio: React.FC = () => {
                       Authenticating with Razorpay Partner Hub...
                     </h4>
                     <p className="text-xs text-[#5e5a5a] max-w-sm mx-auto mt-1">
-                      Verifying merchant KYC status, generating webhook subscription secrets, and enabling instant UPI 0% MDR routing.
+                      Verifying merchant KYC status, generating webhook subscription secrets, and
+                      enabling instant UPI 0% MDR routing.
                     </p>
                   </div>
 
@@ -1514,7 +1717,8 @@ export const PaymentStudio: React.FC = () => {
                       Razorpay Connect Activated!
                     </h4>
                     <p className="text-xs text-[#5e5a5a] max-w-md mx-auto mt-1">
-                      Your store is now authorized to accept all domestic Indian payments with real-time webhooks and instant settlements.
+                      Your store is now authorized to accept all domestic Indian payments with
+                      real-time webhooks and instant settlements.
                     </p>
                   </div>
 
@@ -1525,7 +1729,9 @@ export const PaymentStudio: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e0]/60">
                       <span className="text-[#5e5a5a]">Razorpay Account ID:</span>
-                      <span className="font-mono font-bold text-[#0c2340]">{rzpConnect?.accountId || 'acc_M98K28D91'}</span>
+                      <span className="font-mono font-bold text-[#0c2340]">
+                        {rzpConnect?.accountId || 'acc_M98K28D91'}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e0]/60">
                       <span className="text-[#5e5a5a]">KYC Status:</span>
@@ -1535,7 +1741,9 @@ export const PaymentStudio: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[#5e5a5a]">Settlement Cycle:</span>
-                      <span className="font-semibold text-emerald-700">T+1 Instant Bank Payouts</span>
+                      <span className="font-semibold text-emerald-700">
+                        T+1 Instant Bank Payouts
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1559,8 +1767,16 @@ export const PaymentStudio: React.FC = () => {
                     disabled={connectSubmitting}
                     className="px-5 py-2.5 bg-[#0c2340] hover:bg-[#000000] text-[#00bafe] text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    {connectSubmitting ? <RefreshCw className="w-4 h-4 animate-spin text-[#00bafe]" /> : <Zap className="w-4 h-4 text-[#00bafe]" />}
-                    <span>{connectMode === 'OAUTH' ? 'Authorize & Connect with Razorpay' : 'Save & Verify Credentials'}</span>
+                    {connectSubmitting ? (
+                      <RefreshCw className="w-4 h-4 animate-spin text-[#00bafe]" />
+                    ) : (
+                      <Zap className="w-4 h-4 text-[#00bafe]" />
+                    )}
+                    <span>
+                      {connectMode === 'OAUTH'
+                        ? 'Authorize & Connect with Razorpay'
+                        : 'Save & Verify Credentials'}
+                    </span>
                   </button>
                 </>
               )}
@@ -1591,7 +1807,9 @@ export const PaymentStudio: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-serif font-bold text-lg">Stripe Connect Direct Flow</h3>
-                  <p className="text-xs text-white/80">Global Merchant Account Setup & Multi-Currency Processing</p>
+                  <p className="text-xs text-white/80">
+                    Global Merchant Account Setup & Multi-Currency Processing
+                  </p>
                 </div>
               </div>
               <button
@@ -1605,18 +1823,36 @@ export const PaymentStudio: React.FC = () => {
 
             {/* Stepper Progress Bar */}
             <div className="px-6 py-3 bg-[#fdf1ef] border-b border-[#cbd5e0] flex items-center justify-between text-xs">
-              <div className={`flex items-center gap-1.5 font-bold ${stripeConnectStep >= 1 ? 'text-[#635bff]' : 'text-slate-400'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${stripeConnectStep >= 1 ? 'bg-[#635bff] text-white' : 'bg-slate-200 text-slate-500'}`}>1</span>
+              <div
+                className={`flex items-center gap-1.5 font-bold ${stripeConnectStep >= 1 ? 'text-[#635bff]' : 'text-slate-400'}`}
+              >
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${stripeConnectStep >= 1 ? 'bg-[#635bff] text-white' : 'bg-slate-200 text-slate-500'}`}
+                >
+                  1
+                </span>
                 <span>Config</span>
               </div>
               <div className="w-8 h-0.5 bg-[#cbd5e0]"></div>
-              <div className={`flex items-center gap-1.5 font-bold ${stripeConnectStep >= 2 ? 'text-[#635bff]' : 'text-slate-400'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${stripeConnectStep >= 2 ? 'bg-[#635bff] text-white' : 'bg-slate-200 text-slate-500'}`}>2</span>
+              <div
+                className={`flex items-center gap-1.5 font-bold ${stripeConnectStep >= 2 ? 'text-[#635bff]' : 'text-slate-400'}`}
+              >
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${stripeConnectStep >= 2 ? 'bg-[#635bff] text-white' : 'bg-slate-200 text-slate-500'}`}
+                >
+                  2
+                </span>
                 <span>Handshake</span>
               </div>
               <div className="w-8 h-0.5 bg-[#cbd5e0]"></div>
-              <div className={`flex items-center gap-1.5 font-bold ${stripeConnectStep >= 3 ? 'text-emerald-700' : 'text-slate-400'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${stripeConnectStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'}`}>3</span>
+              <div
+                className={`flex items-center gap-1.5 font-bold ${stripeConnectStep >= 3 ? 'text-emerald-700' : 'text-slate-400'}`}
+              >
+                <span
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${stripeConnectStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'}`}
+                >
+                  3
+                </span>
                 <span>Live & Ready</span>
               </div>
             </div>
@@ -1662,13 +1898,17 @@ export const PaymentStudio: React.FC = () => {
                           <span>Standard Stripe Connect Onboarding</span>
                         </div>
                         <p className="text-xs text-indigo-800 leading-relaxed">
-                          Connect your Stripe account in one click. Automatically activates 135+ global currencies, direct bank payouts, Apple Pay / Google Pay, and Stripe Radar AI fraud protection.
+                          Connect your Stripe account in one click. Automatically activates 135+
+                          global currencies, direct bank payouts, Apple Pay / Google Pay, and Stripe
+                          Radar AI fraud protection.
                         </p>
                       </div>
 
                       {/* Capabilities Overview */}
                       <div className="p-4 rounded-2xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-2">
-                        <p className="text-xs font-bold text-[#191a1b]">Active Stripe Capabilities:</p>
+                        <p className="text-xs font-bold text-[#191a1b]">
+                          Active Stripe Capabilities:
+                        </p>
                         <div className="grid grid-cols-2 gap-2 text-[11px] text-[#5e5a5a]">
                           <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -1725,7 +1965,9 @@ export const PaymentStudio: React.FC = () => {
                           <div className="flex flex-col justify-end">
                             <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
                               <div>
-                                <p className="text-[11px] font-semibold text-[#191a1b]">Sandbox Test Mode</p>
+                                <p className="text-[11px] font-semibold text-[#191a1b]">
+                                  Sandbox Test Mode
+                                </p>
                               </div>
                               <input
                                 type="checkbox"
@@ -1781,7 +2023,8 @@ export const PaymentStudio: React.FC = () => {
                       Authenticating with Stripe Connect Network...
                     </h4>
                     <p className="text-xs text-[#5e5a5a] max-w-sm mx-auto mt-1">
-                      Enabling multi-currency presentment, syncing 3D-Secure 2.0 fraud endpoints, and configuring automatic rolling settlements.
+                      Enabling multi-currency presentment, syncing 3D-Secure 2.0 fraud endpoints,
+                      and configuring automatic rolling settlements.
                     </p>
                   </div>
 
@@ -1813,7 +2056,8 @@ export const PaymentStudio: React.FC = () => {
                       Stripe Connect Activated!
                     </h4>
                     <p className="text-xs text-[#5e5a5a] max-w-md mx-auto mt-1">
-                      Your store is fully equipped to accept international Visa, Mastercard, American Express, Apple Pay, and Google Pay worldwide.
+                      Your store is fully equipped to accept international Visa, Mastercard,
+                      American Express, Apple Pay, and Google Pay worldwide.
                     </p>
                   </div>
 
@@ -1824,7 +2068,9 @@ export const PaymentStudio: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e0]/60">
                       <span className="text-[#5e5a5a]">Stripe Account ID:</span>
-                      <span className="font-mono font-bold text-[#635bff]">{stripeConnect?.accountId || 'acct_1N9xStandardStripe'}</span>
+                      <span className="font-mono font-bold text-[#635bff]">
+                        {stripeConnect?.accountId || 'acct_1N9xStandardStripe'}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e0]/60">
                       <span className="text-[#5e5a5a]">Charges & Payouts:</span>
@@ -1834,7 +2080,9 @@ export const PaymentStudio: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[#5e5a5a]">Settlement Cycle:</span>
-                      <span className="font-semibold text-emerald-700">Rolling 2-day Automatic Bank Payouts</span>
+                      <span className="font-semibold text-emerald-700">
+                        Rolling 2-day Automatic Bank Payouts
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1858,8 +2106,16 @@ export const PaymentStudio: React.FC = () => {
                     disabled={stripeConnectSubmitting}
                     className="px-5 py-2.5 bg-[#635bff] hover:bg-[#5349e0] text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    {stripeConnectSubmitting ? <RefreshCw className="w-4 h-4 animate-spin text-white" /> : <Zap className="w-4 h-4 text-white" />}
-                    <span>{stripeConnectMode === 'OAUTH' ? 'Authorize & Connect with Stripe' : 'Save & Verify Credentials'}</span>
+                    {stripeConnectSubmitting ? (
+                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                    ) : (
+                      <Zap className="w-4 h-4 text-white" />
+                    )}
+                    <span>
+                      {stripeConnectMode === 'OAUTH'
+                        ? 'Authorize & Connect with Stripe'
+                        : 'Save & Verify Credentials'}
+                    </span>
                   </button>
                 </>
               )}
@@ -1892,9 +2148,7 @@ export const PaymentStudio: React.FC = () => {
                   <h3 className="font-serif font-bold text-base text-white">
                     Security Authorization
                   </h3>
-                  <p className="text-xs text-gray-300 font-sans">
-                    Email Verification Required
-                  </p>
+                  <p className="text-xs text-gray-300 font-sans">Email Verification Required</p>
                 </div>
               </div>
 
@@ -1917,7 +2171,8 @@ export const PaymentStudio: React.FC = () => {
                   <span>Authorization Code Sent</span>
                 </div>
                 <p className="text-xs text-amber-800 leading-relaxed">
-                  To protect your store from unauthorized payment routing, a <strong>6-digit security code</strong> was sent to your registered email:
+                  To protect your store from unauthorized payment routing, a{' '}
+                  <strong>6-digit security code</strong> was sent to your registered email:
                 </p>
                 <p className="text-xs font-mono font-bold text-amber-950 bg-amber-100/80 px-2.5 py-1 rounded-lg inline-block">
                   {verificationEmail || 'registered merchant email'}
@@ -2005,4 +2260,3 @@ export const PaymentStudio: React.FC = () => {
     </div>
   );
 };
-

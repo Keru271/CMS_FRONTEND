@@ -38,7 +38,10 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   // Data States
   const [categories, setCategories] = useState<CMSCategory[]>([]);
@@ -138,7 +141,13 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
     try {
       const payload: CategoryFormData = {
         name: categoryFormData.name,
-        slug: (categoryFormData.slug || categoryFormData.name.toLowerCase().trim().replace(/[^a-z0-9]/g, '-')).toLowerCase(),
+        slug: (
+          categoryFormData.slug ||
+          categoryFormData.name
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]/g, '-')
+        ).toLowerCase(),
         icon: categoryFormData.icon || '📦',
         description: categoryFormData.description,
       };
@@ -183,7 +192,14 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
   const handleOpenCreateBrand = () => {
     setEditingBrand(null);
     setBrandModalError(null);
-    setBrandFormData({ name: '', slug: '', logo: '', description: '', website: '', status: 'ACTIVE' });
+    setBrandFormData({
+      name: '',
+      slug: '',
+      logo: '',
+      description: '',
+      website: '',
+      status: 'ACTIVE',
+    });
     setIsBrandModalOpen(true);
   };
 
@@ -208,7 +224,13 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
     try {
       const payload: BrandFormData = {
         name: brandFormData.name,
-        slug: (brandFormData.slug || brandFormData.name.toLowerCase().trim().replace(/[^a-z0-9]/g, '-')).toLowerCase(),
+        slug: (
+          brandFormData.slug ||
+          brandFormData.name
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]/g, '-')
+        ).toLowerCase(),
         logo: brandFormData.logo,
         description: brandFormData.description,
         website: brandFormData.website,
@@ -291,7 +313,13 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
     try {
       const payload: CollectionFormData = {
         name: collectionFormData.name,
-        slug: (collectionFormData.slug || collectionFormData.name.toLowerCase().trim().replace(/[^a-z0-9]/g, '-')).toLowerCase(),
+        slug: (
+          collectionFormData.slug ||
+          collectionFormData.name
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]/g, '-')
+        ).toLowerCase(),
         image: collectionFormData.image,
         description: collectionFormData.description,
         type: collectionFormData.type || 'MANUAL',
@@ -340,26 +368,28 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
   const filteredCategories = categories.filter(
     (c) =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.slug.toLowerCase().includes(searchQuery.toLowerCase())
+      c.slug.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const filteredBrands = brands.filter(
     (b) =>
       b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.slug.toLowerCase().includes(searchQuery.toLowerCase())
+      b.slug.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const filteredCollections = collections.filter(
     (c) =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.slug.toLowerCase().includes(searchQuery.toLowerCase())
+      c.slug.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[350px] gap-3">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-slate-500 animate-pulse">Loading Taxonomy Studio...</span>
+        <span className="text-xs font-bold text-slate-500 animate-pulse">
+          Loading Taxonomy Studio...
+        </span>
       </div>
     );
   }
@@ -399,7 +429,8 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               <span>Taxonomy Studio</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              Add, edit, and manage Categories, Manufacturer Brands, and Curated Product Collections linked with Fastify backend APIs & PostgreSQL storage.
+              Add, edit, and manage Categories, Manufacturer Brands, and Curated Product Collections
+              linked with Fastify backend APIs & PostgreSQL storage.
             </p>
           </div>
 
@@ -520,8 +551,12 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                         {cat.icon || '📦'}
                       </span>
                       <div>
-                        <h3 className="font-black text-base text-slate-900 dark:text-foreground">{cat.name}</h3>
-                        <span className="text-[11px] font-mono text-indigo-600 font-bold">/{cat.slug}</span>
+                        <h3 className="font-black text-base text-slate-900 dark:text-foreground">
+                          {cat.name}
+                        </h3>
+                        <span className="text-[11px] font-mono text-indigo-600 font-bold">
+                          /{cat.slug}
+                        </span>
                       </div>
                     </div>
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300">
@@ -587,8 +622,12 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                         </span>
                       )}
                       <div>
-                        <h3 className="font-black text-base text-slate-900 dark:text-foreground">{brand.name}</h3>
-                        <span className="text-[11px] font-mono text-indigo-600 font-bold">handle: {brand.slug}</span>
+                        <h3 className="font-black text-base text-slate-900 dark:text-foreground">
+                          {brand.name}
+                        </h3>
+                        <span className="text-[11px] font-mono text-indigo-600 font-bold">
+                          handle: {brand.slug}
+                        </span>
                       </div>
                     </div>
 
@@ -682,12 +721,16 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                 <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-black text-base text-slate-900 dark:text-foreground">{coll.name}</h3>
+                      <h3 className="font-black text-base text-slate-900 dark:text-foreground">
+                        {coll.name}
+                      </h3>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300">
                         {coll.type || 'MANUAL'}
                       </span>
                     </div>
-                    <span className="text-[11px] font-mono text-indigo-600 font-bold block">/collections/{coll.slug}</span>
+                    <span className="text-[11px] font-mono text-indigo-600 font-bold block">
+                      /collections/{coll.slug}
+                    </span>
                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                       {coll.description || 'No curated collection description provided.'}
                     </p>
@@ -744,12 +787,16 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               {categoryModalError && (
                 <div className="p-3.5 rounded-2xl bg-rose-50 text-rose-700 text-xs font-bold flex items-center justify-between">
                   <span>{categoryModalError}</span>
-                  <button type="button" onClick={() => setCategoryModalError(null)}>×</button>
+                  <button type="button" onClick={() => setCategoryModalError(null)}>
+                    ×
+                  </button>
                 </div>
               )}
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Category Name *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Category Name *
+                </label>
                 <input
                   type="text"
                   required
@@ -769,23 +816,31 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
 
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2 space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">URL Slug *</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    URL Slug *
+                  </label>
                   <input
                     type="text"
                     required
                     value={categoryFormData.slug}
-                    onChange={(e) => setCategoryFormData({ ...categoryFormData, slug: e.target.value })}
+                    onChange={(e) =>
+                      setCategoryFormData({ ...categoryFormData, slug: e.target.value })
+                    }
                     placeholder="footwear-sneakers"
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-bold text-indigo-600"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Icon Emoji</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Icon Emoji
+                  </label>
                   <input
                     type="text"
                     value={categoryFormData.icon}
-                    onChange={(e) => setCategoryFormData({ ...categoryFormData, icon: e.target.value })}
+                    onChange={(e) =>
+                      setCategoryFormData({ ...categoryFormData, icon: e.target.value })
+                    }
                     placeholder="👟"
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold text-center"
                   />
@@ -793,11 +848,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Description</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Description
+                </label>
                 <textarea
                   rows={3}
                   value={categoryFormData.description}
-                  onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
+                  onChange={(e) =>
+                    setCategoryFormData({ ...categoryFormData, description: e.target.value })
+                  }
                   placeholder="Detail the product types under this category..."
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-medium"
                 />
@@ -816,7 +875,11 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                   disabled={isSaving}
                   className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md flex items-center gap-2"
                 >
-                  {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  {isSaving ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
                   <span>Save Category</span>
                 </button>
               </div>
@@ -846,12 +909,16 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               {brandModalError && (
                 <div className="p-3.5 rounded-2xl bg-rose-50 text-rose-700 text-xs font-bold flex items-center justify-between">
                   <span>{brandModalError}</span>
-                  <button type="button" onClick={() => setBrandModalError(null)}>×</button>
+                  <button type="button" onClick={() => setBrandModalError(null)}>
+                    ×
+                  </button>
                 </div>
               )}
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Brand Name *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Brand Name *
+                </label>
                 <input
                   type="text"
                   required
@@ -870,7 +937,9 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Brand Handle Slug *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Brand Handle Slug *
+                </label>
                 <input
                   type="text"
                   required
@@ -893,7 +962,9 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                   maxSizeMB={5}
                 />
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-500">Or paste image URL</label>
+                  <label className="block text-[11px] font-bold text-slate-500">
+                    Or paste image URL
+                  </label>
                   <input
                     type="text"
                     value={brandFormData.logo || ''}
@@ -905,7 +976,9 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Official Website URL</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Official Website URL
+                </label>
                 <input
                   type="text"
                   value={brandFormData.website || ''}
@@ -916,11 +989,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Description</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Description
+                </label>
                 <textarea
                   rows={2}
                   value={brandFormData.description || ''}
-                  onChange={(e) => setBrandFormData({ ...brandFormData, description: e.target.value })}
+                  onChange={(e) =>
+                    setBrandFormData({ ...brandFormData, description: e.target.value })
+                  }
                   placeholder="Brand story and products summary..."
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-medium"
                 />
@@ -939,7 +1016,11 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                   disabled={isSaving}
                   className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md flex items-center gap-2"
                 >
-                  {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  {isSaving ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
                   <span>Save Brand</span>
                 </button>
               </div>
@@ -954,7 +1035,9 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
           <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
             <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
               <h3 className="font-black text-lg">
-                {editingCollection ? `Edit Collection: ${editingCollection.name}` : 'Add New Collection'}
+                {editingCollection
+                  ? `Edit Collection: ${editingCollection.name}`
+                  : 'Add New Collection'}
               </h3>
               <button
                 type="button"
@@ -969,12 +1052,16 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               {collectionModalError && (
                 <div className="p-3.5 rounded-2xl bg-rose-50 text-rose-700 text-xs font-bold flex items-center justify-between">
                   <span>{collectionModalError}</span>
-                  <button type="button" onClick={() => setCollectionModalError(null)}>×</button>
+                  <button type="button" onClick={() => setCollectionModalError(null)}>
+                    ×
+                  </button>
                 </div>
               )}
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Collection Name *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Collection Name *
+                </label>
                 <input
                   type="text"
                   required
@@ -993,12 +1080,16 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Collection Slug *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Collection Slug *
+                </label>
                 <input
                   type="text"
                   required
                   value={collectionFormData.slug}
-                  onChange={(e) => setCollectionFormData({ ...collectionFormData, slug: e.target.value })}
+                  onChange={(e) =>
+                    setCollectionFormData({ ...collectionFormData, slug: e.target.value })
+                  }
                   placeholder="summer-essentials"
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-bold text-indigo-600"
                 />
@@ -1010,17 +1101,23 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                   fileType="COLLECTION_IMAGE"
                   label="Banner Image"
                   currentUrl={collectionFormData.image || undefined}
-                  onUploadComplete={(url) => setCollectionFormData({ ...collectionFormData, image: url })}
+                  onUploadComplete={(url) =>
+                    setCollectionFormData({ ...collectionFormData, image: url })
+                  }
                   hint="JPG, PNG, or WebP (max 10MB)"
                   previewShape="rect"
                   maxSizeMB={10}
                 />
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-500">Or paste image URL</label>
+                  <label className="block text-[11px] font-bold text-slate-500">
+                    Or paste image URL
+                  </label>
                   <input
                     type="text"
                     value={collectionFormData.image || ''}
-                    onChange={(e) => setCollectionFormData({ ...collectionFormData, image: e.target.value })}
+                    onChange={(e) =>
+                      setCollectionFormData({ ...collectionFormData, image: e.target.value })
+                    }
                     placeholder="https://images.unsplash.com/..."
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-medium"
                   />
@@ -1032,7 +1129,9 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                   <input
                     type="checkbox"
                     checked={collectionFormData.featured}
-                    onChange={(e) => setCollectionFormData({ ...collectionFormData, featured: e.target.checked })}
+                    onChange={(e) =>
+                      setCollectionFormData({ ...collectionFormData, featured: e.target.checked })
+                    }
                     className="w-4 h-4 text-indigo-600 rounded"
                   />
                   <span>Feature on Homepage Canvas</span>
@@ -1040,11 +1139,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Description</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Description
+                </label>
                 <textarea
                   rows={3}
                   value={collectionFormData.description || ''}
-                  onChange={(e) => setCollectionFormData({ ...collectionFormData, description: e.target.value })}
+                  onChange={(e) =>
+                    setCollectionFormData({ ...collectionFormData, description: e.target.value })
+                  }
                   placeholder="Collection narrative and promo details..."
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-medium"
                 />
@@ -1063,7 +1166,11 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                   disabled={isSaving}
                   className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md flex items-center gap-2"
                 >
-                  {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  {isSaving ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
                   <span>Save Collection</span>
                 </button>
               </div>

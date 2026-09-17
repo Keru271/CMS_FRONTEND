@@ -2,7 +2,16 @@
 
 import React, { useState } from 'react';
 import { Button } from '@heroui/react';
-import { Search, Plus, Edit2, Trash2, Package, AlertCircle, FileSpreadsheet, Download } from 'lucide-react';
+import {
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
+  Package,
+  AlertCircle,
+  FileSpreadsheet,
+  Download,
+} from 'lucide-react';
 import { CMSProduct } from '@/src/types';
 import { ProductImportModal } from '@/src/components/cms/ProductImportModal';
 import { ProductExportModal } from '@/src/components/cms/ProductExportModal';
@@ -150,7 +159,9 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Package className="w-10 h-10 text-[#beb9b3]" />
                       <span className="font-serif text-lg text-[#191a1b]">No Products Found</span>
-                      <span className="text-xs font-sans text-[#5e5a5a]">Try clearing search filters or add a new product.</span>
+                      <span className="text-xs font-sans text-[#5e5a5a]">
+                        Try clearing search filters or add a new product.
+                      </span>
                     </div>
                   </td>
                 </tr>
@@ -186,10 +197,14 @@ export const ProductTable: React.FC<ProductTableProps> = ({
 
                     {/* Price */}
                     <td className="py-3.5 px-4">
-                      <div className="font-mono font-bold text-[#191a1b] text-xs">{currencySymbol}{p.price.toFixed(2)}</div>
+                      <div className="font-mono font-bold text-[#191a1b] text-xs">
+                        {currencySymbol}
+                        {p.price.toFixed(2)}
+                      </div>
                       {p.originalPrice && (
                         <div className="text-[10px] font-mono text-[#5e5a5a] line-through">
-                          {currencySymbol}{p.originalPrice.toFixed(2)}
+                          {currencySymbol}
+                          {p.originalPrice.toFixed(2)}
                         </div>
                       )}
                     </td>
@@ -202,8 +217,8 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                             p.stockQuantity === 0
                               ? 'text-[#ef4444]'
                               : p.stockQuantity < 10
-                              ? 'text-amber-700'
-                              : 'text-[#191a1b]'
+                                ? 'text-amber-700'
+                                : 'text-[#191a1b]'
                           }`}
                         >
                           {p.stockQuantity} units
@@ -221,8 +236,8 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                           p.status === 'active'
                             ? 'bg-[#d4ff4c]/40 text-[#191a1b] border border-[#191a1b]'
                             : p.status === 'draft'
-                            ? 'bg-[#d7e5fe] text-[#191a1b] border border-[#cbd5e0]'
-                            : 'bg-[#fdf1ef] text-[#5e5a5a] border border-[#cbd5e0]'
+                              ? 'bg-[#d7e5fe] text-[#191a1b] border border-[#cbd5e0]'
+                              : 'bg-[#fdf1ef] text-[#5e5a5a] border border-[#cbd5e0]'
                         }`}
                       >
                         {p.status}
@@ -258,8 +273,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
         {/* Footer Summary */}
         <div className="p-4 border-t border-[#cbd5e0] text-xs font-sans text-[#5e5a5a] flex items-center justify-between">
           <span>
-            Showing <strong className="text-[#191a1b] font-medium">{filteredProducts.length}</strong> of{' '}
-            <strong className="text-[#191a1b] font-medium">{products.length}</strong> total catalog products
+            Showing{' '}
+            <strong className="text-[#191a1b] font-medium">{filteredProducts.length}</strong> of{' '}
+            <strong className="text-[#191a1b] font-medium">{products.length}</strong> total catalog
+            products
           </span>
         </div>
       </div>
