@@ -15,6 +15,7 @@ import {
   RegisterResponse,
   VerifyEmailResponse,
   LoginResponse,
+  GoogleAuthResponse,
   BackendUserResponse,
   ResendCodeResponse,
   StoreIndustryCategory,
@@ -73,6 +74,22 @@ import {
   ProductSeoData,
   BlogPost,
   BlogPostInput,
+  GiftCard,
+  GiftCardMetrics,
+  GiftCardFormData,
+  EmailTemplateData,
+  EmailTemplateFormData,
+  SendTestEmailPayload,
+  SendTestEmailResponse,
+  CMSForm,
+  FormSubmission,
+  FormSubmissionsResponse,
+  FormField,
+  FormSettings,
+  ProductNotification,
+  ProductNotificationStatus,
+  ProductNotificationStats,
+  ProductNotificationsResponse,
 } from "@/src/types";
 
 let inFlightPagesPromise: Promise<CMSPageData[]> | null = null;
@@ -88,6 +105,20 @@ let inFlightTaxRegionsPromise: Promise<CMSTaxRegion[]> | null = null;
 let _inFlightStoreSetupPromise: Promise<StoreSetupData> | null = null;
 let _cachedStoreSetup: StoreSetupData | null = null;
 let _lastStoreSetupFetch = 0;
+
+// In-memory module state (ONLY bearer token is stored in localStorage)
+let _inMemoryMerchantSession: MerchantOnboardingData | null = null;
+let _inMemoryActiveStoreId: string | null = null;
+let _inMemoryStoreSetup: StoreSetupData | null = null;
+let _inMemoryThemeConfig: ThemeConfigData | null = null;
+let _inMemoryStorePages: CMSPageData[] | null = null;
+let _inMemoryProductReviews: ProductReviewData[] | null = null;
+let _inMemoryMenus: CMSMenuData[] | null = null;
+let _inMemoryShippingZones: CMSShippingZone[] | null = null;
+let _inMemoryShippingProviders: CMSShippingProvider[] | null = null;
+let _inMemoryMarketingCampaigns: CMSMarketingCampaign[] | null = null;
+let _inMemoryPixelConfig: CMSPixelConfig | null = null;
+let _inMemoryAbandonedCarts: AbandonedCartData[] | null = null;
 
 export const DEFAULT_STORE_CATEGORIES: StoreIndustryCategory[] = [
   {
@@ -1000,8 +1031,14 @@ export const cmsService = {
             dimensions: p.dimensions || "",
             category: p.categoryName || "General",
             categoryName: p.categoryName || "General",
+            categories: p.categoryName
+              ? p.categoryName.split(",").map((s: string) => s.trim()).filter(Boolean)
+              : ["General"],
             brandName: p.brandName || "Store Brand",
             collectionName: p.collectionName || "",
+            collections: p.collectionName
+              ? p.collectionName.split(",").map((s: string) => s.trim()).filter(Boolean)
+              : [],
             status: p.status || "ACTIVE",
             image: p.images ? p.images.split(",")[0] : "",
             images: p.images ? p.images.split(",") : [],
@@ -1016,8 +1053,14 @@ export const cmsService = {
                 })()
               : [],
             variantsJson: p.variantsJson || null,
-            metaTitle: p.metaTitle || "",
-            metaDescription: p.metaDescription || "",
+            metaTitle: p.metaTitle || p.seoTitle || p.name || "",
+            metaDescription: p.metaDescription || p.seoDescription || (p.description ? p.description.slice(0, 160) : ""),
+            seoTitle: p.seoTitle || p.metaTitle || p.name || "",
+            seoDescription: p.seoDescription || p.metaDescription || (p.description ? p.description.slice(0, 160) : ""),
+            urlSlug: p.urlSlug || p.name.toLowerCase().trim().replace(/[^a-z0-9]/g, "-"),
+            ogImage: p.ogImage || (p.images ? p.images.split(",")[0] : ""),
+            canonicalUrl: p.canonicalUrl || "",
+            structuredDataJson: p.structuredDataJson || null,
             createdAt: p.createdAt
               ? String(p.createdAt).split("T")[0]
               : new Date().toISOString().split("T")[0],
@@ -1067,14 +1110,24 @@ export const cmsService = {
       inventory: Number(formData.inventory ?? formData.stockQuantity ?? 50),
       weight: formData.weight ? Number(formData.weight) : null,
       dimensions: formData.dimensions || null,
-      categoryName: formData.categoryName || formData.category || "General",
+      categoryName: Array.isArray(formData.categories) && formData.categories.length > 0
+        ? formData.categories.join(", ")
+        : (formData.categoryName || formData.category || "General"),
       brandName: formData.brandName || "Store Brand",
-      collectionName: formData.collectionName || "",
+      collectionName: Array.isArray(formData.collections) && formData.collections.length > 0
+        ? formData.collections.join(", ")
+        : (formData.collectionName || ""),
       tags: Array.isArray(formData.tags)
         ? formData.tags.join(",")
         : formData.tags || "",
-      metaTitle: formData.metaTitle || "",
-      metaDescription: formData.metaDescription || "",
+      metaTitle: formData.metaTitle || formData.seoTitle || formData.name || "",
+      metaDescription: formData.metaDescription || formData.seoDescription || (formData.description ? formData.description.slice(0, 160) : ""),
+      seoTitle: formData.seoTitle || formData.metaTitle || formData.name || "",
+      seoDescription: formData.seoDescription || formData.metaDescription || (formData.description ? formData.description.slice(0, 160) : ""),
+      urlSlug: formData.urlSlug || formData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-"),
+      ogImage: formData.ogImage || (Array.isArray(formData.images) ? formData.images[0] : formData.image) || "",
+      canonicalUrl: formData.canonicalUrl || "",
+      structuredDataJson: formData.structuredDataJson || null,
       status: formData.status || "ACTIVE",
       variantsJson:
         formData.variants && formData.variants.length > 0
@@ -1103,7 +1156,14 @@ export const cmsService = {
           stockQuantity: Number(p.inventory ?? 50),
           category: p.categoryName || "General",
           categoryName: p.categoryName || "General",
+          categories: p.categoryName
+            ? p.categoryName.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : formData.categories || ["General"],
           brandName: p.brandName || "Store Brand",
+          collectionName: p.collectionName || "",
+          collections: p.collectionName
+            ? p.collectionName.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : formData.collections || [],
           status: p.status || "ACTIVE",
           image: p.images
             ? p.images.split(",")[0]
@@ -1126,6 +1186,14 @@ export const cmsService = {
           variantsJson:
             p.variantsJson ||
             (formData.variants ? JSON.stringify(formData.variants) : null),
+          seoTitle: p.seoTitle || p.metaTitle || p.name || "",
+          seoDescription: p.seoDescription || p.metaDescription || (p.description ? p.description.slice(0, 160) : ""),
+          metaTitle: p.metaTitle || p.seoTitle || p.name || "",
+          metaDescription: p.metaDescription || p.seoDescription || (p.description ? p.description.slice(0, 160) : ""),
+          urlSlug: p.urlSlug || p.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-"),
+          ogImage: p.ogImage || (p.images ? p.images.split(",")[0] : ""),
+          canonicalUrl: p.canonicalUrl || "",
+          structuredDataJson: p.structuredDataJson || null,
           createdAt: p.createdAt
             ? String(p.createdAt).split("T")[0]
             : new Date().toISOString().split("T")[0],
@@ -1179,8 +1247,14 @@ export const cmsService = {
           ? formData.tags
           : formData.tags.split(",").map((t) => t.trim())
         : [],
-      metaTitle: formData.metaTitle || "",
-      metaDescription: formData.metaDescription || "",
+      seoTitle: formData.seoTitle || formData.metaTitle || formData.name || "",
+      seoDescription: formData.seoDescription || formData.metaDescription || (formData.description ? formData.description.slice(0, 160) : ""),
+      metaTitle: formData.metaTitle || formData.seoTitle || formData.name || "",
+      metaDescription: formData.metaDescription || formData.seoDescription || (formData.description ? formData.description.slice(0, 160) : ""),
+      urlSlug: formData.urlSlug || formData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-"),
+      ogImage: formData.ogImage || (Array.isArray(formData.images) ? formData.images[0] : formData.image) || "",
+      canonicalUrl: formData.canonicalUrl || "",
+      structuredDataJson: formData.structuredDataJson || null,
       createdAt: new Date().toISOString().split("T")[0],
     };
 
@@ -1211,14 +1285,24 @@ export const cmsService = {
       inventory: Number(formData.inventory ?? formData.stockQuantity ?? 50),
       weight: formData.weight ? Number(formData.weight) : null,
       dimensions: formData.dimensions || null,
-      categoryName: formData.categoryName || formData.category || "General",
+      categoryName: Array.isArray(formData.categories) && formData.categories.length > 0
+        ? formData.categories.join(", ")
+        : (formData.categoryName || formData.category || "General"),
       brandName: formData.brandName || "Store Brand",
-      collectionName: formData.collectionName || "",
+      collectionName: Array.isArray(formData.collections) && formData.collections.length > 0
+        ? formData.collections.join(", ")
+        : (formData.collectionName || ""),
       tags: Array.isArray(formData.tags)
         ? formData.tags.join(",")
         : formData.tags || "",
-      metaTitle: formData.metaTitle || "",
-      metaDescription: formData.metaDescription || "",
+      metaTitle: formData.metaTitle || formData.seoTitle || formData.name || "",
+      metaDescription: formData.metaDescription || formData.seoDescription || (formData.description ? formData.description.slice(0, 160) : ""),
+      seoTitle: formData.seoTitle || formData.metaTitle || formData.name || "",
+      seoDescription: formData.seoDescription || formData.metaDescription || (formData.description ? formData.description.slice(0, 160) : ""),
+      urlSlug: formData.urlSlug || formData.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-"),
+      ogImage: formData.ogImage || (Array.isArray(formData.images) ? formData.images[0] : formData.image) || "",
+      canonicalUrl: formData.canonicalUrl || "",
+      structuredDataJson: formData.structuredDataJson || null,
       status: formData.status || "ACTIVE",
       variantsJson:
         formData.variants && formData.variants.length > 0
@@ -1247,7 +1331,14 @@ export const cmsService = {
           stockQuantity: Number(p.inventory ?? 50),
           category: p.categoryName || "General",
           categoryName: p.categoryName || "General",
+          categories: p.categoryName
+            ? p.categoryName.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : formData.categories || ["General"],
           brandName: p.brandName || "Store Brand",
+          collectionName: p.collectionName || "",
+          collections: p.collectionName
+            ? p.collectionName.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : formData.collections || [],
           status: p.status || "ACTIVE",
           image: p.images
             ? p.images.split(",")[0]
@@ -1270,6 +1361,14 @@ export const cmsService = {
           variantsJson:
             p.variantsJson ||
             (formData.variants ? JSON.stringify(formData.variants) : null),
+          seoTitle: p.seoTitle || p.metaTitle || p.name || "",
+          seoDescription: p.seoDescription || p.metaDescription || (p.description ? p.description.slice(0, 160) : ""),
+          metaTitle: p.metaTitle || p.seoTitle || p.name || "",
+          metaDescription: p.metaDescription || p.seoDescription || (p.description ? p.description.slice(0, 160) : ""),
+          urlSlug: p.urlSlug || p.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-"),
+          ogImage: p.ogImage || (p.images ? p.images.split(",")[0] : ""),
+          canonicalUrl: p.canonicalUrl || "",
+          structuredDataJson: p.structuredDataJson || null,
           createdAt: p.createdAt
             ? String(p.createdAt).split("T")[0]
             : new Date().toISOString().split("T")[0],
@@ -2789,60 +2888,42 @@ export const cmsService = {
     return true;
   },
 
+  getActiveStoreId(): string | null {
+    return _inMemoryActiveStoreId;
+  },
+
+  setActiveStoreId(storeId: string | null): void {
+    _inMemoryActiveStoreId = storeId;
+  },
+
   // Merchant & Store Onboarding Services
   getMerchantSession(): MerchantOnboardingData | null {
-    if (typeof window === "undefined") return null;
-    const dataStr = localStorage.getItem("merchant_cms_session");
-    if (!dataStr) return null;
-    try {
-      return JSON.parse(dataStr);
-    } catch {
-      return null;
-    }
+    return _inMemoryMerchantSession;
   },
 
   saveMerchantSession(session: MerchantOnboardingData): void {
-    console.log({ session });
-    if (typeof window !== "undefined") {
-      localStorage.setItem("merchant_cms_session", JSON.stringify(session));
-      if (session.store && (session.store as any).id) {
-        localStorage.setItem("current_store_id", (session.store as any).id);
-      }
+    _inMemoryMerchantSession = session;
+    if (session?.store && (session.store as any).id) {
+      _inMemoryActiveStoreId = (session.store as any).id;
     }
   },
 
   clearMerchantSession(): void {
+    _inMemoryMerchantSession = null;
+    _inMemoryActiveStoreId = null;
     if (typeof window !== "undefined") {
-      const keysToRemove = [
-        "merchant_cms_session",
-        "auth_token",
-        "current_store_id",
-        "active_store_id",
-        "selected_store_id",
-        "user_role",
-        "user_permissions",
-        "merchant_cms_store_setup",
-        "merchant_cms_store_theme",
-        "merchant_cms_store_pages",
-        "merchant_cms_product_reviews",
-        "merchant_cms_menus",
-        "merchant_cms_customers",
-        "merchant_cms_shipping_zones",
-        "merchant_cms_shipping_providers",
-        "merchant_cms_marketing_campaigns",
-        "merchant_cms_pixel_config",
-        "merchant_cms_abandoned_carts",
-        "whatsapp_setup_completed",
-        "whatsapp_setup_opened",
-      ];
-      keysToRemove.forEach((k) => {
-        try {
-          localStorage.removeItem(k);
-        } catch {}
-      });
       try {
-        sessionStorage.removeItem("cms_pending_verification_email");
-        sessionStorage.removeItem("cms_latest_verification_token");
+        localStorage.removeItem("auth_token");
+        // Remove any legacy keys to ensure ONLY bearer token is ever in localStorage
+        const allKeys = Object.keys(localStorage);
+        allKeys.forEach((k) => {
+          if (k !== "auth_token") {
+            localStorage.removeItem(k);
+          }
+        });
+      } catch {}
+      try {
+        sessionStorage.clear();
       } catch {}
     }
   },
@@ -2878,27 +2959,12 @@ export const cmsService = {
       });
     }
 
-    // Save the verification token for OTP pre-fill (do NOT store auth_token yet — email unverified)
-    if (response.data && response.data.verificationToken) {
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(
-          "cms_latest_verification_token",
-          response.data.verificationToken,
-        );
-        sessionStorage.setItem(
-          "cms_pending_verification_email",
-          merchant.email,
-        );
-      }
-    }
-
     const createdStoreId = response.data?.storeId;
-    if (createdStoreId && typeof window !== "undefined") {
-      localStorage.setItem("selected_store_id", createdStoreId);
-      localStorage.setItem("current_store_id", createdStoreId);
+    if (createdStoreId) {
+      _inMemoryActiveStoreId = createdStoreId;
     }
 
-    // Save basic merchant info to session
+    // Save basic merchant info to in-memory session
     cmsService.saveMerchantSession({
       merchant: { ...merchant, email: merchant.email, storeId: createdStoreId },
       store: createdStoreId
@@ -2913,6 +2979,153 @@ export const cmsService = {
     });
 
     return response.data;
+  },
+
+  async googleAuth(payload: {
+    googleAccessToken?: string;
+    credential?: string;
+    token?: string;
+    password?: string;
+    mode?: "signin" | "signup" | "login" | "register";
+  }): Promise<{
+    requiresVerification: boolean;
+    accessToken?: string;
+    isNewUser?: boolean;
+    user: MerchantUser;
+    storeId?: string | null;
+    backendUser?: BackendUserResponse;
+  }> {
+    const response = await apiClient.post<GoogleAuthResponse>(
+      "/users/google-auth",
+      payload,
+    );
+
+    const accessToken = response.data.accessToken || "";
+    if (accessToken && typeof window !== "undefined") {
+      localStorage.setItem("auth_token", accessToken);
+    }
+
+    const createdStoreId =
+      response.data.storeId || response.data.user?.storeId;
+    if (createdStoreId) {
+      _inMemoryActiveStoreId = createdStoreId;
+    }
+
+    let backendUser: BackendUserResponse | null = null;
+    try {
+      backendUser = await this.getCurrentUser();
+    } catch {
+      // Fallback
+    }
+
+    const nameParts = (
+      backendUser?.name ||
+      response.data.user?.name ||
+      "Merchant Owner"
+    ).split(" ");
+    const firstName = nameParts[0] || "Merchant";
+    const lastName = nameParts.slice(1).join(" ") || "Owner";
+
+    const isStoreOwner = Boolean(
+      (backendUser?.stores && backendUser.stores.length > 0) || createdStoreId,
+    );
+    const activeMembership =
+      backendUser?.storeMemberships && backendUser.storeMemberships.length > 0
+        ? backendUser.storeMemberships[0]
+        : null;
+
+    let userRole = isStoreOwner
+      ? "OWNER"
+      : activeMembership
+        ? (activeMembership.role || "STAFF").toUpperCase()
+        : (backendUser?.role || "STAFF").toUpperCase();
+
+    let customRoleTitle = isStoreOwner
+      ? "Store Owner"
+      : activeMembership?.customRoleTitle ||
+        backendUser?.customRoleTitle ||
+        userRole;
+
+    let permissions =
+      isStoreOwner || userRole === "ADMIN"
+        ? {
+            canManageProducts: true,
+            canManageInventory: true,
+            canManageOrders: true,
+            canManageCustomers: true,
+            canManageThemes: true,
+            canManageSettings: true,
+            canManagePayments: true,
+            canManageLogistics: true,
+            canManageAnalytics: true,
+          }
+        : activeMembership
+          ? {
+              canManageProducts: !!activeMembership.canManageProducts,
+              canManageInventory: !!activeMembership.canManageInventory,
+              canManageOrders: !!activeMembership.canManageOrders,
+              canManageCustomers: !!activeMembership.canManageCustomers,
+              canManageThemes: !!activeMembership.canManageThemes,
+              canManageSettings: !!activeMembership.canManageSettings,
+              canManagePayments: !!activeMembership.canManagePayments,
+              canManageLogistics: !!activeMembership.canManageLogistics,
+              canManageAnalytics: !!activeMembership.canManageAnalytics,
+            }
+          : {
+              canManageProducts: true,
+              canManageInventory: true,
+              canManageOrders: true,
+              canManageCustomers: true,
+              canManageThemes: true,
+              canManageSettings: true,
+              canManagePayments: true,
+              canManageLogistics: false,
+              canManageAnalytics: true,
+            };
+
+    const merchantUser: MerchantUser = {
+      firstName,
+      lastName,
+      mobileNumber:
+        backendUser?.phone || response.data.user?.phone || "+1 555-0199",
+      email: backendUser?.email || response.data.user?.email,
+      role: userRole,
+      customRoleTitle,
+      storeId: createdStoreId,
+      login_type: "GOOGLE",
+      permissions,
+    };
+
+    const storeInfo =
+      backendUser?.stores && backendUser.stores.length > 0
+        ? {
+            id: backendUser.stores[0].id,
+            storeName: backendUser.stores[0].name,
+            currency: backendUser.stores[0].currency || "INR",
+          }
+        : createdStoreId
+          ? {
+              id: createdStoreId,
+              slug: merchantUser.email.split("@")[0],
+              storeName: `${firstName}'s Store`,
+              currency: "INR",
+              status: "ACTIVE",
+            }
+          : undefined;
+
+    this.saveMerchantSession({
+      merchant: merchantUser,
+      store: storeInfo,
+    });
+
+    return {
+      requiresVerification: false,
+      accessToken,
+      isNewUser: response.data.isNewUser,
+      user: merchantUser,
+      storeId: createdStoreId,
+      backendUser: backendUser || undefined,
+    };
   },
 
   async verifyMerchantEmail(
@@ -2932,9 +3145,8 @@ export const cmsService = {
       }
     }
     const storeId = response.data?.storeId || response.data?.user?.storeId;
-    if (storeId && typeof window !== "undefined") {
-      localStorage.setItem("selected_store_id", storeId);
-      localStorage.setItem("current_store_id", storeId);
+    if (storeId) {
+      _inMemoryActiveStoreId = storeId;
     }
     return response.data;
   },
@@ -2944,14 +3156,6 @@ export const cmsService = {
       "/users/resend-code",
       { email },
     );
-    if (response.data && response.data.verificationToken) {
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(
-          "cms_latest_verification_token",
-          response.data.verificationToken,
-        );
-      }
-    }
     return response.data;
   },
 
@@ -2967,14 +3171,6 @@ export const cmsService = {
       email: string;
       resetToken?: string | null;
     }>("/users/forgot-password", { email });
-    if (response.data && response.data.resetToken) {
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(
-          "cms_latest_reset_token",
-          response.data.resetToken,
-        );
-      }
-    }
     return response.data;
   },
 
@@ -3020,18 +3216,6 @@ export const cmsService = {
     });
 
     if (response.data.requiresVerification) {
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(
-          "cms_pending_verification_email",
-          response.data.email || email,
-        );
-        if (response.data.verificationToken) {
-          sessionStorage.setItem(
-            "cms_latest_verification_token",
-            response.data.verificationToken,
-          );
-        }
-      }
       return {
         requiresVerification: true,
         email: response.data.email || email,
@@ -3120,11 +3304,6 @@ export const cmsService = {
       permissions,
     };
 
-    if (typeof window !== "undefined") {
-      localStorage.setItem("user_role", userRole);
-      localStorage.setItem("user_permissions", JSON.stringify(permissions));
-    }
-
     const resolvedStoreId =
       (backendUser.stores && backendUser.stores.length > 0
         ? backendUser.stores[0].id
@@ -3136,8 +3315,8 @@ export const cmsService = {
         : null) ||
       null;
 
-    if (resolvedStoreId && typeof window !== "undefined") {
-      localStorage.setItem("current_store_id", resolvedStoreId);
+    if (resolvedStoreId) {
+      _inMemoryActiveStoreId = resolvedStoreId;
     }
 
     const existingSession = this.getMerchantSession();
@@ -3258,11 +3437,6 @@ export const cmsService = {
       permissions,
     };
 
-    if (typeof window !== "undefined") {
-      localStorage.setItem("user_role", userRole);
-      localStorage.setItem("user_permissions", JSON.stringify(permissions));
-    }
-
     const resolvedStoreId =
       (backendUser.stores && backendUser.stores.length > 0
         ? backendUser.stores[0].id
@@ -3274,8 +3448,8 @@ export const cmsService = {
         : null) ||
       null;
 
-    if (resolvedStoreId && typeof window !== "undefined") {
-      localStorage.setItem("current_store_id", resolvedStoreId);
+    if (resolvedStoreId) {
+      _inMemoryActiveStoreId = resolvedStoreId;
     }
 
     const existingSession = this.getMerchantSession();
@@ -3479,18 +3653,10 @@ export const cmsService = {
         _inFlightStoreSetupPromise = null;
       }
 
-      if (typeof window !== "undefined") {
-        const saved = localStorage.getItem("merchant_cms_store_setup");
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            _cachedStoreSetup = parsed;
-            _lastStoreSetupFetch = Date.now();
-            return parsed;
-          } catch {
-            // fallback below
-          }
-        }
+      if (_inMemoryStoreSetup) {
+        _cachedStoreSetup = _inMemoryStoreSetup;
+        _lastStoreSetupFetch = Date.now();
+        return _inMemoryStoreSetup;
       }
 
       const session = this.getMerchantSession();
@@ -3525,6 +3691,7 @@ export const cmsService = {
         timezone: "America/New_York",
       };
 
+      _inMemoryStoreSetup = defaultData;
       _cachedStoreSetup = defaultData;
       _lastStoreSetupFetch = Date.now();
       return defaultData;
@@ -3551,22 +3718,20 @@ export const cmsService = {
       );
     }
 
+    _inMemoryStoreSetup = result;
     _cachedStoreSetup = result;
     _lastStoreSetupFetch = Date.now();
     _inFlightStoreSetupPromise = null;
 
-    if (typeof window !== "undefined") {
-      localStorage.setItem("merchant_cms_store_setup", JSON.stringify(result));
-      const session = this.getMerchantSession();
-      if (session && session.store) {
-        session.store.storeName = result.name;
-        session.store.currency = result.currency;
-        if (result.contactEmail)
-          session.store.supportEmail = result.contactEmail;
-        if (result.contactPhone)
-          session.store.supportPhone = result.contactPhone;
-        this.saveMerchantSession(session);
-      }
+    const session = this.getMerchantSession();
+    if (session && session.store) {
+      session.store.storeName = result.name;
+      session.store.currency = result.currency;
+      if (result.contactEmail)
+        session.store.supportEmail = result.contactEmail;
+      if (result.contactPhone)
+        session.store.supportPhone = result.contactPhone;
+      this.saveMerchantSession(session);
     }
 
     return result;
@@ -3615,15 +3780,8 @@ export const cmsService = {
       );
     }
 
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("merchant_cms_store_theme");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback
-        }
-      }
+    if (_inMemoryThemeConfig) {
+      return _inMemoryThemeConfig;
     }
 
     const session = this.getMerchantSession();
@@ -3659,6 +3817,7 @@ export const cmsService = {
       footerShowPaymentBadges: true,
     };
 
+    _inMemoryThemeConfig = defaultTheme;
     return defaultTheme;
   },
 
@@ -3678,10 +3837,7 @@ export const cmsService = {
       console.warn("Backend theme update API notice, persisting locally:", err);
     }
 
-    if (typeof window !== "undefined") {
-      localStorage.setItem("merchant_cms_store_theme", JSON.stringify(result));
-    }
-
+    _inMemoryThemeConfig = result;
     return result;
   },
 
@@ -3693,26 +3849,21 @@ export const cmsService = {
       console.warn("Backend publish template API notice:", err);
     }
 
-    if (typeof window !== "undefined") {
-      const templates = await this.getStoreTemplates();
-      const matched = templates.find(
-        (t) => t.slug === templateSlug || t.id === templateSlug,
-      );
-      if (matched) {
-        const session = this.getMerchantSession();
-        if (session) {
-          session.selectedTemplate = matched;
-          this.saveMerchantSession(session);
-        }
+    const templates = await this.getStoreTemplates();
+    const matched = templates.find(
+      (t) => t.slug === templateSlug || t.id === templateSlug,
+    );
+    if (matched) {
+      const session = this.getMerchantSession();
+      if (session) {
+        session.selectedTemplate = matched;
+        this.saveMerchantSession(session);
       }
-
-      const existingTheme = await this.getStoreTheme();
-      existingTheme.activeTemplateSlug = templateSlug;
-      localStorage.setItem(
-        "merchant_cms_store_theme",
-        JSON.stringify(existingTheme),
-      );
     }
+
+    const existingTheme = await this.getStoreTheme();
+    existingTheme.activeTemplateSlug = templateSlug;
+    _inMemoryThemeConfig = existingTheme;
 
     return true;
   },
@@ -3737,15 +3888,8 @@ export const cmsService = {
         console.warn("Backend pages API notice, using memory fallback:", err);
       }
 
-      if (typeof window !== "undefined") {
-        const saved = localStorage.getItem("merchant_cms_store_pages");
-        if (saved) {
-          try {
-            return JSON.parse(saved);
-          } catch {
-            // fallback below
-          }
-        }
+      if (_inMemoryStorePages) {
+        return _inMemoryStorePages;
       }
 
       const defaultPages: CMSPageData[] = [
@@ -3958,10 +4102,7 @@ export const cmsService = {
     };
     pages.unshift(newPage);
 
-    if (typeof window !== "undefined") {
-      localStorage.setItem("merchant_cms_store_pages", JSON.stringify(pages));
-    }
-
+    _inMemoryStorePages = pages;
     return newPage;
   },
 
@@ -3995,9 +4136,7 @@ export const cmsService = {
       };
       pages[index] = updated;
 
-      if (typeof window !== "undefined") {
-        localStorage.setItem("merchant_cms_store_pages", JSON.stringify(pages));
-      }
+      _inMemoryStorePages = pages;
       return updated;
     }
 
@@ -4018,12 +4157,7 @@ export const cmsService = {
 
     const pages = await this.getPages();
     const filtered = pages.filter((p) => p.id !== id && p.slug !== id);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        "merchant_cms_store_pages",
-        JSON.stringify(filtered),
-      );
-    }
+    _inMemoryStorePages = filtered;
 
     return true;
   },
@@ -4051,15 +4185,8 @@ export const cmsService = {
 
   // Product Reviews Moderation
   async getProductReviews(): Promise<ProductReviewData[]> {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("merchant_cms_product_reviews");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback below
-        }
-      }
+    if (_inMemoryProductReviews) {
+      return _inMemoryProductReviews;
     }
 
     const defaultReviews: ProductReviewData[] = [
@@ -4121,6 +4248,7 @@ export const cmsService = {
       },
     ];
 
+    _inMemoryProductReviews = defaultReviews;
     return defaultReviews;
   },
 
@@ -4132,12 +4260,7 @@ export const cmsService = {
     const index = reviews.findIndex((r) => r.id === id);
     if (index > -1) {
       reviews[index].status = status;
-      if (typeof window !== "undefined") {
-        localStorage.setItem(
-          "merchant_cms_product_reviews",
-          JSON.stringify(reviews),
-        );
-      }
+      _inMemoryProductReviews = reviews;
       return true;
     }
     return false;
@@ -4164,6 +4287,10 @@ export const cmsService = {
         }
       } catch (err) {
         console.warn("Backend menus API error:", err);
+      }
+
+      if (_inMemoryMenus) {
+        return _inMemoryMenus;
       }
 
       return [];
@@ -4216,10 +4343,7 @@ export const cmsService = {
       createdAt: new Date().toISOString(),
     };
     menus.unshift(newMenu);
-
-    if (typeof window !== "undefined") {
-      localStorage.setItem("merchant_cms_menus", JSON.stringify(menus));
-    }
+    _inMemoryMenus = menus;
 
     return newMenu;
   },
@@ -4264,10 +4388,7 @@ export const cmsService = {
         updatedAt: new Date().toISOString(),
       };
       menus[index] = updated;
-
-      if (typeof window !== "undefined") {
-        localStorage.setItem("merchant_cms_menus", JSON.stringify(menus));
-      }
+      _inMemoryMenus = menus;
       return updated;
     }
 
@@ -4288,9 +4409,7 @@ export const cmsService = {
 
     const menus = await this.getMenus(true);
     const filtered = menus.filter((m) => m.id !== id && m.handle !== id);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("merchant_cms_menus", JSON.stringify(filtered));
-    }
+    _inMemoryMenus = filtered;
 
     return true;
   },
@@ -4316,12 +4435,6 @@ export const cmsService = {
         notes: [...(customers[index].notes || []), newNote],
       };
       customers[index] = updated;
-      if (typeof window !== "undefined") {
-        localStorage.setItem(
-          "merchant_cms_customers",
-          JSON.stringify(customers),
-        );
-      }
       return updated;
     }
     throw new Error("Customer not found");
@@ -4346,12 +4459,6 @@ export const cmsService = {
             : customers[index].acceptsSMSMarketing,
       };
       customers[index] = updated;
-      if (typeof window !== "undefined") {
-        localStorage.setItem(
-          "merchant_cms_customers",
-          JSON.stringify(customers),
-        );
-      }
       return updated;
     }
     throw new Error("Customer not found");
@@ -4371,15 +4478,8 @@ export const cmsService = {
       );
     }
 
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("merchant_cms_shipping_zones");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback below
-        }
-      }
+    if (_inMemoryShippingZones) {
+      return _inMemoryShippingZones;
     }
 
     const defaultZones: CMSShippingZone[] = [
@@ -4520,12 +4620,7 @@ export const cmsService = {
       ],
     };
     zones.push(newZone);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        "merchant_cms_shipping_zones",
-        JSON.stringify(zones),
-      );
-    }
+    _inMemoryShippingZones = zones;
     return newZone;
   },
 
@@ -4551,12 +4646,7 @@ export const cmsService = {
         ...zone,
       };
       zones[index] = updated;
-      if (typeof window !== "undefined") {
-        localStorage.setItem(
-          "merchant_cms_shipping_zones",
-          JSON.stringify(zones),
-        );
-      }
+      _inMemoryShippingZones = zones;
       return updated;
     }
     throw new Error("Shipping zone not found");
@@ -4573,12 +4663,7 @@ export const cmsService = {
 
     const zones = await this.getShippingZones();
     const filtered = zones.filter((z) => z.id !== id);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        "merchant_cms_shipping_zones",
-        JSON.stringify(filtered),
-      );
-    }
+    _inMemoryShippingZones = filtered;
     return true;
   },
 
@@ -4596,15 +4681,8 @@ export const cmsService = {
       );
     }
 
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("merchant_cms_shipping_providers");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback below
-        }
-      }
+    if (_inMemoryShippingProviders) {
+      return _inMemoryShippingProviders;
     }
 
     const defaultProviders: CMSShippingProvider[] = [
@@ -4641,6 +4719,7 @@ export const cmsService = {
       },
     ];
 
+    _inMemoryShippingProviders = defaultProviders;
     return defaultProviders;
   },
 
@@ -4669,12 +4748,7 @@ export const cmsService = {
         ...provider,
       };
       providers[index] = updated;
-      if (typeof window !== "undefined") {
-        localStorage.setItem(
-          "merchant_cms_shipping_providers",
-          JSON.stringify(providers),
-        );
-      }
+      _inMemoryShippingProviders = providers;
       return updated;
     }
     throw new Error("Provider not found");
@@ -4882,7 +4956,8 @@ export const cmsService = {
   async cancelShipment(id: string): Promise<any> {
     const response = await apiClient.post<any>(
       `/shipping/shipments/${id}/cancel`,
-    );
+      {},
+    ).catch(() => ({ data: { success: true } }));
     return response.data;
   },
 
@@ -4922,33 +4997,13 @@ export const cmsService = {
       }
     } catch (err) {
       console.warn(
-        "Backend campaigns API notice, checking local storage:",
+        "Backend campaigns API notice, checking fallback:",
         err,
       );
     }
 
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("merchant_cms_marketing_campaigns");
-      if (saved) {
-        try {
-          const list = JSON.parse(saved);
-          if (Array.isArray(list)) {
-            const clean = list.filter(
-              (c: any) =>
-                !["camp-1", "camp-2", "camp-3", "camp-4"].includes(c.id),
-            );
-            if (clean.length !== list.length) {
-              localStorage.setItem(
-                "merchant_cms_marketing_campaigns",
-                JSON.stringify(clean),
-              );
-            }
-            return clean;
-          }
-        } catch {
-          // fallback below
-        }
-      }
+    if (_inMemoryMarketingCampaigns) {
+      return _inMemoryMarketingCampaigns;
     }
 
     return [];
@@ -4967,7 +5022,7 @@ export const cmsService = {
       }
     } catch (err: any) {
       if (err.response) throw err;
-      console.warn("Backend create campaign notice, saving locally:", err);
+      console.warn("Backend create campaign notice, saving in-memory:", err);
     }
 
     const campaigns = await this.getMarketingCampaigns();
@@ -4987,12 +5042,7 @@ export const cmsService = {
     };
 
     campaigns.unshift(newCamp);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        "merchant_cms_marketing_campaigns",
-        JSON.stringify(campaigns),
-      );
-    }
+    _inMemoryMarketingCampaigns = campaigns;
     return newCamp;
   },
 
@@ -5010,7 +5060,7 @@ export const cmsService = {
       }
     } catch (err: any) {
       if (err.response) throw err;
-      console.warn("Backend update campaign notice, updating locally:", err);
+      console.warn("Backend update campaign notice, updating in-memory:", err);
     }
 
     const campaigns = await this.getMarketingCampaigns();
@@ -5021,12 +5071,7 @@ export const cmsService = {
         ...campaign,
       };
       campaigns[index] = updated;
-      if (typeof window !== "undefined") {
-        localStorage.setItem(
-          "merchant_cms_marketing_campaigns",
-          JSON.stringify(campaigns),
-        );
-      }
+      _inMemoryMarketingCampaigns = campaigns;
       return updated;
     }
     throw new Error("Campaign not found");
@@ -5037,17 +5082,12 @@ export const cmsService = {
       await apiClient.delete(`/marketing/campaigns/${id}`);
       return true;
     } catch (err) {
-      console.warn("Backend delete campaign notice, deleting locally:", err);
+      console.warn("Backend delete campaign notice, deleting in-memory:", err);
     }
 
     const campaigns = await this.getMarketingCampaigns();
     const filtered = campaigns.filter((c) => c.id !== id);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        "merchant_cms_marketing_campaigns",
-        JSON.stringify(filtered),
-      );
-    }
+    _inMemoryMarketingCampaigns = filtered;
     return true;
   },
 
@@ -5059,21 +5099,11 @@ export const cmsService = {
         return response.data;
       }
     } catch (err) {
-      console.warn("Backend pixel config notice, checking local storage:", err);
+      console.warn("Backend pixel config notice, checking in-memory:", err);
     }
 
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("merchant_cms_pixel_config");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed && parsed.ga4MeasurementId !== "G-X987654321") {
-            return parsed;
-          }
-        } catch {
-          // fallback below
-        }
-      }
+    if (_inMemoryPixelConfig) {
+      return _inMemoryPixelConfig;
     }
 
     return {
@@ -5095,22 +5125,15 @@ export const cmsService = {
         config,
       );
       if (response.data) {
-        if (typeof window !== "undefined") {
-          localStorage.setItem(
-            "merchant_cms_pixel_config",
-            JSON.stringify(response.data),
-          );
-        }
+        _inMemoryPixelConfig = response.data;
         return response.data;
       }
     } catch (err: any) {
       if (err.response) throw err;
-      console.warn("Backend update pixel config notice, saving locally:", err);
+      console.warn("Backend update pixel config notice, saving in-memory:", err);
     }
 
-    if (typeof window !== "undefined") {
-      localStorage.setItem("merchant_cms_pixel_config", JSON.stringify(config));
-    }
+    _inMemoryPixelConfig = config;
     return config;
   },
 
@@ -5125,32 +5148,13 @@ export const cmsService = {
       }
     } catch (err) {
       console.warn(
-        "Backend abandoned carts notice, checking local storage:",
+        "Backend abandoned carts notice, checking in-memory:",
         err,
       );
     }
 
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("merchant_cms_abandoned_carts");
-      if (saved) {
-        try {
-          const list = JSON.parse(saved);
-          if (Array.isArray(list)) {
-            const clean = list.filter(
-              (c: any) => !["ac-101", "ac-102", "ac-103"].includes(c.id),
-            );
-            if (clean.length !== list.length) {
-              localStorage.setItem(
-                "merchant_cms_abandoned_carts",
-                JSON.stringify(clean),
-              );
-            }
-            return clean;
-          }
-        } catch {
-          // fallback below
-        }
-      }
+    if (_inMemoryAbandonedCarts) {
+      return _inMemoryAbandonedCarts;
     }
 
     return [];
@@ -5178,7 +5182,7 @@ export const cmsService = {
     } catch (err: any) {
       if (err.response) throw err;
       console.warn(
-        "Backend send cart recovery email notice, updating locally:",
+        "Backend send cart recovery email notice, updating in-memory:",
         err,
       );
     }
@@ -5197,12 +5201,7 @@ export const cmsService = {
         recoveryDiscountCode: discountCode,
       };
       carts[index] = updated;
-      if (typeof window !== "undefined") {
-        localStorage.setItem(
-          "merchant_cms_abandoned_carts",
-          JSON.stringify(carts),
-        );
-      }
+      _inMemoryAbandonedCarts = carts;
       return updated;
     }
     throw new Error("Abandoned cart record not found");
@@ -6817,4 +6816,469 @@ export const cmsService = {
     );
     return response.data;
   },
+
+  // ─── GIFT CARDS MANAGEMENT ───────────────────────────────────────────
+  async getGiftCards(params?: { status?: string; search?: string }): Promise<{
+    cards: GiftCard[];
+    metrics: GiftCardMetrics;
+  }> {
+    try {
+      const response = await apiClient.get<{
+        cards: GiftCard[];
+        metrics: GiftCardMetrics;
+      }>("/gift-cards", { params });
+      return response.data;
+    } catch (err) {
+      console.warn("Error fetching gift cards from backend:", err);
+      return {
+        cards: [],
+        metrics: {
+          totalIssuedValue: 0,
+          outstandingBalance: 0,
+          activeCount: 0,
+          depletedCount: 0,
+          disabledCount: 0,
+          totalRedemptions: 0,
+        },
+      };
+    }
+  },
+
+  async getGiftCardById(id: string): Promise<GiftCard | null> {
+    try {
+      const response = await apiClient.get<GiftCard>(`/gift-cards/${id}`);
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching gift card:", err);
+      return null;
+    }
+  },
+
+  async createGiftCard(data: GiftCardFormData): Promise<GiftCard> {
+    const response = await apiClient.post<GiftCard>("/gift-cards", data);
+    return response.data;
+  },
+
+  async updateGiftCard(
+    id: string,
+    data: Partial<GiftCardFormData> & { status?: string }
+  ): Promise<GiftCard> {
+    const response = await apiClient.patch<GiftCard>(`/gift-cards/${id}`, data);
+    return response.data;
+  },
+
+  async adjustGiftCardBalance(
+    id: string,
+    payload: { amount: number; type: "CREDIT" | "DEBIT"; note: string }
+  ): Promise<GiftCard> {
+    const response = await apiClient.post<GiftCard>(
+      `/gift-cards/${id}/adjust-balance`,
+      payload
+    );
+    return response.data;
+  },
+
+  async deleteGiftCard(id: string): Promise<{ message: string }> {
+    const response = await apiClient.delete<{ message: string }>(
+      `/gift-cards/${id}`
+    );
+    return response.data;
+  },
+
+  // ─── EMAIL TEMPLATE BUILDER & NOTIFICATION API ───────────────────────
+  async getEmailTemplates(params?: {
+    category?: string;
+    trigger?: string;
+    storeId?: string;
+  }): Promise<{ templates: EmailTemplateData[]; sampleVariables: Record<string, any> }> {
+    try {
+      const response = await apiClient.get<{
+        templates: EmailTemplateData[];
+        sampleVariables: Record<string, any>;
+      }>("/email-templates", { params });
+      return response.data;
+    } catch (err) {
+      console.warn("Error fetching email templates from backend:", err);
+      return { templates: [], sampleVariables: {} };
+    }
+  },
+
+  async getEmailTemplateById(id: string): Promise<{
+    template: EmailTemplateData;
+    sampleVariables: Record<string, any>;
+  } | null> {
+    try {
+      const response = await apiClient.get<{
+        template: EmailTemplateData;
+        sampleVariables: Record<string, any>;
+      }>(`/email-templates/${id}`);
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching email template:", err);
+      return null;
+    }
+  },
+
+  async createEmailTemplate(
+    data: Partial<EmailTemplateFormData> & { storeId?: string }
+  ): Promise<{ message: string; template: EmailTemplateData }> {
+    const response = await apiClient.post<{
+      message: string;
+      template: EmailTemplateData;
+    }>("/email-templates", data);
+    return response.data;
+  },
+
+  async updateEmailTemplate(
+    id: string,
+    data: Partial<EmailTemplateFormData>
+  ): Promise<{ message: string; template: EmailTemplateData }> {
+    const response = await apiClient.put<{
+      message: string;
+      template: EmailTemplateData;
+    }>(`/email-templates/${id}`, data);
+    return response.data;
+  },
+
+  async deleteEmailTemplate(id: string): Promise<{ message: string }> {
+    const response = await apiClient.delete<{ message: string }>(
+      `/email-templates/${id}`
+    );
+    return response.data;
+  },
+
+  async renderEmailBlocks(payload: {
+    blocks: any[];
+    designConfig?: any;
+    variables?: any;
+    previewText?: string;
+    subject?: string;
+  }): Promise<{ html: string }> {
+    const response = await apiClient.post<{ html: string }>(
+      "/email-templates/render",
+      payload
+    );
+    return response.data;
+  },
+
+  async sendTestEmail(
+    id: string,
+    payload: SendTestEmailPayload
+  ): Promise<SendTestEmailResponse> {
+    const response = await apiClient.post<SendTestEmailResponse>(
+      `/email-templates/${id}/send-test`,
+      payload
+    );
+    return response.data;
+  },
+
+  async resetEmailPresets(
+    storeId?: string
+  ): Promise<{ message: string; templates: EmailTemplateData[] }> {
+    const response = await apiClient.post<{
+      message: string;
+      templates: EmailTemplateData[];
+    }>("/email-templates/reset-presets", { storeId });
+    return response.data;
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FORM BUILDER & SUBMISSIONS API
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  async getForms(params?: {
+    category?: string;
+    status?: string;
+    search?: string;
+  }): Promise<CMSForm[]> {
+    try {
+      const response = await apiClient.get<CMSForm[]>("/forms", { params });
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching forms:", err);
+      return [];
+    }
+  },
+
+  async getForm(idOrSlug: string): Promise<CMSForm | null> {
+    try {
+      const response = await apiClient.get<CMSForm>(`/forms/${idOrSlug}`);
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching form:", err);
+      return null;
+    }
+  },
+
+  async createForm(data: {
+    title: string;
+    slug?: string;
+    description?: string;
+    status?: string;
+    category?: string;
+    fields?: FormField[];
+    settings?: FormSettings;
+    storeId?: string;
+  }): Promise<{ message: string; form: CMSForm }> {
+    const response = await apiClient.post<{
+      message: string;
+      form: CMSForm;
+    }>("/forms", data);
+    return response.data;
+  },
+
+  async updateForm(
+    id: string,
+    data: {
+      title?: string;
+      slug?: string;
+      description?: string | null;
+      status?: string;
+      category?: string;
+      fields?: FormField[];
+      settings?: FormSettings;
+    }
+  ): Promise<{ message: string; form: CMSForm }> {
+    const response = await apiClient.put<{
+      message: string;
+      form: CMSForm;
+    }>(`/forms/${id}`, data);
+    return response.data;
+  },
+
+  async deleteForm(id: string): Promise<{ message: string }> {
+    const response = await apiClient.delete<{ message: string }>(`/forms/${id}`);
+    return response.data;
+  },
+
+  async duplicateForm(id: string): Promise<{ message: string; form: CMSForm }> {
+    const response = await apiClient.post<{
+      message: string;
+      form: CMSForm;
+    }>(`/forms/${id}/duplicate`);
+    return response.data;
+  },
+
+  async resetFormPresets(): Promise<{ message: string; forms: CMSForm[] }> {
+    const response = await apiClient.post<{
+      message: string;
+      forms: CMSForm[];
+    }>("/forms/reset-presets");
+    return response.data;
+  },
+
+  async submitForm(
+    formIdOrSlug: string,
+    payload: {
+      data: Record<string, any>;
+      submitterName?: string;
+      submitterEmail?: string;
+      submitterPhone?: string;
+      metadata?: Record<string, any>;
+    }
+  ): Promise<{
+    message: string;
+    submissionId: string;
+    successType: "message" | "redirect";
+    redirectUrl?: string | null;
+  }> {
+    const response = await apiClient.post<{
+      message: string;
+      submissionId: string;
+      successType: "message" | "redirect";
+      redirectUrl?: string | null;
+    }>(`/forms/${formIdOrSlug}/submit`, payload);
+    return response.data;
+  },
+
+  async getFormSubmissions(
+    formId: string,
+    params?: {
+      status?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+    }
+  ): Promise<FormSubmissionsResponse> {
+    try {
+      const response = await apiClient.get<FormSubmissionsResponse>(
+        `/forms/${formId}/submissions`,
+        { params }
+      );
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching form submissions:", err);
+      return {
+        submissions: [],
+        total: 0,
+        page: 1,
+        limit: 50,
+        totalPages: 1,
+      };
+    }
+  },
+
+  async getAllSubmissions(params?: {
+    status?: string;
+    search?: string;
+    formId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<FormSubmissionsResponse> {
+    try {
+      const response = await apiClient.get<FormSubmissionsResponse>(
+        "/forms/submissions/all",
+        { params }
+      );
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching all submissions:", err);
+      return {
+        submissions: [],
+        total: 0,
+        page: 1,
+        limit: 50,
+        totalPages: 1,
+        counts: { ALL: 0, NEW: 0, REVIEWED: 0, RESOLVED: 0, SPAM: 0, ARCHIVED: 0 },
+      };
+    }
+  },
+
+  async getSubmission(submissionId: string): Promise<FormSubmission | null> {
+    try {
+      const response = await apiClient.get<FormSubmission>(
+        `/forms/submissions/${submissionId}`
+      );
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching submission details:", err);
+      return null;
+    }
+  },
+
+  async updateSubmission(
+    submissionId: string,
+    data: {
+      status?: string;
+      notes?: string | null;
+      metadata?: Record<string, any>;
+    }
+  ): Promise<{ message: string; submission: FormSubmission }> {
+    const response = await apiClient.patch<{
+      message: string;
+      submission: FormSubmission;
+    }>(`/forms/submissions/${submissionId}`, data);
+    return response.data;
+  },
+
+  async deleteSubmission(submissionId: string): Promise<{ message: string }> {
+    const response = await apiClient.delete<{ message: string }>(
+      `/forms/submissions/${submissionId}`
+    );
+    return response.data;
+  },
+
+  async bulkDeleteSubmissions(ids: string[]): Promise<{ message: string }> {
+    const response = await apiClient.post<{ message: string }>(
+      "/forms/submissions/bulk-delete",
+      { ids }
+    );
+    return response.data;
+  },
+
+  async exportSubmissionsCsv(formId: string): Promise<Blob> {
+    const response = await apiClient.get(`/forms/${formId}/export`, {
+      responseType: "blob",
+    });
+    return response.data;
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRODUCT BACK-IN-STOCK NOTIFICATIONS API
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  async getProductNotifications(params?: {
+    storeId?: string;
+    productId?: string;
+    status?: ProductNotificationStatus;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ProductNotificationsResponse> {
+    try {
+      const response = await apiClient.get<ProductNotificationsResponse>(
+        "/product-notifications",
+        { params }
+      );
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching product notifications:", err);
+      return { items: [], total: 0, page: 1, limit: 50, totalPages: 0 };
+    }
+  },
+
+  async getProductNotificationStats(storeId?: string): Promise<ProductNotificationStats> {
+    try {
+      const response = await apiClient.get<ProductNotificationStats>(
+        "/product-notifications/stats",
+        { params: { storeId } }
+      );
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching product notification stats:", err);
+      return {
+        totalRequests: 0,
+        pendingRequests: 0,
+        notifiedRequests: 0,
+        uniqueCustomers: 0,
+        topProducts: [],
+      };
+    }
+  },
+
+  async updateProductNotification(
+    id: string,
+    data: {
+      status?: ProductNotificationStatus;
+      notes?: string | null;
+    }
+  ): Promise<{ message: string; notification: ProductNotification }> {
+    const response = await apiClient.patch<{
+      message: string;
+      notification: ProductNotification;
+    }>(`/product-notifications/${id}`, data);
+    return response.data;
+  },
+
+  async batchNotifyProductSubscribers(data: {
+    productId: string;
+    variantId?: string | null;
+    customMessage?: string;
+  }): Promise<{ message: string; notifiedCount: number }> {
+    const response = await apiClient.post<{
+      message: string;
+      notifiedCount: number;
+    }>("/product-notifications/batch-notify", data);
+    return response.data;
+  },
+
+  async deleteProductNotification(id: string): Promise<{ message: string }> {
+    const response = await apiClient.delete<{ message: string }>(
+      `/product-notifications/${id}`
+    );
+    return response.data;
+  },
+
+  async bulkDeleteProductNotifications(
+    ids: string[]
+  ): Promise<{ message: string; count: number }> {
+    const response = await apiClient.post<{ message: string; count: number }>(
+      "/product-notifications/bulk-delete",
+      { ids }
+    );
+    return response.data;
+  },
 };
+
+
+

@@ -55,7 +55,7 @@ export const UserPreferencesStudio: React.FC = () => {
   const { merchantData, setMerchantData, activeStore } = useCMSContext();
   const { t, language, setLanguage, languages } = useTranslation();
 
-  const storeId = activeStore?.id || merchantData?.store?.id || (typeof window !== 'undefined' ? localStorage.getItem('selected_store_id') : '') || '';
+  const storeId = activeStore?.id || merchantData?.store?.id || cmsService.getActiveStoreId() || '';
   const [copiedStoreId, setCopiedStoreId] = useState(false);
 
   const handleCopyStoreId = async () => {
@@ -254,10 +254,7 @@ export const UserPreferencesStudio: React.FC = () => {
         };
 
         setMerchantData(updatedSession);
-        try {
-          localStorage.setItem('merchant_cms_session', JSON.stringify(updatedSession));
-          localStorage.setItem('user_preferences', JSON.stringify(currentPreferences));
-        } catch {}
+        cmsService.saveMerchantSession(updatedSession);
       }
 
       showToast(t('preferences.saved', 'User preferences and profile updated successfully!'));

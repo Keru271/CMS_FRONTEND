@@ -6,6 +6,9 @@ import { Search, Plus, Edit2, Trash2, Package, AlertCircle, FileSpreadsheet, Dow
 import { CMSProduct } from '@/src/types';
 import { ProductImportModal } from '@/src/components/cms/ProductImportModal';
 import { ProductExportModal } from '@/src/components/cms/ProductExportModal';
+import { useCMSContext } from '@/src/context/CMSContext';
+import { getCurrencySymbol } from '@/src/lib/currency';
+import { cmsService } from '@/src/services/cmsService';
 
 interface ProductTableProps {
   products: CMSProduct[];
@@ -24,6 +27,15 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   onDeleteProduct,
   onRefreshProducts,
 }) => {
+  let currencySymbol = '₹';
+  try {
+    const cmsCtx = useCMSContext();
+    currencySymbol = cmsCtx.currencySymbol || '₹';
+  } catch {
+    const session = cmsService.getMerchantSession();
+    currencySymbol = getCurrencySymbol(session?.store?.currency || 'INR');
+  }
+
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -174,10 +186,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
 
                     {/* Price */}
                     <td className="py-3.5 px-4">
-                      <div className="font-mono font-bold text-[#191a1b] text-xs">${p.price.toFixed(2)}</div>
+                      <div className="font-mono font-bold text-[#191a1b] text-xs">{currencySymbol}{p.price.toFixed(2)}</div>
                       {p.originalPrice && (
                         <div className="text-[10px] font-mono text-[#5e5a5a] line-through">
-                          ${p.originalPrice.toFixed(2)}
+                          {currencySymbol}{p.originalPrice.toFixed(2)}
                         </div>
                       )}
                     </td>

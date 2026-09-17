@@ -90,19 +90,14 @@ export const TaxStudio: React.FC = () => {
       else if (code === 'JPY' || code === '¥') setCurrencySymbol('¥');
       else setCurrencySymbol('$');
     } catch {
-      const setupStr = typeof window !== 'undefined' ? localStorage.getItem('merchant_cms_store_setup') : null;
-      if (setupStr) {
-        try {
-          const parsed = JSON.parse(setupStr);
-          if (parsed.currency) {
-            const code = String(parsed.currency).toUpperCase();
-            setCurrencyCode(code);
-            if (code === 'INR' || code === '₹') setCurrencySymbol('₹');
-            else if (code === 'EUR' || code === '€') setCurrencySymbol('€');
-            else if (code === 'GBP' || code === '£') setCurrencySymbol('£');
-            else setCurrencySymbol('$');
-          }
-        } catch {}
+      const setup = await cmsService.getStoreSetup();
+      if (setup && setup.currency) {
+        const code = String(setup.currency).toUpperCase();
+        setCurrencyCode(code);
+        if (code === 'INR' || code === '₹') setCurrencySymbol('₹');
+        else if (code === 'EUR' || code === '€') setCurrencySymbol('€');
+        else if (code === 'GBP' || code === '£') setCurrencySymbol('£');
+        else setCurrencySymbol('$');
       }
     }
   };

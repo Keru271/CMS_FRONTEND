@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { cmsService, STORE_TEMPLATES } from '@/src/services/cmsService';
+import { getCurrencySymbol, formatPrice } from '@/src/lib/currency';
 import {
   CMSProduct,
   CMSCategory,
@@ -52,6 +53,11 @@ interface CMSContextType {
   openAddProductModal: () => void;
   openEditProductModal: (product: CMSProduct) => void;
   
+  // Currency & Formatting
+  currency: string;
+  currencySymbol: string;
+  formatCurrency: (amount: number | string | undefined | null) => string;
+
   // Actions
   handleLogout: () => void;
   
@@ -145,14 +151,12 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const allStores = Array.from(storeMap.values());
       setStores(allStores);
 
-      // Determine active store from localStorage, or default to first store
-      const storedStoreId = typeof window !== 'undefined' ? localStorage.getItem('selected_store_id') : null;
+      // Determine active store from in-memory cmsService, or default to first store
+      const storedStoreId = cmsService.getActiveStoreId();
       let currentActiveStore = allStores.find((s) => s.id === storedStoreId) || allStores[0] || null;
 
       if (currentActiveStore) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('selected_store_id', currentActiveStore.id);
-        }
+        cmsService.setActiveStoreId(currentActiveStore.id);
         setActiveStore(currentActiveStore);
         const currentStatus = (currentActiveStore.status || 'ACTIVE').toUpperCase();
         setStoreStatus(currentStatus);
@@ -210,11 +214,6 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               canManageAnalytics: !!(backendUser as any).permissionsAnalytics,
             };
 
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('user_role', effectiveRole);
-          localStorage.setItem('user_permissions', JSON.stringify(effectivePermissions));
-        }
-
         const session = cmsService.getMerchantSession();
         const updatedSession: MerchantOnboardingData = {
           merchant: {
@@ -229,7 +228,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             storeName: currentActiveStore.name,
             tagline: session?.store?.tagline || currentActiveStore.description || 'Official Store',
             category: session?.store?.category || 'Tech & Electronics',
-            currency: currentActiveStore.currency || 'USD',
+            currency: currentActiveStore.currency || 'INR',
             status: currentStatus,
             supportEmail: user.email,
             supportPhone: user.mobileNumber,
@@ -242,10 +241,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return updatedSession;
       } else {
         // No store created yet. Keep store as null in state and session until user creates a store.
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('selected_store_id');
-          localStorage.removeItem('current_store_id');
-        }
+        cmsService.setActiveStoreId(null);
         setActiveStore(null);
         setStores([]);
 
@@ -270,10 +266,6 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const isOnboarding = onboardingPaths.some((p) => currentPath.startsWith(p));
       if (!isOnboarding) {
         // Only clear credentials and redirect on non-onboarding pages
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('selected_store_id');
-        }
         cmsService.clearMerchantSession();
         router.push('/login');
       }
@@ -285,9 +277,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const targetStore = stores.find((s) => s.id === storeId);
     if (!targetStore) return;
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('selected_store_id', targetStore.id);
-    }
+    cmsService.setActiveStoreId(targetStore.id);
     setActiveStore(targetStore);
     const currentStatus = (targetStore.status || 'ACTIVE').toUpperCase();
     setStoreStatus(currentStatus);
@@ -414,6 +404,13 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsProductModalOpen(true);
   };
 
+  const storeCurrency = activeStore?.currency || merchantData?.store?.currency || 'INR';
+  const currencySymbol = getCurrencySymbol(storeCurrency);
+  const formatCurrency = useCallback(
+    (amount: number | string | undefined | null) => formatPrice(amount, storeCurrency),
+    [storeCurrency]
+  );
+
   return (
     <CMSContext.Provider
       value={{
@@ -447,6 +444,9 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setEditingProduct,
         openAddProductModal,
         openEditProductModal,
+        currency: storeCurrency,
+        currencySymbol,
+        formatCurrency,
         handleLogout,
         sidebarCollapsed,
         setSidebarCollapsed,

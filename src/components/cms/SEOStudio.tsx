@@ -23,9 +23,10 @@ import {
 import { cmsService } from '@/src/services/cmsService';
 import { GlobalSeoData, ProductSeoData, CMSProduct } from '@/src/types';
 import { useCMSContext } from '@/src/context/CMSContext';
+import DragDropUpload from '@/src/components/ui/DragDropUpload';
 
 export const SEOStudio: React.FC = () => {
-  const { merchantData } = useCMSContext();
+  const { merchantData, currencySymbol = '₹' } = useCMSContext();
   const [activeTab, setActiveTab] = useState<'GLOBAL' | 'OPEN_GRAPH' | 'PREVIEW' | 'ROBOTS' | 'SCHEMA' | 'PRODUCTS'>('GLOBAL');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [isLoading, setIsLoading] = useState(true);
@@ -115,19 +116,19 @@ export const SEOStudio: React.FC = () => {
     try {
       const data = await cmsService.getProductSeo(productId);
       const prod = fallbackProd || products.find((p) => p.id === productId);
-      setProdSeoTitle(data.seoTitle || prod?.name || '');
-      setProdSeoDesc(data.seoDescription || prod?.description?.slice(0, 160) || '');
-      setProdUrlSlug(data.urlSlug || prod?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || '');
-      setProdOgImage(data.ogImage || prod?.image || '');
-      setProdCanonicalUrl(data.canonicalUrl || `https://${storeDomain}/products/${prod?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
+      setProdSeoTitle(data.seoTitle || prod?.seoTitle || prod?.metaTitle || prod?.name || '');
+      setProdSeoDesc(data.seoDescription || prod?.seoDescription || prod?.metaDescription || prod?.description?.slice(0, 160) || '');
+      setProdUrlSlug(data.urlSlug || prod?.urlSlug || prod?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || '');
+      setProdOgImage(data.ogImage || prod?.ogImage || prod?.image || '');
+      setProdCanonicalUrl(data.canonicalUrl || prod?.canonicalUrl || `https://${storeDomain}/products/${prod?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
     } catch (err) {
       const prod = fallbackProd || products.find((p) => p.id === productId);
       if (prod) {
-        setProdSeoTitle(prod.name);
-        setProdSeoDesc(prod.description?.slice(0, 160) || '');
-        setProdUrlSlug(prod.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
-        setProdOgImage(prod.image || '');
-        setProdCanonicalUrl(`https://${storeDomain}/products/${prod.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
+        setProdSeoTitle(prod.seoTitle || prod.metaTitle || prod.name || '');
+        setProdSeoDesc(prod.seoDescription || prod.metaDescription || prod.description?.slice(0, 160) || '');
+        setProdUrlSlug(prod.urlSlug || prod.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+        setProdOgImage(prod.ogImage || prod.image || '');
+        setProdCanonicalUrl(prod.canonicalUrl || `https://${storeDomain}/products/${prod.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
       }
     }
   };
@@ -175,6 +176,22 @@ export const SEOStudio: React.FC = () => {
         ogImage: prodOgImage,
         canonicalUrl: prodCanonicalUrl,
       });
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === selectedProductId
+            ? {
+                ...p,
+                seoTitle: prodSeoTitle,
+                metaTitle: prodSeoTitle,
+                seoDescription: prodSeoDesc,
+                metaDescription: prodSeoDesc,
+                urlSlug: prodUrlSlug,
+                ogImage: prodOgImage,
+                canonicalUrl: prodCanonicalUrl,
+              }
+            : p
+        )
+      );
       showToast('Product SEO metadata saved successfully!');
     } catch (err) {
       console.error('Failed to save product SEO:', err);
@@ -493,16 +510,27 @@ export const SEOStudio: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Social Share Banner Image URL (1200x630px Recommended):
-                </label>
-                <input
-                  type="url"
-                  value={ogImage}
-                  onChange={(e) => setOgImage(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-600"
+              <div className="space-y-2">
+                <DragDropUpload
+                  folder="seo"
+                  fileType="OG_IMAGE"
+                  label="Social Share Banner Image (1200×630px Recommended)"
+                  currentUrl={ogImage || undefined}
+                  onUploadComplete={(url) => setOgImage(url)}
+                  hint="JPG, PNG, or WebP social preview card (max 5MB)"
+                  previewShape="rect"
+                  maxSizeMB={5}
                 />
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-slate-500">Or paste image URL</label>
+                  <input
+                    type="url"
+                    value={ogImage}
+                    onChange={(e) => setOgImage(e.target.value)}
+                    placeholder="https://images.unsplash.com/..."
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -643,7 +671,7 @@ export const SEOStudio: React.FC = () => {
                     <img src={p.image} alt={p.name} className="w-9 h-9 rounded-xl object-cover border" />
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold truncate">{p.name}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">${p.price.toFixed(2)} • {p.category}</div>
+                      <div className="text-[10px] text-slate-400 font-mono">{currencySymbol}{p.price.toFixed(2)} • {p.category}</div>
                     </div>
                   </button>
                 );

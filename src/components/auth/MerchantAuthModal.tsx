@@ -116,90 +116,53 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
   const [latestToken, setLatestToken] = useState<string | null>(null);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  // Google Authentication State
-
-  const onGoogleRegisterSuccess = async (tokenResponse: TokenResponse) => {
+  // Unified Google Authentication Handler (Login & Signup)
+  const handleGoogleAuthSuccess = async (tokenResponse: TokenResponse) => {
+    setIsGoogleLoading(true);
+    setServerError(null);
     try {
-      const response = await cmsService.registerMerchant({
-        login_type: "GOOGLE",
-        googleAccessToken: tokenResponse?.access_token,
+      if (!tokenResponse?.access_token) {
+        throw new Error("No access token received from Google.");
+      }
+
+      const res = await cmsService.googleAuth({
+        googleAccessToken: tokenResponse.access_token,
+        mode: authMode === "signup" ? "signup" : "signin",
       });
 
-      if (response.verificationToken) {
-        setLatestToken(response.verificationToken);
+      if (res.user) {
+        onSuccess(res.user, res.isNewUser ? "register" : "login");
       }
     } catch (err: any) {
-      console.log({ err });
+      console.error("Google Auth Error:", err);
+      const email = err.response?.data?.email;
+      if (email) {
+        loginFormik.setFieldValue("email", email);
+      }
       const msg =
         err.response?.data?.message ||
         err.message ||
-        "Registration failed. Please try again.";
-      setServerError(msg);
-      registerFormik.resetForm();
-    }
-  };
-
-  const onGoogleLoginSuccess = async (tokenResponse: TokenResponse) => {
-    try {
-      const res = await cmsService.loginMerchant(values.email, values.password);
-      if (res.requiresVerification) {
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem(
-            "cms_pending_verification_email",
-            res.email || values.email,
-          );
-          if (res.verificationToken) {
-            sessionStorage.setItem(
-              "cms_latest_verification_token",
-              res.verificationToken,
-            );
-          }
-        }
-        const nameParts = ((res as any).name || "").trim().split(" ");
-        const derivedFirstName = nameParts[0] || "";
-        const derivedLastName = nameParts.slice(1).join(" ") || "";
-        onSuccess(
-          {
-            firstName: derivedFirstName,
-            lastName: derivedLastName,
-            mobileNumber: (res as any).phone || "",
-            email: res.email || values.email,
-          },
-          "verify",
-        );
-      } else if (res.user) {
-        onSuccess(res.user, "login");
-      }
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.message ||
-        err.message ||
-        "Invalid email or password.";
+        "Google authentication failed. Please try again.";
       setServerError(msg);
     } finally {
-      setIsSubmitting(false);
+      setIsGoogleLoading(false);
     }
   };
 
-  const register = useGoogleLogin({
-    onSuccess: onGoogleRegisterSuccess,
-  });
-
-  const login = useGoogleLogin({
-    onSuccess: onGoogleLoginSuccess,
-  });
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedToken = sessionStorage.getItem(
-        "cms_latest_verification_token",
-      );
-      if (savedToken) {
-        setLatestToken(savedToken);
-      }
+  const handleGoogleAuthError = (errorResponse: any) => {
+    console.error("Google login failed / cancelled:", errorResponse);
+    setIsGoogleLoading(false);
+    if (errorResponse?.error !== "popup_closed_by_user") {
+      setServerError("Google authentication was cancelled or failed. Please try again.");
     }
-  }, []);
+  };
+
+  const triggerGoogleAuth = useGoogleLogin({
+    onSuccess: handleGoogleAuthSuccess,
+    onError: handleGoogleAuthError,
+  });
 
   // REGISTER FORMIK
   const registerFormik = useFormik({
@@ -257,17 +220,8 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
           values.password,
         );
         if (res.requiresVerification) {
-          if (typeof window !== "undefined") {
-            sessionStorage.setItem(
-              "cms_pending_verification_email",
-              res.email || values.email,
-            );
-            if (res.verificationToken) {
-              sessionStorage.setItem(
-                "cms_latest_verification_token",
-                res.verificationToken,
-              );
-            }
+          if (res.verificationToken) {
+            setLatestToken(res.verificationToken);
           }
           const nameParts = ((res as any).name || "").trim().split(" ");
           const derivedFirstName = nameParts[0] || "";
@@ -1063,34 +1017,41 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 mt-4 w-full">
                   <button
                     type="button"
+                    disabled={isSubmitting || isGoogleLoading}
                     onClick={() => {
-                      if (authMode === "signin") {
-                        login();
-                      } else {
-                        register();
-                      }
+                      setServerError(null);
+                      setIsGoogleLoading(true);
+                      triggerGoogleAuth();
                     }}
-                    className="w-full sm:w-auto flex-1 px-5 py-2.5 rounded-full border border-sage-border hover:border-sage-primary text-xs font-semibold text-sage-text flex items-center justify-center gap-2.5 transition-all bg-white dark:bg-card hover:bg-sage-accent/50 min-h-[42px] cursor-pointer shadow-xs active:scale-98"
+                    className="w-full sm:w-auto flex-1 px-5 py-2.5 rounded-full border border-sage-border hover:border-sage-primary text-xs font-semibold text-sage-text flex items-center justify-center gap-2.5 transition-all bg-white dark:bg-card hover:bg-sage-accent/50 min-h-[42px] cursor-pointer shadow-xs active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                      <path
-                        fill="#4285F4"
-                        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-                      />
-                      <path
-                        fill="#34A853"
-                        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z"
-                      />
-                      <path
-                        fill="#FBBC05"
-                        d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.2.01 10.04.01 12c0 1.96.46 3.8 1.28 5.42l3.99-3.15z"
-                      />
-                      <path
-                        fill="#EA4335"
-                        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-                      />
-                    </svg>
-                    <span>Continue with Google</span>
+                    {isGoogleLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-sage-primary" />
+                    ) : (
+                      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                        <path
+                          fill="#4285F4"
+                          d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.29v3.15C3.26 21.3 7.31 24 12 24z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.29C.47 8.2.01 10.04.01 12c0 1.96.46 3.8 1.28 5.42l3.99-3.15z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.58l3.99 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                        />
+                      </svg>
+                    )}
+                    <span>
+                      {isGoogleLoading
+                        ? "Authenticating with Google..."
+                        : "Continue with Google"}
+                    </span>
                   </button>
                 </div>
               </div>

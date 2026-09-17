@@ -128,10 +128,18 @@ export interface CMSProduct {
   tags?: string[];
   brandName?: string | null;
   categoryName?: string | null;
+  categories?: string[];
   category: string;
   collectionName?: string | null;
+  collections?: string[];
   metaTitle?: string | null;
   metaDescription?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  urlSlug?: string | null;
+  ogImage?: string | null;
+  canonicalUrl?: string | null;
+  structuredDataJson?: string | null;
   status: ProductStatus | string;
   createdAt: string;
 }
@@ -162,9 +170,17 @@ export interface ProductFormData {
   tags?: string;
   brandName?: string;
   categoryName?: string;
+  categories?: string[];
   collectionName?: string;
+  collections?: string[];
   metaTitle?: string;
   metaDescription?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  urlSlug?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+  structuredDataJson?: string;
   status: ProductStatus | string;
 }
 
@@ -680,6 +696,25 @@ export interface VerifyEmailResponse {
   accessToken?: string;
   storeId?: string | null;
   user?: any;
+}
+
+export interface GoogleAuthResponse {
+  accessToken: string;
+  isNewUser?: boolean;
+  requiresVerification?: boolean;
+  message?: string;
+  storeId?: string | null;
+  verificationToken?: string | null;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    customRoleTitle?: string | null;
+    phone?: string | null;
+    storeId?: string | null;
+    emailVerified: boolean;
+  };
 }
 
 export interface MegaMenuConfig {
@@ -1478,3 +1513,335 @@ export interface BlogPostInput {
   relatedProductIds?: string | null;
   storeId?: string | null;
 }
+
+export interface GiftCardTransaction {
+  id: string;
+  giftCardId: string;
+  orderId?: string | null;
+  orderNumber?: string | null;
+  amount: number;
+  type: "REDEMPTION" | "REFUND" | "MANUAL_ADJUSTMENT" | "INITIAL_LOAD";
+  note?: string | null;
+  createdAt: string;
+}
+
+export interface GiftCard {
+  id: string;
+  code: string;
+  initialValue: number;
+  currentBalance: number;
+  currency: string;
+  recipientEmail?: string | null;
+  recipientName?: string | null;
+  senderName?: string | null;
+  message?: string | null;
+  status: "ACTIVE" | "DISABLED" | "EXPIRED" | "DEPLETED";
+  expiresAt?: string | null;
+  storeId?: string | null;
+  orderId?: string | null;
+  customerId?: string | null;
+  transactions?: GiftCardTransaction[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GiftCardMetrics {
+  totalIssuedValue: number;
+  outstandingBalance: number;
+  activeCount: number;
+  depletedCount: number;
+  disabledCount: number;
+  totalRedemptions: number;
+}
+
+export interface GiftCardFormData {
+  code?: string;
+  initialValue: number;
+  currency?: string;
+  recipientEmail?: string;
+  recipientName?: string;
+  senderName?: string;
+  message?: string;
+  expiresAt?: string;
+  status?: "ACTIVE" | "DISABLED";
+  note?: string;
+}
+
+// ─── Email Template Builder Types ──────────────────────────────────────────
+export type EmailBlockType =
+  | "header"
+  | "hero"
+  | "text"
+  | "button"
+  | "products"
+  | "coupon"
+  | "divider"
+  | "social"
+  | "footer"
+  | "order-summary"
+  | "tracking-card";
+
+export interface EmailTemplateBlock {
+  id: string;
+  type: EmailBlockType;
+  content: Record<string, any>;
+  styles?: Record<string, any>;
+}
+
+export interface EmailDesignConfig {
+  backgroundColor?: string;
+  canvasBackgroundColor?: string;
+  fontFamily?: string;
+  primaryColor?: string;
+  textColor?: string;
+  borderRadius?: number;
+  maxWidth?: number;
+}
+
+export interface EmailTemplateData {
+  id: string;
+  storeId?: string | null;
+  name: string;
+  slug: string;
+  category: "MARKETING" | "NOTIFICATION" | "CUSTOM" | string;
+  trigger?: string | null;
+  subject: string;
+  previewText?: string | null;
+  blocksJson: string;
+  blocks?: EmailTemplateBlock[];
+  htmlContent?: string | null;
+  compiledHtml?: string | null;
+  designConfigJson?: string | null;
+  designConfig?: EmailDesignConfig;
+  isActive: boolean;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmailTemplateFormData {
+  name: string;
+  slug?: string;
+  category: "MARKETING" | "NOTIFICATION" | "CUSTOM";
+  trigger?: string | null;
+  subject: string;
+  previewText?: string;
+  blocksJson: string;
+  designConfigJson?: string;
+  isActive?: boolean;
+}
+
+export interface SendTestEmailPayload {
+  recipientEmail: string;
+  sampleData?: Record<string, any>;
+}
+
+export interface SendTestEmailResponse {
+  success: boolean;
+  message: string;
+  dispatchedAt: string;
+  recipientEmail: string;
+  subject: string;
+  previewHtml?: string;
+}
+
+// ─── FORM BUILDER & SUBMISSIONS TYPES ──────────────────────────────────────
+
+export type FormFieldType =
+  | "text"
+  | "email"
+  | "phone"
+  | "number"
+  | "textarea"
+  | "select"
+  | "radio"
+  | "checkbox"
+  | "date"
+  | "time"
+  | "rating"
+  | "file"
+  | "heading"
+  | "divider"
+  | "paragraph";
+
+export type FormCategory =
+  | "GENERAL"
+  | "CONTACT"
+  | "FEEDBACK"
+  | "LEAD_GEN"
+  | "ORDER_INQUIRY"
+  | "SURVEY"
+  | "REGISTRATION"
+  | "CUSTOM";
+
+export type FormStatus = "PUBLISHED" | "DRAFT" | "ARCHIVED";
+export type FormSubmissionStatus = "NEW" | "REVIEWED" | "RESOLVED" | "SPAM" | "ARCHIVED";
+
+export interface FormFieldOption {
+  label: string;
+  value: string;
+}
+
+export interface FormFieldValidation {
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+  pattern?: string;
+}
+
+export interface FormConditionalRule {
+  fieldName: string;
+  operator: "equals" | "not_equals" | "contains" | "filled";
+  value?: string;
+}
+
+export interface FormField {
+  id: string;
+  type: FormFieldType;
+  label: string;
+  placeholder?: string;
+  description?: string;
+  name: string;
+  required: boolean;
+  defaultValue?: any;
+  options?: FormFieldOption[];
+  validation?: FormFieldValidation;
+  width?: "full" | "half" | "third";
+  conditionalRule?: FormConditionalRule;
+}
+
+export interface FormThemeConfig {
+  accentColor: string;
+  backgroundColor?: string;
+  textColor?: string;
+  borderRadius: "none" | "sm" | "md" | "lg" | "full";
+  cardStyle: "bordered" | "elevated" | "flat" | "glass";
+}
+
+export interface FormSettings {
+  submitButtonText: string;
+  submittingButtonText?: string;
+  successType: "message" | "redirect";
+  successMessage: string;
+  redirectUrl?: string;
+  emailNotifications: boolean;
+  notificationEmails?: string[];
+  autoResponder: boolean;
+  autoResponderSubject?: string;
+  autoResponderBody?: string;
+  theme?: FormThemeConfig;
+  closedMessage?: string;
+  captchaEnabled?: boolean;
+}
+
+export interface CMSForm {
+  id: string;
+  storeId?: string | null;
+  title: string;
+  slug: string;
+  description?: string | null;
+  status: FormStatus;
+  category: FormCategory;
+  fieldsJson: string;
+  fields?: FormField[];
+  settingsJson: string;
+  settings?: FormSettings;
+  submissionsCount: number;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FormSubmission {
+  id: string;
+  formId: string;
+  form?: Partial<CMSForm>;
+  storeId?: string | null;
+  dataJson: string;
+  data: Record<string, any>;
+  status: FormSubmissionStatus;
+  submitterName?: string | null;
+  submitterEmail?: string | null;
+  submitterPhone?: string | null;
+  submitterIp?: string | null;
+  userAgent?: string | null;
+  notes?: string | null;
+  metadataJson?: string | null;
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FormSubmissionsResponse {
+  submissions: FormSubmission[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  counts?: Record<string, number>;
+  form?: {
+    id: string;
+    title: string;
+    slug: string;
+    fields: FormField[];
+  };
+}
+
+export type ProductNotificationStatus = "PENDING" | "NOTIFIED" | "CANCELLED";
+
+export interface ProductNotification {
+  id: string;
+  storeId?: string | null;
+  productId: string;
+  productName: string;
+  productSku?: string | null;
+  productImage?: string | null;
+  productPrice?: number | null;
+  variantId?: string | null;
+  variantName?: string | null;
+  customerEmail: string;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  status: ProductNotificationStatus;
+  notifiedAt?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  product?: {
+    id: string;
+    name: string;
+    slug: string;
+    sku?: string | null;
+    price: number;
+    stock: number;
+    status: string;
+    images?: Array<{ id: string; url: string; isThumbnail?: boolean }>;
+  } | null;
+}
+
+export interface ProductNotificationStats {
+  totalRequests: number;
+  pendingRequests: number;
+  notifiedRequests: number;
+  uniqueCustomers: number;
+  topProducts: Array<{
+    productId: string;
+    productName: string;
+    productSku?: string | null;
+    productImage?: string | null;
+    requestCount: number;
+    pendingCount: number;
+  }>;
+}
+
+export interface ProductNotificationsResponse {
+  items: ProductNotification[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+
+

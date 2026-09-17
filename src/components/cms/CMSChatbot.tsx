@@ -32,7 +32,7 @@ import {
   VolumeX,
 } from "lucide-react";
 
-const STORAGE_KEY = "statamic_cms_chatbot_history";
+let _inMemoryChatHistory: ChatMessage[] = [];
 
 export const CMSChatbot: React.FC = () => {
   const pathname = usePathname();
@@ -56,18 +56,10 @@ export const CMSChatbot: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  // Initialize messages from localStorage or default greeting
+  // Initialize messages from in-memory history or default greeting
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch (e) {
-        console.error("Failed to load chat history", e);
-      }
+    if (_inMemoryChatHistory.length > 0) {
+      return _inMemoryChatHistory;
     }
     return [
       {
@@ -111,14 +103,10 @@ export const CMSChatbot: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Save chat history to localStorage
+  // Save chat history to in-memory history
   useEffect(() => {
-    if (typeof window !== "undefined" && messages.length > 0) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-30)));
-      } catch (e) {
-        console.error("Failed to save chat history", e);
-      }
+    if (messages.length > 0) {
+      _inMemoryChatHistory = messages.slice(-30);
     }
   }, [messages]);
 
@@ -318,9 +306,7 @@ export const CMSChatbot: React.FC = () => {
       ],
     };
     setMessages([freshGreeting]);
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(STORAGE_KEY);
-    }
+    _inMemoryChatHistory = [freshGreeting];
   };
 
   const handleCopyMessage = (id: string, text: string) => {

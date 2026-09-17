@@ -50,7 +50,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-[#fdf1ef] text-[#191a1b] font-sans selection:bg-[#191a1b] selection:text-[#d4ff4c]">
         <Providers>
-          <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_CLIENT_ID}>
+          <GoogleOAuthProvider
+            clientId={process.env.NEXT_PUBLIC_CLIENT_ID || ""}
+          >
             <ProtectedRoute>{children}</ProtectedRoute>
           </GoogleOAuthProvider>
         </Providers>

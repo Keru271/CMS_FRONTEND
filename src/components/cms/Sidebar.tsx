@@ -26,11 +26,15 @@ import {
   Zap,
   Globe,
   Bell,
+  BellRing,
   Code2,
   Crown,
   Search,
   FolderTree,
   BookOpen,
+  Gift,
+  Mail,
+  CheckSquare,
 } from "lucide-react";
 import { MerchantOnboardingData } from "@/src/types";
 import { usePlanAccess } from "@/src/hooks/usePlanAccess";
@@ -46,9 +50,11 @@ export type CMSView =
   | "store-setup"
   | "themes"
   | "pages"
+  | "forms"
   | "blog"
   | "navigation"
   | "discounts"
+  | "gift-cards"
   | "payments"
   | "reviews"
   | "billing"
@@ -57,6 +63,7 @@ export type CMSView =
   | "tax"
   | "team"
   | "marketing"
+  | "email-templates"
   | "notifications"
   | "seo"
   | "loyalty"
@@ -122,6 +129,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: FileText,
     },
     {
+      id: "forms" as CMSView,
+      path: "/forms",
+      label: t("nav.forms", "Forms & Surveys"),
+      icon: CheckSquare,
+    },
+    {
       id: "blog" as CMSView,
       path: "/blog",
       label: t("nav.blog", "Blog & Editorial"),
@@ -139,6 +152,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: t("nav.products", "Products Studio"),
       icon: Package,
       badge: productsCount,
+    },
+    {
+      id: "notifications" as CMSView,
+      path: "/products/notifications",
+      label: t("nav.back_in_stock", "Back-in-Stock Alerts"),
+      icon: BellRing,
     },
     {
       id: "categories" as CMSView,
@@ -196,6 +215,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Tag,
     },
     {
+      id: "gift-cards" as CMSView,
+      path: "/gift-cards",
+      label: t("nav.gift_cards", "Gift Cards"),
+      icon: Gift,
+    },
+    {
       id: "tax" as CMSView,
       path: "/tax",
       label: t("nav.tax", "Taxation"),
@@ -212,6 +237,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       path: "/marketing",
       label: t("nav.marketing", "Marketing & Pixels"),
       icon: Megaphone,
+    },
+    {
+      id: "email-templates" as CMSView,
+      path: "/email-templates",
+      label: t("nav.email_templates", "Email Templates"),
+      icon: Mail,
     },
     {
       id: "notifications" as CMSView,
@@ -250,19 +281,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const storeName = merchantData?.store?.storeName || "Wendr";
 
-  const userRole = (
-    merchantData?.merchant?.role ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem("user_role")
-      : null) ||
-    "OWNER"
-  ).toUpperCase();
-
-  const userPermissions =
-    merchantData?.merchant?.permissions ||
-    (typeof window !== "undefined" && localStorage.getItem("user_permissions")
-      ? JSON.parse(localStorage.getItem("user_permissions") || "{}")
-      : null);
+  const userRole = (merchantData?.merchant?.role || "OWNER").toUpperCase();
+  const userPermissions = merchantData?.merchant?.permissions || null;
 
   const {
     isStarter,
