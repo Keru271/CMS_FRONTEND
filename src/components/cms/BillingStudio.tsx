@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import ReactSlider from 'react-slider';
+import React, { useState, useEffect, useCallback } from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
 import { PriceTierData, StoreSubscriptionData, StoreBillingInvoiceData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import {
@@ -53,11 +53,36 @@ export const BillingStudio: React.FC = () => {
     type: 'success' | 'error';
   } | null>(null);
 
-  // Pricing Swiper & View Mode State
+  // Pricing Carousel & View Mode State
   const [pricingViewMode, setPricingViewMode] = useState<'swiper' | 'grid'>('swiper');
   const [activePricingSlide, setActivePricingSlide] = useState(1); // Default to Growth / Pro
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: false,
+    align: 'start',
+    skipSnaps: false,
+  });
+
+  const onSelectSlide = useCallback(() => {
+    if (!emblaApi) return;
+    setActivePricingSlide(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on('select', onSelectSlide);
+    emblaApi.on('reInit', onSelectSlide);
+    return () => {
+      emblaApi.off('select', onSelectSlide);
+      emblaApi.off('reInit', onSelectSlide);
+    };
+  }, [emblaApi, onSelectSlide]);
+
+  const handleSlideChange = (idx: number) => {
+    setActivePricingSlide(idx);
+    if (emblaApi) {
+      emblaApi.scrollTo(idx);
+    }
+  };
 
   // Selected Plan for Upgrade / Payment
   const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<PriceTierData | null>(null);
@@ -607,7 +632,7 @@ export const BillingStudio: React.FC = () => {
                 key={t.id}
                 type="button"
                 onClick={() => {
-                  setActivePricingSlide(idx);
+                  handleSlideChange(idx);
                   if (pricingViewMode !== 'swiper') setPricingViewMode('swiper');
                 }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
@@ -635,10 +660,10 @@ export const BillingStudio: React.FC = () => {
                   ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
                   : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
               }`}
-              title="Expanding Swiper Slider"
+              title="Expanding Carousel Slider"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>Slider</span>
+              <span>Carousel</span>
             </button>
             <button
               type="button"
@@ -660,9 +685,13 @@ export const BillingStudio: React.FC = () => {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() =>
-                  setActivePricingSlide((prev) => (prev - 1 + tiers.length) % tiers.length)
-                }
+                onClick={() => {
+                  if (emblaApi && emblaApi.canScrollPrev()) {
+                    emblaApi.scrollPrev();
+                  } else {
+                    handleSlideChange((activePricingSlide - 1 + tiers.length) % tiers.length);
+                  }
+                }}
                 className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs cursor-pointer"
                 title="Previous Plan"
               >
@@ -670,7 +699,13 @@ export const BillingStudio: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setActivePricingSlide((prev) => (prev + 1) % tiers.length)}
+                onClick={() => {
+                  if (emblaApi && emblaApi.canScrollNext()) {
+                    emblaApi.scrollNext();
+                  } else {
+                    handleSlideChange((activePricingSlide + 1) % tiers.length);
+                  }
+                }}
                 className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs cursor-pointer"
                 title="Next Plan"
               >
@@ -683,22 +718,12 @@ export const BillingStudio: React.FC = () => {
 
       {/* SWIPER / EXPANDING ACCORDION SLIDER VIEW (MATCHING ATTACHED DESIGN) */}
       {pricingViewMode === 'swiper' && tiers.length > 0 ? (
-        <div
-          className="relative pt-2 pb-4 overflow-hidden select-none"
-          onTouchStart={(e) => setTouchStartX(e.targetTouches[0].clientX)}
-          onTouchMove={(e) => setTouchEndX(e.targetTouches[0].clientX)}
-          onTouchEnd={() => {
-            if (!touchStartX || !touchEndX) return;
-            const diff = touchStartX - touchEndX;
-            if (diff > 50) setActivePricingSlide((prev) => (prev + 1) % tiers.length);
-            if (diff < -50)
-              setActivePricingSlide((prev) => (prev - 1 + tiers.length) % tiers.length);
-            setTouchStartX(null);
-            setTouchEndX(null);
-          }}
-        >
-          {/* Horizontal Expanding Card Track Container */}
-          <div className="p-4 sm:p-6 rounded-[36px] bg-[#0c0d10] dark:bg-[#07080a] border border-slate-800/80 shadow-2xl overflow-x-auto scrollbar-none">
+        <div className="relative pt-2 pb-4 overflow-hidden select-none">
+          {/* Horizontal Expanding Card Track Container with Embla */}
+          <div
+            ref={emblaRef}
+            className="p-4 sm:p-6 rounded-[36px] bg-[#0c0d10] dark:bg-[#07080a] border border-slate-800/80 shadow-2xl overflow-x-auto scrollbar-none"
+          >
             <div className="flex items-stretch gap-3 sm:gap-4 min-w-[720px] sm:min-w-full h-[560px]">
               {tiers.map((tier, idx) => {
                 const id = tier.id.toUpperCase();
@@ -750,7 +775,7 @@ export const BillingStudio: React.FC = () => {
                   <div
                     key={tier.id}
                     onClick={() => {
-                      if (!isExpanded) setActivePricingSlide(idx);
+                      if (!isExpanded) handleSlideChange(idx);
                     }}
                     className={`relative rounded-[30px] border overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col justify-between ${
                       isExpanded
@@ -978,31 +1003,27 @@ export const BillingStudio: React.FC = () => {
             </div>
           </div>
 
-          {/* Swiper Interactive React-Slider Scrubber & Indicators */}
+          {/* Swiper Interactive Range Scrubber & Indicators */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 px-2">
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-rose-500" />
                 <span>Drag Slider:</span>
               </span>
-              <div className="w-full sm:w-60 px-2">
-                <ReactSlider
-                  className="w-full h-7 flex items-center cursor-pointer select-none"
-                  thumbClassName="w-6 h-6 rounded-full bg-white shadow-md border-2 border-rose-500 flex items-center justify-center text-[10px] font-black text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500/50 cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
-                  trackClassName="h-2 rounded-full bg-slate-200 dark:bg-slate-750"
+              <div className="w-full sm:w-60 px-2 flex items-center gap-2">
+                <input
+                  type="range"
                   min={0}
                   max={Math.max(0, tiers.length - 1)}
+                  step={1}
                   value={activePricingSlide}
-                  onChange={(val: number) => setActivePricingSlide(val)}
-                  renderThumb={(props, state) => {
-                    const { key, ...restProps } = props as any;
-                    return (
-                      <div key={key} {...restProps}>
-                        {state.valueNow + 1}
-                      </div>
-                    );
-                  }}
+                  onChange={(e) => handleSlideChange(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/50"
+                  aria-label="Select Pricing Plan Tier"
                 />
+                <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shrink-0 font-mono">
+                  {activePricingSlide + 1}/{tiers.length}
+                </span>
               </div>
             </div>
 
@@ -1012,7 +1033,7 @@ export const BillingStudio: React.FC = () => {
                 <button
                   key={idx}
                   type="button"
-                  onClick={() => setActivePricingSlide(idx)}
+                  onClick={() => handleSlideChange(idx)}
                   className={`transition-all duration-300 rounded-full cursor-pointer flex items-center gap-1 ${
                     activePricingSlide === idx
                       ? 'px-3 py-1 bg-rose-500 text-white text-[11px] font-bold shadow-sm'
