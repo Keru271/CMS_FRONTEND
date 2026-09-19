@@ -54,10 +54,15 @@ import {
   Minus,
   ChevronLeft,
   ArrowUpRight,
+  Maximize2,
+  Minimize2,
+  FileText,
+  Inbox,
 } from 'lucide-react';
-import { CMSPageData, PageFormData } from '@/src/types';
+import { CMSPageData, PageFormData, CMSForm } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
+import { PublicFormRenderer } from './PublicFormRenderer';
 
 function InstagramIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -111,7 +116,8 @@ export type BlockType =
   | 'featured_products'
   | 'stats'
   | 'columns'
-  | 'image_gallery';
+  | 'image_gallery'
+  | 'custom_form';
 
 export interface PageBlock {
   id: string;
@@ -854,6 +860,23 @@ const BLOCK_LIBRARY: {
       ],
     },
   },
+  {
+    type: 'custom_form',
+    label: 'Custom Form',
+    desc: 'Embed any pre-existing form created in Form Builder (Lead Gen, Contact, Feedback, Surveys)',
+    category: 'marketing',
+    icon: <FileText className="w-4 h-4" />,
+    defaultData: {
+      formId: '',
+      formSlug: '',
+      formTitle: '',
+      heading: '',
+      subtitle: '',
+      containerWidth: 'container',
+      containerMaxWidth: 'max-w-3xl',
+      containerPadding: 'normal',
+    },
+  },
 ];
 
 const BLOCK_CATEGORIES = [
@@ -951,12 +974,14 @@ const inputCls =
 
 function BlockInspector({
   block,
+  availableForms = [],
   onUpdate,
   onDelete,
   onDuplicate,
   onToggleVisible,
 }: {
   block: PageBlock;
+  availableForms?: CMSForm[];
   onUpdate: (data: Record<string, any>) => void;
   onDelete: () => void;
   onDuplicate: () => void;
@@ -1019,6 +1044,90 @@ function BlockInspector({
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
+      </div>
+
+      {/* ── UNIVERSAL LAYOUT & CONTAINER WIDTH (EVERY COMPONENT) ── */}
+      <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <LayoutTemplate className="w-3.5 h-3.5 text-indigo-400" />
+            Component Layout Width
+          </span>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-indigo-300 font-bold">
+            {data.containerWidth === 'full' ? '100% Full Screen' : 'Max-Width Container'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => set('containerWidth', 'full')}
+            className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+              data.containerWidth === 'full'
+                ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-sm ring-1 ring-indigo-500'
+                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <Maximize2 className="w-4 h-4 mb-1 text-indigo-400" />
+            <span className="text-xs font-bold">Full Screen</span>
+            <span className="text-[9px] text-slate-500">100% Edge-to-Edge</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => set('containerWidth', 'container')}
+            className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+              data.containerWidth !== 'full'
+                ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-sm ring-1 ring-indigo-500'
+                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <Minimize2 className="w-4 h-4 mb-1 text-indigo-400" />
+            <span className="text-xs font-bold">Max-Width</span>
+            <span className="text-[9px] text-slate-500">Boxed & Centered</span>
+          </button>
+        </div>
+
+        {data.containerWidth !== 'full' && (
+          <div className="pt-2 border-t border-slate-800/80 space-y-2.5">
+            <Field label="Container Max Width">
+              <select
+                className={inputCls}
+                value={data.containerMaxWidth || 'max-w-7xl'}
+                onChange={(e) => set('containerMaxWidth', e.target.value)}
+              >
+                <option value="max-w-7xl">Standard 7XL (1280px)</option>
+                <option value="max-w-6xl">Large 6XL (1152px)</option>
+                <option value="max-w-5xl">Medium 5XL (1024px)</option>
+                <option value="max-w-4xl">Compact 4XL (896px)</option>
+                <option value="max-w-3xl">Narrow 3XL (768px)</option>
+              </select>
+            </Field>
+
+            <Field label="Horizontal Gutters (Padding)">
+              <div className="grid grid-cols-3 gap-1">
+                {[
+                  { id: 'normal', label: 'Standard' },
+                  { id: 'compact', label: 'Compact' },
+                  { id: 'none', label: 'None' },
+                ].map((pad) => (
+                  <button
+                    key={pad.id}
+                    type="button"
+                    onClick={() => set('containerPadding', pad.id)}
+                    className={`py-1 rounded-lg text-[11px] font-bold border transition ${
+                      (data.containerPadding || 'normal') === pad.id
+                        ? 'bg-indigo-600 border-indigo-500 text-white'
+                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {pad.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+          </div>
+        )}
       </div>
 
       {/* ── HEADING TAG (H1-H6) ── */}
@@ -2605,13 +2714,149 @@ function BlockInspector({
           </Field>
         </>
       )}
+
+      {/* ── CUSTOM FORM EMBED ── */}
+      {type === 'custom_form' && (
+        <>
+          <Field label="Select Pre-Existing Form">
+            <select
+              className={inputCls}
+              value={data.formId || ''}
+              onChange={(e) => {
+                const targetId = e.target.value;
+                const found = (availableForms || []).find((f) => f.id === targetId);
+                if (found) {
+                  onUpdate({
+                    ...data,
+                    formId: found.id,
+                    formSlug: found.slug,
+                    formTitle: found.title,
+                  });
+                } else {
+                  onUpdate({
+                    ...data,
+                    formId: '',
+                    formSlug: '',
+                    formTitle: '',
+                  });
+                }
+              }}
+            >
+              <option value="">-- Choose a Form from Form Builder --</option>
+              {(availableForms || []).map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.title} ({f.category || 'General'})
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          {data.formId ? (
+            <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-400">Selected Form:</span>
+                <span className="font-bold text-indigo-400">{data.formTitle || data.formId}</span>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <a
+                  href={`/forms/${data.formId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-1.5 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-[10px] font-bold border border-slate-700 flex items-center justify-center gap-1 transition"
+                >
+                  <ExternalLink className="w-3 h-3 text-indigo-400" />
+                  <span>Edit in Form Builder</span>
+                </a>
+                <a
+                  href={`/forms/submissions?formId=${data.formId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-1.5 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-[10px] font-bold border border-slate-700 flex items-center justify-center gap-1 transition"
+                >
+                  <Inbox className="w-3 h-3 text-indigo-400" />
+                  <span>Submissions</span>
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-800/50 text-[11px] text-amber-300 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+              <div className="space-y-1">
+                <p>
+                  No form selected. Choose an existing form created in Form Builder above, or create a
+                  new one.
+                </p>
+                <a
+                  href="/forms/builder"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-indigo-400 font-bold hover:underline"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Create New Form</span>
+                </a>
+              </div>
+            </div>
+          )}
+
+          <Field label="Section Heading (Optional Override)">
+            <input
+              className={inputCls}
+              value={data.heading || ''}
+              onChange={(e) => set('heading', e.target.value)}
+              placeholder="e.g. Get in Touch With Us"
+            />
+          </Field>
+
+          <Field label="Section Subtitle (Optional Override)">
+            <textarea
+              className={inputCls}
+              rows={2}
+              value={data.subtitle || ''}
+              onChange={(e) => set('subtitle', e.target.value)}
+              placeholder="e.g. Fill out the form below and our team will respond promptly."
+            />
+          </Field>
+        </>
+      )}
     </div>
   );
 }
 
 // ─── Block Live Visual Canvas Preview ───────────────────────────────────────
 
-function BlockPreview({ block }: { block: PageBlock }) {
+function BlockPreviewWrapper({ block, children }: { block: PageBlock; children: React.ReactNode }) {
+  const isFull = block.data?.containerWidth === 'full';
+  const maxWidth = block.data?.containerMaxWidth || 'max-w-7xl';
+  const padding = block.data?.containerPadding || 'normal';
+
+  const paddingClass =
+    padding === 'none'
+      ? 'px-0'
+      : padding === 'compact'
+        ? 'px-3 sm:px-4'
+        : 'px-4 sm:px-6 lg:px-8';
+
+  if (isFull) {
+    return <div className="w-full">{children}</div>;
+  }
+
+  return (
+    <div className={`w-full ${maxWidth} mx-auto ${paddingClass}`}>
+      {children}
+    </div>
+  );
+}
+
+function BlockPreviewInner({
+  block,
+  availableForms = [],
+  onUpdateBlockData,
+}: {
+  block: PageBlock;
+  availableForms?: CMSForm[];
+  onUpdateBlockData?: (data: Record<string, any>) => void;
+}) {
   const { type, data } = block;
   const [activeSlideIdx, setActiveSlideIdx] = useState(0);
 
@@ -3443,7 +3688,117 @@ function BlockPreview({ block }: { block: PageBlock }) {
       </div>
     );
 
+  // ── CUSTOM FORM (EMBED FORM BUILDER FORM) ──
+  if (type === 'custom_form') {
+    const selectedForm = availableForms?.find(
+      (f) => f.id === data.formId || (data.formSlug && f.slug === data.formSlug),
+    );
+
+    if (!selectedForm && !data.formId) {
+      return (
+        <div className="p-8 my-4 rounded-3xl border-2 border-dashed border-indigo-200 bg-indigo-50/40 text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 text-indigo-600 mx-auto flex items-center justify-center">
+            <FileText className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h4 className="font-black text-sm text-slate-900">
+              Select a Pre-Existing Form
+            </h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Choose a form created in Form Builder to embed it directly on this page.
+            </p>
+          </div>
+          {availableForms && availableForms.length > 0 ? (
+            <div className="pt-2 max-w-xs mx-auto">
+              <select
+                className="w-full px-3 py-2 rounded-xl bg-white border border-indigo-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                value=""
+                onChange={(e) => {
+                  const f = availableForms.find((item) => item.id === e.target.value);
+                  if (f) {
+                    onUpdateBlockData?.({
+                      ...data,
+                      formId: f.id,
+                      formSlug: f.slug,
+                      formTitle: f.title,
+                    });
+                  }
+                }}
+              >
+                <option value="">-- Choose Existing Form --</option>
+                {availableForms.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.title} ({f.category || 'General'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="pt-2">
+              <a
+                href="/forms/builder"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow hover:bg-indigo-700 transition"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Create Form in Form Builder</span>
+              </a>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (selectedForm) {
+      return (
+        <div className="py-4">
+          {(data.heading || data.subtitle) && (
+            <div className="mb-6 text-center space-y-1">
+              {data.heading && (
+                <h3 className="text-2xl font-black text-slate-900">
+                  {data.heading}
+                </h3>
+              )}
+              {data.subtitle && (
+                <p className="text-xs text-slate-500 max-w-md mx-auto">{data.subtitle}</p>
+              )}
+            </div>
+          )}
+          <PublicFormRenderer form={selectedForm} previewMode={true} isEmbedded={true} />
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50 text-center space-y-2 text-xs text-slate-500">
+        <FileText className="w-6 h-6 mx-auto text-slate-400" />
+        <p>Selected form ({data.formTitle || data.formId}) could not be loaded.</p>
+      </div>
+    );
+  }
+
   return <div className="p-4 text-xs text-slate-400 italic">Unknown block type: {type}</div>;
+}
+
+function BlockPreview({
+  block,
+  availableForms = [],
+  onUpdateBlockData,
+}: {
+  block: PageBlock;
+  availableForms?: CMSForm[];
+  onUpdateBlockData?: (data: Record<string, any>) => void;
+}) {
+  return (
+    <BlockPreviewWrapper block={block}>
+      <BlockPreviewInner
+        block={block}
+        availableForms={availableForms}
+        onUpdateBlockData={onUpdateBlockData}
+      />
+    </BlockPreviewWrapper>
+  );
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────
@@ -3487,6 +3842,19 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
   const [mobileWorkspaceView, setMobileWorkspaceView] = useState<'blocks' | 'canvas' | 'inspector'>(
     'canvas',
   );
+  const [availableForms, setAvailableForms] = useState<CMSForm[]>([]);
+
+  // Fetch pre-existing forms for Form embed block
+  useEffect(() => {
+    if (isOpen) {
+      cmsService
+        .getForms()
+        .then((res) => {
+          if (Array.isArray(res)) setAvailableForms(res);
+        })
+        .catch((err) => console.error('Error fetching forms for page builder:', err));
+    }
+  }, [isOpen]);
 
   // Sync state whenever initialPage changes or modal opens
   useEffect(() => {
@@ -3586,6 +3954,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
     setBlocks([...blocks, newBlock]);
     setActiveBlockId(newBlock.id);
     showToast(`Added "${def.label}" to canvas`);
+    setMobileWorkspaceView('canvas');
   };
 
   // Drag and drop reordering
@@ -3963,7 +4332,6 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                       type="button"
                       onClick={() => {
                         addBlock(def);
-                        setMobileWorkspaceView('canvas');
                       }}
                       title={def.desc}
                       className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-indigo-500 hover:bg-indigo-950/30 text-left transition-all group flex items-start gap-3"
@@ -4113,6 +4481,9 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                         {isSelected && (
                           <div className="absolute top-2 right-2 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-[10px] font-black uppercase shadow-md">
                             <span>{block.type.replace(/_/g, ' ')}</span>
+                            <span className="px-1.5 py-0.5 rounded bg-indigo-900/80 text-[9px] font-bold text-indigo-200 border border-indigo-500/30">
+                              {block.data?.containerWidth === 'full' ? '↔ Full Screen' : '⇥ Max-Width ⇤'}
+                            </span>
                             <button
                               type="button"
                               onClick={(e) => {
@@ -4127,7 +4498,11 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                         )}
 
                         {/* Render Block Content */}
-                        <BlockPreview block={block} />
+                        <BlockPreview
+                          block={block}
+                          availableForms={availableForms}
+                          onUpdateBlockData={(updated) => updateBlock(block.id, updated)}
+                        />
                       </div>
                     );
                   })}
@@ -4156,6 +4531,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
             {selectedBlock ? (
               <BlockInspector
                 block={selectedBlock}
+                availableForms={availableForms}
                 onUpdate={(data) => updateBlock(selectedBlock.id, data)}
                 onDelete={() => deleteBlock(selectedBlock.id)}
                 onDuplicate={() => duplicateBlock(selectedBlock.id)}

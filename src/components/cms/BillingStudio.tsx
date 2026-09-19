@@ -398,7 +398,7 @@ export const BillingStudio: React.FC = () => {
               SaaS Billing & Subscriptions
             </span>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#d4ff4c] text-[#191a1b]">
-              Dual Gateways Active
+              Secure Payments Active
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-[#191a1b] flex items-center gap-3 mt-1">
@@ -406,14 +406,13 @@ export const BillingStudio: React.FC = () => {
             <span>Store Pricing Tiers & Billing</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Seamless payments for Indian merchants (via **Razorpay UPI & Cards**) and global
-            international stores (via **Stripe**).
+            Upgrade, downgrade, or switch billing cycles anytime — with instant prorated adjustment.
           </p>
         </div>
 
-        {/* Customer Region & Refresh Controls */}
+        {/* Currency Region Switcher & Refresh */}
         <div className="flex items-center gap-3">
-          {/* Indian vs International Switcher Pill */}
+          {/* Currency Toggle: ₹ INR vs $ USD */}
           <div className="bg-[#ffffff] border border-[#cbd5e0] p-1 rounded-2xl flex items-center shadow-xs">
             <button
               type="button"
@@ -425,19 +424,19 @@ export const BillingStudio: React.FC = () => {
               }`}
             >
               <span>🇮🇳</span>
-              <span>India (Razorpay ₹)</span>
+              <span>₹ INR</span>
             </button>
             <button
               type="button"
               onClick={() => setCustomerRegion('INTERNATIONAL')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 customerRegion === 'INTERNATIONAL'
-                  ? 'bg-[#635bff] text-white shadow-sm'
+                  ? 'bg-slate-800 text-white shadow-sm'
                   : 'text-[#5e5a5a] hover:text-[#191a1b]'
               }`}
             >
               <span>🌍</span>
-              <span>International (Stripe $)</span>
+              <span>$ USD</span>
             </button>
           </div>
 
@@ -500,10 +499,10 @@ export const BillingStudio: React.FC = () => {
               </div>
             </div>
 
-            {/* Payment Method & Active Gateway Badge */}
+            {/* Payment Method Card — gateway identity intentionally abstracted */}
             <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/10 space-y-3 w-full lg:w-80 shrink-0">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-300 uppercase">Billing Gateway</span>
+                <span className="text-xs font-bold text-slate-300 uppercase">Payment Method</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -515,20 +514,20 @@ export const BillingStudio: React.FC = () => {
                   }}
                   className="text-xs font-bold text-[#d4ff4c] hover:underline cursor-pointer"
                 >
-                  Edit Method
+                  Edit
                 </button>
               </div>
 
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
-                  {subscription.planPaymentMethod?.includes('STRIPE') ? '🌐' : '⚡'}
+                  {subscription.planPaymentMethod?.includes('STRIPE') ? '💳' : '📲'}
                 </div>
                 <div>
                   <span className="text-xs font-bold block flex items-center gap-1.5">
                     <span>
                       {subscription.planPaymentMethod?.includes('STRIPE')
-                        ? 'Stripe Gateway'
-                        : 'Razorpay Gateway'}
+                        ? 'International Card'
+                        : 'UPI / Debit Card'}
                     </span>
                     <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/20 text-emerald-300">
                       {subscription.planPaymentMethod?.includes('STRIPE') ? 'USD' : 'INR'}
@@ -561,20 +560,124 @@ export const BillingStudio: React.FC = () => {
         </div>
       )}
 
-      {/* BILLING CYCLE TOGGLE & REGIONAL GATEWAY INFO */}
+      {/* PLATFORM FEE RULES & SETTLEMENT LEDGER */}
+      <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-border pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center font-black">
+              ⚡
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-slate-900 dark:text-foreground">
+                Platform Fee & Payout Engine
+              </h3>
+              <p className="text-xs text-slate-400">
+                Transparent transaction processing fees per order based on your active tier.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+              Active Tier Fee:
+            </span>
+            <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-600 text-white shadow-xs">
+              {subscription?.planTransactionFeePercent ?? 2.0}% / order
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Free Starter Tier */}
+          <div
+            className={`p-4 rounded-2xl border transition-all ${
+              (subscription?.plan || 'STARTER').toUpperCase() === 'STARTER'
+                ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 ring-2 ring-indigo-600/20'
+                : 'border-slate-200 dark:border-border bg-slate-50/50 dark:bg-accent/20'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-slate-900 dark:text-foreground">
+                Free Starter Pack
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-300">
+                Free Forever
+              </span>
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-black text-slate-900 dark:text-foreground">2.0%</span>
+              <span className="text-xs text-slate-400 ml-1">platform fee / order</span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2">
+              No monthly subscription cost. Platform fee is automatically calculated at checkout.
+            </p>
+          </div>
+
+          {/* Growth Pro Tier */}
+          <div
+            className={`p-4 rounded-2xl border transition-all ${
+              (subscription?.plan || '').toUpperCase() === 'GROWTH'
+                ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 ring-2 ring-indigo-600/20'
+                : 'border-slate-200 dark:border-border bg-slate-50/50 dark:bg-accent/20'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-slate-900 dark:text-foreground">
+                Growth Pro
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 border border-rose-200">
+                Popular
+              </span>
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-black text-slate-900 dark:text-foreground">0.5%</span>
+              <span className="text-xs text-slate-400 ml-1">reduced fee / order</span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2">
+              75% fee savings compared to Starter. Includes custom domains and marketing automation.
+            </p>
+          </div>
+
+          {/* Enterprise Tier */}
+          <div
+            className={`p-4 rounded-2xl border transition-all ${
+              (subscription?.plan || '').toUpperCase() === 'ENTERPRISE'
+                ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 ring-2 ring-indigo-600/20'
+                : 'border-slate-200 dark:border-border bg-slate-50/50 dark:bg-accent/20'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-slate-900 dark:text-foreground">
+                Scale Enterprise
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200">
+                0% Fee
+              </span>
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">0.0%</span>
+              <span className="text-xs text-slate-400 ml-1">zero platform fees</span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2">
+              Keep 100% of your store revenue with dedicated cloud infrastructure and API access.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* BILLING CYCLE TOGGLE & PAYMENT STATUS INFO */}
       <div className="flex flex-col items-center justify-center space-y-4 pt-6 text-center">
         <div className="flex items-center gap-2">
           {customerRegion === 'INDIA' ? (
             <span className="text-xs font-bold px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-900 border border-blue-200 shadow-xs flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
               <span>
-                Razorpay Active: UPI AutoPay, RuPay, Visa, NetBanking & Instant GST Invoicing
+                ₹ INR Pricing • UPI AutoPay, Debit Cards, NetBanking & Instant GST Invoicing
               </span>
             </span>
           ) : (
-            <span className="text-xs font-bold px-3.5 py-1.5 rounded-full bg-purple-50 text-purple-900 border border-purple-200 shadow-xs flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse" />
-              <span>Stripe Active: Global Credit/Debit Cards, Apple Pay & 135+ Currencies</span>
+            <span className="text-xs font-bold px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-800 border border-slate-300 shadow-xs flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+              <span>$ USD Pricing • International Cards, Apple Pay, Google Pay & 135+ Currencies</span>
             </span>
           )}
         </div>
@@ -727,8 +830,12 @@ export const BillingStudio: React.FC = () => {
             <div className="flex items-stretch gap-3 sm:gap-4 min-w-[720px] sm:min-w-full h-[560px]">
               {tiers.map((tier, idx) => {
                 const id = tier.id.toUpperCase();
+                const currentPlanId = subscription?.plan || 'STARTER';
+                const activeCycle = subscription?.billingCycle || 'MONTHLY';
+                const isCurrentPlanAndCycle = currentPlanId.toUpperCase() === id && activeCycle === billingCycle;
+                const isSwitchingCycleOnSamePlan = currentPlanId.toUpperCase() === id && activeCycle !== billingCycle;
+                const isCurrent = isCurrentPlanAndCycle;
                 const isExpanded = activePricingSlide === idx;
-                const isCurrent = (currentPlanId || 'STARTER').toUpperCase() === id;
                 const isAnnual = billingCycle === 'ANNUAL';
                 const isIndian = customerRegion === 'INDIA';
 
@@ -755,6 +862,7 @@ export const BillingStudio: React.FC = () => {
                 const isUpgradeTier = !isCurrent && price > currentPrice && currentPrice > 0;
                 const upgradeDiffPrice = isUpgradeTier ? Math.max(0, price - currentPrice) : price;
                 const currencySymbol = isIndian ? '₹' : '$';
+                const monthlyEquivalent = isAnnual ? Math.round(price / 12) : price;
 
                 const isGrowth = id === 'GROWTH' || id === 'PRO' || tier.popular;
                 const isEnterprise = id === 'ENTERPRISE';
@@ -812,10 +920,15 @@ export const BillingStudio: React.FC = () => {
                               {isCurrent && (
                                 <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-extrabold flex items-center gap-1">
                                   <CheckCircle2 className="w-3.5 h-3.5" />
-                                  <span>Active Plan</span>
+                                  <span>Active Plan ({activeCycle.toLowerCase()})</span>
                                 </span>
                               )}
-                              {isGrowth && !isCurrent && (
+                              {isSwitchingCycleOnSamePlan && (
+                                <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-extrabold flex items-center gap-1">
+                                  <span>Switch to {billingCycle.toLowerCase()}</span>
+                                </span>
+                              )}
+                              {isGrowth && !isCurrent && !isSwitchingCycleOnSamePlan && (
                                 <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-extrabold flex items-center gap-1">
                                   <Sparkles className="w-3.5 h-3.5 text-rose-400" />
                                   <span>Popular</span>
@@ -841,10 +954,10 @@ export const BillingStudio: React.FC = () => {
                           <div className="flex items-baseline gap-2">
                             <span className="text-3xl sm:text-4xl font-black text-white tracking-tight font-sans">
                               {currencySymbol}
-                              {upgradeDiffPrice.toLocaleString()}
+                              {isStarter ? '0' : isAnnual ? monthlyEquivalent.toLocaleString() : upgradeDiffPrice.toLocaleString()}
                             </span>
                             <span className="text-base sm:text-lg font-medium text-slate-300 font-normal">
-                              /{isAnnual ? 'year' : 'month'}
+                              /month
                             </span>
                             {isAnnual && !isStarter && (
                               <span className="ml-auto px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[11px] font-bold">
@@ -856,7 +969,7 @@ export const BillingStudio: React.FC = () => {
                             {isStarter
                               ? 'Free tier for personal catalogs'
                               : isAnnual
-                                ? `${currencySymbol}${price.toLocaleString()} billed annually`
+                                ? `${currencySymbol}${price.toLocaleString()} billed annually (${currencySymbol}${monthlyEquivalent.toLocaleString()}/mo)`
                                 : 'Billed monthly, cancel anytime'}
                           </div>
                         </div>
@@ -868,7 +981,7 @@ export const BillingStudio: React.FC = () => {
                           </span>
                           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-200">
                             {tier.features.map((feat, fIdx) => (
-                              <li key={fIdx} className="flex items-start gap-2 leading-snug">
+                              <li key={fIdx} className="flex items-start gap-2.5 leading-snug">
                                 <div
                                   className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                                     isGrowth
@@ -890,7 +1003,7 @@ export const BillingStudio: React.FC = () => {
 
                         {/* CTA Action Button */}
                         <div className="pt-2">
-                          {isCurrent ? (
+                          {isCurrentPlanAndCycle ? (
                             <button
                               type="button"
                               disabled
@@ -898,6 +1011,30 @@ export const BillingStudio: React.FC = () => {
                             >
                               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                               <span>Current Active Plan</span>
+                            </button>
+                          ) : isSwitchingCycleOnSamePlan ? (
+                            <button
+                              type="button"
+                              disabled={isProcessingPayment}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleInitiatePlanUpgrade(tier);
+                              }}
+                              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white font-bold text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                            >
+                              {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                              ) : isAnnual ? (
+                                <>
+                                  <span>Switch to Annual Billing (Save 20%)</span>
+                                  <Sparkles className="w-4 h-4" />
+                                </>
+                              ) : (
+                                <>
+                                  <span>Switch to Monthly Billing</span>
+                                  <ArrowRight className="w-4 h-4" />
+                                </>
+                              )}
                             </button>
                           ) : (
                             <button
@@ -1052,7 +1189,11 @@ export const BillingStudio: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 pt-4">
           {tiers.map((tier) => {
             const id = tier.id.toUpperCase();
-            const isCurrent = (currentPlanId || 'STARTER').toUpperCase() === id;
+            const currentPlanId = subscription?.plan || 'STARTER';
+            const activeCycle = subscription?.billingCycle || 'MONTHLY';
+            const isCurrentPlanAndCycle = currentPlanId.toUpperCase() === id && activeCycle === billingCycle;
+            const isSwitchingCycleOnSamePlan = currentPlanId.toUpperCase() === id && activeCycle !== billingCycle;
+            const isCurrent = isCurrentPlanAndCycle;
             const isAnnual = billingCycle === 'ANNUAL';
             const isIndian = customerRegion === 'INDIA';
 
@@ -1079,6 +1220,7 @@ export const BillingStudio: React.FC = () => {
             const isUpgradeTier = !isCurrent && price > currentPrice && currentPrice > 0;
             const upgradeDiffPrice = isUpgradeTier ? Math.max(0, price - currentPrice) : price;
             const currencySymbol = isIndian ? '₹' : '$';
+            const monthlyEquivalent = isAnnual ? Math.round(price / 12) : price;
 
             const isGrowth = id === 'GROWTH' || id === 'PRO' || tier.popular;
             const isEnterprise = id === 'ENTERPRISE';
@@ -1101,7 +1243,12 @@ export const BillingStudio: React.FC = () => {
                 {isCurrent ? (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10">
                     <CheckCircle2 className="w-3 h-3" />
-                    <span>Your Active Plan</span>
+                    <span>Active Plan ({activeCycle.toLowerCase()})</span>
+                  </div>
+                ) : isSwitchingCycleOnSamePlan ? (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10">
+                    <Sparkles className="w-3 h-3 text-amber-200" />
+                    <span>Switch to {billingCycle.toLowerCase()}</span>
                   </div>
                 ) : isUpgradeTier ? (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10">
@@ -1155,17 +1302,17 @@ export const BillingStudio: React.FC = () => {
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight font-sans">
                         {currencySymbol}
-                        {upgradeDiffPrice.toLocaleString()}
+                        {isStarter ? '0' : isAnnual ? monthlyEquivalent.toLocaleString() : upgradeDiffPrice.toLocaleString()}
                       </span>
                       <span className="text-xl sm:text-2xl font-serif italic text-slate-500 font-normal">
-                        /{isAnnual ? 'year' : 'month'}
+                        /month
                       </span>
                     </div>
                     <div className="text-[11px] font-medium text-slate-500 mt-1">
                       {isStarter
                         ? 'Free to use'
                         : isAnnual
-                          ? `${currencySymbol}${price.toLocaleString()} billed annually`
+                          ? `${currencySymbol}${price.toLocaleString()} billed annually (${currencySymbol}${monthlyEquivalent.toLocaleString()}/mo)`
                           : 'Billed monthly'}
                     </div>
                   </div>
@@ -1203,7 +1350,7 @@ export const BillingStudio: React.FC = () => {
 
                 {/* Action Button */}
                 <div className="pt-6">
-                  {isCurrent ? (
+                  {isCurrentPlanAndCycle ? (
                     <button
                       type="button"
                       disabled
@@ -1211,6 +1358,27 @@ export const BillingStudio: React.FC = () => {
                     >
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       <span>Current Plan</span>
+                    </button>
+                  ) : isSwitchingCycleOnSamePlan ? (
+                    <button
+                      type="button"
+                      disabled={isProcessingPayment}
+                      onClick={() => handleInitiatePlanUpgrade(tier)}
+                      className="w-full py-3.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                    >
+                      {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : isAnnual ? (
+                        <>
+                          <span>Switch to Annual (Save 20%)</span>
+                          <Sparkles className="w-4 h-4" />
+                        </>
+                      ) : (
+                        <>
+                          <span>Switch to Monthly</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
                     </button>
                   ) : (
                     <button
@@ -1391,7 +1559,7 @@ export const BillingStudio: React.FC = () => {
                   <th className="py-3 px-4">Plan / Tier</th>
                   <th className="py-3 px-4">Billing Interval</th>
                   <th className="py-3 px-4">Amount Paid</th>
-                  <th className="py-3 px-4">Gateway</th>
+                  <th className="py-3 px-4">Currency</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right">Action</th>
                 </tr>
@@ -1416,14 +1584,8 @@ export const BillingStudio: React.FC = () => {
                       {inv.amount.toLocaleString()}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          inv.paymentMethod?.includes('STRIPE')
-                            ? 'bg-purple-100 text-purple-900'
-                            : 'bg-blue-100 text-blue-900'
-                        }`}
-                      >
-                        {inv.paymentMethod?.includes('STRIPE') ? 'Stripe' : 'Razorpay'}
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900">
+                        {inv.currency || 'INR'}
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
@@ -1455,26 +1617,26 @@ export const BillingStudio: React.FC = () => {
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* RAZORPAY CHECKOUT MODAL (FOR INDIAN CUSTOMERS)                 */}
+      {/* UNIFIED SECURE CHECKOUT MODAL (Gateway abstracted on backend)  */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isRazorpayModalOpen && selectedPlanForPayment && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 space-y-0">
-            {/* Razorpay Header Bar */}
-            <div className="bg-[#0c2340] text-white p-6 flex items-center justify-between">
+            {/* Secure Checkout Header — gateway name intentionally not shown */}
+            <div className="bg-[#191a1b] text-white p-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center text-blue-400 font-bold text-lg">
-                  ⚡
+                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-lg">
+                  🔒
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-base text-white">Razorpay Secure Checkout</span>
-                    <span className="px-1.5 py-0.2 rounded bg-blue-500/30 text-blue-300 text-[10px] font-mono font-bold">
-                      🇮🇳 India
+                    <span className="font-bold text-base text-white">Secure Checkout</span>
+                    <span className="px-1.5 py-0.5 rounded bg-[#d4ff4c]/20 text-[#d4ff4c] text-[10px] font-mono font-bold">
+                      256-bit SSL
                     </span>
                   </div>
                   <p className="text-xs text-slate-300 font-sans">
-                    256-Bit Encrypted • UPI AutoPay • RuPay & Cards
+                    UPI • Debit / Credit Cards • NetBanking • International Cards
                   </p>
                 </div>
               </div>
@@ -1542,7 +1704,7 @@ export const BillingStudio: React.FC = () => {
                   {/* Payment Method Selector */}
                   <div className="space-y-2">
                     <label className="block font-bold text-slate-700">
-                      Choose Razorpay Payment Channel:
+                      Choose Payment Method:
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       <button
@@ -1666,10 +1828,10 @@ export const BillingStudio: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 py-3 rounded-2xl bg-[#0c2340] hover:bg-[#061527] text-[#d4ff4c] font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 py-3 rounded-2xl bg-[#191a1b] hover:bg-black text-[#d4ff4c] font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Lock className="w-4 h-4" />
-                      <span>Pay with Razorpay</span>
+                      <span>Pay Now</span>
                     </button>
                   </div>
                 </form>
@@ -1677,12 +1839,12 @@ export const BillingStudio: React.FC = () => {
 
               {razorpayStep === 'AUTHORIZING' && (
                 <div className="py-12 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full border-4 border-blue-600 border-t-transparent animate-spin mx-auto" />
+                  <div className="w-16 h-16 rounded-full border-4 border-slate-800 border-t-transparent animate-spin mx-auto" />
                   <h4 className="text-base font-bold text-slate-900">
-                    Connecting to Razorpay Gateway...
+                    Processing Payment...
                   </h4>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Please approve the mandate or complete the authorization in your UPI app. Do not
+                    Please complete the authorization in your payment app. Do not
                     refresh this window.
                   </p>
                 </div>
@@ -1702,7 +1864,7 @@ export const BillingStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsRazorpayModalOpen(false)}
-                    className="px-6 py-2.5 rounded-xl bg-[#0c2340] text-[#d4ff4c] text-xs font-bold shadow-md cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl bg-[#191a1b] text-[#d4ff4c] text-xs font-bold shadow-md cursor-pointer"
                   >
                     Done
                   </button>
@@ -1714,26 +1876,27 @@ export const BillingStudio: React.FC = () => {
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* STRIPE CHECKOUT MODAL (FOR INTERNATIONAL CUSTOMERS)            */}
+      {/* UNIFIED SECURE CHECKOUT MODAL — INTERNATIONAL ($ USD)          */}
+      {/* Gateway identity intentionally abstracted from UI              */}
       {/* ───────────────────────────────────────────────────────────── */}
       {isStripeModalOpen && selectedPlanForPayment && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 space-y-0">
-            {/* Stripe Header Bar */}
-            <div className="bg-[#635bff] text-white p-6 flex items-center justify-between">
+            {/* Secure Checkout Header — gateway name intentionally not shown */}
+            <div className="bg-[#191a1b] text-white p-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold text-lg">
-                  💳
+                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-lg">
+                  🔒
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-base text-white">Stripe Global Checkout</span>
-                    <span className="px-1.5 py-0.2 rounded bg-white/20 text-white text-[10px] font-mono font-bold">
-                      🌍 Global
+                    <span className="font-bold text-base text-white">Secure Checkout</span>
+                    <span className="px-1.5 py-0.5 rounded bg-[#d4ff4c]/20 text-[#d4ff4c] text-[10px] font-mono font-bold">
+                      PCI-DSS Compliant
                     </span>
                   </div>
-                  <p className="text-xs text-purple-100 font-sans">
-                    PCI-DSS Level 1 Compliant • Apple Pay • Google Pay • 3D Secure
+                  <p className="text-xs text-slate-300 font-sans">
+                    Credit / Debit Cards • Apple Pay • Google Pay • 3D Secure
                   </p>
                 </div>
               </div>
@@ -1756,7 +1919,7 @@ export const BillingStudio: React.FC = () => {
                     onClick={handleConfirmStripePayment}
                     className="w-full py-3 px-4 bg-black hover:bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer transition"
                   >
-                    <span> Pay / GPay Express</span>
+                    <span>⚡ Express Pay (Apple Pay / Google Pay)</span>
                   </button>
 
                   <div className="flex items-center gap-2 text-slate-400 text-[10px] uppercase font-bold">
@@ -1896,10 +2059,10 @@ export const BillingStudio: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 py-3 rounded-2xl bg-[#635bff] hover:bg-[#534be0] text-white font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 py-3 rounded-2xl bg-[#191a1b] hover:bg-black text-[#d4ff4c] font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Lock className="w-4 h-4" />
-                      <span>Pay with Stripe</span>
+                      <span>Pay Now</span>
                     </button>
                   </div>
                 </form>
@@ -1907,12 +2070,12 @@ export const BillingStudio: React.FC = () => {
 
               {stripeStep === 'AUTHORIZING' && (
                 <div className="py-12 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full border-4 border-purple-600 border-t-transparent animate-spin mx-auto" />
+                  <div className="w-16 h-16 rounded-full border-4 border-slate-800 border-t-transparent animate-spin mx-auto" />
                   <h4 className="text-base font-bold text-slate-900">
-                    Authorizing Payment with Stripe...
+                    Processing Payment...
                   </h4>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Secure 3D-Secure transaction in progress. Please wait a moment.
+                    Secure 3D authentication in progress. Please wait a moment.
                   </p>
                 </div>
               )}
@@ -1922,7 +2085,7 @@ export const BillingStudio: React.FC = () => {
                   <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-2xl font-bold">
                     ✓
                   </div>
-                  <h4 className="text-lg font-bold text-slate-900">Stripe Payment Successful!</h4>
+                  <h4 className="text-lg font-bold text-slate-900">Payment Successful!</h4>
                   <p className="text-xs text-slate-500">
                     Your store subscription is now active on{' '}
                     <strong>{selectedPlanForPayment.name}</strong>.
@@ -1930,7 +2093,7 @@ export const BillingStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsStripeModalOpen(false)}
-                    className="px-6 py-2.5 rounded-xl bg-[#635bff] text-white text-xs font-bold shadow-md cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl bg-[#191a1b] text-[#d4ff4c] text-xs font-bold shadow-md cursor-pointer"
                   >
                     Done
                   </button>
@@ -1978,11 +2141,9 @@ export const BillingStudio: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Payment Gateway:</span>
+                  <span className="text-slate-500">Payment Currency:</span>
                   <span className="font-bold text-slate-900">
-                    {selectedInvoiceForReceipt.paymentMethod?.includes('STRIPE')
-                      ? 'Stripe Global (USD)'
-                      : 'Razorpay (INR ₹)'}
+                    {selectedInvoiceForReceipt.currency === 'USD' ? 'USD ($)' : 'INR (₹)'}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -2073,13 +2234,13 @@ export const BillingStudio: React.FC = () => {
                   onChange={(e) => setUpdatePaymentMethodType(e.target.value as any)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 font-bold text-xs"
                 >
-                  <optgroup label="🇮🇳 Indian Customers (Razorpay)">
-                    <option value="RAZORPAY_UPI">Razorpay UPI Autopay</option>
-                    <option value="RAZORPAY_CARD">Razorpay Credit/Debit Card</option>
+                  <optgroup label="🇮🇳 INR — Indian Payments">
+                    <option value="RAZORPAY_UPI">UPI Autopay (Google Pay, PhonePe, Paytm)</option>
+                    <option value="RAZORPAY_CARD">Debit / Credit Card (RuPay, Visa)</option>
                     <option value="NETBANKING">NetBanking Direct Mandate</option>
                   </optgroup>
-                  <optgroup label="🌍 International Customers (Stripe)">
-                    <option value="STRIPE_CARD">Stripe International Card</option>
+                  <optgroup label="🌍 USD — International Payments">
+                    <option value="STRIPE_CARD">International Credit / Debit Card</option>
                   </optgroup>
                 </select>
               </div>

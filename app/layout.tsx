@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from '@/src/components/providers/HeroUIProvider';
 import { ProtectedRoute } from '@/src/components/auth/ProtectedRoute';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { CookieConsent } from '@/src/components/ui/CookieConsent';
 
 const lexend = Lexend({
   variable: '--font-lexend',
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_CLIENT_ID || ''}>
             <ProtectedRoute>{children}</ProtectedRoute>
+            <CookieConsent />
           </GoogleOAuthProvider>
         </Providers>
       </body>

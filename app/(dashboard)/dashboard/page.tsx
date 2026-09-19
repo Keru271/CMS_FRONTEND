@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { cmsService } from '@/src/services/cmsService';
 import { DashboardOverview } from '@/src/components/cms/DashboardOverview';
+import { DashboardStats, CMSProduct } from '@/src/types';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -43,7 +44,43 @@ export default function DashboardPage() {
     setOrders(updatedOrders);
   };
 
-  const lowStockProducts = products.filter((p) => p.stockQuantity < 10 && p.status === 'active');
+  // Helper to reliably extract stock count whether stored in inventory or stockQuantity
+  const getProductStock = (p: any): number => {
+    if (p.inventory !== undefined && p.inventory !== null && !isNaN(Number(p.inventory))) {
+      return Number(p.inventory);
+    }
+    if (p.stockQuantity !== undefined && p.stockQuantity !== null && !isNaN(Number(p.stockQuantity))) {
+      return Number(p.stockQuantity);
+    }
+    return 0;
+  };
+
+  // Low stock products: non-archived products with inventory <= 10
+  const lowStockProducts = useMemo(() => {
+    return (products || []).filter((p) => {
+      const status = (p.status || 'ACTIVE').toString().toUpperCase();
+      if (status === 'ARCHIVED') return false;
+      const stock = getProductStock(p);
+      return stock <= 10;
+    });
+  }, [products]);
+
+  // Synchronize stats with actively computed lowStockCount
+  const enrichedStats: DashboardStats | null = useMemo(() => {
+    if (!stats) return null;
+    return {
+      ...stats,
+      lowStockCount: lowStockProducts.length,
+      ...(stats.inventoryHealth
+        ? {
+            inventoryHealth: {
+              ...stats.inventoryHealth,
+              lowStockProducts: lowStockProducts.length,
+            },
+          }
+        : {}),
+    };
+  }, [stats, lowStockProducts.length]);
 
   if (loading || !stats) {
     return (
@@ -60,7 +97,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardOverview
-      stats={stats}
+      stats={enrichedStats || stats}
       recentOrders={orders.slice(0, 5)}
       lowStockProducts={lowStockProducts}
       onNavigateProducts={() => router.push('/products')}

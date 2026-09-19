@@ -78,6 +78,9 @@ export interface CMSOrder {
   cancellationReason?: string | null;
   refundAmount?: number | null;
   refundReason?: string | null;
+  platformFeePercent?: number | null;
+  platformFeeAmount?: number | null;
+  netMerchantAmount?: number | null;
   notes?: OrderNote[];
 }
 
@@ -545,6 +548,61 @@ export interface ThemeConfigData {
   footerShowSocial: boolean;
   footerShowNewsletter: boolean;
   footerShowPaymentBadges: boolean;
+  homeSectionsJson?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  logoUrl?: string | null;
+  storeName?: string | null;
+}
+
+export type HomepageSectionType =
+  | 'hero'
+  | 'featured-products'
+  | 'categories'
+  | 'collections'
+  | 'lookbook'
+  | 'testimonials'
+  | 'trust-badges'
+  | 'custom_form'
+  | 'newsletter'
+  | 'banner'
+  | 'spacer';
+
+export interface HomepageSection {
+  id: string;
+  type: HomepageSectionType;
+  enabled: boolean;
+  title?: string;
+  config: {
+    headline?: string;
+    subheadline?: string;
+    badge?: string;
+    ctaLabel?: string;
+    ctaHref?: string;
+    secondaryCtaLabel?: string;
+    secondaryCtaHref?: string;
+    backgroundImage?: string;
+    title?: string;
+    subtitle?: string;
+    limit?: number;
+    category?: string;
+    collection?: string;
+    showAll?: boolean;
+    layout?: 'grid' | 'masonry' | 'carousel';
+    lookbookTitle?: string;
+    lookbookDesc?: string;
+    lookbookImage?: string;
+    testimonials?: Array<{ name: string; rating: number; text: string; avatar?: string }>;
+    badges?: Array<{ icon: string; title: string; desc: string }>;
+    formId?: string;
+    formSlug?: string;
+    formTitle?: string;
+    description?: string;
+    placeholder?: string;
+    variant?: 'primary' | 'accent' | 'dark';
+    height?: number;
+    [key: string]: any;
+  };
 }
 
 export type PageType = 'SYSTEM' | 'POLICY' | 'BRAND' | 'CUSTOM';
@@ -580,10 +638,14 @@ export interface StoreTemplate {
   tagline: string;
   description: string;
   previewImage: string;
+  demoUrl?: string | null;
+  urlLink?: string | null;
+  requiredTier?: string | null;
   accentColor: string;
   badge: string;
   features: string[];
 }
+
 
 export interface StoreIndustryCategory {
   id: string;

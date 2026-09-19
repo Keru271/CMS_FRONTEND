@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CollectionManager } from '@/src/components/cms/CollectionManager';
 import { CategoryManager } from '@/src/components/cms/CategoryManager';
 import { ProductImportModal } from '@/src/components/cms/ProductImportModal';
@@ -58,6 +58,7 @@ import {
   ArrowUpDown,
   FolderPlus,
   BookmarkPlus,
+  ChevronDown,
   CheckSquare,
   Square,
   BellRing,
@@ -170,9 +171,35 @@ export const ProductStudio: React.FC = () => {
   });
   const [isSavingQuickCollection, setIsSavingQuickCollection] = useState(false);
 
-  // Search Filters for Existing Taxonomy Pickers in Product Form
-  const [categorySearchTerm, setCategorySearchTerm] = useState('');
-  const [collectionSearchTerm, setCollectionSearchTerm] = useState('');
+  // Unified Taxonomy Dropdown & Quick-Create States
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [brandSearchQuery, setBrandSearchQuery] = useState('');
+  const [isBrandMenuOpen, setIsBrandMenuOpen] = useState(false);
+  const brandDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [collectionSearchQuery, setCollectionSearchQuery] = useState('');
+  const [isCollectionMenuOpen, setIsCollectionMenuOpen] = useState(false);
+  const collectionDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close taxonomy dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setIsCategoryMenuOpen(false);
+      }
+      if (brandDropdownRef.current && !brandDropdownRef.current.contains(event.target as Node)) {
+        setIsBrandMenuOpen(false);
+      }
+      if (collectionDropdownRef.current && !collectionDropdownRef.current.contains(event.target as Node)) {
+        setIsCollectionMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Variant Matrix Generator State
   const [showMatrixBuilder, setShowMatrixBuilder] = useState(false);
@@ -325,8 +352,8 @@ export const ProductStudio: React.FC = () => {
     setActiveSubTab('add-product');
   };
 
-  // Set primary category from existing categories
-  const handlePrimaryCategoryChange = (catName: string) => {
+  // Set primary category
+  const handleSetPrimaryCategory = (catName: string) => {
     const current = formData.categories || [];
     const next = current.includes(catName) ? current : [catName, ...current];
     setFormData({
@@ -337,53 +364,68 @@ export const ProductStudio: React.FC = () => {
     });
   };
 
-  // Toggle category inclusion in multi-category selection
+  // Remove category from assigned categories
+  const handleRemoveCategory = (catName: string) => {
+    const current = formData.categories || [];
+    const filtered = current.filter((c) => c !== catName);
+    const fallback = filtered.length > 0 ? filtered[0] : (categories[0]?.name || 'General');
+    const nextCategories = filtered.length > 0 ? filtered : [fallback];
+    const isPrimary = (formData.categoryName || formData.category) === catName;
+    const nextPrimary = isPrimary ? fallback : (formData.categoryName || fallback);
+    setFormData({
+      ...formData,
+      categories: nextCategories,
+      categoryName: nextPrimary,
+      category: nextPrimary,
+    });
+  };
+
+  // Toggle category inclusion
   const handleToggleCategory = (catName: string) => {
     const current = formData.categories || [];
     const exists = current.includes(catName);
-    let next: string[];
     if (exists) {
-      next = current.filter((c) => c !== catName);
-      if (next.length === 0 && categories.length > 0) {
-        next = [categories[0].name];
-      }
+      handleRemoveCategory(catName);
     } else {
-      next = [...current, catName];
+      const next = [...current, catName];
+      setFormData({
+        ...formData,
+        categories: next,
+        categoryName: formData.categoryName || catName,
+        category: formData.categoryName || catName,
+      });
     }
-    setFormData({
-      ...formData,
-      categories: next,
-      categoryName: next[0] || 'General',
-      category: next[0] || 'General',
-    });
   };
 
-  // Select all existing categories
-  const handleSelectAllCategories = () => {
-    const allNames = categories.map((c) => c.name);
-    setFormData({
-      ...formData,
-      categories: allNames,
-      categoryName: allNames[0] || formData.categoryName || 'General',
-      category: allNames[0] || formData.categoryName || 'General',
-    });
+  // Inline Quick Create Category
+  const handleQuickCreateCategoryInline = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const slug = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    try {
+      await cmsService.createCategory({ name: trimmed, slug, icon: '📦', description: '' });
+      const updatedCats = await cmsService.getCategories(true);
+      setCategories(updatedCats);
+      const current = formData.categories || [];
+      const next = current.includes(trimmed) ? current : [...current, trimmed];
+      setFormData({
+        ...formData,
+        categories: next,
+        categoryName: formData.categoryName || trimmed,
+        category: formData.categoryName || trimmed,
+      });
+      setCategorySearchQuery('');
+      setIsCategoryMenuOpen(false);
+      showToast(`Category "${trimmed}" created and added!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to create category.', 'error');
+    }
   };
 
-  // Reset/Clear categories to default
-  const handleClearAllCategories = () => {
-    const defaultCat = categories[0]?.name || 'General';
-    setFormData({
-      ...formData,
-      categories: [defaultCat],
-      categoryName: defaultCat,
-      category: defaultCat,
-    });
-  };
-
-  // Set primary collection from existing collections
-  const handlePrimaryCollectionChange = (colName: string) => {
+  // Set primary collection
+  const handleSetPrimaryCollection = (colName: string) => {
     const current = formData.collections || [];
-    const next = !colName ? current : current.includes(colName) ? current : [colName, ...current];
+    const next = current.includes(colName) ? current : [colName, ...current];
     setFormData({
       ...formData,
       collectionName: colName,
@@ -391,35 +433,77 @@ export const ProductStudio: React.FC = () => {
     });
   };
 
-  // Toggle collection inclusion in multi-collection selection
+  // Remove collection from assigned collections
+  const handleRemoveCollection = (colName: string) => {
+    const current = formData.collections || [];
+    const filtered = current.filter((c) => c !== colName);
+    const isPrimary = formData.collectionName === colName;
+    setFormData({
+      ...formData,
+      collections: filtered,
+      collectionName: isPrimary ? (filtered[0] || '') : formData.collectionName,
+    });
+  };
+
+  // Toggle collection inclusion
   const handleToggleCollection = (colName: string) => {
     const current = formData.collections || [];
     const exists = current.includes(colName);
-    const next = exists ? current.filter((c) => c !== colName) : [...current, colName];
-    setFormData({
-      ...formData,
-      collections: next,
-      collectionName: next[0] || '',
-    });
+    if (exists) {
+      handleRemoveCollection(colName);
+    } else {
+      const next = [...current, colName];
+      setFormData({
+        ...formData,
+        collections: next,
+        collectionName: formData.collectionName || colName,
+      });
+    }
   };
 
-  // Select all existing collections
-  const handleSelectAllCollections = () => {
-    const allNames = collections.map((c) => c.name);
-    setFormData({
-      ...formData,
-      collections: allNames,
-      collectionName: allNames[0] || '',
-    });
+  // Inline Quick Create Collection
+  const handleQuickCreateCollectionInline = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const slug = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    try {
+      await cmsService.createCollection({ name: trimmed, slug, type: 'MANUAL', featured: false });
+      const updatedCols = await cmsService.getCollections();
+      setCollections(updatedCols);
+      const current = formData.collections || [];
+      const next = current.includes(trimmed) ? current : [...current, trimmed];
+      setFormData({
+        ...formData,
+        collections: next,
+        collectionName: formData.collectionName || trimmed,
+      });
+      setCollectionSearchQuery('');
+      setIsCollectionMenuOpen(false);
+      showToast(`Collection "${trimmed}" created and added!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to create collection.', 'error');
+    }
   };
 
-  // Clear all selected collections
-  const handleClearAllCollections = () => {
-    setFormData({
-      ...formData,
-      collections: [],
-      collectionName: '',
-    });
+  // Inline Quick Create Brand
+  const handleQuickCreateBrandInline = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const slug = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    try {
+      await cmsService.createBrand({ name: trimmed, slug, status: 'ACTIVE' });
+      const updatedBrands = await cmsService.getBrands();
+      setBrands(updatedBrands);
+      setFormData({
+        ...formData,
+        brandName: trimmed,
+      });
+      setBrandSearchQuery('');
+      setIsBrandMenuOpen(false);
+      showToast(`Brand "${trimmed}" created and selected!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to create brand.', 'error');
+    }
   };
 
   // Quick Add Category Handler (Saves inline and auto-selects)
@@ -1816,352 +1900,473 @@ export const ProductStudio: React.FC = () => {
                 </select>
               </div>
 
-              {/* Organization: Brand, Categories (Multi-select), Collections (Multi-select) */}
-              <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-2.5">
+              {/* Organization: Categories, Brand, Collections (Simplified & Unified) */}
+              <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-3">
                   <div>
-                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-indigo-500" />
                       Storefront Organization
                     </h3>
                     <p className="text-[11px] text-slate-400">
-                      Choose primary & multi-categories, brand, and collections
+                      Categorize your product, assign collections, and specify brand
                     </p>
                   </div>
-                  <span className="text-[10px] text-indigo-600 font-bold bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full">
-                    Multi-Taxonomy
+                  <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full">
+                    Taxonomy
                   </span>
                 </div>
 
-                <div className="space-y-5">
-                  {/* 1. PRODUCT CATEGORIES (Choose Primary + Multi-select from Existing with Search & Quick Add) */}
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <label className="text-xs font-bold text-slate-800 dark:text-foreground">
-                          Primary Category
-                        </label>
-                        <span className="text-[10px] text-rose-500 font-black">*</span>
+                {/* 1. CATEGORIES */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800 dark:text-foreground flex items-center gap-1.5">
+                      <FolderTree className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>Categories</span>
+                      <span className="text-rose-500 text-xs">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuickCategoryData({ name: '', slug: '', icon: '📦', description: '' });
+                        setIsQuickCategoryModalOpen(true);
+                      }}
+                      className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1 hover:underline cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>New Category</span>
+                    </button>
+                  </div>
+
+                  {/* Selected Categories Chips with Primary Designation */}
+                  <div className="flex flex-wrap gap-1.5 min-h-7 items-center">
+                    {(formData.categories || []).map((catName) => {
+                      const catObj = categories.find((c) => c.name.toLowerCase() === catName.toLowerCase());
+                      const isPrimary = (formData.categoryName || formData.category) === catName;
+                      return (
+                        <div
+                          key={catName}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                            isPrimary
+                              ? 'bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-500/30 font-bold shadow-xs'
+                              : 'bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+                          }`}
+                        >
+                          <span className="text-sm">{catObj?.icon || '📦'}</span>
+                          <span>{catName}</span>
+                          {isPrimary ? (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-md">
+                              <Star className="w-2.5 h-2.5 fill-slate-950" /> Primary
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSetPrimaryCategory(catName)}
+                              className="text-[10px] text-slate-400 hover:text-amber-600 dark:hover:text-amber-300 font-semibold px-1 py-0.5 rounded hover:bg-white/80 dark:hover:bg-slate-700 transition cursor-pointer"
+                              title="Set as primary storefront category"
+                            >
+                              Make Primary
+                            </button>
+                          )}
+                          {(formData.categories || []).length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCategory(catName)}
+                              className="p-0.5 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                              title={`Remove ${catName}`}
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Clean Search & Pick Dropdown */}
+                  <div className="relative" ref={categoryDropdownRef}>
+                    <div
+                      onClick={() => setIsCategoryMenuOpen(!isCategoryMenuOpen)}
+                      className="flex items-center justify-between w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition"
+                    >
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="text-slate-400 truncate">
+                          {isCategoryMenuOpen ? 'Choose categories below...' : '+ Assign more categories...'}
+                        </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setQuickCategoryData({ name: '', slug: '', icon: '📦', description: '' });
-                          setIsQuickCategoryModalOpen(true);
-                        }}
-                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 px-2.5 py-1 rounded-lg transition cursor-pointer"
-                      >
-                        <FolderPlus className="w-3.5 h-3.5" />
-                        <span>+ Add Category</span>
-                      </button>
+                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isCategoryMenuOpen ? 'rotate-180' : ''}`} />
                     </div>
 
-                    {/* Choose Primary Category from Existing Categories Dropdown */}
-                    <select
-                      value={
-                        formData.categoryName ||
-                        formData.category ||
-                        categories[0]?.name ||
-                        'General'
-                      }
-                      onChange={(e) => handlePrimaryCategoryChange(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-bold text-slate-900 dark:text-foreground"
-                    >
-                      {categories.length === 0 ? (
-                        <option value="General">General</option>
-                      ) : (
-                        categories.map((cat) => (
-                          <option key={cat.id} value={cat.name}>
-                            {cat.icon ? `${cat.icon} ` : ''}
-                            {cat.name}
-                          </option>
-                        ))
-                      )}
-                    </select>
-
-                    {/* All Assigned Categories (Multi-select from Existing) */}
-                    <div className="pt-1.5 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                            Also in Categories ({formData.categories?.length || 0} selected)
-                          </label>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={handleSelectAllCategories}
-                            className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                          >
-                            Select All
-                          </button>
-                          <span className="text-slate-300">|</span>
-                          <button
-                            type="button"
-                            onClick={handleClearAllCategories}
-                            className="text-[10px] font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 cursor-pointer"
-                          >
-                            Reset
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Filter Search Input for Existing Categories */}
-                      {categories.length > 4 && (
-                        <div className="relative">
+                    {isCategoryMenuOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1.5 z-30 bg-white dark:bg-slate-900 border border-slate-200 dark:border-border rounded-2xl shadow-xl p-2 space-y-2 max-h-60 overflow-hidden flex flex-col">
+                        <div className="relative shrink-0">
                           <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                           <input
                             type="text"
-                            value={categorySearchTerm}
-                            onChange={(e) => setCategorySearchTerm(e.target.value)}
-                            placeholder="Filter existing categories..."
-                            className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 bg-white dark:bg-card dark:border-border text-[11px] placeholder:text-slate-400"
+                            autoFocus
+                            value={categorySearchQuery}
+                            onChange={(e) => setCategorySearchQuery(e.target.value)}
+                            placeholder="Search or type new category..."
+                            className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-border bg-slate-50 dark:bg-slate-800 text-xs placeholder:text-slate-400 text-slate-900 dark:text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           />
                         </div>
-                      )}
 
-                      {/* Existing Categories Selection Chips */}
-                      <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto p-2 bg-slate-50 dark:bg-accent/40 rounded-2xl border border-slate-200/80 dark:border-border">
-                        {categories.length === 0 ? (
-                          <div className="w-full text-center py-2 text-slate-400 text-xs">
-                            No existing categories. Click "+ Add Category" to create one.
-                          </div>
-                        ) : (
-                          categories
-                            .filter(
-                              (cat) =>
-                                !categorySearchTerm ||
-                                cat.name.toLowerCase().includes(categorySearchTerm.toLowerCase()),
-                            )
+                        <div className="overflow-y-auto space-y-1 max-h-44 pr-1">
+                          {categories
+                            .filter((c) => !categorySearchQuery || c.name.toLowerCase().includes(categorySearchQuery.toLowerCase()))
                             .map((cat) => {
                               const isSelected = (formData.categories || []).includes(cat.name);
-                              const isPrimary =
-                                (formData.categoryName || formData.category) === cat.name;
                               return (
                                 <button
                                   key={cat.id}
                                   type="button"
                                   onClick={() => handleToggleCategory(cat.name)}
-                                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
                                     isSelected
-                                      ? 'bg-slate-900 text-white shadow-xs dark:bg-indigo-600'
-                                      : 'bg-white dark:bg-card text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-border hover:border-slate-300 hover:bg-slate-100'
+                                      ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-bold'
+                                      : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                                   }`}
                                 >
-                                  <span>{cat.icon || '📦'}</span>
-                                  <span>{cat.name}</span>
-                                  {isPrimary && (
-                                    <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1 rounded-xs">
-                                      Primary
-                                    </span>
-                                  )}
+                                  <span className="flex items-center gap-2 truncate">
+                                    <span>{cat.icon || '📦'}</span>
+                                    <span className="truncate">{cat.name}</span>
+                                  </span>
                                   {isSelected ? (
-                                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                    <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                                   ) : (
-                                    <Plus className="w-3 h-3 text-slate-400" />
+                                    <Plus className="w-3 h-3 text-slate-400 shrink-0" />
                                   )}
                                 </button>
                               );
-                            })
-                        )}
+                            })}
+
+                          {categorySearchQuery.trim() &&
+                            !categories.some((c) => c.name.toLowerCase() === categorySearchQuery.trim().toLowerCase()) && (
+                              <button
+                                type="button"
+                                onClick={() => handleQuickCreateCategoryInline(categorySearchQuery)}
+                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50/60 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition cursor-pointer text-left"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                                <span>Create & add "{categorySearchQuery.trim()}"</span>
+                              </button>
+                            )}
+
+                          {categories.length === 0 && !categorySearchQuery.trim() && (
+                            <div className="text-center py-3 text-slate-400 text-xs">
+                              No categories yet. Type above to create one!
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
+                </div>
 
-                  {/* 2. BRAND SELECTION (Choose from Existing Brands + Inline Quick Add) */}
-                  <div className="space-y-1.5 pt-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-800 dark:text-foreground">
-                        Brand / Manufacturer
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setQuickBrandData({
-                            name: '',
-                            slug: '',
-                            logo: '',
-                            website: '',
-                            description: '',
-                          });
-                          setIsQuickBrandModalOpen(true);
-                        }}
-                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 px-2.5 py-1 rounded-lg transition cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>+ Add Brand</span>
-                      </button>
-                    </div>
-
-                    <select
-                      value={formData.brandName || ''}
-                      onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-bold text-slate-900 dark:text-foreground"
+                {/* 2. BRAND / MANUFACTURER */}
+                <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-border">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800 dark:text-foreground flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>Brand / Manufacturer</span>
+                      <span className="text-slate-400 text-[10px] font-normal">(Optional)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuickBrandData({ name: '', slug: '', logo: '', website: '', description: '' });
+                        setIsQuickBrandModalOpen(true);
+                      }}
+                      className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1 hover:underline cursor-pointer"
                     >
-                      <option value="">Select an Existing Brand (Optional)</option>
-                      {brands.map((b) => (
-                        <option key={b.id} value={b.name}>
-                          {b.name}
-                        </option>
-                      ))}
-                    </select>
+                      <Plus className="w-3 h-3" />
+                      <span>New Brand</span>
+                    </button>
                   </div>
 
-                  {/* 3. COLLECTIONS (Choose Primary + Multi-select from Existing with Search & Quick Add) */}
-                  <div className="space-y-2.5 pt-1">
-                    <div className="flex items-center justify-between">
+                  {formData.brandName ? (
+                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 flex items-center justify-center text-xs font-black">
+                          {formData.brandName.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-xs font-bold text-slate-800 dark:text-foreground">
+                          {formData.brandName}
+                        </span>
+                      </div>
                       <div className="flex items-center gap-1.5">
-                        <label className="text-xs font-bold text-slate-800 dark:text-foreground">
-                          Primary Collection
-                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBrandSearchQuery('');
+                            setIsBrandMenuOpen(true);
+                          }}
+                          className="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold hover:underline px-1.5 py-0.5 rounded cursor-pointer"
+                        >
+                          Change
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, brandName: '' })}
+                          className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                          title="Remove brand"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setQuickCollectionData({
-                            name: '',
-                            slug: '',
-                            type: 'MANUAL',
-                            image: '',
-                            description: '',
-                          });
-                          setIsQuickCollectionModalOpen(true);
-                        }}
-                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                    </div>
+                  ) : (
+                    <div className="relative" ref={brandDropdownRef}>
+                      <div
+                        onClick={() => setIsBrandMenuOpen(!isBrandMenuOpen)}
+                        className="flex items-center justify-between w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition"
                       >
-                        <BookmarkPlus className="w-3.5 h-3.5" />
-                        <span>+ Add Collection</span>
-                      </button>
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="text-slate-400 truncate">
+                            {isBrandMenuOpen ? 'Choose brand below...' : 'Select or create a brand...'}
+                          </span>
+                        </div>
+                        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isBrandMenuOpen ? 'rotate-180' : ''}`} />
+                      </div>
+
+                      {isBrandMenuOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-1.5 z-30 bg-white dark:bg-slate-900 border border-slate-200 dark:border-border rounded-2xl shadow-xl p-2 space-y-2 max-h-60 overflow-hidden flex flex-col">
+                          <div className="relative shrink-0">
+                            <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                            <input
+                              type="text"
+                              autoFocus
+                              value={brandSearchQuery}
+                              onChange={(e) => setBrandSearchQuery(e.target.value)}
+                              placeholder="Search or type brand name..."
+                              className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-border bg-slate-50 dark:bg-slate-800 text-xs placeholder:text-slate-400 text-slate-900 dark:text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            />
+                          </div>
+
+                          <div className="overflow-y-auto space-y-1 max-h-44 pr-1">
+                            {brands
+                              .filter((b) => !brandSearchQuery || b.name.toLowerCase().includes(brandSearchQuery.toLowerCase()))
+                              .map((brand) => (
+                                <button
+                                  key={brand.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData({ ...formData, brandName: brand.name });
+                                    setIsBrandMenuOpen(false);
+                                    setBrandSearchQuery('');
+                                  }}
+                                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition cursor-pointer text-left"
+                                >
+                                  <span className="truncate">{brand.name}</span>
+                                  <Check className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                                </button>
+                              ))}
+
+                            {brandSearchQuery.trim() &&
+                              !brands.some((b) => b.name.toLowerCase() === brandSearchQuery.trim().toLowerCase()) && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickCreateBrandInline(brandSearchQuery)}
+                                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50/60 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition cursor-pointer text-left"
+                                >
+                                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                                  <span>Create brand "{brandSearchQuery.trim()}"</span>
+                                </button>
+                              )}
+
+                            {brands.length === 0 && !brandSearchQuery.trim() && (
+                              <div className="text-center py-3 text-slate-400 text-xs">
+                                No brands found. Type above to create one!
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. COLLECTIONS */}
+                <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-border">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800 dark:text-foreground flex items-center gap-1.5">
+                      <Tag className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>Collections</span>
+                      <span className="text-slate-400 text-[10px] font-normal">(Optional)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuickCollectionData({ name: '', slug: '', type: 'MANUAL', image: '', description: '' });
+                        setIsQuickCollectionModalOpen(true);
+                      }}
+                      className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1 hover:underline cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>New Collection</span>
+                    </button>
+                  </div>
+
+                  {/* Selected Collections Chips */}
+                  {(formData.collections || []).length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 min-h-7 items-center">
+                      {(formData.collections || []).map((colName) => {
+                        const isPrimary = formData.collectionName === colName;
+                        return (
+                          <div
+                            key={colName}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                              isPrimary
+                                ? 'bg-purple-500/15 text-purple-900 dark:text-purple-200 border border-purple-500/30 font-bold shadow-xs'
+                                : 'bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+                            }`}
+                          >
+                            <span>🏷️</span>
+                            <span>{colName}</span>
+                            {isPrimary ? (
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-purple-500 text-white px-1.5 py-0.5 rounded-md">
+                                <Star className="w-2.5 h-2.5 fill-white" /> Primary
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleSetPrimaryCollection(colName)}
+                                className="text-[10px] text-slate-400 hover:text-purple-600 dark:hover:text-purple-300 font-semibold px-1 py-0.5 rounded hover:bg-white/80 dark:hover:bg-slate-700 transition cursor-pointer"
+                                title="Set as primary collection"
+                              >
+                                Make Primary
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCollection(colName)}
+                              className="p-0.5 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                              title={`Remove ${colName}`}
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-slate-400 italic">
+                      No collections assigned yet.
+                    </p>
+                  )}
+
+                  {/* Clean Search & Pick Dropdown */}
+                  <div className="relative" ref={collectionDropdownRef}>
+                    <div
+                      onClick={() => setIsCollectionMenuOpen(!isCollectionMenuOpen)}
+                      className="flex items-center justify-between w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition"
+                    >
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="text-slate-400 truncate">
+                          {isCollectionMenuOpen ? 'Choose collections below...' : '+ Assign collections...'}
+                        </span>
+                      </div>
+                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isCollectionMenuOpen ? 'rotate-180' : ''}`} />
                     </div>
 
-                    {/* Choose Primary Collection from Existing Collections Dropdown */}
-                    <select
-                      value={formData.collectionName || ''}
-                      onChange={(e) => handlePrimaryCollectionChange(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-bold text-slate-900 dark:text-foreground"
-                    >
-                      <option value="">None / Choose Existing Primary Collection</option>
-                      {collections.map((col) => (
-                        <option key={col.id} value={col.name}>
-                          🏷️ {col.name} ({col.type || 'MANUAL'})
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* All Assigned Collections (Multi-select from Existing) */}
-                    <div className="pt-1.5 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                            Also in Collections ({formData.collections?.length || 0} selected)
-                          </label>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={handleSelectAllCollections}
-                            className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                          >
-                            Select All
-                          </button>
-                          <span className="text-slate-300">|</span>
-                          <button
-                            type="button"
-                            onClick={handleClearAllCollections}
-                            className="text-[10px] font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 cursor-pointer"
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Filter Search Input for Existing Collections */}
-                      {collections.length > 4 && (
-                        <div className="relative">
+                    {isCollectionMenuOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1.5 z-30 bg-white dark:bg-slate-900 border border-slate-200 dark:border-border rounded-2xl shadow-xl p-2 space-y-2 max-h-60 overflow-hidden flex flex-col">
+                        <div className="relative shrink-0">
                           <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                           <input
                             type="text"
-                            value={collectionSearchTerm}
-                            onChange={(e) => setCollectionSearchTerm(e.target.value)}
-                            placeholder="Filter existing collections..."
-                            className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 bg-white dark:bg-card dark:border-border text-[11px] placeholder:text-slate-400"
+                            autoFocus
+                            value={collectionSearchQuery}
+                            onChange={(e) => setCollectionSearchQuery(e.target.value)}
+                            placeholder="Search or type new collection..."
+                            className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-border bg-slate-50 dark:bg-slate-800 text-xs placeholder:text-slate-400 text-slate-900 dark:text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           />
                         </div>
-                      )}
 
-                      {/* Existing Collections Selection Chips */}
-                      <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto p-2 bg-slate-50 dark:bg-accent/40 rounded-2xl border border-slate-200/80 dark:border-border">
-                        {collections.length === 0 ? (
-                          <div className="w-full text-center py-2 text-slate-400 text-xs">
-                            No existing collections. Click "+ Add Collection" to create one.
-                          </div>
-                        ) : (
-                          collections
-                            .filter(
-                              (col) =>
-                                !collectionSearchTerm ||
-                                col.name.toLowerCase().includes(collectionSearchTerm.toLowerCase()),
-                            )
+                        <div className="overflow-y-auto space-y-1 max-h-44 pr-1">
+                          {collections
+                            .filter((col) => !collectionSearchQuery || col.name.toLowerCase().includes(collectionSearchQuery.toLowerCase()))
                             .map((col) => {
                               const isSelected = (formData.collections || []).includes(col.name);
-                              const isPrimary = formData.collectionName === col.name;
                               return (
                                 <button
                                   key={col.id}
                                   type="button"
                                   onClick={() => handleToggleCollection(col.name)}
-                                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
                                     isSelected
-                                      ? 'bg-purple-600 text-white shadow-xs'
-                                      : 'bg-white dark:bg-card text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-border hover:border-slate-300 hover:bg-slate-100'
+                                      ? 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 font-bold'
+                                      : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                                   }`}
                                 >
-                                  <span>🏷️</span>
-                                  <span>{col.name}</span>
-                                  {isPrimary && (
-                                    <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1 rounded-xs">
-                                      Primary
+                                  <span className="flex items-center gap-2 truncate">
+                                    <span>🏷️</span>
+                                    <span className="truncate">{col.name}</span>
+                                    <span className="text-[10px] text-slate-400 font-normal">
+                                      ({col.type || 'MANUAL'})
                                     </span>
-                                  )}
+                                  </span>
                                   {isSelected ? (
-                                    <Check className="w-3.5 h-3.5 text-purple-200" />
+                                    <Check className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
                                   ) : (
-                                    <Plus className="w-3 h-3 text-slate-400" />
+                                    <Plus className="w-3 h-3 text-slate-400 shrink-0" />
                                   )}
                                 </button>
                               );
-                            })
-                        )}
+                            })}
+
+                          {collectionSearchQuery.trim() &&
+                            !collections.some((c) => c.name.toLowerCase() === collectionSearchQuery.trim().toLowerCase()) && (
+                              <button
+                                type="button"
+                                onClick={() => handleQuickCreateCollectionInline(collectionSearchQuery)}
+                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50/60 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/60 transition cursor-pointer text-left"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                                <span>Create collection "{collectionSearchQuery.trim()}"</span>
+                              </button>
+                            )}
+
+                          {collections.length === 0 && !collectionSearchQuery.trim() && (
+                            <div className="text-center py-3 text-slate-400 text-xs">
+                              No collections yet. Type above to create one!
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
+                </div>
 
-                  {/* 4. MATERIAL SPEC */}
-                  <div className="space-y-1 pt-1">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                      Material Specification
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.material || ''}
-                      onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                      placeholder="e.g. 100% Organic Cotton / Brushed Titanium"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-bold"
-                    />
-                  </div>
+                {/* 4. MATERIAL SPEC */}
+                <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-border">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                    Material Specification
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.material || ''}
+                    onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                    placeholder="e.g. 100% Organic Cotton / Brushed Titanium"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-bold"
+                  />
+                </div>
 
-                  {/* 5. PRODUCT TAGS */}
-                  <div className="space-y-1 pt-1">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                      Search Tags (comma separated)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.tags || ''}
-                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                      placeholder="bestseller, summer, limited, trending"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-semibold"
-                    />
-                  </div>
+                {/* 5. PRODUCT TAGS */}
+                <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-border">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                    Search Tags (comma separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.tags || ''}
+                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                    placeholder="bestseller, summer, limited, trending"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 dark:border-border text-xs font-semibold"
+                  />
                 </div>
               </div>
 

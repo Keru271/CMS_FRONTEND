@@ -1,8 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { StoreTemplate, ThemeConfigData } from '@/src/types';
+import { StoreTemplate, ThemeConfigData, CMSForm, HomepageSection } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import {
+  HomepageSectionsCustomizer,
+  DEFAULT_TEMPLATE_SECTIONS,
+} from './HomepageSectionsCustomizer';
 import {
   Palette,
   Layout,
@@ -40,8 +44,11 @@ import {
   Image as ImageIcon,
   Trash2,
   RotateCcw,
+  Lock,
 } from 'lucide-react';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
+import { usePlanAccess } from '@/src/hooks/usePlanAccess';
+
 
 const PRESET_PALETTES = [
   {
@@ -688,8 +695,46 @@ const normalizeFontValue = (val: string | undefined | null, defaultVal: string) 
   return clean || defaultVal;
 };
 
+const TIER_HIERARCHY: Record<string, number> = {
+  ALL: 0,
+  FREE: 0,
+  STARTER: 1,
+  GROWTH: 2,
+  PRO: 3,
+  AGENCY: 4,
+  ENTERPRISE: 5,
+};
+
+const getTierBadgeInfo = (requiredTier?: string | null) => {
+  const tier = (requiredTier || 'ALL').toUpperCase();
+  switch (tier) {
+    case 'ENTERPRISE':
+      return { label: 'Enterprise Exclusive', color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/50' };
+    case 'AGENCY':
+      return { label: 'Agency Tier', color: 'bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 border-fuchsia-200 dark:border-fuchsia-900/50' };
+    case 'PRO':
+      return { label: 'Pro Tier', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/50' };
+    case 'GROWTH':
+      return { label: 'Growth+', color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-200 dark:border-violet-900/50' };
+    case 'STARTER':
+      return { label: 'Starter+', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50' };
+    default:
+      return { label: 'Free Theme', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50' };
+  }
+};
+
+const isTemplateUnlocked = (userPlan: string, requiredTier?: string | null) => {
+  const req = (requiredTier || 'ALL').toUpperCase();
+  const user = (userPlan || 'STARTER').toUpperCase();
+  const reqRank = TIER_HIERARCHY[req] ?? 0;
+  const userRank = TIER_HIERARCHY[user] ?? 1;
+  return userRank >= reqRank;
+};
+
 export const ThemeManager: React.FC = () => {
+  const { plan: userPlan } = usePlanAccess();
   const [templates, setTemplates] = useState<StoreTemplate[]>([]);
+
 
   console.log({ templates });
   const [themeConfig, setThemeConfig] = useState<ThemeConfigData | null>(null);
@@ -703,8 +748,10 @@ export const ThemeManager: React.FC = () => {
   );
   const [previewPage, setPreviewPage] = useState<'home' | 'plp' | 'pdp' | 'cart'>('home');
   const [activeTab, setActiveTab] = useState<
-    'templates' | 'colors' | 'typography' | 'headerFooter'
+    'templates' | 'sections' | 'colors' | 'typography' | 'headerFooter'
   >('templates');
+  const [sectionsMap, setSectionsMap] = useState<Record<string, HomepageSection[]>>({});
+  const [availableForms, setAvailableForms] = useState<CMSForm[]>([]);
   const [toastMessage, setToastMessage] = useState<{
     text: string;
     type: 'success' | 'error';
@@ -713,6 +760,7 @@ export const ThemeManager: React.FC = () => {
   const [livePreviewPage, setLivePreviewPage] = useState<'/' | '/products' | '/cart'>('/');
   const [liveViewport, setLiveViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [mobileEditorView, setMobileEditorView] = useState<'editor' | 'preview'>('editor');
+  const [canvasPreviewType, setCanvasPreviewType] = useState<'iframe' | 'canvas'>('iframe');
 
   const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
 
@@ -745,19 +793,105 @@ export const ThemeManager: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [tmplList, themeData] = await Promise.all([
+      const [tmplList, themeData, formsList] = await Promise.all([
         cmsService.getStoreTemplates(),
         cmsService.getStoreTheme(),
+        cmsService.getForms().catch(() => []),
       ]);
       console.log({ tmplList });
       setTemplates(tmplList);
       setThemeConfig(themeData);
       setInitialConfig(themeData);
+      setAvailableForms(formsList);
+
+      // Parse custom homepage sections if configured
+      if (themeData && themeData.homeSectionsJson) {
+        try {
+          const parsed = JSON.parse(themeData.homeSectionsJson);
+          if (parsed && typeof parsed === 'object') {
+            if (Array.isArray(parsed)) {
+              setSectionsMap({
+                [themeData.activeTemplateSlug || 'mincom']: parsed,
+              });
+            } else {
+              setSectionsMap(parsed);
+            }
+          }
+        } catch (e) {
+          console.error('Failed to parse homeSectionsJson:', e);
+        }
+      }
     } catch (err) {
       console.error('Failed to load theme data:', err);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getActiveTemplateSections = (slug: string): HomepageSection[] => {
+    const lowerSlug = slug.toLowerCase().trim();
+    if (sectionsMap[slug] && sectionsMap[slug].length > 0) {
+      return sectionsMap[slug];
+    }
+    if (sectionsMap[lowerSlug] && sectionsMap[lowerSlug].length > 0) {
+      return sectionsMap[lowerSlug];
+    }
+    const ALIASES: Record<string, string[]> = {
+      funo: ['funo', 'funie', 'funo-furniture', 'nordic'],
+      funie: ['funie', 'funo', 'funo-furniture', 'nordic'],
+      mincom: ['mincom', 'mincom-furniture', 'furniture', 'artisan-craft', 'modern', 'mincom-theme'],
+      'artisan-craft': ['artisan-craft', 'mincom', 'furniture', 'modern'],
+      nova: ['nova', 'nova-tech', 'electronics', 'tech', 'gadgets'],
+      'nova-tech': ['nova-tech', 'nova', 'electronics', 'tech', 'gadgets'],
+      luxe: ['luxe', 'luxury', 'velvet-luxury', 'fashion', 'haute-couture'],
+      'velvet-luxury': ['velvet-luxury', 'luxe', 'luxury', 'fashion', 'haute-couture'],
+      minimal: ['minimal', 'minimalist', 'clean', 'scandinavian'],
+      default: ['default', 'general', 'pulse-streetwear', 'botanica-wellness'],
+      'pulse-streetwear': ['pulse-streetwear', 'default', 'streetwear'],
+      'botanica-wellness': ['botanica-wellness', 'default', 'botanica', 'wellness'],
+    };
+    const checkKeys = ALIASES[lowerSlug] || [];
+    for (const k of checkKeys) {
+      if (sectionsMap[k] && sectionsMap[k].length > 0) {
+        return sectionsMap[k];
+      }
+    }
+    for (const k of [slug, lowerSlug, ...checkKeys]) {
+      if (DEFAULT_TEMPLATE_SECTIONS[k] && DEFAULT_TEMPLATE_SECTIONS[k].length > 0) {
+        return DEFAULT_TEMPLATE_SECTIONS[k];
+      }
+    }
+    return (
+      DEFAULT_TEMPLATE_SECTIONS['mincom'] ||
+      DEFAULT_TEMPLATE_SECTIONS['default'] ||
+      []
+    );
+  };
+
+  const handleSectionsChange = (newSections: HomepageSection[]) => {
+    if (!themeConfig) return;
+    const currentSlug = themeConfig.activeTemplateSlug || 'mincom';
+    const updatedMap = {
+      ...sectionsMap,
+      [currentSlug]: newSections,
+    };
+    setSectionsMap(updatedMap);
+    setThemeConfig({
+      ...themeConfig,
+      homeSectionsJson: JSON.stringify(updatedMap),
+    });
+  };
+
+  const handleResetSectionsToDefault = () => {
+    if (!themeConfig) return;
+    const currentSlug = themeConfig.activeTemplateSlug || 'mincom';
+    const defaultSections =
+      DEFAULT_TEMPLATE_SECTIONS[currentSlug] ||
+      DEFAULT_TEMPLATE_SECTIONS['mincom'] ||
+      DEFAULT_TEMPLATE_SECTIONS['default'] ||
+      [];
+    handleSectionsChange(defaultSections);
+    showToast(`Reset sections to ${currentSlug} template defaults!`, 'success');
   };
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
@@ -859,35 +993,48 @@ export const ThemeManager: React.FC = () => {
         }}
       >
         <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-          {config.headerAnnouncement && (
-            <div
-              className="py-1.5 px-4 text-center text-[11px] font-extrabold text-white flex items-center justify-center gap-2"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <span>{config.headerAnnouncement}</span>
-              <span className="opacity-75">| Free returns in 30 days</span>
+          <div
+            className="py-1.5 px-4 text-center text-xs font-semibold text-white flex flex-wrap items-center justify-between gap-2"
+            style={{ backgroundColor: primaryColor }}
+          >
+            <div className="flex items-center gap-3 text-[11px] opacity-90 hidden sm:flex">
+              <span>{config.contactPhone || '+1 555-0199'}</span>
+              <span>{config.contactEmail || 'balakeerthi2710@gmail.com'}</span>
             </div>
-          )}
-          <div className="px-6 py-3.5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 mx-auto sm:mx-0 font-extrabold text-xs">
+              <span>{config.headerAnnouncement || 'Welcome to Nova Horizon Goods! Enjoy free shipping on your first order.'}</span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] opacity-90 hidden sm:flex">
+              <span>Wishlist (0)</span>
+            </div>
+          </div>
+          <div className="px-6 py-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-sm"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {tmpl.name.charAt(0)}
-              </div>
+              {config.logoUrl ? (
+                <img
+                  src={config.logoUrl}
+                  alt="Store Logo"
+                  className="h-9 w-auto max-w-[120px] object-contain rounded-md"
+                />
+              ) : (
+                <div
+                  className="w-9 h-9 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-md"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {tmpl.name.charAt(0)}
+                </div>
+              )}
               <div>
                 <span
-                  className="font-black text-lg tracking-tight block leading-tight"
+                  className="font-black text-lg tracking-tight block leading-tight text-slate-900"
                   style={{
                     fontFamily: config.themeHeadingFont || 'Inter, sans-serif',
-                    color: primaryColor,
                   }}
                 >
-                  {tmpl.name.split(' ')[0]} Store
+                  {(config as any).storeName || (config as any).name || tmpl.name}
                 </span>
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                  {tmpl.tagline}
+                  Official Storefront
                 </span>
               </div>
             </div>
@@ -904,43 +1051,41 @@ export const ThemeManager: React.FC = () => {
                 onClick={() => setPreviewPage('plp')}
                 className={`transition-colors hover:text-indigo-600 ${page === 'plp' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-0.5' : ''}`}
               >
-                Catalog & Drops
+                All Products
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewPage('plp')}
+                className="transition-colors hover:text-indigo-600"
+              >
+                Collections
               </button>
               <button
                 type="button"
                 onClick={() => setPreviewPage('pdp')}
-                className={`transition-colors hover:text-indigo-600 ${page === 'pdp' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-0.5' : ''}`}
+                className="transition-colors hover:text-indigo-600"
               >
-                Featured Product
+                Wishlist
               </button>
               <button
                 type="button"
                 onClick={() => setPreviewPage('cart')}
                 className={`transition-colors hover:text-indigo-600 ${page === 'cart' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-0.5' : ''}`}
               >
-                Cart & Taxes
+                My Account
               </button>
             </nav>
-            <div className="flex items-center gap-3">
-              {config.headerShowSearch && (
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-400">
-                  <Search className="w-3.5 h-3.5" />
-                  <span className="text-[11px]">Search products...</span>
-                </div>
-              )}
-              {config.headerShowCurrency && (
-                <span className="text-[11px] font-bold px-2 py-1 rounded-lg bg-slate-100 text-slate-600">
-                  USD ($)
-                </span>
-              )}
+            <div className="flex items-center gap-3 text-slate-600">
+              <Search className="w-4 h-4 hover:text-slate-900 cursor-pointer" />
+              <Heart className="w-4 h-4 hover:text-slate-900 cursor-pointer" />
               <button
                 type="button"
                 onClick={() => setPreviewPage('cart')}
-                className="px-3.5 py-1.5 text-white flex items-center gap-1.5 text-xs font-bold shadow-sm transition-transform active:scale-95"
-                style={{ backgroundColor: primaryColor, borderRadius }}
+                className="px-3 py-1.5 rounded-xl text-white flex items-center gap-1.5 text-xs font-extrabold shadow-sm transition-transform active:scale-95"
+                style={{ backgroundColor: primaryColor }}
               >
                 <ShoppingBag className="w-3.5 h-3.5" />
-                <span>Bag (2)</span>
+                <span>1</span>
               </button>
             </div>
           </div>
@@ -948,204 +1093,415 @@ export const ThemeManager: React.FC = () => {
         <main className="flex-1">
           {page === 'home' && (
             <div className="space-y-10 pb-12">
-              <div className="relative overflow-hidden rounded-3xl mx-6 mt-6 min-h-[380px] flex items-center shadow-xl">
-                <img
-                  src={mock.heroImage}
-                  alt={tmpl.name}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/60 to-transparent" />
-                <div className="relative z-10 p-8 sm:p-12 max-w-xl text-white space-y-4">
-                  <span
-                    className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider inline-block shadow-sm"
-                    style={{ backgroundColor: accentColor, color: '#FFFFFF' }}
-                  >
-                    {mock.heroBadge}
-                  </span>
-                  <h1
-                    className="text-2xl sm:text-4xl font-black tracking-tight leading-tight"
-                    style={{
-                      fontFamily: config.themeHeadingFont || 'Inter, sans-serif',
-                    }}
-                  >
-                    {mock.heroTitle}
-                  </h1>
-                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed max-w-md">
-                    {mock.heroSubtitle}
-                  </p>
-                  <div className="flex items-center gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewPage('plp')}
-                      className="px-6 py-3 text-xs font-extrabold text-white shadow-lg transition-all flex items-center gap-2 hover:opacity-90 active:scale-95"
-                      style={{ backgroundColor: primaryColor, borderRadius }}
-                    >
-                      <span>Explore Collection</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewPage('pdp')}
-                      className="px-5 py-3 text-xs font-bold text-white bg-white/10 hover:bg-white/20 border border-white/30 backdrop-blur-sm transition-all"
-                      style={{ borderRadius }}
-                    >
-                      View Bestseller
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div className="px-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2
-                    className="text-lg font-black"
-                    style={{ fontFamily: config.themeHeadingFont }}
-                  >
-                    Featured Categories
-                  </h2>
-                  <span className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer">
-                    View All →
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {mock.categories.map((cat, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => setPreviewPage('plp')}
-                      className="group cursor-pointer p-3 rounded-2xl border border-slate-200/80 hover:border-indigo-400 bg-white shadow-xs hover:shadow-md transition-all space-y-2"
-                      style={{ borderRadius }}
-                    >
-                      <div className="h-28 rounded-xl overflow-hidden bg-slate-100 relative">
-                        <img
-                          src={cat.image}
-                          alt={cat.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                      <div>
-                        <h4 className="font-extrabold text-xs text-slate-800 group-hover:text-indigo-600 transition-colors">
-                          {cat.name}
-                        </h4>
-                        <p className="text-[10px] text-slate-400 font-semibold">{cat.count}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="px-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2
-                      className="text-lg font-black"
-                      style={{ fontFamily: config.themeHeadingFont }}
-                    >
-                      Trending Arrivals
-                    </h2>
-                    <p className="text-xs text-slate-400 font-medium">
-                      Handpicked essentials ready for dispatch
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewPage('plp')}
-                    className="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition"
-                  >
-                    View All Products
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                  {mock.products.map((prod, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => setPreviewPage('pdp')}
-                      className="group cursor-pointer rounded-2xl border border-slate-200/80 hover:border-indigo-300 bg-white p-3 space-y-3 shadow-xs hover:shadow-lg transition-all"
-                      style={{ borderRadius }}
-                    >
-                      <div className="h-44 rounded-xl overflow-hidden bg-slate-100 relative">
-                        <img
-                          src={prod.image}
-                          alt={prod.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        {prod.badge && (
-                          <span
-                            className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-sm"
-                            style={{ backgroundColor: accentColor }}
-                          >
-                            {prod.badge}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPreviewPage('cart');
-                          }}
-                          className="absolute bottom-2.5 right-2.5 p-2 rounded-xl bg-white/90 text-slate-800 shadow-md hover:bg-white transition-all active:scale-90"
-                        >
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                          {prod.category}
-                        </span>
-                        <h3 className="text-xs font-black text-slate-800 group-hover:text-indigo-600 line-clamp-1">
-                          {prod.name}
-                        </h3>
-                        <div className="flex items-center gap-1 text-[11px] text-amber-500 font-bold">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                          <span>{prod.rating}</span>
-                          <span className="text-slate-400 font-normal">({prod.reviews})</span>
-                        </div>
-                        <div className="flex items-baseline gap-2 pt-1">
-                          <span className="text-sm font-black" style={{ color: primaryColor }}>
-                            {prod.price}
-                          </span>
-                          {prod.originalPrice && (
-                            <span className="text-xs text-slate-400 line-through font-semibold">
-                              {prod.originalPrice}
+              {getActiveTemplateSections(slugKey)
+                .filter((sec) => sec.enabled)
+                .map((sec, idx) => {
+                  if (sec.type === 'hero') {
+                    return (
+                      <div
+                        key={sec.id || idx}
+                        className="relative overflow-hidden min-h-[480px] flex items-center text-white"
+                        style={{
+                          background: `linear-gradient(135deg, color-mix(in srgb, ${primaryColor} 90%, black) 0%, color-mix(in srgb, ${accentColor} 80%, black) 60%, color-mix(in srgb, ${primaryColor} 70%, black) 100%)`,
+                          backgroundImage: sec.config.backgroundImage
+                            ? `url(${sec.config.backgroundImage})`
+                            : undefined,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                        }}
+                      >
+                        {/* Decorative circles matching storefront */}
+                        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full opacity-20 bg-white pointer-events-none" />
+                        <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full opacity-10 bg-white pointer-events-none" />
+
+                        <div className="relative w-full max-w-7xl mx-auto px-6 sm:px-10 py-16 flex flex-col lg:flex-row items-center justify-between gap-8">
+                          <div className="flex-1 text-center lg:text-left space-y-5">
+                            <span
+                              className="inline-block text-[11px] font-extrabold tracking-widest uppercase px-3.5 py-1.5 rounded-full"
+                              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#FFFFFF' }}
+                            >
+                              {sec.config.badge || 'NEW SEASON ARRIVALS'}
                             </span>
-                          )}
+                            <h1
+                              className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight"
+                              style={{
+                                fontFamily: config.themeHeadingFont || 'Inter, sans-serif',
+                              }}
+                            >
+                              Shop the<br />
+                              <span
+                                className="relative inline-block mr-2"
+                                style={{ WebkitTextStroke: '2px rgba(255,255,255,0.5)', color: 'transparent' }}
+                              >
+                                Latest
+                              </span> Drops
+                            </h1>
+                            <p className="text-xs sm:text-sm text-white/80 max-w-lg leading-relaxed">
+                              {sec.config.subheadline ||
+                                'Discover thousands of products curated just for you. Free shipping on orders over $50.'}
+                            </p>
+                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
+                              <button
+                                type="button"
+                                onClick={() => setPreviewPage('plp')}
+                                className="px-6 py-3 rounded-xl font-bold text-xs shadow-lg transition-all hover:scale-105 active:scale-95"
+                                style={{ backgroundColor: '#FFFFFF', color: primaryColor }}
+                              >
+                                {sec.config.ctaLabel || 'Shop Now'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setPreviewPage('plp')}
+                                className="px-6 py-3 rounded-xl font-bold text-xs text-white transition-all hover:scale-105 active:scale-95"
+                                style={{
+                                  backgroundColor: 'rgba(255,255,255,0.15)',
+                                  border: '1.5px solid rgba(255,255,255,0.3)',
+                                }}
+                              >
+                                {sec.config.secondaryCtaLabel || 'Explore Collections'}
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Stats on the right matching storefront */}
+                          <div className="flex gap-8 lg:flex-col text-white text-center lg:text-right shrink-0 border-t lg:border-t-0 lg:border-l border-white/10 pt-4 lg:pt-0 lg:pl-8">
+                            <div>
+                              <span className="text-3xl font-black block">10K+</span>
+                              <p className="text-[10px] text-white/70 uppercase tracking-wider">Products</p>
+                            </div>
+                            <div>
+                              <span className="text-3xl font-black block">50K+</span>
+                              <p className="text-[10px] text-white/70 uppercase tracking-wider">Happy Customers</p>
+                            </div>
+                            <div>
+                              <span className="text-3xl font-black block">4.9★</span>
+                              <p className="text-[10px] text-white/70 uppercase tracking-wider">Average Rating</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="px-6">
-                <div
-                  className="rounded-3xl p-8 bg-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl overflow-hidden relative"
-                  style={{ borderRadius }}
-                >
-                  <div className="space-y-3 max-w-md">
-                    <span className="px-3 py-1 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-wider border border-white/20">
-                      Editorial Story
-                    </span>
-                    <h3
-                      className="text-xl sm:text-2xl font-black"
-                      style={{ fontFamily: config.themeHeadingFont }}
-                    >
-                      {mock.lookbookTitle}
-                    </h3>
-                    <p className="text-xs text-slate-300 leading-relaxed">{mock.lookbookDesc}</p>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewPage('pdp')}
-                      className="px-5 py-2.5 text-xs font-bold text-slate-900 bg-white hover:bg-slate-100 transition shadow-md"
-                      style={{ borderRadius }}
-                    >
-                      Discover Story & Specs
-                    </button>
-                  </div>
-                  <div className="w-full md:w-64 h-48 rounded-2xl overflow-hidden shadow-lg shrink-0">
-                    <img
-                      src={mock.lookbookImage}
-                      alt="Lookbook"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-              </div>
+                    );
+                  }
+
+                  if (sec.type === 'categories') {
+                    return (
+                      <div key={sec.id || idx} className="px-6 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h2
+                              className="text-lg font-black"
+                              style={{ fontFamily: config.themeHeadingFont }}
+                            >
+                              {sec.config.title || 'Featured Categories'}
+                            </h2>
+                            {sec.config.subtitle && (
+                              <p className="text-xs text-slate-400 font-medium">
+                                {sec.config.subtitle}
+                              </p>
+                            )}
+                          </div>
+                          <span
+                            onClick={() => setPreviewPage('plp')}
+                            className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
+                          >
+                            View All →
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                          {mock.categories.slice(0, sec.config.limit || 4).map((cat, catIdx) => (
+                            <div
+                              key={catIdx}
+                              onClick={() => setPreviewPage('plp')}
+                              className="group cursor-pointer p-3 rounded-2xl border border-slate-200/80 hover:border-indigo-400 bg-white shadow-xs hover:shadow-md transition-all space-y-2"
+                              style={{ borderRadius }}
+                            >
+                              <div className="h-28 rounded-xl overflow-hidden bg-slate-100 relative">
+                                <img
+                                  src={cat.image}
+                                  alt={cat.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                              </div>
+                              <div>
+                                <h4 className="font-extrabold text-xs text-slate-800 group-hover:text-indigo-600 transition-colors">
+                                  {cat.name}
+                                </h4>
+                                <p className="text-[10px] text-slate-400 font-semibold">{cat.count}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (sec.type === 'featured-products') {
+                    return (
+                      <div key={sec.id || idx} className="px-6 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h2
+                              className="text-lg font-black"
+                              style={{ fontFamily: config.themeHeadingFont }}
+                            >
+                              {sec.config.title || 'Trending Arrivals'}
+                            </h2>
+                            <p className="text-xs text-slate-400 font-medium">
+                              {sec.config.subtitle || 'Handpicked essentials ready for dispatch'}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewPage('plp')}
+                            className="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition"
+                          >
+                            View All Products
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                          {mock.products.slice(0, sec.config.limit || 4).map((prod, prodIdx) => (
+                            <div
+                              key={prodIdx}
+                              onClick={() => setPreviewPage('pdp')}
+                              className="group cursor-pointer rounded-2xl border border-slate-200/80 hover:border-indigo-300 bg-white p-3 space-y-3 shadow-xs hover:shadow-lg transition-all"
+                              style={{ borderRadius }}
+                            >
+                              <div className="h-44 rounded-xl overflow-hidden bg-slate-100 relative">
+                                <img
+                                  src={prod.image}
+                                  alt={prod.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                                {prod.badge && (
+                                  <span
+                                    className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-sm"
+                                    style={{ backgroundColor: accentColor }}
+                                  >
+                                    {prod.badge}
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewPage('cart');
+                                  }}
+                                  className="absolute bottom-2.5 right-2.5 p-2 rounded-xl bg-white/90 text-slate-800 shadow-md hover:bg-white transition-all active:scale-90"
+                                >
+                                  <ShoppingCart className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              <div className="space-y-1">
+                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                                  {prod.category}
+                                </span>
+                                <h3 className="text-xs font-black text-slate-800 group-hover:text-indigo-600 line-clamp-1">
+                                  {prod.name}
+                                </h3>
+                                <div className="flex items-center gap-1 text-[11px] text-amber-500 font-bold">
+                                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                  <span>{prod.rating}</span>
+                                  <span className="text-slate-400 font-normal">({prod.reviews})</span>
+                                </div>
+                                <div className="flex items-baseline gap-2 pt-1">
+                                  <span className="text-sm font-black" style={{ color: primaryColor }}>
+                                    {prod.price}
+                                  </span>
+                                  {prod.originalPrice && (
+                                    <span className="text-xs text-slate-400 line-through font-semibold">
+                                      {prod.originalPrice}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (sec.type === 'lookbook') {
+                    return (
+                      <div key={sec.id || idx} className="px-6">
+                        <div
+                          className="rounded-3xl p-8 bg-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl overflow-hidden relative"
+                          style={{ borderRadius }}
+                        >
+                          <div className="space-y-3 max-w-md">
+                            <span className="px-3 py-1 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-wider border border-white/20">
+                              Editorial Story
+                            </span>
+                            <h3
+                              className="text-xl sm:text-2xl font-black"
+                              style={{ fontFamily: config.themeHeadingFont }}
+                            >
+                              {sec.config.lookbookTitle || mock.lookbookTitle}
+                            </h3>
+                            <p className="text-xs text-slate-300 leading-relaxed">
+                              {sec.config.lookbookDesc || mock.lookbookDesc}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewPage('pdp')}
+                              className="px-5 py-2.5 text-xs font-bold text-slate-900 bg-white hover:bg-slate-100 transition shadow-md"
+                              style={{ borderRadius }}
+                            >
+                              {sec.config.ctaLabel || 'Discover Story & Specs'}
+                            </button>
+                          </div>
+                          <div className="w-full md:w-64 h-48 rounded-2xl overflow-hidden shadow-lg shrink-0">
+                            <img
+                              src={sec.config.lookbookImage || mock.lookbookImage}
+                              alt="Lookbook"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (sec.type === 'custom_form') {
+                    return (
+                      <div key={sec.id || idx} className="px-6">
+                        <div
+                          className="rounded-3xl p-8 bg-white border border-slate-200/90 shadow-lg space-y-6 max-w-2xl mx-auto"
+                          style={{ borderRadius }}
+                        >
+                          <div className="text-center space-y-1.5">
+                            <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-wider inline-block">
+                              Embedded Form: {sec.config.formTitle || 'Lead Capture'}
+                            </span>
+                            <h3
+                              className="text-xl font-black text-slate-900"
+                              style={{ fontFamily: config.themeHeadingFont }}
+                            >
+                              {sec.config.heading || 'Get in Touch with our Team'}
+                            </h3>
+                            <p className="text-xs text-slate-500">
+                              {sec.config.subtitle ||
+                                'We respond within 24 hours to all customer inquiries.'}
+                            </p>
+                          </div>
+                          <div className="space-y-3 text-xs">
+                            <div className="grid grid-cols-2 gap-3">
+                              <input
+                                type="text"
+                                placeholder="Your Name"
+                                disabled
+                                className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500"
+                              />
+                              <input
+                                type="email"
+                                placeholder="Your Email"
+                                disabled
+                                className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500"
+                              />
+                            </div>
+                            <textarea
+                              rows={2}
+                              placeholder="Your Message..."
+                              disabled
+                              className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500"
+                            />
+                            <button
+                              type="button"
+                              className="w-full py-2.5 text-white font-bold text-xs shadow-md transition-all opacity-90"
+                              style={{ backgroundColor: primaryColor, borderRadius }}
+                            >
+                              Submit Form →
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (sec.type === 'trust-badges') {
+                    return (
+                      <div key={sec.id || idx} className="py-6 px-6 sm:px-10 bg-white border-y border-slate-100">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                          {(sec.config.badges || [
+                            { icon: '🚚', title: 'Free Shipping', desc: 'On orders over $50' },
+                            { icon: '🔄', title: 'Easy Returns', desc: '30-day return policy' },
+                            { icon: '🔒', title: 'Secure Payment', desc: 'SSL encrypted checkout' },
+                            { icon: '💬', title: '24/7 Support', desc: 'Always here to help' },
+                          ]).map((b: any, bIdx: number) => (
+                            <div key={bIdx} className="flex items-center gap-3">
+                              <span className="text-2xl">{b.icon}</span>
+                              <div>
+                                <h4 className="text-xs font-bold text-slate-900">{b.title}</h4>
+                                <p className="text-[11px] text-slate-500">{b.desc}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (sec.type === 'banner') {
+                    return (
+                      <div key={sec.id || idx} className="px-6">
+                        <div
+                          className="rounded-3xl p-8 text-white text-center space-y-3 shadow-lg"
+                          style={{ backgroundColor: primaryColor, borderRadius }}
+                        >
+                          <h3 className="text-xl font-black">{sec.config.title || 'Special Promotion'}</h3>
+                          <p className="text-xs text-white/80 max-w-md mx-auto">
+                            {sec.config.description || 'Limited-time special offer across catalog.'}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewPage('plp')}
+                            className="px-6 py-2.5 rounded-xl bg-white text-slate-900 font-extrabold text-xs shadow-md hover:bg-slate-100 transition"
+                          >
+                            {sec.config.ctaLabel || 'Shop Now'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (sec.type === 'newsletter') {
+                    return (
+                      <div key={sec.id || idx} className="px-6">
+                        <div
+                          className="rounded-3xl p-8 bg-slate-900 text-white text-center space-y-4 max-w-2xl mx-auto shadow-xl"
+                          style={{ borderRadius }}
+                        >
+                          <h3
+                            className="text-xl font-black text-white"
+                            style={{ fontFamily: config.themeHeadingFont }}
+                          >
+                            {sec.config.title || 'Join the Collective'}
+                          </h3>
+                          <p className="text-xs text-slate-300 max-w-md mx-auto">
+                            {sec.config.description ||
+                              'Subscribe for seasonal drops and member benefits.'}
+                          </p>
+                          <div className="flex gap-2 max-w-sm mx-auto">
+                            <input
+                              type="email"
+                              placeholder={sec.config.placeholder || 'Enter email...'}
+                              disabled
+                              className="flex-1 px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-300"
+                            />
+                            <button
+                              type="button"
+                              className="px-4 py-2 rounded-xl text-slate-900 font-bold text-xs bg-white hover:bg-slate-100 transition"
+                            >
+                              {sec.config.ctaLabel || 'Subscribe'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })}
             </div>
           )}
           {page === 'plp' && (
@@ -1509,11 +1865,16 @@ export const ThemeManager: React.FC = () => {
               label: '1. Select & Preview All Templates',
               icon: Layout,
             },
-            { id: 'colors', label: '2. Color Scheme', icon: Palette },
-            { id: 'typography', label: '3. Typography & Fonts', icon: Type },
+            {
+              id: 'sections',
+              label: '2. Homepage Customizer & Sections',
+              icon: Layers,
+            },
+            { id: 'colors', label: '3. Color Scheme', icon: Palette },
+            { id: 'typography', label: '4. Typography & Fonts', icon: Type },
             {
               id: 'headerFooter',
-              label: '4. Header & Footer Config',
+              label: '5. Header & Footer Config',
               icon: Sliders,
             },
           ].map((tab) => {
@@ -1567,13 +1928,18 @@ export const ThemeManager: React.FC = () => {
                   themeConfig.activeTemplateSlug === tmpl.slug ||
                   themeConfig.activeTemplateSlug === tmpl.id;
                 const isPublishing = publishingSlug === tmpl.slug || publishingSlug === tmpl.id;
+                const isUnlocked = isTemplateUnlocked(userPlan, tmpl.requiredTier);
+                const tierInfo = getTierBadgeInfo(tmpl.requiredTier);
+
                 return (
                   <div
                     key={tmpl.id}
                     className={`rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between bg-white dark:bg-card ${
                       isPublished
                         ? 'border-indigo-600 ring-2 ring-indigo-600/30 shadow-xl'
-                        : 'border-slate-200/80 dark:border-border hover:border-indigo-300 shadow-sm hover:shadow-md'
+                        : isUnlocked
+                          ? 'border-slate-200/80 dark:border-border hover:border-indigo-300 shadow-sm hover:shadow-md'
+                          : 'border-slate-200/60 dark:border-border/60 shadow-sm opacity-95'
                     }`}
                   >
                     <div className="space-y-4">
@@ -1584,33 +1950,63 @@ export const ThemeManager: React.FC = () => {
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
-                        <div className="absolute top-3 left-3 flex items-center gap-2">
-                          {isPublished ? (
-                            <span className="px-3 py-1 rounded-full bg-emerald-500 text-white font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-md">
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>Active Theme</span>
-                            </span>
-                          ) : tmpl.badge ? (
-                            <span className="px-3 py-1 rounded-full bg-slate-900/90 text-white font-extrabold text-[10px] uppercase tracking-wider backdrop-blur-xs">
-                              {tmpl.badge}
-                            </span>
-                          ) : null}
+                        
+                        {/* Top Badges */}
+                        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {isPublished ? (
+                              <span className="px-3 py-1 rounded-full bg-emerald-500 text-white font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-md">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Active Theme</span>
+                              </span>
+                            ) : tmpl.badge ? (
+                              <span className="px-3 py-1 rounded-full bg-slate-900/90 text-white font-extrabold text-[10px] uppercase tracking-wider backdrop-blur-xs">
+                                {tmpl.badge}
+                              </span>
+                            ) : null}
+                          </div>
+
+                          {/* Tier Badge */}
+                          <span className={`px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-xs flex items-center gap-1 ${
+                            isUnlocked 
+                              ? tierInfo.color 
+                              : 'bg-amber-500/90 text-white border-amber-600 shadow-amber-500/20'
+                          }`}>
+                            {!isUnlocked && <Lock className="w-2.5 h-2.5" />}
+                            <span>{tierInfo.label}</span>
+                          </span>
                         </div>
                       </div>
+
                       <div className="p-5 space-y-3">
-                        <div>
-                          <h3 className="font-black text-base text-slate-900 dark:text-foreground">
-                            {tmpl.name}
-                          </h3>
-                          <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                            {tmpl.tagline}
-                          </p>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h3 className="font-black text-base text-slate-900 dark:text-foreground">
+                              {tmpl.name}
+                            </h3>
+                            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                              {tmpl.tagline}
+                            </p>
+                          </div>
+                          {tmpl.demoUrl && (
+                            <a
+                              href={tmpl.demoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold flex items-center gap-1 transition-all border border-indigo-200/50 dark:border-indigo-800/50"
+                              title="Open live template demo site"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              <span>Live Demo</span>
+                            </a>
+                          )}
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                           {tmpl.description}
                         </p>
                       </div>
                     </div>
+
                     <div className="p-4 pt-0 flex flex-wrap sm:flex-nowrap items-center gap-2 border-t border-slate-100 dark:border-border mt-3">
                       <button
                         type="button"
@@ -1618,23 +2014,37 @@ export const ThemeManager: React.FC = () => {
                           setPreviewTemplate(tmpl);
                           setPreviewPage('home');
                         }}
-                        className="flex-1 min-w-[95px] py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black flex items-center justify-center gap-1.5 transition-all"
+                        className="flex-1 min-w-[90px] py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black flex items-center justify-center gap-1.5 transition-all"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>Mock Preview</span>
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLivePreviewTemplate(tmpl);
-                          setLivePreviewPage('/');
-                          setLiveViewport('desktop');
-                        }}
-                        className="flex-1 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-black flex items-center justify-center gap-1.5 transition-all border border-emerald-200"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>Live Site</span>
-                      </button>
+
+                      {tmpl.demoUrl ? (
+                        <a
+                          href={tmpl.demoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-black flex items-center justify-center gap-1.5 transition-all border border-emerald-200 text-center"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Live Demo</span>
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLivePreviewTemplate(tmpl);
+                            setLivePreviewPage('/');
+                            setLiveViewport('desktop');
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-black flex items-center justify-center gap-1.5 transition-all border border-emerald-200"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Live Site</span>
+                        </button>
+                      )}
+
                       {isPublished ? (
                         <button
                           type="button"
@@ -1643,6 +2053,21 @@ export const ThemeManager: React.FC = () => {
                         >
                           <Check className="w-4 h-4" />
                           <span>Published</span>
+                        </button>
+                      ) : !isUnlocked ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            showToast(
+                              `Template "${tmpl.name}" requires the ${(tmpl.requiredTier || 'PRO').toUpperCase()} plan. Please upgrade your store subscription.`,
+                              'error'
+                            );
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                          title={`Requires ${tmpl.requiredTier || 'PRO'} plan`}
+                        >
+                          <Lock className="w-3.5 h-3.5" />
+                          <span>Requires {tmpl.requiredTier || 'PRO'}</span>
                         </button>
                       ) : (
                         <button
@@ -1701,6 +2126,16 @@ export const ThemeManager: React.FC = () => {
             <div
               className={`lg:col-span-5 space-y-6 ${mobileEditorView === 'preview' ? 'hidden lg:block' : 'block'}`}
             >
+              {activeTab === 'sections' && themeConfig && (
+                <HomepageSectionsCustomizer
+                  templateSlug={themeConfig.activeTemplateSlug || 'mincom'}
+                  templateName={activeTemplate?.name || 'Store Theme'}
+                  sections={getActiveTemplateSections(themeConfig.activeTemplateSlug || 'mincom')}
+                  availableForms={availableForms}
+                  onChange={handleSectionsChange}
+                  onResetToDefault={handleResetSectionsToDefault}
+                />
+              )}
               {activeTab === 'colors' && (
                 <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
                   <div className="border-b border-slate-100 dark:border-border pb-3">
@@ -1999,12 +2434,30 @@ export const ThemeManager: React.FC = () => {
             <div
               className={`lg:col-span-7 static lg:sticky lg:top-6 space-y-3 ${mobileEditorView === 'editor' ? 'hidden lg:block' : 'block'}`}
             >
-              <div className="flex items-center justify-between px-2">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                  <Eye className="w-4 h-4 text-indigo-600" />
-                  <span>Live Active Theme Canvas ({activeTemplate?.name})</span>
-                </span>
-                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-foreground flex items-center gap-1.5">
+                    <Eye className="w-4 h-4 text-indigo-600" />
+                    <span>Live Theme Canvas ({activeTemplate?.name || 'Default'})</span>
+                  </span>
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-accent p-0.5 rounded-lg text-[10px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setCanvasPreviewType('iframe')}
+                      className={`px-2 py-0.5 rounded-md transition ${canvasPreviewType === 'iframe' ? 'bg-white dark:bg-card text-indigo-600 shadow-2xs font-extrabold' : 'text-slate-500'}`}
+                    >
+                      🌐 Live Store Engine
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCanvasPreviewType('canvas')}
+                      className={`px-2 py-0.5 rounded-md transition ${canvasPreviewType === 'canvas' ? 'bg-white dark:bg-card text-indigo-600 shadow-2xs font-extrabold' : 'text-slate-500'}`}
+                    >
+                      ⚡ Rapid Canvas
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-accent p-1 rounded-xl">
                   {[
                     { id: 'home', label: 'Home' },
                     { id: 'plp', label: 'Catalog' },
@@ -2018,7 +2471,7 @@ export const ThemeManager: React.FC = () => {
                       className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all ${
                         previewPage === p.id
                           ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
+                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                       }`}
                     >
                       {p.label}
@@ -2026,9 +2479,45 @@ export const ThemeManager: React.FC = () => {
                   ))}
                 </div>
               </div>
-              <div className="rounded-3xl border border-slate-200/80 shadow-xl overflow-hidden min-h-[560px]">
-                {renderTemplateLivePreview(activeTemplate, themeConfig, previewPage)}
-              </div>
+
+              {canvasPreviewType === 'iframe' ? (
+                <div className="rounded-3xl border border-slate-200/80 dark:border-border shadow-2xl overflow-hidden bg-slate-950 flex flex-col min-h-[660px]">
+                  {/* Browser Bar */}
+                  <div className="h-10 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-3 gap-2 shrink-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex gap-1.5 shrink-0">
+                        <div className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      </div>
+                      <div className="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-0.5 text-[10px] font-mono text-slate-300 truncate max-w-xs sm:max-w-sm">
+                        🔒 {STOREFRONT_URL.replace(/^https?:\/\//, '')}{previewPage === 'home' ? '' : previewPage === 'plp' ? '/products' : previewPage === 'pdp' ? '/products' : '/cart'}?previewTemplate={themeConfig.activeTemplateSlug || activeTemplate?.slug || 'default'}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <a
+                        href={`${STOREFRONT_URL}${previewPage === 'home' ? '' : previewPage === 'plp' ? '/products' : previewPage === 'pdp' ? '/products' : '/cart'}?previewTemplate=${themeConfig.activeTemplateSlug || activeTemplate?.slug || 'default'}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black flex items-center gap-1 transition"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        <span>Open Live Site ↗</span>
+                      </a>
+                    </div>
+                  </div>
+                  <iframe
+                    key={`${activeTemplate?.slug}-${themeConfig.activeTemplateSlug}-${previewPage}-${themeConfig.themePrimaryColor}-${themeConfig.homeSectionsJson}`}
+                    src={`${STOREFRONT_URL}${previewPage === 'home' ? '' : previewPage === 'plp' ? '/products' : previewPage === 'pdp' ? '/products' : '/cart'}?previewTemplate=${themeConfig.activeTemplateSlug || activeTemplate?.slug || 'default'}`}
+                    className="w-full h-[620px] border-0 bg-white"
+                    title="Live Template Preview"
+                  />
+                </div>
+              ) : (
+                <div className="rounded-3xl border border-slate-200/80 dark:border-border shadow-xl overflow-hidden min-h-[560px]">
+                  {renderTemplateLivePreview(activeTemplate, themeConfig, previewPage)}
+                </div>
+              )}
             </div>
           </div>
         </div>

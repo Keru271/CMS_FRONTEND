@@ -84,7 +84,8 @@ export function ProductNotificationsStudio() {
         cmsService.getProductNotificationStats(),
       ]);
 
-      setNotifications(notifsRes.items || []);
+      const items = Array.isArray(notifsRes) ? notifsRes : notifsRes?.items || [];
+      setNotifications(items);
       setStats(statsRes);
     } catch (err) {
       console.error('Failed to load product notifications:', err);
@@ -156,7 +157,8 @@ export function ProductNotificationsStudio() {
       const res = await cmsService.updateProductNotification(id, {
         status: newStatus,
       });
-      setNotifications((prev) => prev.map((n) => (n.id === id ? res.notification : n)));
+      const updatedItem = res?.notification || (res as any);
+      setNotifications((prev) => prev.map((n) => (n.id === id ? updatedItem : n)));
       // Refresh stats
       const newStats = await cmsService.getProductNotificationStats();
       setStats(newStats);
@@ -485,6 +487,7 @@ export function ProductNotificationsStudio() {
                           src={prod.productImage}
                           alt={prod.productName}
                           fill
+                          unoptimized
                           className="object-cover"
                         />
                       ) : (
@@ -715,6 +718,7 @@ export function ProductNotificationsStudio() {
                                 src={item.productImage}
                                 alt={item.productName}
                                 fill
+                                unoptimized
                                 className="object-cover"
                               />
                             ) : (

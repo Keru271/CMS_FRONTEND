@@ -184,6 +184,8 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
     badge: 'Trending',
     previewImage:
       'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80',
+    demoUrl: 'https://demo.owntheshop.com/funo',
+    requiredTier: 'ALL',
     features: [
       'Stylized Funie Lamp Header',
       'Interactive Mega Menu Dropdown',
@@ -193,6 +195,7 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
   },
   {
     id: 'nova-tech',
+    slug: 'nova-tech',
     name: 'Nova Tech & Minimal',
     tagline: 'High-tech, sleek contrast interface',
     description:
@@ -201,6 +204,8 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
     badge: 'Bestseller',
     previewImage:
       'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
+    demoUrl: 'https://demo.owntheshop.com/nova-tech',
+    requiredTier: 'ALL',
     features: [
       'Dark Mode Adaptive',
       'High-Res Specs Table',
@@ -210,6 +215,7 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
   },
   {
     id: 'velvet-luxury',
+    slug: 'velvet-luxury',
     name: 'Velvet Haute Couture',
     tagline: 'Elegant editorial layouts with serif typography',
     description:
@@ -218,6 +224,8 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
     badge: 'Luxury',
     previewImage:
       'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80',
+    demoUrl: 'https://demo.owntheshop.com/velvet-luxury',
+    requiredTier: 'PRO',
     features: [
       'Editorial Lookbook',
       'Size & Color Variant Selector',
@@ -227,6 +235,7 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
   },
   {
     id: 'artisan-craft',
+    slug: 'artisan-craft',
     name: 'Artisan Craft & Studio',
     tagline: 'Warm organic tones for handcrafted goods',
     description:
@@ -235,6 +244,8 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
     badge: 'Trending',
     previewImage:
       'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
+    demoUrl: 'https://demo.owntheshop.com/artisan-craft',
+    requiredTier: 'STARTER',
     features: [
       'Maker Story Section',
       'Subscription & Auto-Ship',
@@ -244,6 +255,7 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
   },
   {
     id: 'pulse-streetwear',
+    slug: 'pulse-streetwear',
     name: 'Pulse Urban Streetwear',
     tagline: 'Bold typography, neon accents & fast drops',
     description:
@@ -252,6 +264,8 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
     badge: 'New',
     previewImage:
       'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80',
+    demoUrl: 'https://demo.owntheshop.com/pulse-streetwear',
+    requiredTier: 'GROWTH',
     features: [
       'Limited Drop Countdown Timer',
       'Insta-Story Reels Carousel',
@@ -261,6 +275,7 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
   },
   {
     id: 'botanica-wellness',
+    slug: 'botanica-wellness',
     name: 'Botanica Pure Skincare',
     tagline: 'Clean pastel aesthetics for wellness & cosmetics',
     description:
@@ -269,6 +284,8 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
     badge: 'Popular',
     previewImage:
       'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=800&q=80',
+    demoUrl: 'https://demo.owntheshop.com/botanica-wellness',
+    requiredTier: 'ALL',
     features: [
       'Skin Routine Quiz',
       'Clean Label Ingredients Guide',
@@ -277,6 +294,7 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
     ],
   },
 ];
+
 
 // Mock CMS Data catalog
 export const INITIAL_PRODUCTS: CMSProduct[] = [
@@ -748,18 +766,17 @@ export const cmsService = {
     const totalOrdersCount = ordersMemoryState.length;
     const aov = totalOrdersCount > 0 ? totalRev / totalOrdersCount : 0;
     const activeProds = productsMemoryState.filter(
-      (p) => p.status === 'active' || p.status === 'ACTIVE',
+      (p) => (p.status || 'ACTIVE').toUpperCase() === 'ACTIVE',
     ).length;
     const draftProds = productsMemoryState.filter(
-      (p) => p.status === 'draft' || p.status === 'DRAFT',
+      (p) => (p.status || '').toUpperCase() === 'DRAFT',
     ).length;
-    const lowStock = productsMemoryState.filter(
-      (p) =>
-        p.stockQuantity > 0 &&
-        p.stockQuantity < 10 &&
-        (p.status === 'active' || p.status === 'ACTIVE'),
-    ).length;
-    const outOfStock = productsMemoryState.filter((p) => p.stockQuantity === 0).length;
+    const lowStock = productsMemoryState.filter((p) => {
+      const stock = p.inventory ?? p.stockQuantity ?? 0;
+      const status = (p.status || 'ACTIVE').toUpperCase();
+      return status !== 'ARCHIVED' && stock <= 10;
+    }).length;
+    const outOfStock = productsMemoryState.filter((p) => (p.inventory ?? p.stockQuantity ?? 0) <= 0).length;
     const noImages = productsMemoryState.filter(
       (p) => !p.image && (!p.images || p.images.length === 0),
     ).length;
@@ -3442,6 +3459,8 @@ export const cmsService = {
             tagline: tmpl.tagline || '',
             description: tmpl.description || '',
             previewImage: tmpl.previewImage || STORE_TEMPLATES[0].previewImage,
+            demoUrl: tmpl.demoUrl || tmpl.urlLink || null,
+            requiredTier: tmpl.requiredTier || 'ALL',
             accentColor: tmpl.accentColor || '#3B82F6',
             badge: tmpl.badge || '',
             features,
@@ -3451,8 +3470,9 @@ export const cmsService = {
     } catch (err) {
       console.warn('Backend templates API notice, using fallback templates:', err);
     }
-    return [];
+    return STORE_TEMPLATES;
   },
+
 
   async getStoreCategories(): Promise<StoreIndustryCategory[]> {
     try {
@@ -6822,10 +6842,23 @@ export const cmsService = {
     limit?: number;
   }): Promise<ProductNotificationsResponse> {
     try {
-      const response = await apiClient.get<ProductNotificationsResponse>('/product-notifications', {
+      const response = await apiClient.get<any>('/product-notifications', {
         params,
       });
-      return response.data;
+      const data = response.data;
+      if (Array.isArray(data)) {
+        return {
+          items: data,
+          total: data.length,
+          page: 1,
+          limit: data.length || 50,
+          totalPages: 1,
+        };
+      }
+      if (data && Array.isArray(data.items)) {
+        return data;
+      }
+      return { items: [], total: 0, page: 1, limit: 50, totalPages: 0 };
     } catch (err) {
       console.error('Error fetching product notifications:', err);
       return { items: [], total: 0, page: 1, limit: 50, totalPages: 0 };
@@ -6834,11 +6867,25 @@ export const cmsService = {
 
   async getProductNotificationStats(storeId?: string): Promise<ProductNotificationStats> {
     try {
-      const response = await apiClient.get<ProductNotificationStats>(
+      const response = await apiClient.get<any>(
         '/product-notifications/stats',
         { params: { storeId } },
       );
-      return response.data;
+      const data = response.data || {};
+      return {
+        totalRequests: data.totalRequests ?? data.total ?? 0,
+        pendingRequests: data.pendingRequests ?? data.pending ?? 0,
+        notifiedRequests: data.notifiedRequests ?? data.notified ?? 0,
+        uniqueCustomers: data.uniqueCustomers ?? 0,
+        topProducts: (data.topProducts || data.topDemanded || []).map((p: any) => ({
+          productId: p.productId,
+          productName: p.productName,
+          productSku: p.productSku,
+          productImage: p.productImage,
+          requestCount: p.requestCount ?? p.totalCount ?? 0,
+          pendingCount: p.pendingCount ?? 0,
+        })),
+      };
     } catch (err) {
       console.error('Error fetching product notification stats:', err);
       return {
@@ -6858,11 +6905,15 @@ export const cmsService = {
       notes?: string | null;
     },
   ): Promise<{ message: string; notification: ProductNotification }> {
-    const response = await apiClient.patch<{
-      message: string;
-      notification: ProductNotification;
-    }>(`/product-notifications/${id}`, data);
-    return response.data;
+    const response = await apiClient.patch<any>(`/product-notifications/${id}`, data);
+    const respData = response.data;
+    if (respData && respData.notification) {
+      return respData;
+    }
+    return {
+      message: respData?.message || 'Updated successfully',
+      notification: respData,
+    };
   },
 
   async batchNotifyProductSubscribers(data: {
@@ -6889,4 +6940,5 @@ export const cmsService = {
     );
     return response.data;
   },
+
 };

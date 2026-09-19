@@ -762,6 +762,14 @@ export const OrderStudio: React.FC = () => {
                       )}
                     </span>
                   </div>
+                  {selectedOrder.shippingAmount !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Shipping:</span>
+                      <span className="font-bold">
+                        {formatPrice(selectedOrder.shippingAmount || 0, selectedOrder.currency)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-slate-500">Tax Fee:</span>
                     <span className="font-bold">
@@ -769,11 +777,32 @@ export const OrderStudio: React.FC = () => {
                     </span>
                   </div>
                   <div className="flex justify-between font-black text-sm text-slate-900 pt-2 border-t border-slate-200">
-                    <span>Total Paid Amount:</span>
+                    <span>Total Paid by Customer:</span>
                     <span className="text-indigo-600 font-mono">
                       {formatPrice(selectedOrder.totalAmount, selectedOrder.currency)}{' '}
                       {selectedOrder.currency || storeCurrency}
                     </span>
+                  </div>
+
+                  {/* Platform Fee Settlement Breakdown */}
+                  <div className="mt-3 pt-3 border-t border-dashed border-indigo-200 bg-indigo-50/60 -mx-5 px-5 py-3 rounded-b-2xl space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-1.5 text-slate-600 font-semibold">
+                        <span>⚡ Platform Fee</span>
+                        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-indigo-100 text-indigo-700 uppercase">
+                          {selectedOrder.platformFeePercent ?? 2.0}% Tier Rate
+                        </span>
+                      </div>
+                      <span className="font-mono font-bold text-rose-600">
+                        - {formatPrice(selectedOrder.platformFeeAmount ?? (selectedOrder.totalAmount * (selectedOrder.platformFeePercent ?? 2.0)) / 100, selectedOrder.currency)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs font-black text-emerald-700 pt-1 border-t border-indigo-100">
+                      <span>💵 Net Merchant Payout:</span>
+                      <span className="font-mono">
+                        {formatPrice(selectedOrder.netMerchantAmount ?? (selectedOrder.totalAmount - (selectedOrder.platformFeeAmount ?? (selectedOrder.totalAmount * (selectedOrder.platformFeePercent ?? 2.0)) / 100)), selectedOrder.currency)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

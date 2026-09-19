@@ -24,7 +24,9 @@ import {
   MapPin,
   Coins,
   Globe,
+  ExternalLink,
 } from 'lucide-react';
+
 
 interface WhatsAppStoreSetupProps {
   onSaved?: (data: StoreSetupData) => void;
@@ -989,10 +991,17 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
                               alt={tmpl.name}
                               className="w-full h-full object-cover"
                             />
-                            <div className="absolute top-2.5 left-2.5">
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#191a1b]/80 backdrop-blur-xs text-[#d4ff4c]">
-                                {tmpl.badge}
-                              </span>
+                            <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
+                              {tmpl.badge && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#191a1b]/80 backdrop-blur-xs text-[#d4ff4c]">
+                                  {tmpl.badge}
+                                </span>
+                              )}
+                              {tmpl.requiredTier && tmpl.requiredTier !== 'ALL' && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/90 text-white shadow-xs">
+                                  {tmpl.requiredTier}
+                                </span>
+                              )}
                             </div>
                             <div
                               className="absolute top-2.5 right-2.5 w-4 h-4 rounded-full border border-white shadow-xs"
@@ -1002,16 +1011,31 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
 
                           <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
                             <div>
-                              <div className="flex items-center justify-between">
+                              <div className="flex items-center justify-between gap-2">
                                 <h4 className="font-serif font-bold text-sm text-[#191a1b]">
                                   {tmpl.name}
                                 </h4>
-                                {isSelected && <Check className="w-4 h-4 text-[#075e54]" />}
+                                <div className="flex items-center gap-1.5">
+                                  {tmpl.demoUrl && (
+                                    <a
+                                      href={tmpl.demoUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="p-1 text-gray-400 hover:text-[#075e54] transition-colors"
+                                      title="Live Preview"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <ExternalLink className="w-3.5 h-3.5" />
+                                    </a>
+                                  )}
+                                  {isSelected && <Check className="w-4 h-4 text-[#075e54]" />}
+                                </div>
                               </div>
                               <p className="text-[11px] text-[#5e5a5a] line-clamp-2 mt-0.5">
                                 {tmpl.description}
                               </p>
                             </div>
+
 
                             <button
                               type="button"
