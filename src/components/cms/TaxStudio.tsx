@@ -699,8 +699,6 @@ export const TaxStudio: React.FC = () => {
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
                   >
                     <option value="GST">GST (Goods & Services Tax)</option>
-                    <option value="VAT">VAT (Value Added Tax)</option>
-                    <option value="Sales Tax">Sales Tax</option>
                   </select>
                 </div>
 
@@ -726,7 +724,7 @@ export const TaxStudio: React.FC = () => {
 
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-slate-700">
-                  GSTIN / VAT Registration ID
+                  GSTIN / Tax ID
                 </label>
                 <input
                   type="text"

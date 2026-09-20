@@ -5700,7 +5700,7 @@ export const cmsService = {
               'Custom Domains with Dedicated Edge CDN',
               'Advanced Multi-Currency Currency Routing',
               'Custom Webhooks & REST API Access',
-              'Automated Tax Invoicing (GST & VAT)',
+              'Automated Tax Invoicing (GST)',
               'Dedicated Account Manager (SLA 1-Hour)',
             ],
           },

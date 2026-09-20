@@ -767,11 +767,27 @@ export interface GoogleAuthResponse {
   };
 }
 
+export interface MegaMenuCardItem {
+  id?: string;
+  label: string;
+  url: string;
+  description?: string;
+  badge?: string;
+  target?: '_self' | '_blank' | string;
+}
+
 export interface MegaMenuConfig {
   bannerImage?: string;
   headline?: string;
   buttonLabel?: string;
   buttonUrl?: string;
+  catalogTitle?: string;
+  viewAllLabel?: string;
+  viewAllUrl?: string;
+  promoBadge?: string;
+  footerLeft?: string;
+  footerRight?: string;
+  items?: MegaMenuCardItem[];
 }
 
 export interface CMSMenuItem {
@@ -779,6 +795,8 @@ export interface CMSMenuItem {
   label: string;
   url: string;
   target?: '_self' | '_blank' | string;
+  description?: string;
+  badge?: string;
   isMegaMenu?: boolean;
   megaMenuConfig?: MegaMenuConfig;
   children?: CMSMenuItem[];
@@ -991,7 +1009,7 @@ export interface CMSTaxRegion {
   id: string;
   name: string;
   country: string;
-  taxName: 'GST' | 'VAT' | 'Sales Tax' | string;
+  taxName: 'GST' | string;
   taxNumber?: string | null;
   standardRate: number;
   reducedRate?: number | null;
@@ -1022,10 +1040,16 @@ export interface CMSPixelConfig {
   metaPixelId?: string | null;
   tikTokPixelId?: string | null;
   pinterestTagId?: string | null;
+  adobeLaunchUrl?: string | null;
+  cleverTapAccountId?: string | null;
+  cleverTapToken?: string | null;
+  cleverTapRegion?: string | null;
   isGa4Active?: boolean;
   isMetaActive?: boolean;
   isTikTokActive?: boolean;
   isPinterestActive?: boolean;
+  isAdobeActive?: boolean;
+  isCleverTapActive?: boolean;
 }
 
 export interface AbandonedCartData {

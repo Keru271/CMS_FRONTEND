@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CMSMenuData, CMSMenuItem, MegaMenuConfig } from '@/src/types';
+import { CMSMenuData, CMSMenuItem, MegaMenuConfig, MegaMenuCardItem } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
 import {
@@ -27,6 +27,11 @@ import {
   RefreshCw,
   FolderTree,
   Smartphone,
+  Layers,
+  Tag,
+  ArrowRight,
+  Sliders,
+  Eye,
 } from 'lucide-react';
 
 interface NavigationSlot {
@@ -76,6 +81,37 @@ const COMMON_ROUTE_SUGGESTIONS = [
   { label: 'Track Orders', url: '/account/orders' },
 ];
 
+const DEFAULT_PRESET_CARDS: MegaMenuCardItem[] = [
+  {
+    id: 'card-all',
+    label: 'All Products',
+    url: '/products',
+    description: 'Browse the full catalog',
+    badge: '',
+  },
+  {
+    id: 'card-drops',
+    label: 'Featured Drops',
+    url: '/collections',
+    description: 'Seasonal top picks',
+    badge: 'HOT',
+  },
+  {
+    id: 'card-offers',
+    label: 'Special Offers',
+    url: '/products?sale=true',
+    description: 'Limited deals & bundles',
+    badge: 'SALE',
+  },
+  {
+    id: 'card-arrivals',
+    label: 'New Arrivals',
+    url: '/products?sort=newest',
+    description: 'Fresh arrivals this week',
+    badge: 'NEW',
+  },
+];
+
 export const NavigationManager: React.FC = () => {
   const [menus, setMenus] = useState<CMSMenuData[]>([]);
   const [activeSlotKey, setActiveSlotKey] = useState<'header' | 'footer' | 'mobile'>('header');
@@ -90,26 +126,45 @@ export const NavigationManager: React.FC = () => {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [editingParentId, setEditingParentId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<CMSMenuItem | null>(null);
+  const [activeMegaMenuTab, setActiveMegaMenuTab] = useState<'cards' | 'header' | 'promo' | 'footer'>('cards');
 
   const [itemFormData, setItemFormData] = useState<{
     label: string;
     url: string;
     target: '_self' | '_blank';
+    description: string;
+    badge: string;
     isMegaMenu: boolean;
     bannerImage: string;
     headline: string;
     buttonLabel: string;
     buttonUrl: string;
+    catalogTitle: string;
+    viewAllLabel: string;
+    viewAllUrl: string;
+    promoBadge: string;
+    footerLeft: string;
+    footerRight: string;
+    megaMenuItems: MegaMenuCardItem[];
   }>({
     label: '',
     url: '/',
     target: '_self',
+    description: '',
+    badge: '',
     isMegaMenu: false,
     bannerImage:
       'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
     headline: 'Featured Collection 2026',
     buttonLabel: 'Explore Collection',
     buttonUrl: '/collections/all',
+    catalogTitle: '',
+    viewAllLabel: 'View All →',
+    viewAllUrl: '/products',
+    promoBadge: 'Featured Promotion',
+    footerLeft: 'Fast Worldwide Delivery & Free Returns',
+    footerRight: 'Official Store Guaranteed',
+    megaMenuItems: [...DEFAULT_PRESET_CARDS],
   });
 
   // Hover Mega Menu in live preview
@@ -163,16 +218,26 @@ export const NavigationManager: React.FC = () => {
   ) => {
     setEditingParentId(parentId);
     setEditingItem(null);
+    setActiveMegaMenuTab('cards');
     setItemFormData({
       label: defaultValues?.label || '',
       url: defaultValues?.url || '/',
       target: '_self',
+      description: '',
+      badge: '',
       isMegaMenu: false,
       bannerImage:
         'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
       headline: 'Featured Collection 2026',
       buttonLabel: 'Explore Collection',
       buttonUrl: '/collections/all',
+      catalogTitle: '',
+      viewAllLabel: 'View All →',
+      viewAllUrl: '/products',
+      promoBadge: 'Featured Promotion',
+      footerLeft: 'Fast Worldwide Delivery & Free Returns',
+      footerRight: 'Official Store Guaranteed',
+      megaMenuItems: [...DEFAULT_PRESET_CARDS],
     });
     setIsItemModalOpen(true);
   };
@@ -180,10 +245,14 @@ export const NavigationManager: React.FC = () => {
   const handleOpenEditItemModal = (item: CMSMenuItem) => {
     setEditingParentId(null);
     setEditingItem(item);
+    setActiveMegaMenuTab('cards');
+    const existingCards = item.megaMenuConfig?.items;
     setItemFormData({
       label: item.label,
       url: item.url,
       target: (item.target as any) || '_self',
+      description: item.description || '',
+      badge: item.badge || '',
       isMegaMenu: !!item.isMegaMenu,
       bannerImage:
         item.megaMenuConfig?.bannerImage ||
@@ -191,6 +260,16 @@ export const NavigationManager: React.FC = () => {
       headline: item.megaMenuConfig?.headline || 'Featured Collection 2026',
       buttonLabel: item.megaMenuConfig?.buttonLabel || 'Explore Collection',
       buttonUrl: item.megaMenuConfig?.buttonUrl || '/collections/all',
+      catalogTitle: item.megaMenuConfig?.catalogTitle || '',
+      viewAllLabel: item.megaMenuConfig?.viewAllLabel || 'View All →',
+      viewAllUrl: item.megaMenuConfig?.viewAllUrl || item.url || '/products',
+      promoBadge: item.megaMenuConfig?.promoBadge || 'Featured Promotion',
+      footerLeft: item.megaMenuConfig?.footerLeft ?? 'Fast Worldwide Delivery & Free Returns',
+      footerRight: item.megaMenuConfig?.footerRight ?? 'Official Store Guaranteed',
+      megaMenuItems:
+        existingCards && existingCards.length > 0
+          ? [...existingCards]
+          : [...DEFAULT_PRESET_CARDS],
     });
     setIsItemModalOpen(true);
   };
@@ -229,6 +308,8 @@ export const NavigationManager: React.FC = () => {
       label: itemFormData.label,
       url: itemFormData.url,
       target: itemFormData.target,
+      description: itemFormData.description.trim() || undefined,
+      badge: itemFormData.badge.trim() || undefined,
       isMegaMenu: itemFormData.isMegaMenu,
       megaMenuConfig: itemFormData.isMegaMenu
         ? {
@@ -236,6 +317,13 @@ export const NavigationManager: React.FC = () => {
             headline: itemFormData.headline,
             buttonLabel: itemFormData.buttonLabel,
             buttonUrl: itemFormData.buttonUrl,
+            catalogTitle: itemFormData.catalogTitle.trim() || undefined,
+            viewAllLabel: itemFormData.viewAllLabel.trim() || undefined,
+            viewAllUrl: itemFormData.viewAllUrl.trim() || undefined,
+            promoBadge: itemFormData.promoBadge.trim() || undefined,
+            footerLeft: itemFormData.footerLeft,
+            footerRight: itemFormData.footerRight,
+            items: itemFormData.megaMenuItems,
           }
         : undefined,
       children: editingItem ? editingItem.children || [] : [],
@@ -318,6 +406,57 @@ export const NavigationManager: React.FC = () => {
     }
   };
 
+  // ─── Mega Menu Card Management Helpers ───
+  const handleLoadDefaultCards = () => {
+    setItemFormData((prev) => ({
+      ...prev,
+      megaMenuItems: [...DEFAULT_PRESET_CARDS],
+    }));
+    showToast('Loaded 4 default feature cards (All Products, Featured Drops, etc.)', 'success');
+  };
+
+  const handleAddCard = () => {
+    const newCard: MegaMenuCardItem = {
+      id: `card-${Date.now()}`,
+      label: 'New Drop / Collection',
+      url: '/collections',
+      description: 'Explore new curation',
+      badge: '',
+    };
+    setItemFormData((prev) => ({
+      ...prev,
+      megaMenuItems: [...prev.megaMenuItems, newCard],
+    }));
+  };
+
+  const handleUpdateCard = (index: number, field: keyof MegaMenuCardItem, value: string) => {
+    setItemFormData((prev) => {
+      const cards = [...prev.megaMenuItems];
+      cards[index] = { ...cards[index], [field]: value };
+      return { ...prev, megaMenuItems: cards };
+    });
+  };
+
+  const handleRemoveCard = (index: number) => {
+    setItemFormData((prev) => ({
+      ...prev,
+      megaMenuItems: prev.megaMenuItems.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleMoveCard = (index: number, direction: 'UP' | 'DOWN') => {
+    const targetIndex = direction === 'UP' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= itemFormData.megaMenuItems.length) return;
+
+    setItemFormData((prev) => {
+      const cards = [...prev.megaMenuItems];
+      const temp = cards[index];
+      cards[index] = cards[targetIndex];
+      cards[targetIndex] = temp;
+      return { ...prev, megaMenuItems: cards };
+    });
+  };
+
   return (
     <div className="space-y-6 font-sans">
       {/* Toast Notification */}
@@ -354,7 +493,7 @@ export const NavigationManager: React.FC = () => {
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
               Configure Header Navigation, Footer Navigation, and Mobile Drawer Navigation links.
-              Add nested dropdowns, mega menu promotional cards, and internal or external links.
+              Customize visual mega menus with All Products, Featured Drops, promotional cards, badges, and subtitles.
             </p>
           </div>
 
@@ -467,7 +606,7 @@ export const NavigationManager: React.FC = () => {
                   </span>
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Organize top-level links and sub-menus by reordering or adding nested children.
+                  Organize top-level links, visual mega menus, sub-links, badges, and custom drop categories.
                 </p>
               </div>
 
@@ -552,18 +691,31 @@ export const NavigationManager: React.FC = () => {
                           </button>
                         </div>
 
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-extrabold text-sm text-slate-900 dark:text-foreground truncate">
                               {item.label}
                             </span>
+                            {item.badge && (
+                              <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-extrabold text-[9px] uppercase tracking-wider border border-amber-500/30">
+                                {item.badge}
+                              </span>
+                            )}
                             {item.isMegaMenu && (
-                              <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white font-black text-[9px] uppercase tracking-wider flex items-center gap-1 shrink-0">
+                              <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white font-black text-[9px] uppercase tracking-wider flex items-center gap-1 shrink-0 shadow-xs">
                                 <Sparkles className="w-2.5 h-2.5" />
-                                Mega Menu
+                                Visual Mega Menu
+                                {item.megaMenuConfig?.items && item.megaMenuConfig.items.length > 0 && (
+                                  <span className="opacity-80">({item.megaMenuConfig.items.length} cards)</span>
+                                )}
                               </span>
                             )}
                           </div>
+                          {item.description && (
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 italic truncate">
+                              {item.description}
+                            </p>
+                          )}
                           <span className="text-xs font-mono text-slate-500 dark:text-slate-400 font-semibold truncate block">
                             {item.url} {item.target === '_blank' && '(Opens in new tab)'}
                           </span>
@@ -609,10 +761,22 @@ export const NavigationManager: React.FC = () => {
                             key={child.id}
                             className="p-3 rounded-xl bg-white dark:bg-card border border-slate-200/80 dark:border-border flex items-center justify-between gap-3 hover:border-slate-300"
                           >
-                            <div className="min-w-0">
-                              <span className="font-bold text-xs text-slate-900 dark:text-foreground block truncate">
-                                {child.label}
-                              </span>
+                            <div className="min-w-0 space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-xs text-slate-900 dark:text-foreground block truncate">
+                                  {child.label}
+                                </span>
+                                {child.badge && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+                                    {child.badge}
+                                  </span>
+                                )}
+                              </div>
+                              {child.description && (
+                                <p className="text-[10px] text-slate-400 italic truncate">
+                                  {child.description}
+                                </p>
+                              )}
                               <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block truncate">
                                 {child.url}
                               </span>
@@ -676,52 +840,118 @@ export const NavigationManager: React.FC = () => {
                         (No links added to Header Navigation)
                       </span>
                     ) : (
-                      activeMenu.items.map((item) => (
-                        <div
-                          key={item.id}
-                          onMouseEnter={() => item.isMegaMenu && setActiveHoverMegaMenu(item)}
-                          onMouseLeave={() => setActiveHoverMegaMenu(null)}
-                          className="relative group"
-                        >
-                          <span className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1 cursor-pointer transition-colors">
-                            {item.label}
-                            {item.children && item.children.length > 0 && (
-                              <ChevronDown className="w-3 h-3 text-slate-400" />
-                            )}
-                          </span>
+                      activeMenu.items.map((item) => {
+                        const previewCards =
+                          item.megaMenuConfig?.items && item.megaMenuConfig.items.length > 0
+                            ? item.megaMenuConfig.items
+                            : item.children && item.children.length > 0
+                              ? item.children.map((c) => ({
+                                  label: c.label,
+                                  url: c.url,
+                                  description: c.description || '',
+                                  badge: c.badge || '',
+                                }))
+                              : DEFAULT_PRESET_CARDS;
 
-                          {/* Hover Dropdown / Mega Menu Preview */}
-                          {item.isMegaMenu && activeHoverMegaMenu?.id === item.id && (
-                            <div className="absolute top-full left-0 mt-2 w-80 bg-white text-slate-900 rounded-2xl p-4 shadow-2xl border border-slate-200 z-50 animate-in fade-in zoom-in-95">
-                              {item.megaMenuConfig?.bannerImage && (
-                                <div className="h-28 rounded-xl overflow-hidden mb-3 relative">
-                                  <img
-                                    src={item.megaMenuConfig.bannerImage}
-                                    alt="Mega Banner"
-                                    className="w-full h-full object-cover"
-                                  />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent" />
-                                  <span className="absolute bottom-2 left-2 text-[11px] font-bold text-white">
-                                    {item.megaMenuConfig.headline}
+                        return (
+                          <div
+                            key={item.id}
+                            onMouseEnter={() => item.isMegaMenu && setActiveHoverMegaMenu(item)}
+                            onMouseLeave={() => setActiveHoverMegaMenu(null)}
+                            className="relative group"
+                          >
+                            <span className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1 cursor-pointer transition-colors">
+                              {item.label}
+                              {item.badge && (
+                                <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] font-extrabold">
+                                  {item.badge}
+                                </span>
+                              )}
+                              {(item.isMegaMenu || (item.children && item.children.length > 0)) && (
+                                <ChevronDown className="w-3 h-3 text-slate-400" />
+                              )}
+                            </span>
+
+                            {/* Hover Dropdown / Mega Menu Preview */}
+                            {item.isMegaMenu && activeHoverMegaMenu?.id === item.id && (
+                              <div className="absolute top-full left-0 mt-2 w-[420px] bg-white text-slate-900 rounded-3xl p-4 shadow-2xl border border-slate-200 z-50 animate-in fade-in zoom-in-95 space-y-3">
+                                {/* Top Header */}
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+                                    <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                      {item.megaMenuConfig?.catalogTitle || `${item.label} Catalog & Collections`}
+                                    </h5>
+                                  </div>
+                                  <span className="text-[10px] font-bold text-indigo-600 flex items-center gap-0.5">
+                                    {item.megaMenuConfig?.viewAllLabel || 'View All →'}
                                   </span>
                                 </div>
-                              )}
-                              {item.children && item.children.length > 0 && (
-                                <div className="space-y-1">
-                                  {item.children.map((c) => (
-                                    <div
-                                      key={c.id}
-                                      className="p-1.5 rounded-lg hover:bg-slate-100 text-xs font-semibold text-slate-700"
-                                    >
-                                      {c.label}
+
+                                {/* Cards Grid & Promo Card */}
+                                <div className="grid grid-cols-12 gap-3">
+                                  {/* Left visual cards */}
+                                  <div className="col-span-7 grid grid-cols-1 gap-2">
+                                    {previewCards.slice(0, 4).map((c, cIdx) => (
+                                      <div
+                                        key={c.id || cIdx}
+                                        className="p-2 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-indigo-50/50 transition-colors"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-[11px] font-extrabold text-slate-900 truncate">
+                                            {c.label}
+                                          </span>
+                                          {c.badge && (
+                                            <span className="px-1.5 py-0.2 rounded bg-indigo-600 text-white text-[8px] font-black uppercase">
+                                              {c.badge}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {c.description && (
+                                          <span className="block text-[9px] text-slate-400 truncate mt-0.5">
+                                            {c.description}
+                                          </span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {/* Right Promo Card */}
+                                  <div className="col-span-5 relative rounded-xl overflow-hidden min-h-[140px] flex flex-col justify-end p-2.5 bg-slate-900">
+                                    {item.megaMenuConfig?.bannerImage && (
+                                      <img
+                                        src={item.megaMenuConfig.bannerImage}
+                                        alt="Banner"
+                                        className="absolute inset-0 w-full h-full object-cover"
+                                      />
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                                    <div className="relative z-10 space-y-1">
+                                      <span className="px-1.5 py-0.5 rounded bg-white/20 text-white text-[8px] font-extrabold uppercase">
+                                        {item.megaMenuConfig?.promoBadge || 'Featured Promotion'}
+                                      </span>
+                                      <h6 className="text-[10px] font-black text-white leading-tight line-clamp-2">
+                                        {item.megaMenuConfig?.headline || 'Featured Collection 2026'}
+                                      </h6>
+                                      <span className="inline-block px-2 py-1 rounded-md bg-white text-slate-900 text-[9px] font-black">
+                                        {item.megaMenuConfig?.buttonLabel || 'Explore'} →
+                                      </span>
                                     </div>
-                                  ))}
+                                  </div>
                                 </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))
+
+                                {/* Footer Highlights */}
+                                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[9px] text-slate-400">
+                                  <span>{item.megaMenuConfig?.footerLeft || 'Fast Worldwide Delivery'}</span>
+                                  <span className="font-semibold text-slate-500">
+                                    {item.megaMenuConfig?.footerRight || 'Official Store Guaranteed'}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
                     )}
                   </div>
                 </div>
@@ -783,13 +1013,14 @@ export const NavigationManager: React.FC = () => {
       {/* ─── ADD / EDIT LINK MODAL ─── */}
       {isItemModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-card rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-border">
-            <div className="p-6 bg-gradient-to-r from-slate-900 to-indigo-950 text-white flex items-center justify-between">
+          <div className="bg-white dark:bg-card rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-border">
+            <div className="p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
               <div>
-                <h3 className="font-extrabold text-base">
-                  {editingItem ? 'Edit Navigation Link' : 'Add Navigation Link'}
+                <h3 className="font-extrabold text-base flex items-center gap-2">
+                  <Compass className="w-5 h-5 text-indigo-400" />
+                  <span>{editingItem ? 'Edit Navigation Link' : 'Add Navigation Link'}</span>
                 </h3>
-                <p className="text-xs text-slate-300">Target: {activeSlot.title}</p>
+                <p className="text-xs text-slate-300">Target Menu: {activeSlot.title}</p>
               </div>
               <button
                 type="button"
@@ -800,19 +1031,35 @@ export const NavigationManager: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSaveItem} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Link Label Title <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={itemFormData.label}
-                  onChange={(e) => setItemFormData({ ...itemFormData, label: e.target.value })}
-                  placeholder="e.g. Products, Summer Sale, About Us"
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
-                />
+            <form onSubmit={handleSaveItem} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+              {/* Basic Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Link Label Title <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={itemFormData.label}
+                    onChange={(e) => setItemFormData({ ...itemFormData, label: e.target.value })}
+                    placeholder="e.g. Products, Featured, Collections"
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Badge Tag <span className="text-[10px] text-slate-400">(Optional, e.g. HOT, NEW, SALE)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={itemFormData.badge}
+                    onChange={(e) => setItemFormData({ ...itemFormData, badge: e.target.value })}
+                    placeholder="e.g. HOT, NEW, 20% OFF"
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -824,7 +1071,7 @@ export const NavigationManager: React.FC = () => {
                   required
                   value={itemFormData.url}
                   onChange={(e) => setItemFormData({ ...itemFormData, url: e.target.value })}
-                  placeholder="e.g. /products, /categories/tech, https://..."
+                  placeholder="e.g. /products, /collections, /categories"
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400"
                 />
 
@@ -849,113 +1096,470 @@ export const NavigationManager: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Target Window
-                </label>
-                <select
-                  value={itemFormData.target}
-                  onChange={(e) =>
-                    setItemFormData({
-                      ...itemFormData,
-                      target: e.target.value as '_self' | '_blank',
-                    })
-                  }
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
-                >
-                  <option value="_self">Same Browser Tab (_self)</option>
-                  <option value="_blank">New Tab / Window (_blank)</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Subtitle / Description <span className="text-[10px] text-slate-400">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={itemFormData.description}
+                    onChange={(e) =>
+                      setItemFormData({ ...itemFormData, description: e.target.value })
+                    }
+                    placeholder="e.g. Browse the full catalog"
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Target Window
+                  </label>
+                  <select
+                    value={itemFormData.target}
+                    onChange={(e) =>
+                      setItemFormData({
+                        ...itemFormData,
+                        target: e.target.value as '_self' | '_blank',
+                      })
+                    }
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold"
+                  >
+                    <option value="_self">Same Browser Tab (_self)</option>
+                    <option value="_blank">New Tab / Window (_blank)</option>
+                  </select>
+                </div>
               </div>
 
               {/* Mega Menu Toggle (for Header) */}
               {activeSlot.key === 'header' && (
-                <div className="pt-2 border-t border-slate-100 dark:border-border space-y-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={itemFormData.isMegaMenu}
-                      onChange={(e) =>
-                        setItemFormData({ ...itemFormData, isMegaMenu: e.target.checked })
-                      }
-                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                      Enable Visual Mega Menu Dropdown
-                    </span>
-                  </label>
+                <div className="pt-3 border-t border-slate-100 dark:border-border space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900">
+                    <label className="flex items-center gap-3 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={itemFormData.isMegaMenu}
+                        onChange={(e) =>
+                          setItemFormData({ ...itemFormData, isMegaMenu: e.target.checked })
+                        }
+                        className="w-5 h-5 rounded-lg text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      />
+                      <div>
+                        <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                          Enable Visual Mega Menu Dropdown
+                        </span>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          Enables rich 2-column visual feature cards (All Products, Featured Drops, etc.) and promo banner.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
 
                   {itemFormData.isMegaMenu && (
-                    <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900 space-y-3">
-                      <div className="space-y-1">
-                        <label className="block text-[11px] font-bold text-indigo-900 dark:text-indigo-200">
-                          Banner Promotional Headline
-                        </label>
-                        <input
-                          type="text"
-                          value={itemFormData.headline}
-                          onChange={(e) =>
-                            setItemFormData({ ...itemFormData, headline: e.target.value })
-                          }
-                          className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-card text-xs font-bold"
-                        />
+                    <div className="p-4 rounded-3xl bg-slate-50/80 dark:bg-accent/40 border border-slate-200 dark:border-border space-y-4">
+                      {/* Mega Menu Tabs */}
+                      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-border pb-3">
+                        <button
+                          type="button"
+                          onClick={() => setActiveMegaMenuTab('cards')}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            activeMegaMenuTab === 'cards'
+                              ? 'bg-indigo-600 text-white shadow-xs'
+                              : 'bg-white dark:bg-card text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-border'
+                          }`}
+                        >
+                          <LayoutGrid className="w-3.5 h-3.5" />
+                          <span>Feature Cards ({itemFormData.megaMenuItems.length})</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveMegaMenuTab('header')}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            activeMegaMenuTab === 'header'
+                              ? 'bg-indigo-600 text-white shadow-xs'
+                              : 'bg-white dark:bg-card text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-border'
+                          }`}
+                        >
+                          <Layers className="w-3.5 h-3.5" />
+                          <span>Header & View All</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveMegaMenuTab('promo')}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            activeMegaMenuTab === 'promo'
+                              ? 'bg-indigo-600 text-white shadow-xs'
+                              : 'bg-white dark:bg-card text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-border'
+                          }`}
+                        >
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          <span>Promo Card</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveMegaMenuTab('footer')}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            activeMegaMenuTab === 'footer'
+                              ? 'bg-indigo-600 text-white shadow-xs'
+                              : 'bg-white dark:bg-card text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-border'
+                          }`}
+                        >
+                          <Sliders className="w-3.5 h-3.5" />
+                          <span>Footer Highlights</span>
+                        </button>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <label className="block text-[11px] font-bold text-indigo-900 dark:text-indigo-200">
-                          Banner Promotional Image
-                        </label>
-                        <DragDropUpload
-                          currentUrl={itemFormData.bannerImage}
-                          onUploadComplete={(url) =>
-                            setItemFormData({ ...itemFormData, bannerImage: url })
-                          }
-                          folder="navigation"
-                          previewShape="rect"
-                          hint="Drag & drop promotion card banner (JPEG, PNG, WebP)"
-                        />
-                        <div className="pt-1">
-                          <input
-                            type="text"
-                            placeholder="Or paste banner image URL..."
-                            value={itemFormData.bannerImage}
-                            onChange={(e) =>
-                              setItemFormData({ ...itemFormData, bannerImage: e.target.value })
-                            }
-                            className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-card text-xs font-mono"
-                          />
-                        </div>
-                      </div>
+                      {/* TAB 1: VISUAL FEATURE CARDS & DROPS */}
+                      {activeMegaMenuTab === 'cards' && (
+                        <div className="space-y-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                              <h4 className="text-xs font-extrabold text-slate-900 dark:text-foreground">
+                                Visual Feature Cards (All Products, Featured Drops, etc.)
+                              </h4>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                These cards render in the 2-column left section of the visual mega menu dropdown.
+                              </p>
+                            </div>
 
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <label className="block text-[11px] font-bold text-indigo-900 dark:text-indigo-200">
-                            CTA Button Label
-                          </label>
-                          <input
-                            type="text"
-                            value={itemFormData.buttonLabel}
-                            onChange={(e) =>
-                              setItemFormData({ ...itemFormData, buttonLabel: e.target.value })
-                            }
-                            className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-card text-xs font-bold"
-                          />
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                type="button"
+                                onClick={handleLoadDefaultCards}
+                                className="px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 text-[11px] font-bold border border-indigo-200 dark:border-indigo-800 transition-colors flex items-center gap-1 cursor-pointer"
+                                title="Reset / Load 4 default preset cards"
+                              >
+                                <Sparkles className="w-3 h-3 text-indigo-500" />
+                                <span>Load Presets</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={handleAddCard}
+                                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold flex items-center gap-1 cursor-pointer shadow-xs"
+                              >
+                                <Plus className="w-3 h-3" />
+                                <span>Add Card</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Card Items List */}
+                          <div className="space-y-3">
+                            {itemFormData.megaMenuItems.length === 0 ? (
+                              <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-border rounded-2xl space-y-2">
+                                <p className="text-xs text-slate-500">No feature cards added yet.</p>
+                                <button
+                                  type="button"
+                                  onClick={handleLoadDefaultCards}
+                                  className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <Sparkles className="w-3.5 h-3.5" />
+                                  <span>✨ Load Default Presets (All Products, Featured Drops, etc.)</span>
+                                </button>
+                              </div>
+                            ) : (
+                              itemFormData.megaMenuItems.map((card, cIdx) => (
+                                <div
+                                  key={card.id || cIdx}
+                                  className="p-3.5 rounded-2xl bg-white dark:bg-card border border-slate-200 dark:border-border shadow-xs space-y-2.5"
+                                >
+                                  <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-border pb-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="w-5 h-5 rounded-full bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-400 text-[10px] font-black flex items-center justify-center">
+                                        {cIdx + 1}
+                                      </span>
+                                      <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200 truncate">
+                                        {card.label || 'Untitled Card'}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        disabled={cIdx === 0}
+                                        onClick={() => handleMoveCard(cIdx, 'UP')}
+                                        className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20 cursor-pointer"
+                                        title="Move Up"
+                                      >
+                                        <ArrowUp className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={cIdx === itemFormData.megaMenuItems.length - 1}
+                                        onClick={() => handleMoveCard(cIdx, 'DOWN')}
+                                        className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20 cursor-pointer"
+                                        title="Move Down"
+                                      >
+                                        <ArrowDown className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveCard(cIdx)}
+                                        className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded cursor-pointer ml-1"
+                                        title="Remove Card"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                                    <div className="sm:col-span-4 space-y-1">
+                                      <label className="block text-[10px] font-bold text-slate-500">
+                                        Title <span className="text-rose-500">*</span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={card.label}
+                                        onChange={(e) =>
+                                          handleUpdateCard(cIdx, 'label', e.target.value)
+                                        }
+                                        placeholder="e.g. All Products, Featured Drops"
+                                        className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-border text-xs font-bold"
+                                      />
+                                    </div>
+
+                                    <div className="sm:col-span-5 space-y-1">
+                                      <label className="block text-[10px] font-bold text-slate-500">
+                                        Subtitle / Description
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={card.description || ''}
+                                        onChange={(e) =>
+                                          handleUpdateCard(cIdx, 'description', e.target.value)
+                                        }
+                                        placeholder="e.g. Browse the full catalog"
+                                        className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-border text-xs"
+                                      />
+                                    </div>
+
+                                    <div className="sm:col-span-3 space-y-1">
+                                      <label className="block text-[10px] font-bold text-slate-500">
+                                        Badge (e.g. HOT)
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={card.badge || ''}
+                                        onChange={(e) =>
+                                          handleUpdateCard(cIdx, 'badge', e.target.value)
+                                        }
+                                        placeholder="e.g. HOT"
+                                        className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-border text-xs font-extrabold uppercase"
+                                      />
+                                    </div>
+
+                                    <div className="sm:col-span-12 space-y-1 pt-1">
+                                      <label className="block text-[10px] font-bold text-slate-500">
+                                        Destination URL / Route
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={card.url}
+                                        onChange={(e) =>
+                                          handleUpdateCard(cIdx, 'url', e.target.value)
+                                        }
+                                        placeholder="e.g. /products, /collections, /products?sale=true"
+                                        className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-border text-xs font-mono text-indigo-600 font-bold"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
                         </div>
-                        <div className="space-y-1">
-                          <label className="block text-[11px] font-bold text-indigo-900 dark:text-indigo-200">
-                            CTA Destination URL
-                          </label>
-                          <input
-                            type="text"
-                            value={itemFormData.buttonUrl}
-                            onChange={(e) =>
-                              setItemFormData({ ...itemFormData, buttonUrl: e.target.value })
-                            }
-                            className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-card text-xs font-mono font-bold"
-                          />
+                      )}
+
+                      {/* TAB 2: HEADER & VIEW ALL */}
+                      {activeMegaMenuTab === 'header' && (
+                        <div className="space-y-4">
+                          <div className="space-y-1">
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                              Catalog Section Headline Title
+                            </label>
+                            <input
+                              type="text"
+                              value={itemFormData.catalogTitle}
+                              onChange={(e) =>
+                                setItemFormData({ ...itemFormData, catalogTitle: e.target.value })
+                              }
+                              placeholder={`Defaults to "${itemFormData.label || 'Home'} Catalog & Collections"`}
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold"
+                            />
+                            <p className="text-[10px] text-slate-400">
+                              Displayed at the top left above the catalog cards with the pulsing indicator.
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                                "View All" Button Label
+                              </label>
+                              <input
+                                type="text"
+                                value={itemFormData.viewAllLabel}
+                                onChange={(e) =>
+                                  setItemFormData({ ...itemFormData, viewAllLabel: e.target.value })
+                                }
+                                placeholder="View All →"
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                                "View All" Destination URL
+                              </label>
+                              <input
+                                type="text"
+                                value={itemFormData.viewAllUrl}
+                                onChange={(e) =>
+                                  setItemFormData({ ...itemFormData, viewAllUrl: e.target.value })
+                                }
+                                placeholder="/products"
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-mono font-bold text-indigo-600"
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      )}
+
+                      {/* TAB 3: PROMOTIONAL CARD */}
+                      {activeMegaMenuTab === 'promo' && (
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                                Promo Card Badge Tag
+                              </label>
+                              <input
+                                type="text"
+                                value={itemFormData.promoBadge}
+                                onChange={(e) =>
+                                  setItemFormData({ ...itemFormData, promoBadge: e.target.value })
+                                }
+                                placeholder="Featured Promotion"
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                                Banner Promotional Headline
+                              </label>
+                              <input
+                                type="text"
+                                value={itemFormData.headline}
+                                onChange={(e) =>
+                                  setItemFormData({ ...itemFormData, headline: e.target.value })
+                                }
+                                placeholder="e.g. Featured Collection 2026"
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                              Banner Promotional Image
+                            </label>
+                            <DragDropUpload
+                              currentUrl={itemFormData.bannerImage}
+                              onUploadComplete={(url) =>
+                                setItemFormData({ ...itemFormData, bannerImage: url })
+                              }
+                              folder="navigation"
+                              previewShape="rect"
+                              hint="Drag & drop promotion card banner (JPEG, PNG, WebP)"
+                            />
+                            <div className="pt-1">
+                              <input
+                                type="text"
+                                placeholder="Or paste banner image URL..."
+                                value={itemFormData.bannerImage}
+                                onChange={(e) =>
+                                  setItemFormData({ ...itemFormData, bannerImage: e.target.value })
+                                }
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-mono"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                                CTA Button Label
+                              </label>
+                              <input
+                                type="text"
+                                value={itemFormData.buttonLabel}
+                                onChange={(e) =>
+                                  setItemFormData({ ...itemFormData, buttonLabel: e.target.value })
+                                }
+                                placeholder="Explore Collection"
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                                CTA Destination URL
+                              </label>
+                              <input
+                                type="text"
+                                value={itemFormData.buttonUrl}
+                                onChange={(e) =>
+                                  setItemFormData({ ...itemFormData, buttonUrl: e.target.value })
+                                }
+                                placeholder="/collections/all"
+                                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-mono font-bold"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* TAB 4: FOOTER HIGHLIGHTS */}
+                      {activeMegaMenuTab === 'footer' && (
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                              Left Highlight Text
+                            </label>
+                            <input
+                              type="text"
+                              value={itemFormData.footerLeft}
+                              onChange={(e) =>
+                                setItemFormData({ ...itemFormData, footerLeft: e.target.value })
+                              }
+                              placeholder="Fast Worldwide Delivery & Free Returns"
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-medium"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                              Right Highlight Text
+                            </label>
+                            <input
+                              type="text"
+                              value={itemFormData.footerRight}
+                              onChange={(e) =>
+                                setItemFormData({ ...itemFormData, footerRight: e.target.value })
+                              }
+                              placeholder="Official Store Guaranteed"
+                              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -989,3 +1593,5 @@ export const NavigationManager: React.FC = () => {
     </div>
   );
 };
+
+export default NavigationManager;

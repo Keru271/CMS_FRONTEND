@@ -1544,7 +1544,7 @@ export const BillingStudio: React.FC = () => {
               <span>Subscription Invoices & Tax Receipts</span>
             </h3>
             <p className="text-xs text-slate-500">
-              Official tax invoices and payment receipts with GST and International VAT breakdowns.
+              Official tax invoices and payment receipts with GST breakdowns.
             </p>
           </div>
         </div>
@@ -2172,7 +2172,7 @@ export const BillingStudio: React.FC = () => {
                     </span>
                   </div>
                   <div className="flex justify-between text-slate-500 text-[11px]">
-                    <span>Taxes (GST / VAT Included)</span>
+                    <span>Taxes (GST Included)</span>
                     <span>{selectedInvoiceForReceipt.currency === 'INR' ? '₹' : '$'}0.00</span>
                   </div>
                   <div className="pt-2 border-t border-slate-200 flex justify-between font-bold text-sm text-slate-900">
