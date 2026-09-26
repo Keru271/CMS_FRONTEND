@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CMSMenuData, CMSMenuItem, MegaMenuConfig, MegaMenuCardItem } from '@/src/types';
+import { CMSMenuData, CMSMenuItem, MegaMenuCardItem } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
 import {
@@ -126,7 +126,9 @@ export const NavigationManager: React.FC = () => {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [editingParentId, setEditingParentId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<CMSMenuItem | null>(null);
-  const [activeMegaMenuTab, setActiveMegaMenuTab] = useState<'cards' | 'header' | 'promo' | 'footer'>('cards');
+  const [activeMegaMenuTab, setActiveMegaMenuTab] = useState<
+    'cards' | 'header' | 'promo' | 'footer'
+  >('cards');
 
   const [itemFormData, setItemFormData] = useState<{
     label: string;
@@ -267,9 +269,7 @@ export const NavigationManager: React.FC = () => {
       footerLeft: item.megaMenuConfig?.footerLeft ?? 'Fast Worldwide Delivery & Free Returns',
       footerRight: item.megaMenuConfig?.footerRight ?? 'Official Store Guaranteed',
       megaMenuItems:
-        existingCards && existingCards.length > 0
-          ? [...existingCards]
-          : [...DEFAULT_PRESET_CARDS],
+        existingCards && existingCards.length > 0 ? [...existingCards] : [...DEFAULT_PRESET_CARDS],
     });
     setIsItemModalOpen(true);
   };
@@ -313,18 +313,18 @@ export const NavigationManager: React.FC = () => {
       isMegaMenu: itemFormData.isMegaMenu,
       megaMenuConfig: itemFormData.isMegaMenu
         ? {
-            bannerImage: itemFormData.bannerImage,
-            headline: itemFormData.headline,
-            buttonLabel: itemFormData.buttonLabel,
-            buttonUrl: itemFormData.buttonUrl,
-            catalogTitle: itemFormData.catalogTitle.trim() || undefined,
-            viewAllLabel: itemFormData.viewAllLabel.trim() || undefined,
-            viewAllUrl: itemFormData.viewAllUrl.trim() || undefined,
-            promoBadge: itemFormData.promoBadge.trim() || undefined,
-            footerLeft: itemFormData.footerLeft,
-            footerRight: itemFormData.footerRight,
-            items: itemFormData.megaMenuItems,
-          }
+          bannerImage: itemFormData.bannerImage,
+          headline: itemFormData.headline,
+          buttonLabel: itemFormData.buttonLabel,
+          buttonUrl: itemFormData.buttonUrl,
+          catalogTitle: itemFormData.catalogTitle.trim() || undefined,
+          viewAllLabel: itemFormData.viewAllLabel.trim() || undefined,
+          viewAllUrl: itemFormData.viewAllUrl.trim() || undefined,
+          promoBadge: itemFormData.promoBadge.trim() || undefined,
+          footerLeft: itemFormData.footerLeft,
+          footerRight: itemFormData.footerRight,
+          items: itemFormData.megaMenuItems,
+        }
         : undefined,
       children: editingItem ? editingItem.children || [] : [],
     };
@@ -462,11 +462,10 @@ export const NavigationManager: React.FC = () => {
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border transition-all animate-in slide-in-from-bottom-5 ${
-            toastMessage.type === 'success'
+          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border transition-all animate-in slide-in-from-bottom-5 ${toastMessage.type === 'success'
               ? 'bg-slate-900 text-white border-emerald-500/50'
               : 'bg-rose-950 text-rose-100 border-rose-500/50'
-          }`}
+            }`}
         >
           {toastMessage.type === 'success' ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -493,7 +492,8 @@ export const NavigationManager: React.FC = () => {
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
               Configure Header Navigation, Footer Navigation, and Mobile Drawer Navigation links.
-              Customize visual mega menus with All Products, Featured Drops, promotional cards, badges, and subtitles.
+              Customize visual mega menus with All Products, Featured Drops, promotional cards,
+              badges, and subtitles.
             </p>
           </div>
 
@@ -537,20 +537,18 @@ export const NavigationManager: React.FC = () => {
               key={slot.key}
               type="button"
               onClick={() => setActiveSlotKey(slot.key)}
-              className={`p-5 rounded-3xl text-left transition-all border flex flex-col justify-between gap-4 cursor-pointer ${
-                isSelected
+              className={`p-5 rounded-3xl text-left transition-all border flex flex-col justify-between gap-4 cursor-pointer ${isSelected
                   ? 'bg-white dark:bg-card border-indigo-600 dark:border-indigo-500 shadow-md ring-2 ring-indigo-500/20'
                   : 'bg-white/80 dark:bg-card/70 hover:bg-white dark:hover:bg-card border-slate-200/80 dark:border-border hover:border-slate-300 shadow-xs'
-              }`}
+                }`}
             >
               <div className="flex items-start justify-between gap-3 w-full">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors ${
-                      isSelected
+                    className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors ${isSelected
                         ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
                         : 'bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300'
-                    }`}
+                      }`}
                   >
                     <SlotIcon className="w-5 h-5" />
                   </div>
@@ -563,11 +561,10 @@ export const NavigationManager: React.FC = () => {
                 </div>
 
                 <span
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
-                    itemCount > 0
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${itemCount > 0
                       ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
                       : 'bg-slate-100 dark:bg-accent text-slate-500 dark:text-slate-400'
-                  }`}
+                    }`}
                 >
                   {itemCount} {itemCount === 1 ? 'link' : 'links'}
                 </span>
@@ -606,7 +603,8 @@ export const NavigationManager: React.FC = () => {
                   </span>
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Organize top-level links, visual mega menus, sub-links, badges, and custom drop categories.
+                  Organize top-level links, visual mega menus, sub-links, badges, and custom drop
+                  categories.
                 </p>
               </div>
 
@@ -705,9 +703,12 @@ export const NavigationManager: React.FC = () => {
                               <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white font-black text-[9px] uppercase tracking-wider flex items-center gap-1 shrink-0 shadow-xs">
                                 <Sparkles className="w-2.5 h-2.5" />
                                 Visual Mega Menu
-                                {item.megaMenuConfig?.items && item.megaMenuConfig.items.length > 0 && (
-                                  <span className="opacity-80">({item.megaMenuConfig.items.length} cards)</span>
-                                )}
+                                {item.megaMenuConfig?.items &&
+                                  item.megaMenuConfig.items.length > 0 && (
+                                    <span className="opacity-80">
+                                      ({item.megaMenuConfig.items.length} cards)
+                                    </span>
+                                  )}
                               </span>
                             )}
                           </div>
@@ -846,11 +847,12 @@ export const NavigationManager: React.FC = () => {
                             ? item.megaMenuConfig.items
                             : item.children && item.children.length > 0
                               ? item.children.map((c) => ({
-                                  label: c.label,
-                                  url: c.url,
-                                  description: c.description || '',
-                                  badge: c.badge || '',
-                                }))
+                                id: c.id,
+                                label: c.label,
+                                url: c.url,
+                                description: c.description || '',
+                                badge: c.badge || '',
+                              }))
                               : DEFAULT_PRESET_CARDS;
 
                         return (
@@ -880,7 +882,8 @@ export const NavigationManager: React.FC = () => {
                                   <div className="flex items-center gap-1.5">
                                     <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
                                     <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                                      {item.megaMenuConfig?.catalogTitle || `${item.label} Catalog & Collections`}
+                                      {item.megaMenuConfig?.catalogTitle ||
+                                        `${item.label} Catalog & Collections`}
                                     </h5>
                                   </div>
                                   <span className="text-[10px] font-bold text-indigo-600 flex items-center gap-0.5">
@@ -931,7 +934,8 @@ export const NavigationManager: React.FC = () => {
                                         {item.megaMenuConfig?.promoBadge || 'Featured Promotion'}
                                       </span>
                                       <h6 className="text-[10px] font-black text-white leading-tight line-clamp-2">
-                                        {item.megaMenuConfig?.headline || 'Featured Collection 2026'}
+                                        {item.megaMenuConfig?.headline ||
+                                          'Featured Collection 2026'}
                                       </h6>
                                       <span className="inline-block px-2 py-1 rounded-md bg-white text-slate-900 text-[9px] font-black">
                                         {item.megaMenuConfig?.buttonLabel || 'Explore'} →
@@ -942,9 +946,12 @@ export const NavigationManager: React.FC = () => {
 
                                 {/* Footer Highlights */}
                                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[9px] text-slate-400">
-                                  <span>{item.megaMenuConfig?.footerLeft || 'Fast Worldwide Delivery'}</span>
+                                  <span>
+                                    {item.megaMenuConfig?.footerLeft || 'Fast Worldwide Delivery'}
+                                  </span>
                                   <span className="font-semibold text-slate-500">
-                                    {item.megaMenuConfig?.footerRight || 'Official Store Guaranteed'}
+                                    {item.megaMenuConfig?.footerRight ||
+                                      'Official Store Guaranteed'}
                                   </span>
                                 </div>
                               </div>
@@ -1050,7 +1057,10 @@ export const NavigationManager: React.FC = () => {
 
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Badge Tag <span className="text-[10px] text-slate-400">(Optional, e.g. HOT, NEW, SALE)</span>
+                    Badge Tag{' '}
+                    <span className="text-[10px] text-slate-400">
+                      (Optional, e.g. HOT, NEW, SALE)
+                    </span>
                   </label>
                   <input
                     type="text"
@@ -1099,7 +1109,8 @@ export const NavigationManager: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Subtitle / Description <span className="text-[10px] text-slate-400">(Optional)</span>
+                    Subtitle / Description{' '}
+                    <span className="text-[10px] text-slate-400">(Optional)</span>
                   </label>
                   <input
                     type="text"
@@ -1151,7 +1162,8 @@ export const NavigationManager: React.FC = () => {
                           Enable Visual Mega Menu Dropdown
                         </span>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                          Enables rich 2-column visual feature cards (All Products, Featured Drops, etc.) and promo banner.
+                          Enables rich 2-column visual feature cards (All Products, Featured Drops,
+                          etc.) and promo banner.
                         </p>
                       </div>
                     </label>
@@ -1164,11 +1176,10 @@ export const NavigationManager: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setActiveMegaMenuTab('cards')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
-                            activeMegaMenuTab === 'cards'
+                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${activeMegaMenuTab === 'cards'
                               ? 'bg-indigo-600 text-white shadow-xs'
                               : 'bg-white dark:bg-card text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-border'
-                          }`}
+                            }`}
                         >
                           <LayoutGrid className="w-3.5 h-3.5" />
                           <span>Feature Cards ({itemFormData.megaMenuItems.length})</span>
@@ -1177,11 +1188,10 @@ export const NavigationManager: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setActiveMegaMenuTab('header')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
-                            activeMegaMenuTab === 'header'
+                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${activeMegaMenuTab === 'header'
                               ? 'bg-indigo-600 text-white shadow-xs'
                               : 'bg-white dark:bg-card text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-border'
-                          }`}
+                            }`}
                         >
                           <Layers className="w-3.5 h-3.5" />
                           <span>Header & View All</span>
@@ -1190,11 +1200,10 @@ export const NavigationManager: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setActiveMegaMenuTab('promo')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
-                            activeMegaMenuTab === 'promo'
+                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${activeMegaMenuTab === 'promo'
                               ? 'bg-indigo-600 text-white shadow-xs'
                               : 'bg-white dark:bg-card text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-border'
-                          }`}
+                            }`}
                         >
                           <ImageIcon className="w-3.5 h-3.5" />
                           <span>Promo Card</span>
@@ -1203,11 +1212,10 @@ export const NavigationManager: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setActiveMegaMenuTab('footer')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
-                            activeMegaMenuTab === 'footer'
+                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${activeMegaMenuTab === 'footer'
                               ? 'bg-indigo-600 text-white shadow-xs'
                               : 'bg-white dark:bg-card text-slate-600 hover:bg-slate-100 border border-slate-200 dark:border-border'
-                          }`}
+                            }`}
                         >
                           <Sliders className="w-3.5 h-3.5" />
                           <span>Footer Highlights</span>
@@ -1223,7 +1231,8 @@ export const NavigationManager: React.FC = () => {
                                 Visual Feature Cards (All Products, Featured Drops, etc.)
                               </h4>
                               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                These cards render in the 2-column left section of the visual mega menu dropdown.
+                                These cards render in the 2-column left section of the visual mega
+                                menu dropdown.
                               </p>
                             </div>
 
@@ -1253,14 +1262,18 @@ export const NavigationManager: React.FC = () => {
                           <div className="space-y-3">
                             {itemFormData.megaMenuItems.length === 0 ? (
                               <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-border rounded-2xl space-y-2">
-                                <p className="text-xs text-slate-500">No feature cards added yet.</p>
+                                <p className="text-xs text-slate-500">
+                                  No feature cards added yet.
+                                </p>
                                 <button
                                   type="button"
                                   onClick={handleLoadDefaultCards}
                                   className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
                                 >
                                   <Sparkles className="w-3.5 h-3.5" />
-                                  <span>✨ Load Default Presets (All Products, Featured Drops, etc.)</span>
+                                  <span>
+                                    ✨ Load Default Presets (All Products, Featured Drops, etc.)
+                                  </span>
                                 </button>
                               </div>
                             ) : (
@@ -1394,7 +1407,8 @@ export const NavigationManager: React.FC = () => {
                               className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold"
                             />
                             <p className="text-[10px] text-slate-400">
-                              Displayed at the top left above the catalog cards with the pulsing indicator.
+                              Displayed at the top left above the catalog cards with the pulsing
+                              indicator.
                             </p>
                           </div>
 
