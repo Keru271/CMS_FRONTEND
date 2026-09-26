@@ -3025,6 +3025,7 @@ export const cmsService = {
             canManagePayments: true,
             canManageLogistics: true,
             canManageAnalytics: true,
+            canManage3DModels: true,
           }
         : activeMembership
           ? {
@@ -3037,6 +3038,7 @@ export const cmsService = {
               canManagePayments: !!activeMembership.canManagePayments,
               canManageLogistics: !!activeMembership.canManageLogistics,
               canManageAnalytics: !!activeMembership.canManageAnalytics,
+              canManage3DModels: activeMembership.canManage3DModels !== false,
             }
           : {
               canManageProducts: true,
@@ -3048,6 +3050,7 @@ export const cmsService = {
               canManagePayments: true,
               canManageLogistics: false,
               canManageAnalytics: true,
+              canManage3DModels: true,
             };
 
     const merchantUser: MerchantUser = {
@@ -3436,6 +3439,16 @@ export const cmsService = {
     return response.data;
   },
 
+  async completeUserOnboardingFlag(): Promise<{ success: boolean; onboardingCompleted: boolean }> {
+    try {
+      const response = await apiClient.post<{ success: boolean; onboardingCompleted: boolean }>('/users/complete-onboarding');
+      return response.data;
+    } catch (err) {
+      console.warn('Backend complete-onboarding endpoint call:', err);
+      return { success: true, onboardingCompleted: true };
+    }
+  },
+
   async getStoreTemplates(): Promise<StoreTemplate[]> {
     try {
       const response = await apiClient.get<any[]>('/templates');
@@ -3525,8 +3538,18 @@ export const cmsService = {
   },
 
   async completeOnboarding(
-    onboardingData: MerchantOnboardingData,
-  ): Promise<MerchantOnboardingData> {
+    onboardingData?: MerchantOnboardingData,
+  ): Promise<any> {
+    try {
+      await apiClient.post<{ success: boolean; onboardingCompleted: boolean }>('/users/complete-onboarding');
+    } catch (err) {
+      console.warn('Backend complete-onboarding endpoint call:', err);
+    }
+
+    if (!onboardingData) {
+      return { success: true, onboardingCompleted: true };
+    }
+
     // 1. Create merchant store on backend via POST /api/stores with template ID/slug if store details provided
     if (onboardingData.store) {
       const templateSlug =
@@ -5144,12 +5167,17 @@ export const cmsService = {
         id: 'store-1',
         paymentStripeActive: true,
         paymentRazorpayActive: true,
+        paymentPaypalActive: false,
         paymentCodActive: true,
         paymentTestMode: true,
         razorpayKeyId: 'rzp_test_standardDemo2026',
         razorpayKeySecretMasked: 'rzp_test_••••••••secret',
         razorpayWebhookSecretMasked: 'whsec_••••••••1234',
         razorpayAutoCapture: true,
+        paypalClientId: 'sb',
+        paypalClientSecretMasked: 'sb_••••••••secret',
+        paypalWebhookIdMasked: 'wh_••••••••9012',
+        paypalMode: 'sandbox',
         stripePublishableKey: 'pk_test_standardDemoStripe2026',
         stripeSecretKeyMasked: 'sk_test_••••••••secret',
         stripeWebhookSecretMasked: 'whsec_••••••••5678',
@@ -5158,7 +5186,7 @@ export const cmsService = {
         codMaxLimit: 50000,
         currencyRoutingRulesJson: JSON.stringify({
           indiaDomesticGateway: 'RAZORPAY',
-          internationalGateway: 'STRIPE',
+          internationalGateway: 'PAYPAL',
           domesticCurrency: 'INR',
           internationalCurrencies: ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'SGD', 'AED'],
           autoRouteByGeo: true,
@@ -5166,6 +5194,7 @@ export const cmsService = {
         webhookUrls: {
           razorpay: 'http://localhost:5001/api/storefront/checkout/razorpay/webhook',
           stripe: 'http://localhost:5001/api/storefront/checkout/stripe/webhook',
+          paypal: 'http://localhost:5001/api/storefront/checkout/paypal/webhook',
         },
       };
     }
@@ -5206,9 +5235,12 @@ export const cmsService = {
   },
 
   async testPaymentGateway(payload: {
-    gateway: 'RAZORPAY' | 'STRIPE';
+    gateway: 'RAZORPAY' | 'STRIPE' | 'PAYPAL';
     keyId?: string;
     keySecret?: string;
+    clientId?: string;
+    clientSecret?: string;
+    mode?: string;
     publishableKey?: string;
     secretKey?: string;
     testMode?: boolean;
@@ -5862,7 +5894,7 @@ export const cmsService = {
   },
 
   async updateStorePaymentMethod(payload: {
-    paymentMethod: 'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'STRIPE_CARD' | 'NETBANKING';
+    paymentMethod: 'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'PAYPAL' | 'NETBANKING';
     paymentMethodDetails: string;
   }): Promise<{
     success: boolean;
@@ -5914,33 +5946,35 @@ export const cmsService = {
     return response.data;
   },
 
-  // ─── STRIPE (FOR INTERNATIONAL MERCHANTS - USD) ──────────────────────────
-  async createBillingStripeSession(payload: {
-    plan: 'GROWTH' | 'ENTERPRISE';
+  // ─── PAYPAL (FOR INTERNATIONAL MERCHANTS - USD/EUR/GBP) ──────────────────
+  async createBillingPaypalOrder(payload: {
+    plan: string;
     billingCycle: 'MONTHLY' | 'ANNUAL';
     currency?: 'USD' | 'EUR' | 'GBP';
   }): Promise<{
     success: boolean;
-    sessionId: string;
-    clientSecret: string;
+    orderId: string;
     amount: number;
-    amountCents: number;
+    originalAmount?: number;
+    creditedAmount?: number;
+    upgradeDifference?: number;
+    isUpgradeDifference?: boolean;
     currency: string;
-    publishableKey: string;
+    clientId: string;
     plan: string;
     planName: string;
     billingCycle: string;
+    storeId?: string;
     storeName: string;
     contactEmail: string;
   }> {
-    const response = await apiClient.post('/billing/stripe/create-session', payload);
+    const response = await apiClient.post('/billing/paypal/create-order', payload);
     return response.data;
   },
 
-  async confirmBillingStripePayment(payload: {
-    sessionId?: string;
-    paymentIntentId?: string;
-    plan: 'GROWTH' | 'ENTERPRISE';
+  async captureBillingPaypalOrder(payload: {
+    orderId: string;
+    plan: string;
     billingCycle: 'MONTHLY' | 'ANNUAL';
     paymentMethodDetails?: string;
     currency?: string;
@@ -5949,9 +5983,10 @@ export const cmsService = {
     message: string;
     plan: string;
     billingCycle: string;
+    orderId: string;
     invoice: StoreBillingInvoiceData;
   }> {
-    const response = await apiClient.post('/billing/stripe/confirm-payment', payload);
+    const response = await apiClient.post('/billing/paypal/capture-order', payload);
     return response.data;
   },
 
@@ -6941,4 +6976,174 @@ export const cmsService = {
     return response.data;
   },
 
+  // ─── 3D AI Studio & Product Modeling API ────────────────────────────────────
+  async getThreeDStudioData(): Promise<import('@/src/types').ThreeDStudioData> {
+    try {
+      const response = await apiClient.get<import('@/src/types').ThreeDStudioData>('/three-d/studio');
+      return response.data;
+    } catch (err: any) {
+      console.warn('Failed to load 3D studio data from API, using fallback store state:', err);
+      return {
+        credits: {
+          available: 10,
+          totalGranted: 10,
+          used: 0,
+          plan: 'STARTER',
+          monthlyAllowance: 5,
+        },
+        packages: [
+          {
+            id: 'starter-10',
+            name: 'Starter 3D Pack',
+            credits: 10,
+            priceUsd: 15.0,
+            priceInr: 999.0,
+            badge: 'Basic',
+            description: 'Great for testing 3D product visualization on priority catalog items.',
+            perCreditUsd: '$1.50/model',
+          },
+          {
+            id: 'growth-50',
+            name: 'Growth Pro Pack',
+            credits: 50,
+            priceUsd: 49.0,
+            priceInr: 3499.0,
+            badge: 'Most Popular',
+            description: 'Ideal for growing eCommerce brands digitizing entire seasonal collections.',
+            perCreditUsd: '$0.98/model',
+            popular: true,
+          },
+          {
+            id: 'studio-150',
+            name: 'Studio Creator Pack',
+            credits: 150,
+            priceUsd: 99.0,
+            priceInr: 6999.0,
+            badge: 'Best Value',
+            description: 'Tailored for high-volume catalogs requiring rapid 3D asset generation.',
+            perCreditUsd: '$0.66/model',
+          },
+          {
+            id: 'enterprise-500',
+            name: 'Enterprise Fleet Pack',
+            credits: 500,
+            priceUsd: 249.0,
+            priceInr: 17499.0,
+            badge: 'Volume Scale',
+            description: 'Maximum scale with dedicated GPU rendering queue and custom shaders.',
+            perCreditUsd: '$0.50/model',
+          },
+        ],
+        models: [
+          {
+            id: 'demo-shoe-3d',
+            name: 'Cyber Kinetic Sneaker (Sample 3D Model)',
+            description: 'High-density photogrammetric 3D scan reconstructed from 5 studio angles.',
+            sourceImages: [
+              'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80',
+              'https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=600&q=80',
+              'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=600&q=80',
+              'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=600&q=80',
+              'https://images.unsplash.com/photo-1515955656352-a1fa3ffcd111?auto=format&fit=crop&w=600&q=80',
+            ],
+            modelUrl: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Shoe/glTF-Binary/Shoe.glb',
+            usdzUrl: 'https://developer.apple.com/augmented-reality/quick-look/models/sneaker/sneaker.usdz',
+            thumbnailUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80',
+            status: 'COMPLETED',
+            creditsCost: 1,
+            polyCount: 18450,
+            fileSizeBytes: 3840000,
+            settingsJson: JSON.stringify({
+              autoRotate: true,
+              lighting: 'studio',
+              materialFinish: 'pbr-metallic',
+              background: 'gradient-dark',
+              scale: 1.0,
+            }),
+            metadataJson: JSON.stringify({
+              confidenceScore: 0.984,
+              reconstructionTimeSec: 14.2,
+              meshResolution: 'HIGH_DENSITY',
+              textureMapSize: '2048x2048',
+              format: 'GLB + USDZ (AR Ready)',
+            }),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        transactions: [
+          {
+            id: 'tx-init',
+            storeId: 'current',
+            amount: 10,
+            type: 'PLAN_GRANT',
+            description: 'Starter Tier 3D AI Credit Allocation',
+            balanceAfter: 10,
+            createdAt: new Date().toISOString(),
+          },
+        ],
+        products: [],
+      };
+    }
+  },
+
+  async generateThreeDModel(payload: {
+    name: string;
+    description?: string | null;
+    productId?: string | null;
+    sourceImages: string[];
+    format?: string;
+    settings?: import('@/src/types').ThreeDViewerSettings;
+  }): Promise<{ message: string; model: import('@/src/types').ThreeDModelData; remainingCredits: number }> {
+    const response = await apiClient.post<{
+      message: string;
+      model: import('@/src/types').ThreeDModelData;
+      remainingCredits: number;
+    }>('/three-d/generate', payload);
+    return response.data;
+  },
+
+  async attachThreeDModelToProduct(payload: {
+    modelId: string;
+    productId: string;
+  }): Promise<{ message: string; product: any; model: import('@/src/types').ThreeDModelData }> {
+    const response = await apiClient.post<{
+      message: string;
+      product: any;
+      model: import('@/src/types').ThreeDModelData;
+    }>('/three-d/attach', payload);
+    return response.data;
+  },
+
+  async purchaseThreeDCredits(payload: {
+    packId: string;
+    paymentMethod?: string;
+    currency?: string;
+  }): Promise<{ message: string; pack: any; creditsAdded: number; newBalance: number }> {
+    const response = await apiClient.post<{
+      message: string;
+      pack: any;
+      creditsAdded: number;
+      newBalance: number;
+    }>('/three-d/purchase-credits', payload);
+    return response.data;
+  },
+
+  async updateThreeDModel(
+    id: string,
+    data: {
+      name?: string;
+      description?: string | null;
+      productId?: string | null;
+      settings?: import('@/src/types').ThreeDViewerSettings;
+    },
+  ): Promise<import('@/src/types').ThreeDModelData> {
+    const response = await apiClient.put<import('@/src/types').ThreeDModelData>(`/three-d/${id}`, data);
+    return response.data;
+  },
+
+  async deleteThreeDModel(id: string): Promise<{ message: string }> {
+    const response = await apiClient.delete<{ message: string }>(`/three-d/${id}`);
+    return response.data;
+  },
 };

@@ -440,22 +440,24 @@ export const NotificationStudio: React.FC = () => {
 
               {/* Template Editor Tabs */}
               <div className="space-y-4">
-                <div className="flex border-b border-slate-100 dark:border-border gap-4">
-                  {['WHATSAPP', 'EMAIL', ...(isSmsPlatformEnabled ? ['SMS' as const] : [])].map(
+                <div className="flex border-b border-slate-100 dark:border-border gap-4 overflow-x-auto">
+                  {['WHATSAPP', 'EMAIL', ...(isSmsPlatformEnabled ? ['SMS' as const] : []), 'PUSH' as const].map(
                     (chan) => {
                       const isChanEnabled =
                         chan === 'WHATSAPP'
                           ? !!currentConfig.whatsAppEnabled
                           : chan === 'EMAIL'
                             ? !!currentConfig.emailEnabled
-                            : !!currentConfig.smsEnabled && isSmsPlatformEnabled;
+                            : chan === 'SMS'
+                              ? !!currentConfig.smsEnabled && isSmsPlatformEnabled
+                              : !!currentConfig.pushEnabled;
 
                       return (
                         <button
                           key={chan}
                           type="button"
                           onClick={() => setActiveChannelTab(chan as any)}
-                          className={`pb-2.5 text-xs font-black transition border-b-2 flex items-center gap-1.5 ${
+                          className={`pb-2.5 text-xs font-black transition border-b-2 flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
                             activeChannelTab === chan
                               ? isChanEnabled
                                 ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
@@ -466,9 +468,10 @@ export const NotificationStudio: React.FC = () => {
                           }`}
                         >
                           <span>
-                            {chan === 'WHATSAPP' && '💬 WhatsApp Template'}
-                            {chan === 'EMAIL' && '✉️ Email Template'}
-                            {chan === 'SMS' && '📱 SMS Template'}
+                            {chan === 'WHATSAPP' && '💬 WhatsApp'}
+                            {chan === 'EMAIL' && '✉️ Email'}
+                            {chan === 'SMS' && '📱 SMS'}
+                            {chan === 'PUSH' && '🔔 Web Push'}
                           </span>
                           {!isChanEnabled && (
                             <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400">
@@ -583,6 +586,23 @@ export const NotificationStudio: React.FC = () => {
                   </div>
                 )}
 
+                {/* PUSH NOTIFICATION EDITOR */}
+                {activeChannelTab === 'PUSH' && (
+                  <div className="space-y-3">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Web Push Notification Content:
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={currentConfig.pushBodyTemplate || ''}
+                      onChange={(e) => handleTemplateChange('pushBodyTemplate', e.target.value)}
+                      disabled={!currentConfig.pushEnabled}
+                      className="w-full p-4 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent font-mono text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="e.g. 📦 Order Confirmed #{{order_number}}! Thank you for buying from {{store_name}}."
+                    />
+                  </div>
+                )}
+
                 {/* Merge Tags Helper */}
                 <div className="p-3.5 bg-slate-50 dark:bg-accent/40 rounded-2xl border text-xs space-y-1.5">
                   <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider block">
@@ -609,6 +629,22 @@ export const NotificationStudio: React.FC = () => {
                     </code>
                   </div>
                 </div>
+
+                {/* Save Changes Button */}
+                <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-border">
+                  <span className="text-[11px] text-slate-400">
+                    Changes apply immediately to upcoming trigger events.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSaveConfig}
+                    disabled={isSaving}
+                    className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-lg shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{isSaving ? 'Saving Settings...' : 'Save Notification Settings'}</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -627,7 +663,8 @@ export const NotificationStudio: React.FC = () => {
               {(activeChannelTab === 'WHATSAPP' && !currentConfig.whatsAppEnabled) ||
               (activeChannelTab === 'EMAIL' && !currentConfig.emailEnabled) ||
               (activeChannelTab === 'SMS' &&
-                (!currentConfig.smsEnabled || !isSmsPlatformEnabled)) ? (
+                (!currentConfig.smsEnabled || !isSmsPlatformEnabled)) ||
+              (activeChannelTab === 'PUSH' && !currentConfig.pushEnabled) ? (
                 <div className="p-8 rounded-2xl bg-slate-950 border border-slate-800 text-center space-y-2 max-w-md mx-auto">
                   <div className="w-10 h-10 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto">
                     <AlertCircle className="w-5 h-5" />
@@ -679,6 +716,21 @@ export const NotificationStudio: React.FC = () => {
                       </span>
                       <div className="p-3.5 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-200 text-xs">
                         {getRenderedPreview(currentConfig.smsBodyTemplate || '')}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeChannelTab === 'PUSH' && (
+                    <div className="bg-slate-950 p-4 rounded-2xl border border-amber-500/30 space-y-2 max-w-md mx-auto shadow-lg">
+                      <div className="flex items-center justify-between text-[10px] text-amber-400 pb-1.5 border-b border-slate-800">
+                        <span className="font-bold flex items-center gap-1">
+                          <span>🔔</span>
+                          <span>Web Push Notification</span>
+                        </span>
+                        <span>Just now</span>
+                      </div>
+                      <div className="text-slate-200 text-xs font-medium">
+                        {getRenderedPreview(currentConfig.pushBodyTemplate || '')}
                       </div>
                     </div>
                   )}

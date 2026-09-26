@@ -38,9 +38,42 @@ import {
   Flame,
   ChevronDown,
   ChevronLeft,
-  LayoutGrid,
-  SlidersHorizontal,
 } from 'lucide-react';
+
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && (window as any).Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
+
+const loadPaypalScript = (clientId: string = 'sb', currency: string = 'USD'): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && (window as any).paypal) {
+      resolve(true);
+      return;
+    }
+    const existing = document.getElementById('paypal-sdk-script');
+    if (existing) existing.remove();
+
+    const script = document.createElement('script');
+    script.id = 'paypal-sdk-script';
+    script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=${currency}&intent=capture`;
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export const BillingStudio: React.FC = () => {
   const [subscription, setSubscription] = useState<StoreSubscriptionData | null>(null);
@@ -53,13 +86,13 @@ export const BillingStudio: React.FC = () => {
     type: 'success' | 'error';
   } | null>(null);
 
-  // Pricing Carousel & View Mode State
-  const [pricingViewMode, setPricingViewMode] = useState<'swiper' | 'grid'>('swiper');
-  const [activePricingSlide, setActivePricingSlide] = useState(1); // Default to Growth / Pro
+  // Pricing Carousel State
+  const [activePricingSlide, setActivePricingSlide] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: 'start',
     skipSnaps: false,
+    containScroll: 'trimSnaps',
   });
 
   const onSelectSlide = useCallback(() => {
@@ -99,14 +132,11 @@ export const BillingStudio: React.FC = () => {
     'DETAILS',
   );
 
-  // Stripe Checkout State (For International Customers)
-  const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
-  const [stripeCardNumber, setStripeCardNumber] = useState('4242 •••• •••• 4242');
-  const [stripeExpiry, setStripeExpiry] = useState('12/28');
-  const [stripeCvc, setStripeCvc] = useState('888');
-  const [stripeCountry, setStripeCountry] = useState('United States (US)');
-  const [stripeZip, setStripeZip] = useState('94103');
-  const [stripeStep, setStripeStep] = useState<'DETAILS' | 'AUTHORIZING' | 'SUCCESS'>('DETAILS');
+  // PayPal Checkout State (For International Customers)
+  const [isPaypalModalOpen, setIsPaypalModalOpen] = useState(false);
+  const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
+  const [paypalClientId, setPaypalClientId] = useState<string>('sb');
+  const [paypalStep, setPaypalStep] = useState<'DETAILS' | 'AUTHORIZING' | 'SUCCESS'>('DETAILS');
 
   // Invoice Receipt Preview Modal
   const [selectedInvoiceForReceipt, setSelectedInvoiceForReceipt] =
@@ -124,7 +154,7 @@ export const BillingStudio: React.FC = () => {
   // Payment Method Update Modal
   const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState(false);
   const [updatePaymentMethodType, setUpdatePaymentMethodType] = useState<
-    'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'STRIPE_CARD' | 'NETBANKING'
+    'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'PAYPAL' | 'NETBANKING'
   >('RAZORPAY_UPI');
   const [updatePaymentMethodDetails, setUpdatePaymentMethodDetails] = useState('');
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
@@ -147,7 +177,7 @@ export const BillingStudio: React.FC = () => {
       if (subRes.billingCycle) {
         setBillingCycle(subRes.billingCycle as any);
       }
-      if (subRes.planPaymentMethod?.includes('STRIPE')) {
+      if (subRes.planPaymentMethod?.includes('PAYPAL')) {
         setCustomerRegion('INTERNATIONAL');
       } else {
         setCustomerRegion('INDIA');
@@ -169,7 +199,7 @@ export const BillingStudio: React.FC = () => {
     setIsProcessingApiTier(true);
     try {
       const res = await cmsService.subscribeApiTier({
-        paymentMethod: customerRegion === 'INDIA' ? 'RAZORPAY_UPI' : 'STRIPE_CARD',
+        paymentMethod: customerRegion === 'INDIA' ? 'RAZORPAY_UPI' : 'PAYPAL',
       });
       showToast(`🎉 ${res.message}`, 'success');
       await loadBillingData();
@@ -230,7 +260,7 @@ export const BillingStudio: React.FC = () => {
     }
 
     if (customerRegion === 'INDIA') {
-      // Razorpay Flow for Paid Tiers (With Prorated Upgrade Calculation)
+      // Razorpay Flow for Paid Tiers (Live Orders API & Razorpay Checkout SDK)
       setIsProcessingPayment(true);
       try {
         const orderData = await cmsService.createBillingRazorpayOrder({
@@ -245,33 +275,101 @@ export const BillingStudio: React.FC = () => {
           isUpgradeDifference: (orderData as any).isUpgradeDifference,
           currentPlanName: (orderData as any).currentPlanName,
         });
-        setRazorpayStep('DETAILS');
-        setIsRazorpayModalOpen(true);
+
+        const isLoaded = await loadRazorpayScript();
+        if (isLoaded && typeof window !== 'undefined' && (window as any).Razorpay) {
+          const rzpOptions = {
+            key: orderData.keyId,
+            amount: orderData.amountPaise,
+            currency: orderData.currency || 'INR',
+            name: 'Statamic CMS SaaS',
+            description: `${tier.name} Plan Subscription (${billingCycle.toLowerCase()})`,
+            image: 'https://cdn-icons-png.flaticon.com/512/888/888879.png',
+            order_id: orderData.orderId,
+            prefill: {
+              name: orderData.storeName || '',
+              email: orderData.contactEmail || '',
+              contact: orderData.contactPhone || '',
+            },
+            notes: {
+              plan: tier.id,
+              billingCycle,
+              storeId: (orderData as any).storeId,
+            },
+            theme: {
+              color: '#0c2340',
+            },
+            handler: async function (response: {
+              razorpay_payment_id: string;
+              razorpay_order_id: string;
+              razorpay_signature?: string;
+            }) {
+              try {
+                setIsProcessingPayment(true);
+                const res = await cmsService.verifyBillingRazorpayPayment({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  plan: tier.id as any,
+                  billingCycle,
+                  paymentMethodDetails: `Razorpay SDK Checkout (ID: ${response.razorpay_payment_id})`,
+                });
+                showToast(`🎉 ${res.message || 'Payment verified & plan upgraded successfully!'}`, 'success');
+                await loadBillingData();
+              } catch (err: any) {
+                showToast(err?.message || 'Razorpay payment verification failed', 'error');
+              } finally {
+                setIsProcessingPayment(false);
+              }
+            },
+            modal: {
+              ondismiss: function () {
+                setIsProcessingPayment(false);
+              },
+            },
+          };
+          const rzp = new (window as any).Razorpay(rzpOptions);
+          rzp.on('payment.failed', function (resp: any) {
+            showToast(resp.error?.description || 'Razorpay payment was cancelled or failed', 'error');
+            setIsProcessingPayment(false);
+          });
+          rzp.open();
+        } else {
+          // Fallback to built-in simulation modal
+          setRazorpayStep('DETAILS');
+          setIsRazorpayModalOpen(true);
+        }
       } catch (err: any) {
         showToast(err?.message || 'Failed to initialize Razorpay checkout', 'error');
       } finally {
         setIsProcessingPayment(false);
       }
     } else {
-      // Stripe Flow for Paid Tiers (With Prorated Upgrade Calculation)
+      // International Flow: PayPal (1-Click & Pay in 4)
       setIsProcessingPayment(true);
       try {
-        const sessionData = await cmsService.createBillingStripeSession({
+        const paypalData = await cmsService.createBillingPaypalOrder({
           plan: tier.id as any,
           billingCycle,
           currency: 'USD',
         });
-        setUpgradeDetails({
-          originalAmount: (sessionData as any).originalAmount,
-          creditedAmount: (sessionData as any).creditedAmount,
-          upgradeDifference: (sessionData as any).upgradeDifference || sessionData.amount,
-          isUpgradeDifference: (sessionData as any).isUpgradeDifference,
-          currentPlanName: (sessionData as any).currentPlanName,
-        });
-        setStripeStep('DETAILS');
-        setIsStripeModalOpen(true);
+
+        if (paypalData) {
+          setPaypalOrderId(paypalData.orderId);
+          setPaypalClientId(paypalData.clientId || 'sb');
+          setUpgradeDetails({
+            originalAmount: (paypalData as any).originalAmount,
+            creditedAmount: (paypalData as any).creditedAmount,
+            upgradeDifference: (paypalData as any).upgradeDifference || paypalData.amount,
+            isUpgradeDifference: (paypalData as any).isUpgradeDifference,
+            currentPlanName: (paypalData as any).currentPlanName,
+          });
+        }
+
+        setPaypalStep('DETAILS');
+        setIsPaypalModalOpen(true);
       } catch (err: any) {
-        showToast(err?.message || 'Failed to initialize Stripe checkout', 'error');
+        showToast(err?.message || 'Failed to initialize PayPal checkout', 'error');
       } finally {
         setIsProcessingPayment(false);
       }
@@ -314,36 +412,86 @@ export const BillingStudio: React.FC = () => {
     }, 1400);
   };
 
-  // Complete Stripe Payment (International Customer)
-  const handleConfirmStripePayment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Complete PayPal Payment (International Customer)
+  const handleConfirmPaypalPayment = async (orderIdToCapture?: string) => {
     if (!selectedPlanForPayment) return;
 
-    setStripeStep('AUTHORIZING');
-
-    // Simulate / Trigger Stripe verification
-    setTimeout(async () => {
-      try {
-        const paymentIntentId = `pi_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-        const methodDesc = `Stripe Visa (•••• ${stripeCardNumber.slice(-4) || '4242'})`;
-
-        const res = await cmsService.confirmBillingStripePayment({
-          paymentIntentId,
+    setPaypalStep('AUTHORIZING');
+    try {
+      let finalOrderId = orderIdToCapture || paypalOrderId;
+      if (!finalOrderId) {
+        const orderRes = await cmsService.createBillingPaypalOrder({
           plan: selectedPlanForPayment.id as any,
           billingCycle,
-          paymentMethodDetails: methodDesc,
           currency: 'USD',
         });
-
-        setStripeStep('SUCCESS');
-        showToast(`🎉 ${res.message}`, 'success');
-        await loadBillingData();
-      } catch (err: any) {
-        setStripeStep('DETAILS');
-        showToast(err?.message || 'Stripe payment confirmation failed', 'error');
+        finalOrderId = orderRes.orderId;
       }
-    }, 1400);
+
+      const res = await cmsService.captureBillingPaypalOrder({
+        orderId: finalOrderId,
+        plan: selectedPlanForPayment.id as any,
+        billingCycle,
+        paymentMethodDetails: `PayPal Verified Account (${finalOrderId})`,
+        currency: 'USD',
+      });
+
+      setPaypalStep('SUCCESS');
+      showToast(`🎉 ${res.message || 'PayPal payment captured & plan upgraded successfully!'}`, 'success');
+      await loadBillingData();
+    } catch (err: any) {
+      setPaypalStep('DETAILS');
+      showToast(err?.message || 'PayPal payment confirmation failed', 'error');
+    }
   };
+
+  // Mount PayPal Buttons inside Modal when opened
+  useEffect(() => {
+    if (!isPaypalModalOpen || paypalStep !== 'DETAILS' || !selectedPlanForPayment) return;
+    let isMounted = true;
+
+    loadPaypalScript(paypalClientId, 'USD').then((loaded) => {
+      if (!isMounted || !loaded || !(window as any).paypal) return;
+      try {
+        const container = document.getElementById('paypal-sdk-button-container');
+        if (!container) return;
+        container.innerHTML = '';
+        (window as any).paypal
+          .Buttons({
+            style: {
+              layout: 'vertical',
+              color: 'gold',
+              shape: 'rect',
+              label: 'paypal',
+              height: 44,
+            },
+            createOrder: async () => {
+              if (paypalOrderId) return paypalOrderId;
+              const res = await cmsService.createBillingPaypalOrder({
+                plan: selectedPlanForPayment.id as any,
+                billingCycle,
+                currency: 'USD',
+              });
+              setPaypalOrderId(res.orderId);
+              return res.orderId;
+            },
+            onApprove: async (data: any) => {
+              await handleConfirmPaypalPayment(data.orderID || paypalOrderId || undefined);
+            },
+            onError: (err: any) => {
+              console.warn('[PayPal SDK] Popup error or cancelled:', err);
+            },
+          })
+          .render('#paypal-sdk-button-container');
+      } catch (e) {
+        console.warn('Could not mount PayPal SDK buttons:', e);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isPaypalModalOpen, paypalStep, paypalOrderId, paypalClientId, selectedPlanForPayment, billingCycle]);
 
   // Submit Payment Method Update
   const handleUpdatePaymentMethod = async (e: React.FormEvent) => {
@@ -520,17 +668,17 @@ export const BillingStudio: React.FC = () => {
 
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
-                  {subscription.planPaymentMethod?.includes('STRIPE') ? '💳' : '📲'}
+                  {subscription.planPaymentMethod?.includes('PAYPAL') ? '🅿️' : '📲'}
                 </div>
                 <div>
                   <span className="text-xs font-bold block flex items-center gap-1.5">
                     <span>
-                      {subscription.planPaymentMethod?.includes('STRIPE')
-                        ? 'International Card'
+                      {subscription.planPaymentMethod?.includes('PAYPAL')
+                        ? 'PayPal Verified'
                         : 'UPI / Debit Card'}
                     </span>
                     <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/20 text-emerald-300">
-                      {subscription.planPaymentMethod?.includes('STRIPE') ? 'USD' : 'INR'}
+                      {subscription.planPaymentMethod?.includes('PAYPAL') ? 'USD' : 'INR'}
                     </span>
                   </span>
                   <span className="text-[11px] text-slate-300 font-mono block truncate max-w-[180px]">
@@ -722,120 +870,19 @@ export const BillingStudio: React.FC = () => {
         </div>
       </div>
 
-      {/* VIEW CONTROLS & QUICK PLAN SELECTOR */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200/80">
-        {/* Quick Tier Jumper Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl overflow-x-auto max-w-full">
-          {tiers.map((t, idx) => {
-            const isActive = pricingViewMode === 'swiper' ? activePricingSlide === idx : false;
-            const isGrowth =
-              t.id.toUpperCase() === 'GROWTH' || t.id.toUpperCase() === 'PRO' || t.popular;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => {
-                  handleSlideChange(idx);
-                  if (pricingViewMode !== 'swiper') setPricingViewMode('swiper');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-                  isActive
-                    ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-900/10 dark:bg-slate-900 dark:text-white'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {isGrowth && <Sparkles className="w-3 h-3 text-rose-500 fill-rose-500" />}
-                <span>{t.badge || t.name}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* View Mode Toggle & Navigation Chevrons */}
-        <div className="flex items-center gap-2">
-          {/* Swiper vs Grid Switcher */}
-          <div className="inline-flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-            <button
-              type="button"
-              onClick={() => setPricingViewMode('swiper')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                pricingViewMode === 'swiper'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
-              }`}
-              title="Expanding Carousel Slider"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>Carousel</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPricingViewMode('grid')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                pricingViewMode === 'grid'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
-              }`}
-              title="Grid View"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Grid</span>
-            </button>
-          </div>
-
-          {/* Navigation Arrows for Swiper Mode */}
-          {pricingViewMode === 'swiper' && tiers.length > 0 && (
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => {
-                  if (emblaApi && emblaApi.canScrollPrev()) {
-                    emblaApi.scrollPrev();
-                  } else {
-                    handleSlideChange((activePricingSlide - 1 + tiers.length) % tiers.length);
-                  }
-                }}
-                className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs cursor-pointer"
-                title="Previous Plan"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (emblaApi && emblaApi.canScrollNext()) {
-                    emblaApi.scrollNext();
-                  } else {
-                    handleSlideChange((activePricingSlide + 1) % tiers.length);
-                  }
-                }}
-                className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs cursor-pointer"
-                title="Next Plan"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* SWIPER / EXPANDING ACCORDION SLIDER VIEW (MATCHING ATTACHED DESIGN) */}
-      {pricingViewMode === 'swiper' && tiers.length > 0 ? (
-        <div className="relative pt-2 pb-4 overflow-hidden select-none">
-          {/* Horizontal Expanding Card Track Container with Embla */}
-          <div
-            ref={emblaRef}
-            className="p-4 sm:p-6 rounded-[36px] bg-[#0c0d10] dark:bg-[#07080a] border border-slate-800/80 shadow-2xl overflow-x-auto scrollbar-none"
-          >
-            <div className="flex items-stretch gap-3 sm:gap-4 min-w-[720px] sm:min-w-full h-[560px]">
-              {tiers.map((tier, idx) => {
+      {/* PRICING CAROUSEL */}
+      {tiers.length > 0 && (
+        <div className="space-y-4 pt-4">
+          {/* Embla Carousel Viewport */}
+          <div ref={emblaRef} className="overflow-hidden py-2 cursor-grab active:cursor-grabbing">
+            <div className="flex gap-5 -ml-1">
+              {tiers.map((tier) => {
                 const id = tier.id.toUpperCase();
                 const currentPlanId = subscription?.plan || 'STARTER';
                 const activeCycle = subscription?.billingCycle || 'MONTHLY';
                 const isCurrentPlanAndCycle = currentPlanId.toUpperCase() === id && activeCycle === billingCycle;
                 const isSwitchingCycleOnSamePlan = currentPlanId.toUpperCase() === id && activeCycle !== billingCycle;
                 const isCurrent = isCurrentPlanAndCycle;
-                const isExpanded = activePricingSlide === idx;
                 const isAnnual = billingCycle === 'ANNUAL';
                 const isIndian = customerRegion === 'INDIA';
 
@@ -870,556 +917,262 @@ export const BillingStudio: React.FC = () => {
                 const isStarter =
                   id === 'STARTER' || (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0);
 
-                // Background Gradients matching card themes
-                const bgGradient = isGrowth
-                  ? 'bg-gradient-to-br from-[#1a0d18] via-[#240e1d] to-[#120815] border-rose-500/60 shadow-rose-500/15'
-                  : isEnterprise
-                    ? 'bg-gradient-to-br from-[#120e24] via-[#1a1435] to-[#0c0818] border-purple-500/50 shadow-purple-500/15'
-                    : isAgency
-                      ? 'bg-gradient-to-br from-[#0c1a1a] via-[#112424] to-[#081212] border-emerald-500/50 shadow-emerald-500/15'
-                      : 'bg-gradient-to-br from-[#16181f] via-[#1c1f28] to-[#111318] border-slate-700/60 shadow-slate-900/20';
-
                 return (
                   <div
                     key={tier.id}
-                    onClick={() => {
-                      if (!isExpanded) handleSlideChange(idx);
-                    }}
-                    className={`relative rounded-[30px] border overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col justify-between ${
-                      isExpanded
-                        ? `flex-[4] sm:flex-[3.8] p-7 sm:p-8 cursor-default shadow-2xl ring-2 ${
-                            isGrowth
-                              ? 'ring-rose-500/40'
-                              : isCurrent
-                                ? 'ring-emerald-500/40'
-                                : 'ring-indigo-500/30'
-                          } ${bgGradient}`
-                        : `flex-[0.9] sm:flex-[1] min-w-[96px] sm:min-w-[120px] p-4 sm:p-5 cursor-pointer hover:opacity-100 opacity-75 hover:scale-[1.01] ${bgGradient}`
-                    }`}
+                    className="flex-[0_0_100%] sm:flex-[0_0_80%] md:flex-[0_0_48%] lg:flex-[0_0_31%] min-w-0 pl-1"
                   >
-                    {/* EXPANDED SLIDE VIEW (WIDE DETAILED CARD LIKE SLIDE 1) */}
-                    {isExpanded ? (
-                      <div className="flex flex-col justify-between h-full space-y-6 text-white animate-in fade-in duration-300">
-                        {/* Top Row: Floating Badge & Tier Title */}
+                    <div
+                      className={`rounded-[26px] p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 relative group h-full min-h-[520px] ${
+                        isGrowth
+                          ? 'border-2 border-[#ff4893] bg-gradient-to-b from-[#fff9f6] via-[#fff1f6] to-[#fdf2f8] shadow-xl shadow-rose-500/10 hover:-translate-y-1'
+                          : isCurrent
+                            ? 'bg-white border-2 border-emerald-500 shadow-xl shadow-emerald-500/10 ring-2 ring-emerald-500/20'
+                            : 'bg-white border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md hover:-translate-y-1'
+                      }`}
+                    >
+                      {/* Top Floating Badge */}
+                      {isCurrent ? (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10 whitespace-nowrap">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Active Plan ({activeCycle.toLowerCase()})</span>
+                        </div>
+                      ) : isSwitchingCycleOnSamePlan ? (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10 whitespace-nowrap">
+                          <Sparkles className="w-3 h-3 text-amber-200" />
+                          <span>Switch to {billingCycle.toLowerCase()}</span>
+                        </div>
+                      ) : isUpgradeTier ? (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10 whitespace-nowrap">
+                          <Flame className="w-3 h-3 text-amber-200 fill-amber-200" />
+                          <span>
+                            Upgrade & Save {currencySymbol}
+                            {currentPrice.toLocaleString()}
+                          </span>
+                        </div>
+                      ) : null}
+
+                      {/* Card Header & Content */}
+                      <div className="space-y-4">
                         <div>
-                          <div className="flex items-center justify-between gap-3 mb-3">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
-                                  isGrowth
-                                    ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md'
-                                    : isEnterprise
-                                      ? 'bg-purple-600 text-white'
-                                      : isAgency
-                                        ? 'bg-emerald-600 text-white'
-                                        : 'bg-slate-700 text-slate-200'
-                                }`}
-                              >
-                                {tier.badge || tier.name}
-                              </span>
-                              {isCurrent && (
-                                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-extrabold flex items-center gap-1">
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                  <span>Active Plan ({activeCycle.toLowerCase()})</span>
-                                </span>
-                              )}
-                              {isSwitchingCycleOnSamePlan && (
-                                <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-extrabold flex items-center gap-1">
-                                  <span>Switch to {billingCycle.toLowerCase()}</span>
-                                </span>
-                              )}
-                              {isGrowth && !isCurrent && !isSwitchingCycleOnSamePlan && (
-                                <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-extrabold flex items-center gap-1">
-                                  <Sparkles className="w-3.5 h-3.5 text-rose-400" />
-                                  <span>Popular</span>
-                                </span>
-                              )}
-                            </div>
-
-                            <span className="text-xs font-bold text-slate-400">
-                              Slide {idx + 1} of {tiers.length}
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <span
+                              className={`text-sm font-black italic tracking-wider uppercase ${
+                                isGrowth
+                                  ? 'bg-gradient-to-r from-[#ff5722] via-[#ff4081] to-[#d946ef] bg-clip-text text-transparent'
+                                  : isEnterprise
+                                    ? 'text-purple-700'
+                                    : isAgency
+                                      ? 'text-slate-900'
+                                      : 'text-slate-500'
+                              }`}
+                            >
+                              {tier.badge || tier.name}
                             </span>
+                            {isGrowth && !isCurrent && (
+                              <span className="text-[11px] font-extrabold text-rose-600 flex items-center gap-1">
+                                <Sparkles className="w-3 h-3 text-rose-500" />
+                                <span>Best Value</span>
+                              </span>
+                            )}
                           </div>
-
-                          <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-2">
-                            {tier.name}
-                          </h3>
-                          <p className="text-xs sm:text-sm text-slate-300 mt-1 line-clamp-2">
+                          <p className="text-xs text-slate-600 leading-relaxed min-h-[36px] line-clamp-2">
                             {tier.description}
                           </p>
                         </div>
 
+                        {/* Savings Callout Pill */}
+                        {isAnnual && !isStarter && (
+                          <div className="text-xs font-bold text-rose-600 flex items-center gap-1">
+                            <span>Save 20% on Annual Plan</span>
+                            <span>✨</span>
+                          </div>
+                        )}
+
                         {/* Price Display */}
-                        <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-3xl sm:text-4xl font-black text-white tracking-tight font-sans">
+                        <div className="py-2">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight font-sans">
                               {currencySymbol}
                               {isStarter ? '0' : isAnnual ? monthlyEquivalent.toLocaleString() : upgradeDiffPrice.toLocaleString()}
                             </span>
-                            <span className="text-base sm:text-lg font-medium text-slate-300 font-normal">
+                            <span className="text-xl sm:text-2xl font-serif italic text-slate-500 font-normal">
                               /month
                             </span>
-                            {isAnnual && !isStarter && (
-                              <span className="ml-auto px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[11px] font-bold">
-                                Save 20%
-                              </span>
-                            )}
                           </div>
-                          <div className="text-[11px] text-slate-400 mt-1">
+                          <div className="text-[11px] font-medium text-slate-500 mt-1">
                             {isStarter
-                              ? 'Free tier for personal catalogs'
+                              ? 'Free to use'
                               : isAnnual
                                 ? `${currencySymbol}${price.toLocaleString()} billed annually (${currencySymbol}${monthlyEquivalent.toLocaleString()}/mo)`
-                                : 'Billed monthly, cancel anytime'}
+                                : 'Billed monthly'}
                           </div>
                         </div>
 
-                        {/* Features Checklist */}
-                        <div className="space-y-2.5 flex-1 overflow-y-auto max-h-48 pr-1 scrollbar-thin">
+                        {/* Divider */}
+                        <div className="h-px bg-slate-200/80 w-full" />
+
+                        {/* Features List */}
+                        <div className="space-y-2.5 pt-1">
                           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                            Included in this plan:
+                            What&apos;s Included:
                           </span>
-                          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-200">
-                            {tier.features.map((feat, fIdx) => (
-                              <li key={fIdx} className="flex items-start gap-2.5 leading-snug">
+                          <ul className="space-y-2.5 text-xs text-slate-700">
+                            {tier.features.map((feat, idx) => (
+                              <li key={idx} className="flex items-start gap-2.5 leading-snug">
                                 <div
                                   className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                                     isGrowth
-                                      ? 'bg-rose-500/20 text-rose-400'
+                                      ? 'bg-rose-100 text-rose-600'
                                       : isEnterprise
-                                        ? 'bg-purple-500/20 text-purple-400'
+                                        ? 'bg-purple-100 text-purple-700'
                                         : isAgency
-                                          ? 'bg-emerald-500/20 text-emerald-400'
-                                          : 'bg-slate-700 text-slate-300'
+                                          ? 'bg-emerald-100 text-emerald-700'
+                                          : 'bg-slate-100 text-slate-600'
                                   }`}
                                 >
                                   <Check className="w-2.5 h-2.5 stroke-[3]" />
                                 </div>
-                                <span className="text-slate-200 font-medium">{feat}</span>
+                                <span className="text-slate-700 font-medium">{feat}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
-
-                        {/* CTA Action Button */}
-                        <div className="pt-2">
-                          {isCurrentPlanAndCycle ? (
-                            <button
-                              type="button"
-                              disabled
-                              className="w-full py-3.5 rounded-2xl bg-white/10 text-emerald-300 font-bold text-xs border border-emerald-500/30 flex items-center justify-center gap-2 cursor-default"
-                            >
-                              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                              <span>Current Active Plan</span>
-                            </button>
-                          ) : isSwitchingCycleOnSamePlan ? (
-                            <button
-                              type="button"
-                              disabled={isProcessingPayment}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleInitiatePlanUpgrade(tier);
-                              }}
-                              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white font-bold text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-                            >
-                              {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
-                                <RefreshCw className="w-4 h-4 animate-spin" />
-                              ) : isAnnual ? (
-                                <>
-                                  <span>Switch to Annual Billing (Save 20%)</span>
-                                  <Sparkles className="w-4 h-4" />
-                                </>
-                              ) : (
-                                <>
-                                  <span>Switch to Monthly Billing</span>
-                                  <ArrowRight className="w-4 h-4" />
-                                </>
-                              )}
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              disabled={isProcessingPayment}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleInitiatePlanUpgrade(tier);
-                              }}
-                              className={`w-full py-3.5 rounded-2xl font-bold text-xs transition-all shadow-xl active:scale-98 flex items-center justify-center gap-2 cursor-pointer ${
-                                isGrowth
-                                  ? 'bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white shadow-rose-500/25'
-                                  : isStarter
-                                    ? 'bg-slate-800 text-slate-200 hover:bg-slate-700'
-                                    : 'bg-white text-slate-900 hover:bg-slate-100'
-                              }`}
-                            >
-                              {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
-                                <RefreshCw className="w-4 h-4 animate-spin" />
-                              ) : isStarter ? (
-                                <>
-                                  <span>Activate Free Plan</span>
-                                  <Check className="w-4 h-4" />
-                                </>
-                              ) : isUpgradeTier ? (
-                                <>
-                                  <span>
-                                    Upgrade to {tier.badge || tier.name} for {currencySymbol}
-                                    {upgradeDiffPrice.toLocaleString()}
-                                  </span>
-                                  <ArrowRight className="w-4 h-4" />
-                                </>
-                              ) : (
-                                <>
-                                  <span>Upgrade to {tier.badge || tier.name}</span>
-                                  <ArrowRight className="w-4 h-4" />
-                                </>
-                              )}
-                            </button>
-                          )}
-                        </div>
                       </div>
-                    ) : (
-                      /* COLLAPSED / ACCORDION PREVIEW CARD (VERTICAL LIKE SLIDE 2 & 3) */
-                      <div className="flex flex-col justify-between items-center h-full py-2 text-center text-white select-none">
-                        {/* Top Indicator */}
-                        <div className="w-8 h-8 rounded-2xl bg-white/10 flex items-center justify-center text-xs font-bold text-slate-300">
-                          {idx + 1}
-                        </div>
 
-                        {/* Middle: Vertical Title & Pricing Pill */}
-                        <div className="space-y-4 my-auto flex flex-col items-center">
-                          <div
-                            className={`p-2.5 rounded-2xl ${
+                      {/* Action Button */}
+                      <div className="pt-6 mt-auto">
+                        {isCurrentPlanAndCycle ? (
+                          <button
+                            type="button"
+                            disabled
+                            className="w-full py-3.5 rounded-full bg-slate-100 text-slate-600 font-bold text-xs cursor-default flex items-center justify-center gap-2"
+                          >
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <span>Current Plan</span>
+                          </button>
+                        ) : isSwitchingCycleOnSamePlan ? (
+                          <button
+                            type="button"
+                            disabled={isProcessingPayment}
+                            onClick={() => handleInitiatePlanUpgrade(tier)}
+                            className="w-full py-3.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                          >
+                            {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : isAnnual ? (
+                              <>
+                                <span>Switch to Annual (Save 20%)</span>
+                                <Sparkles className="w-4 h-4" />
+                              </>
+                            ) : (
+                              <>
+                                <span>Switch to Monthly</span>
+                                <ArrowRight className="w-4 h-4" />
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={isProcessingPayment}
+                            onClick={() => handleInitiatePlanUpgrade(tier)}
+                            className={`w-full py-3.5 rounded-full font-bold text-xs transition-all shadow-sm active:scale-98 flex items-center justify-center gap-2 cursor-pointer ${
                               isGrowth
-                                ? 'bg-rose-500/20 text-rose-300'
-                                : isEnterprise
-                                  ? 'bg-purple-500/20 text-purple-300'
-                                  : isAgency
-                                    ? 'bg-emerald-500/20 text-emerald-300'
-                                    : 'bg-slate-800 text-slate-300'
+                                ? 'bg-black text-white hover:bg-slate-800 shadow-md shadow-black/20'
+                                : isStarter
+                                  ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                  : 'bg-slate-900 text-white hover:bg-black'
                             }`}
                           >
-                            {isGrowth ? (
-                              <Sparkles className="w-5 h-5" />
-                            ) : isEnterprise ? (
-                              <Crown className="w-5 h-5" />
-                            ) : isAgency ? (
-                              <Building className="w-5 h-5" />
+                            {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : isStarter ? (
+                              <>
+                                <span>Activate Free Tier</span>
+                                <Check className="w-4 h-4" />
+                              </>
+                            ) : isUpgradeTier ? (
+                              <>
+                                <span>
+                                  Upgrade for {currencySymbol}
+                                  {upgradeDiffPrice.toLocaleString()}
+                                </span>
+                                <ArrowRight className="w-4 h-4" />
+                              </>
                             ) : (
-                              <Package className="w-5 h-5" />
+                              <>
+                                <span>Upgrade Now</span>
+                                <ArrowRight className="w-4 h-4" />
+                              </>
                             )}
-                          </div>
-
-                          <div className="space-y-1">
-                            <span className="text-xs font-black uppercase tracking-wider block text-white">
-                              {tier.badge || tier.name}
-                            </span>
-                            <span className="text-[11px] font-extrabold text-slate-400 block font-sans">
-                              {currencySymbol}
-                              {price.toLocaleString()}
-                            </span>
-                          </div>
-
-                          {isCurrent && (
-                            <span
-                              className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"
-                              title="Active Plan"
-                            />
-                          )}
-                        </div>
-
-                        {/* Bottom: Click Hint */}
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 group-hover:text-white transition">
-                          <span>View</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </div>
+                          </button>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Swiper Interactive Range Scrubber & Indicators */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 px-2">
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-rose-500" />
-                <span>Drag Slider:</span>
+          {/* Carousel Pagination & Indicator Dots */}
+          <div className="flex items-center justify-between pt-3 px-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-400 font-mono">
+                Slide {activePricingSlide + 1} of {tiers.length}
               </span>
-              <div className="w-full sm:w-60 px-2 flex items-center gap-2">
-                <input
-                  type="range"
-                  min={0}
-                  max={Math.max(0, tiers.length - 1)}
-                  step={1}
-                  value={activePricingSlide}
-                  onChange={(e) => handleSlideChange(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/50"
-                  aria-label="Select Pricing Plan Tier"
-                />
-                <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shrink-0 font-mono">
-                  {activePricingSlide + 1}/{tiers.length}
-                </span>
-              </div>
             </div>
 
-            {/* Quick Step Indicators */}
-            <div className="flex items-center gap-2">
-              {tiers.map((t, idx) => (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                {tiers.map((t, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSlideChange(idx)}
+                    className={`transition-all duration-300 rounded-full cursor-pointer ${
+                      activePricingSlide === idx
+                        ? 'w-6 h-2 bg-slate-900 dark:bg-white'
+                        : 'w-2 h-2 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
+                    }`}
+                    title={`Go to ${t.badge || t.name}`}
+                  />
+                ))}
+              </div>
+
+              <div className="flex items-center gap-1 ml-2">
                 <button
-                  key={idx}
                   type="button"
-                  onClick={() => handleSlideChange(idx)}
-                  className={`transition-all duration-300 rounded-full cursor-pointer flex items-center gap-1 ${
-                    activePricingSlide === idx
-                      ? 'px-3 py-1 bg-rose-500 text-white text-[11px] font-bold shadow-sm'
-                      : 'w-2.5 h-2.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
-                  }`}
-                  title={`Go to ${t.badge || t.name}`}
+                  onClick={() => {
+                    if (emblaApi && emblaApi.canScrollPrev()) {
+                      emblaApi.scrollPrev();
+                    } else {
+                      handleSlideChange((activePricingSlide - 1 + tiers.length) % tiers.length);
+                    }
+                  }}
+                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs cursor-pointer"
+                  title="Previous Plan"
                 >
-                  {activePricingSlide === idx ? <span>{t.badge || t.name}</span> : null}
+                  <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (emblaApi && emblaApi.canScrollNext()) {
+                      emblaApi.scrollNext();
+                    } else {
+                      handleSlideChange((activePricingSlide + 1) % tiers.length);
+                    }
+                  }}
+                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs cursor-pointer"
+                  title="Next Plan"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        /* 4-TIER REFERO COMPARISON GRID */
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 pt-4">
-          {tiers.map((tier) => {
-            const id = tier.id.toUpperCase();
-            const currentPlanId = subscription?.plan || 'STARTER';
-            const activeCycle = subscription?.billingCycle || 'MONTHLY';
-            const isCurrentPlanAndCycle = currentPlanId.toUpperCase() === id && activeCycle === billingCycle;
-            const isSwitchingCycleOnSamePlan = currentPlanId.toUpperCase() === id && activeCycle !== billingCycle;
-            const isCurrent = isCurrentPlanAndCycle;
-            const isAnnual = billingCycle === 'ANNUAL';
-            const isIndian = customerRegion === 'INDIA';
-
-            const price = isIndian
-              ? isAnnual
-                ? tier.priceAnnualInr
-                : tier.priceMonthlyInr
-              : isAnnual
-                ? tier.priceAnnualUsd
-                : tier.priceMonthlyUsd;
-
-            const currentTier =
-              tiers.find(
-                (t) => (currentPlanId || 'STARTER').toUpperCase() === t.id.toUpperCase(),
-              ) || tiers[0];
-            const currentPrice = isIndian
-              ? isAnnual
-                ? currentTier.priceAnnualInr
-                : currentTier.priceMonthlyInr
-              : isAnnual
-                ? currentTier.priceAnnualUsd
-                : currentTier.priceMonthlyUsd;
-
-            const isUpgradeTier = !isCurrent && price > currentPrice && currentPrice > 0;
-            const upgradeDiffPrice = isUpgradeTier ? Math.max(0, price - currentPrice) : price;
-            const currencySymbol = isIndian ? '₹' : '$';
-            const monthlyEquivalent = isAnnual ? Math.round(price / 12) : price;
-
-            const isGrowth = id === 'GROWTH' || id === 'PRO' || tier.popular;
-            const isEnterprise = id === 'ENTERPRISE';
-            const isAgency = id === 'AGENCY';
-            const isStarter =
-              id === 'STARTER' || (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0);
-
-            return (
-              <div
-                key={tier.id}
-                className={`rounded-[26px] p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 relative group ${
-                  isGrowth
-                    ? 'border-2 border-[#ff4893] bg-gradient-to-b from-[#fff9f6] via-[#fff1f6] to-[#fdf2f8] shadow-xl shadow-rose-500/10 hover:-translate-y-1'
-                    : isCurrent
-                      ? 'bg-white border-2 border-emerald-500 shadow-xl shadow-emerald-500/10 ring-2 ring-emerald-500/20'
-                      : 'bg-white border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md hover:-translate-y-1'
-                }`}
-              >
-                {/* Top Floating Badge */}
-                {isCurrent ? (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10">
-                    <CheckCircle2 className="w-3 h-3" />
-                    <span>Active Plan ({activeCycle.toLowerCase()})</span>
-                  </div>
-                ) : isSwitchingCycleOnSamePlan ? (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10">
-                    <Sparkles className="w-3 h-3 text-amber-200" />
-                    <span>Switch to {billingCycle.toLowerCase()}</span>
-                  </div>
-                ) : isUpgradeTier ? (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10">
-                    <Flame className="w-3 h-3 text-amber-200 fill-amber-200" />
-                    <span>
-                      Upgrade & Save {currencySymbol}
-                      {currentPrice.toLocaleString()}
-                    </span>
-                  </div>
-                ) : null}
-
-                {/* Card Header & Content */}
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span
-                        className={`text-sm font-black italic tracking-wider uppercase ${
-                          isGrowth
-                            ? 'bg-gradient-to-r from-[#ff5722] via-[#ff4081] to-[#d946ef] bg-clip-text text-transparent'
-                            : isEnterprise
-                              ? 'text-purple-700'
-                              : isAgency
-                                ? 'text-slate-900'
-                                : 'text-slate-500'
-                        }`}
-                      >
-                        {tier.badge || tier.name}
-                      </span>
-                      {isGrowth && !isCurrent && (
-                        <span className="text-[11px] font-extrabold text-rose-600 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3 text-rose-500" />
-                          <span>Best Value</span>
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-600 leading-relaxed min-h-[36px] line-clamp-2">
-                      {tier.description}
-                    </p>
-                  </div>
-
-                  {/* Savings Callout Pill */}
-                  {isAnnual && !isStarter && (
-                    <div className="text-xs font-bold text-rose-600 flex items-center gap-1">
-                      <span>Save 20% on Annual Plan</span>
-                      <span>✨</span>
-                    </div>
-                  )}
-
-                  {/* Price Display */}
-                  <div className="py-2">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight font-sans">
-                        {currencySymbol}
-                        {isStarter ? '0' : isAnnual ? monthlyEquivalent.toLocaleString() : upgradeDiffPrice.toLocaleString()}
-                      </span>
-                      <span className="text-xl sm:text-2xl font-serif italic text-slate-500 font-normal">
-                        /month
-                      </span>
-                    </div>
-                    <div className="text-[11px] font-medium text-slate-500 mt-1">
-                      {isStarter
-                        ? 'Free to use'
-                        : isAnnual
-                          ? `${currencySymbol}${price.toLocaleString()} billed annually (${currencySymbol}${monthlyEquivalent.toLocaleString()}/mo)`
-                          : 'Billed monthly'}
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="h-px bg-slate-200/80 w-full" />
-
-                  {/* Features List */}
-                  <div className="space-y-2.5 pt-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                      What&apos;s Included:
-                    </span>
-                    <ul className="space-y-2.5 text-xs text-slate-700">
-                      {tier.features.map((feat, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5 leading-snug">
-                          <div
-                            className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                              isGrowth
-                                ? 'bg-rose-100 text-rose-600'
-                                : isEnterprise
-                                  ? 'bg-purple-100 text-purple-700'
-                                  : isAgency
-                                    ? 'bg-emerald-100 text-emerald-700'
-                                    : 'bg-slate-100 text-slate-600'
-                            }`}
-                          >
-                            <Check className="w-2.5 h-2.5 stroke-[3]" />
-                          </div>
-                          <span className="text-slate-700 font-medium">{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Action Button */}
-                <div className="pt-6">
-                  {isCurrentPlanAndCycle ? (
-                    <button
-                      type="button"
-                      disabled
-                      className="w-full py-3.5 rounded-full bg-slate-100 text-slate-600 font-bold text-xs cursor-default flex items-center justify-center gap-2"
-                    >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>Current Plan</span>
-                    </button>
-                  ) : isSwitchingCycleOnSamePlan ? (
-                    <button
-                      type="button"
-                      disabled={isProcessingPayment}
-                      onClick={() => handleInitiatePlanUpgrade(tier)}
-                      className="w-full py-3.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-                    >
-                      {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      ) : isAnnual ? (
-                        <>
-                          <span>Switch to Annual (Save 20%)</span>
-                          <Sparkles className="w-4 h-4" />
-                        </>
-                      ) : (
-                        <>
-                          <span>Switch to Monthly</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </>
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={isProcessingPayment}
-                      onClick={() => handleInitiatePlanUpgrade(tier)}
-                      className={`w-full py-3.5 rounded-full font-bold text-xs transition-all shadow-sm active:scale-98 flex items-center justify-center gap-2 cursor-pointer ${
-                        isGrowth
-                          ? 'bg-black text-white hover:bg-slate-800 shadow-md shadow-black/20'
-                          : isStarter
-                            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                            : 'bg-slate-900 text-white hover:bg-black'
-                      }`}
-                    >
-                      {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      ) : isStarter ? (
-                        <>
-                          <span>Activate Free Tier</span>
-                          <Check className="w-4 h-4" />
-                        </>
-                      ) : isUpgradeTier ? (
-                        <>
-                          <span>
-                            Upgrade for {currencySymbol}
-                            {upgradeDiffPrice.toLocaleString()}
-                          </span>
-                          <ArrowRight className="w-4 h-4" />
-                        </>
-                      ) : (
-                        <>
-                          <span>Upgrade Now</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </>
-                      )}
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
         </div>
       )}
 
@@ -1876,33 +1629,32 @@ export const BillingStudio: React.FC = () => {
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* UNIFIED SECURE CHECKOUT MODAL — INTERNATIONAL ($ USD)          */}
-      {/* Gateway identity intentionally abstracted from UI              */}
+      {/* SECURE PAYPAL INTERNATIONAL CHECKOUT MODAL ($ USD)             */}
       {/* ───────────────────────────────────────────────────────────── */}
-      {isStripeModalOpen && selectedPlanForPayment && (
+      {isPaypalModalOpen && selectedPlanForPayment && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 space-y-0">
-            {/* Secure Checkout Header — gateway name intentionally not shown */}
-            <div className="bg-[#191a1b] text-white p-6 flex items-center justify-between">
+            {/* Header */}
+            <div className="bg-[#003087] text-white p-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-lg">
-                  🔒
+                  🅿️
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-base text-white">Secure Checkout</span>
-                    <span className="px-1.5 py-0.5 rounded bg-[#d4ff4c]/20 text-[#d4ff4c] text-[10px] font-mono font-bold">
-                      PCI-DSS Compliant
+                    <span className="font-bold text-base text-white">PayPal International Checkout</span>
+                    <span className="px-1.5 py-0.5 rounded bg-[#FFC439] text-[#003087] text-[10px] font-mono font-bold">
+                      Live
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 font-sans">
-                    Credit / Debit Cards • Apple Pay • Google Pay • 3D Secure
+                  <p className="text-xs text-blue-100 font-sans">
+                    PayPal 1-Click • Pay Later (Pay in 4) • Debit / Credit Card
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setIsStripeModalOpen(false)}
+                onClick={() => setIsPaypalModalOpen(false)}
                 className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer"
               >
                 ✕
@@ -1911,28 +1663,13 @@ export const BillingStudio: React.FC = () => {
 
             {/* Modal Body */}
             <div className="p-6 sm:p-8 space-y-6">
-              {stripeStep === 'DETAILS' && (
-                <form onSubmit={handleConfirmStripePayment} className="space-y-5 text-xs">
-                  {/* 1-Click Apple Pay / Google Pay Express Button */}
-                  <button
-                    type="button"
-                    onClick={handleConfirmStripePayment}
-                    className="w-full py-3 px-4 bg-black hover:bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer transition"
-                  >
-                    <span>⚡ Express Pay (Apple Pay / Google Pay)</span>
-                  </button>
-
-                  <div className="flex items-center gap-2 text-slate-400 text-[10px] uppercase font-bold">
-                    <span className="h-px bg-slate-200 flex-1" />
-                    <span>Or Pay with Credit / Debit Card</span>
-                    <span className="h-px bg-slate-200 flex-1" />
-                  </div>
-
+              {paypalStep === 'DETAILS' && (
+                <div className="space-y-5 text-xs">
                   {/* Order Summary Box */}
-                  <div className="p-4 rounded-2xl bg-purple-50/90 border border-purple-200 space-y-2">
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] uppercase font-bold text-purple-700 block">
+                        <span className="text-[10px] uppercase font-bold text-slate-600 block">
                           {upgradeDetails?.isUpgradeDifference
                             ? 'Subscription Plan Upgrade (Prorated)'
                             : 'Subscription Plan'}
@@ -1948,14 +1685,14 @@ export const BillingStudio: React.FC = () => {
                               Full Price: ${(upgradeDetails.originalAmount || 0).toLocaleString()}{' '}
                               USD
                             </span>
-                            <strong className="text-lg font-black text-purple-900">
+                            <strong className="text-lg font-black text-emerald-800">
                               ${(upgradeDetails.upgradeDifference || 0).toLocaleString()} USD
                             </strong>
                           </>
                         ) : (
                           <>
-                            <span className="text-xs text-slate-500 block">Total Amount:</span>
-                            <strong className="text-lg font-bold text-[#635bff]">
+                            <span className="text-xs text-slate-500 block">Total Payable:</span>
+                            <strong className="text-lg font-bold text-slate-900">
                               $
                               {(billingCycle === 'ANNUAL'
                                 ? selectedPlanForPayment.priceAnnualUsd
@@ -1969,7 +1706,7 @@ export const BillingStudio: React.FC = () => {
                     </div>
 
                     {upgradeDetails?.isUpgradeDifference && (
-                      <div className="pt-2 border-t border-purple-200/80 flex items-center justify-between text-[11px] text-purple-950 font-bold">
+                      <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-700 font-bold">
                         <span>Active {upgradeDetails.currentPlanName || 'Plan'} Credit:</span>
                         <span className="text-emerald-700">
                           - ${(upgradeDetails.creditedAmount || 0).toLocaleString()} USD
@@ -1978,109 +1715,84 @@ export const BillingStudio: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Card Form */}
-                  <div className="space-y-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">Card Number</label>
-                      <input
-                        type="text"
-                        required
-                        value={stripeCardNumber}
-                        onChange={(e) => setStripeCardNumber(e.target.value)}
-                        placeholder="•••• •••• •••• ••••"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-mono font-bold text-xs"
-                      />
-                    </div>
+                  {/* PayPal Payment Action Buttons */}
+                  <div className="space-y-4">
+                    {/* Official PayPal SDK Buttons Container */}
+                    <div id="paypal-sdk-button-container" className="min-h-[44px]" />
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block font-bold text-slate-700 mb-1">Expiration</label>
-                        <input
-                          type="text"
-                          required
-                          value={stripeExpiry}
-                          onChange={(e) => setStripeExpiry(e.target.value)}
-                          placeholder="MM/YY"
-                          className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white font-mono text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-bold text-slate-700 mb-1">CVC / CVV</label>
-                        <input
-                          type="password"
-                          required
-                          maxLength={4}
-                          value={stripeCvc}
-                          onChange={(e) => setStripeCvc(e.target.value)}
-                          placeholder="CVC"
-                          className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white font-mono text-xs"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block font-bold text-slate-700 mb-1">Country</label>
-                        <select
-                          value={stripeCountry}
-                          onChange={(e) => setStripeCountry(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-medium"
-                        >
-                          <option value="United States (US)">United States (US)</option>
-                          <option value="United Kingdom (UK)">United Kingdom (UK)</option>
-                          <option value="Canada (CA)">Canada (CA)</option>
-                          <option value="Australia (AU)">Australia (AU)</option>
-                          <option value="Germany (DE)">Germany (DE)</option>
-                          <option value="Singapore (SG)">Singapore (SG)</option>
-                          <option value="United Arab Emirates (AE)">UAE (AE)</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block font-bold text-slate-700 mb-1">ZIP / Postal</label>
-                        <input
-                          type="text"
-                          required
-                          value={stripeZip}
-                          onChange={(e) => setStripeZip(e.target.value)}
-                          placeholder="ZIP Code"
-                          className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white font-mono text-xs"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 flex gap-3">
+                    {/* Quick 1-Click Fallback Button */}
                     <button
                       type="button"
-                      onClick={() => setIsStripeModalOpen(false)}
-                      className="flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 cursor-pointer"
+                      onClick={() => handleConfirmPaypalPayment()}
+                      className="w-full py-3.5 px-4 bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition cursor-pointer"
                     >
-                      Cancel
+                      <span className="font-extrabold italic text-base">Pay</span>
+                      <span className="font-extrabold italic text-base text-[#0079C1]">Pal</span>
+                      <span className="text-xs font-bold text-slate-800 ml-1">
+                        — 1-Click Checkout ($
+                        {(upgradeDetails?.upgradeDifference ||
+                          (billingCycle === 'ANNUAL'
+                            ? selectedPlanForPayment.priceAnnualUsd
+                            : selectedPlanForPayment.priceMonthlyUsd)
+                        ).toLocaleString()}{' '}
+                        USD)
+                      </span>
                     </button>
+
+                    {/* PayPal Pay Later / Pay in 4 Button */}
                     <button
-                      type="submit"
-                      className="flex-1 py-3 rounded-2xl bg-[#191a1b] hover:bg-black text-[#d4ff4c] font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                      type="button"
+                      onClick={() => handleConfirmPaypalPayment()}
+                      className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-[#003087] rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border border-slate-300 transition cursor-pointer"
                     >
-                      <Lock className="w-4 h-4" />
-                      <span>Pay Now</span>
+                      <span>🅿️ Pay Later with Pay in 4 (Interest-Free)</span>
                     </button>
+
+                    {/* PayPal Trust and Guarantee Badges */}
+                    <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1.5 text-slate-600">
+                      <div className="flex items-center gap-2 font-bold text-blue-900 text-[11px]">
+                        <ShieldCheck className="w-4 h-4 text-blue-600" />
+                        <span>PayPal Buyer Protection Guaranteed</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500">
+                        Your international subscription is backed by 24/7 PayPal fraud prevention, zero liability protection, and encrypted transactions.
+                      </p>
+                    </div>
+
+                    <div className="pt-2 flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsPaypalModalOpen(false)}
+                        className="flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleConfirmPaypalPayment()}
+                        className="flex-1 py-3 rounded-2xl bg-[#003087] hover:bg-[#002569] text-white font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Lock className="w-4 h-4" />
+                        <span>Authorize PayPal</span>
+                      </button>
+                    </div>
                   </div>
-                </form>
+                </div>
               )}
 
-              {stripeStep === 'AUTHORIZING' && (
+              {paypalStep === 'AUTHORIZING' && (
                 <div className="py-12 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full border-4 border-slate-800 border-t-transparent animate-spin mx-auto" />
+                  <div className="w-16 h-16 rounded-full border-4 border-[#003087] border-t-transparent animate-spin mx-auto" />
                   <h4 className="text-base font-bold text-slate-900">
-                    Processing Payment...
+                    Processing PayPal Payment...
                   </h4>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Secure 3D authentication in progress. Please wait a moment.
+                    Secure authorization in progress with PayPal. Please wait a moment.
                   </p>
                 </div>
               )}
 
-              {stripeStep === 'SUCCESS' && (
+              {paypalStep === 'SUCCESS' && (
                 <div className="py-8 text-center space-y-4">
                   <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-2xl font-bold">
                     ✓
@@ -2088,11 +1800,11 @@ export const BillingStudio: React.FC = () => {
                   <h4 className="text-lg font-bold text-slate-900">Payment Successful!</h4>
                   <p className="text-xs text-slate-500">
                     Your store subscription is now active on{' '}
-                    <strong>{selectedPlanForPayment.name}</strong>.
+                    <strong>{selectedPlanForPayment.name}</strong> via PayPal.
                   </p>
                   <button
                     type="button"
-                    onClick={() => setIsStripeModalOpen(false)}
+                    onClick={() => setIsPaypalModalOpen(false)}
                     className="px-6 py-2.5 rounded-xl bg-[#191a1b] text-[#d4ff4c] text-xs font-bold shadow-md cursor-pointer"
                   >
                     Done
@@ -2240,7 +1952,7 @@ export const BillingStudio: React.FC = () => {
                     <option value="NETBANKING">NetBanking Direct Mandate</option>
                   </optgroup>
                   <optgroup label="🌍 USD — International Payments">
-                    <option value="STRIPE_CARD">International Credit / Debit Card</option>
+                    <option value="PAYPAL">PayPal Verified Account</option>
                   </optgroup>
                 </select>
               </div>

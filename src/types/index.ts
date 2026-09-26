@@ -137,6 +137,10 @@ export interface CMSProduct {
   ogImage?: string | null;
   canonicalUrl?: string | null;
   structuredDataJson?: string | null;
+  model3dUrl?: string | null;
+  model3dFormat?: string | null;
+  model3dPoster?: string | null;
+  model3dConfigJson?: string | null;
   status: ProductStatus | string;
   createdAt: string;
 }
@@ -178,6 +182,10 @@ export interface ProductFormData {
   ogImage?: string;
   canonicalUrl?: string;
   structuredDataJson?: string;
+  model3dUrl?: string;
+  model3dFormat?: string;
+  model3dPoster?: string;
+  model3dConfigJson?: string;
   status: ProductStatus | string;
 }
 
@@ -468,6 +476,7 @@ export interface MerchantUser {
   role?: StoreMemberRole | string;
   customRoleTitle?: string | null;
   storeId?: string | null;
+  onboardingCompleted?: boolean;
   preferences?: UserPreferences;
   preferencesJson?: string | null;
   googleAccessToken?: string;
@@ -481,6 +490,7 @@ export interface MerchantUser {
     canManagePayments?: boolean;
     canManageLogistics?: boolean;
     canManageAnalytics?: boolean;
+    canManage3DModels?: boolean;
   };
 }
 
@@ -522,6 +532,12 @@ export interface StoreSetupData {
   currency: string;
   language: string;
   timezone: string;
+  shippingFlatRate?: number | null;
+  shippingFreeThreshold?: number | null;
+  taxName?: string | null;
+  taxRateStandard?: number | null;
+  taxInclusive?: boolean | null;
+  codFee?: number | null;
 }
 
 export interface ThemeConfigData {
@@ -558,6 +574,9 @@ export interface ThemeConfigData {
 export type HomepageSectionType =
   | 'hero'
   | 'featured-products'
+  | 'deal-countdown'
+  | 'room-grid'
+  | 'product-matrix'
   | 'categories'
   | 'collections'
   | 'lookbook'
@@ -566,6 +585,8 @@ export type HomepageSectionType =
   | 'custom_form'
   | 'newsletter'
   | 'banner'
+  | 'split-features'
+  | 'faq-locations'
   | 'spacer';
 
 export interface HomepageSection {
@@ -592,7 +613,7 @@ export interface HomepageSection {
     lookbookTitle?: string;
     lookbookDesc?: string;
     lookbookImage?: string;
-    testimonials?: Array<{ name: string; rating: number; text: string; avatar?: string }>;
+    testimonials?: Array<{ name: string; rating: number; text: string; avatar?: string; role?: string }>;
     badges?: Array<{ icon: string; title: string; desc: string }>;
     formId?: string;
     formSlug?: string;
@@ -699,6 +720,7 @@ export interface BackendUserResponse {
   role: string;
   customRoleTitle?: string | null;
   emailVerified: boolean;
+  onboardingCompleted?: boolean;
   verificationToken?: string | null;
   createdAt?: string;
   stores?: CMSStore[];
@@ -717,6 +739,7 @@ export interface BackendUserResponse {
     canManagePayments: boolean;
     canManageLogistics: boolean;
     canManageAnalytics: boolean;
+    canManage3DModels?: boolean;
     store?: CMSStore;
   }[];
 }
@@ -1097,6 +1120,7 @@ export interface CMSStoreMember {
   canManagePayments: boolean;
   canManageLogistics: boolean;
   canManageAnalytics: boolean;
+  canManage3DModels?: boolean;
   invitedAt?: string;
   acceptedAt?: string | null;
   createdAt: string;
@@ -1117,6 +1141,7 @@ export interface CreateStoreMemberPayload {
   canManagePayments?: boolean;
   canManageLogistics?: boolean;
   canManageAnalytics?: boolean;
+  canManage3DModels?: boolean;
 }
 
 export interface TransferOwnershipPayload {
@@ -1125,17 +1150,99 @@ export interface TransferOwnershipPayload {
   passwordConfirm?: string;
 }
 
+// ─── 3D AI Studio & Product Modeling Types ────────────────────────────────────
+export interface ThreeDViewerSettings {
+  autoRotate?: boolean;
+  lighting?: 'studio' | 'sunset' | 'neutral' | 'cyberpunk' | string;
+  materialFinish?: 'standard' | 'pbr-metallic' | 'matte' | 'wireframe' | string;
+  background?: 'gradient-dark' | 'radial-slate' | 'studio-white' | 'transparent' | string;
+  scale?: number;
+}
+
+export interface ThreeDModelData {
+  id: string;
+  name: string;
+  description?: string | null;
+  storeId?: string | null;
+  productId?: string | null;
+  sourceImages: string | string[];
+  modelUrl?: string | null;
+  usdzUrl?: string | null;
+  thumbnailUrl?: string | null;
+  status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | string;
+  creditsCost: number;
+  polyCount?: number | null;
+  fileSizeBytes?: number | null;
+  settingsJson?: string | null;
+  metadataJson?: string | null;
+  settings?: ThreeDViewerSettings;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ThreeDCreditPackage {
+  id: string;
+  name: string;
+  credits: number;
+  priceUsd: number;
+  priceInr: number;
+  badge?: string;
+  description: string;
+  perCreditUsd: string;
+  popular?: boolean;
+}
+
+export interface ThreeDCreditTransaction {
+  id: string;
+  storeId: string;
+  amount: number;
+  type: 'PLAN_GRANT' | 'PURCHASE' | 'USAGE_DEDUCTION' | 'ADMIN_ADJUSTMENT' | 'REFUND' | string;
+  description: string;
+  balanceAfter: number;
+  pricePaid?: number | null;
+  currency?: string | null;
+  paymentRef?: string | null;
+  modelId?: string | null;
+  createdAt: string;
+}
+
+export interface ThreeDStudioData {
+  credits: {
+    available: number;
+    totalGranted: number;
+    used: number;
+    plan: string;
+    monthlyAllowance: number;
+  };
+  packages: ThreeDCreditPackage[];
+  models: ThreeDModelData[];
+  transactions: ThreeDCreditTransaction[];
+  products: {
+    id: string;
+    name: string;
+    images?: string | string[];
+    sku?: string | null;
+    price: number;
+    model3dUrl?: string | null;
+  }[];
+}
+
 // ─── Payment Gateway & Transaction Types ─────────────────────────────────────
 export interface CMSPaymentSettings {
   id: string;
   paymentStripeActive: boolean;
   paymentRazorpayActive: boolean;
+  paymentPaypalActive: boolean;
   paymentCodActive: boolean;
   paymentTestMode: boolean;
   razorpayKeyId?: string | null;
   razorpayKeySecretMasked?: string | null;
   razorpayWebhookSecretMasked?: string | null;
   razorpayAutoCapture?: boolean;
+  paypalClientId?: string | null;
+  paypalClientSecretMasked?: string | null;
+  paypalWebhookIdMasked?: string | null;
+  paypalMode?: 'sandbox' | 'live' | string;
   stripePublishableKey?: string | null;
   stripeSecretKeyMasked?: string | null;
   stripeWebhookSecretMasked?: string | null;
@@ -1146,18 +1253,24 @@ export interface CMSPaymentSettings {
   webhookUrls: {
     razorpay: string;
     stripe: string;
+    paypal?: string;
   };
 }
 
 export interface UpdatePaymentSettingsPayload {
   paymentStripeActive?: boolean;
   paymentRazorpayActive?: boolean;
+  paymentPaypalActive?: boolean;
   paymentCodActive?: boolean;
   paymentTestMode?: boolean;
   razorpayKeyId?: string | null;
   razorpayKeySecret?: string | null;
   razorpayWebhookSecret?: string | null;
   razorpayAutoCapture?: boolean;
+  paypalClientId?: string | null;
+  paypalClientSecret?: string | null;
+  paypalWebhookId?: string | null;
+  paypalMode?: 'sandbox' | 'live' | string;
   stripePublishableKey?: string | null;
   stripeSecretKey?: string | null;
   stripeWebhookSecret?: string | null;
@@ -1278,7 +1391,7 @@ export interface PaymentTransactionData {
 
 export interface PaymentTestResponse {
   success: boolean;
-  gateway: 'RAZORPAY' | 'STRIPE';
+  gateway: 'RAZORPAY' | 'STRIPE' | 'PAYPAL';
   mode: string;
   message: string;
   supportedCurrencies: string[];
@@ -1334,7 +1447,7 @@ export interface StoreSubscriptionData {
   billingCycle: 'MONTHLY' | 'ANNUAL';
   planStartedAt: string;
   planRenewsAt: string;
-  planPaymentMethod: 'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'STRIPE_CARD' | 'NETBANKING' | string;
+  planPaymentMethod: 'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'PAYPAL' | 'NETBANKING' | string;
   planPaymentMethodDetails: string;
   planStatus: 'ACTIVE' | 'TRIAL' | 'PAST_DUE' | 'CANCELLED' | string;
   planTransactionFeePercent: number;

@@ -78,6 +78,7 @@ apiClient.interceptors.response.use(
             !currentPath.includes('/verify-email') &&
             !currentPath.includes('/forgot-password') &&
             !currentPath.includes('/reset-password') &&
+            !currentPath.includes('/onboarding') &&
             !currentPath.includes('/store-setup') &&
             !currentPath.includes('/setup')
           ) {

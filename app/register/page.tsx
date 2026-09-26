@@ -18,7 +18,7 @@ export default function RegisterPage() {
     }
 
     if (mode === 'register') {
-      router.push('/store-setup?first_time=true');
+      router.push('/onboarding');
     } else {
       router.push('/dashboard');
     }

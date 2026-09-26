@@ -29,6 +29,9 @@ import {
   Sparkles,
   AtSign,
   Tv,
+  Truck,
+  Percent,
+  Receipt,
 } from 'lucide-react';
 
 interface StoreSetupProps {
@@ -41,7 +44,7 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    'general' | 'branding' | 'contact' | 'domain' | 'regional'
+    'general' | 'branding' | 'contact' | 'domain' | 'regional' | 'delivery_taxes'
   >('general');
   const [toastMessage, setToastMessage] = useState<{
     text: string;
@@ -209,6 +212,7 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
             { id: 'contact', label: '3. Contact & Address', icon: Mail },
             { id: 'domain', label: '4. Domain & SSL', icon: Globe },
             { id: 'regional', label: '5. Currency & Region', icon: DollarSign },
+            { id: 'delivery_taxes', label: '6. Delivery & Taxes', icon: Truck },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -939,6 +943,191 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
                 <p className="text-[10px] text-slate-400">
                   Used for order timestamps, analytics reporting, and inventory logs.
                 </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 6: DELIVERY FEES & TAX SETTINGS */}
+        {activeTab === 'delivery_taxes' && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
+                  <Truck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-black text-slate-900 dark:text-foreground">
+                    Delivery Fees & Tax Configuration
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Configure standard shipping rates, free delivery criteria, taxes, and handling fees passed to the storefront checkout.
+                  </p>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-wider border border-indigo-200 dark:border-indigo-800">
+                Checkout Financials
+              </span>
+            </div>
+
+            {/* Delivery / Shipping Fee Section */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Truck className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Shipping & Delivery Rates</span>
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-2xl bg-slate-50/60 dark:bg-slate-900/30 border border-slate-200/60 dark:border-border">
+                {/* Standard Shipping Rate */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Standard Delivery / Shipping Flat Rate ({formData.currency || 'USD'})
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.shippingFlatRate ?? ''}
+                      onChange={(e) =>
+                        handleChange(
+                          'shippingFlatRate',
+                          e.target.value === '' ? null : parseFloat(e.target.value)
+                        )
+                      }
+                      placeholder="e.g. 9.99"
+                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    Base shipping fee charged during storefront checkout for standard deliveries.
+                  </p>
+                </div>
+
+                {/* Free Shipping Threshold */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Free Delivery Minimum Order Value ({formData.currency || 'USD'})
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.shippingFreeThreshold ?? ''}
+                      onChange={(e) =>
+                        handleChange(
+                          'shippingFreeThreshold',
+                          e.target.value === '' ? null : parseFloat(e.target.value)
+                        )
+                      }
+                      placeholder="e.g. 50.00"
+                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    Orders at or exceeding this subtotal automatically qualify for free shipping.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Taxes & Extra Fees Section */}
+            <div className="space-y-4 pt-2">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Receipt className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Taxes & Extra Fees</span>
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 rounded-2xl bg-slate-50/60 dark:bg-slate-900/30 border border-slate-200/60 dark:border-border">
+                {/* Tax Label / Name */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Tax Name / Label
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.taxName || ''}
+                    onChange={(e) => handleChange('taxName', e.target.value)}
+                    placeholder="e.g. GST, VAT, Sales Tax"
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <p className="text-[10px] text-slate-400">
+                    Name displayed on customer checkout receipts and tax breakdown popups.
+                  </p>
+                </div>
+
+                {/* Standard Tax Rate */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Standard Tax Rate (%)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.taxRateStandard ?? ''}
+                      onChange={(e) =>
+                        handleChange(
+                          'taxRateStandard',
+                          e.target.value === '' ? null : parseFloat(e.target.value)
+                        )
+                      }
+                      placeholder="e.g. 18.00 or 5.00"
+                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    Percentage calculated on order subtotal during storefront checkout.
+                  </p>
+                </div>
+
+                {/* Cash on Delivery Fee */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    COD Handling Fee ({formData.currency || 'USD'})
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.codFee ?? ''}
+                      onChange={(e) =>
+                        handleChange(
+                          'codFee',
+                          e.target.value === '' ? null : parseFloat(e.target.value)
+                        )
+                      }
+                      placeholder="e.g. 0.00"
+                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    Additional handling fee applied only when customer chooses Cash on Delivery.
+                  </p>
+                </div>
+              </div>
+
+              {/* Tax Inclusive Checkbox */}
+              <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">
+                    Tax Inclusive Pricing
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    When enabled, product catalog prices already include tax and no extra tax is added on top at checkout.
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!formData.taxInclusive}
+                    onChange={(e) => handleChange('taxInclusive', e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
               </div>
             </div>
           </div>

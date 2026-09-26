@@ -43,8 +43,8 @@ function VerifyEmailContent() {
         : undefined,
     });
 
-    // After verification → go to store setup (WhatsApp flow)
-    router.push('/store-setup?first_time=true');
+    // After verification → go to onboarding wizard
+    router.push('/onboarding');
   };
 
   if (!unverifiedEmail) {

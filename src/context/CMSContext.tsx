@@ -116,7 +116,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!token) {
       // Don't redirect during the registration onboarding flow pages
       const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-      const onboardingPaths = ['/store-setup', '/verify-email', '/register', '/setup'];
+      const onboardingPaths = ['/onboarding', '/store-setup', '/verify-email', '/register', '/setup'];
       const isOnboarding = onboardingPaths.some((p) => currentPath.startsWith(p));
       if (!isOnboarding) {
         router.push('/login');
@@ -266,7 +266,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.warn('Failed to sync store status (stale token or reset DB):', err);
       const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-      const onboardingPaths = ['/store-setup', '/verify-email', '/register', '/setup'];
+      const onboardingPaths = ['/onboarding', '/store-setup', '/verify-email', '/register', '/setup'];
       const isOnboarding = onboardingPaths.some((p) => currentPath.startsWith(p));
       if (!isOnboarding) {
         // Only clear credentials and redirect on non-onboarding pages

@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StoreTemplate, ThemeConfigData, CMSForm, HomepageSection } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import {
   HomepageSectionsCustomizer,
   DEFAULT_TEMPLATE_SECTIONS,
 } from './HomepageSectionsCustomizer';
+import { HomepageStudioModal } from './HomepageStudioModal';
 import {
   Palette,
   Layout,
@@ -761,8 +762,10 @@ export const ThemeManager: React.FC = () => {
   const [liveViewport, setLiveViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [mobileEditorView, setMobileEditorView] = useState<'editor' | 'preview'>('editor');
   const [canvasPreviewType, setCanvasPreviewType] = useState<'iframe' | 'canvas'>('iframe');
+  const [isHomepageStudioOpen, setIsHomepageStudioOpen] = useState(false);
 
   const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     loadData();
@@ -868,6 +871,87 @@ export const ThemeManager: React.FC = () => {
     );
   };
 
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+
+  const postSectionsToIframe = (sectionsToPost: HomepageSection[]) => {
+    try {
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          {
+            type: 'CMS_SECTIONS_UPDATE',
+            sections: sectionsToPost,
+          },
+          '*',
+        );
+      }
+    } catch (err) {
+      console.warn('Failed to post sections update to preview iframe:', err);
+    }
+  };
+
+  const postHighlightToIframe = (
+    sectionId?: string,
+    sectionType?: string,
+    sectionIndex?: number,
+  ) => {
+    try {
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          {
+            type: 'CMS_HIGHLIGHT_SECTION',
+            sectionId,
+            sectionType,
+            sectionIndex,
+          },
+          '*',
+        );
+      }
+    } catch (err) {
+      console.warn('Failed to post highlight to preview iframe:', err);
+    }
+  };
+
+  const postThemeToIframe = (themeToPost: ThemeConfigData) => {
+    try {
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          {
+            type: 'CMS_THEME_UPDATE',
+            theme: themeToPost,
+          },
+          '*',
+        );
+      }
+    } catch (err) {
+      console.warn('Failed to post theme update to preview iframe:', err);
+    }
+  };
+
+  useEffect(() => {
+    const handleStorefrontMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'STOREFRONT_READY' && themeConfig) {
+        const currentSlug = themeConfig.activeTemplateSlug || 'mincom';
+        const currentSections = getActiveTemplateSections(currentSlug);
+        postSectionsToIframe(currentSections);
+        postThemeToIframe(themeConfig);
+      }
+      if (event.data?.type === 'STOREFRONT_SECTION_CLICKED') {
+        const { sectionId, sectionIndex } = event.data;
+        if (sectionId) {
+          setSelectedSectionId(sectionId);
+        } else if (typeof sectionIndex === 'number' && themeConfig) {
+          const currentSlug = themeConfig.activeTemplateSlug || 'mincom';
+          const currentSections = getActiveTemplateSections(currentSlug);
+          if (currentSections[sectionIndex]) {
+            setSelectedSectionId(currentSections[sectionIndex].id);
+          }
+        }
+      }
+    };
+    window.addEventListener('message', handleStorefrontMessage);
+    return () => window.removeEventListener('message', handleStorefrontMessage);
+  }, [themeConfig, sectionsMap]);
+
   const handleSectionsChange = (newSections: HomepageSection[]) => {
     if (!themeConfig) return;
     const currentSlug = themeConfig.activeTemplateSlug || 'mincom';
@@ -880,6 +964,7 @@ export const ThemeManager: React.FC = () => {
       ...themeConfig,
       homeSectionsJson: JSON.stringify(updatedMap),
     });
+    postSectionsToIframe(newSections);
   };
 
   const handleResetSectionsToDefault = () => {
@@ -901,7 +986,9 @@ export const ThemeManager: React.FC = () => {
 
   const handleConfigChange = (field: keyof ThemeConfigData, value: any) => {
     if (!themeConfig) return;
-    setThemeConfig({ ...themeConfig, [field]: value });
+    const updated: ThemeConfigData = { ...themeConfig, [field]: value };
+    setThemeConfig(updated);
+    postThemeToIframe(updated);
   };
 
   const handleSaveTheme = async () => {
@@ -920,11 +1007,28 @@ export const ThemeManager: React.FC = () => {
   };
 
   const handlePublishTemplate = async (slug: string) => {
+    if (!themeConfig) return;
     setPublishingSlug(slug);
     try {
       await cmsService.publishTemplate(slug);
-      handleConfigChange('activeTemplateSlug', slug);
-      showToast(`Template "${slug}" published as active store theme!`, 'success');
+      const defaultSections =
+        DEFAULT_TEMPLATE_SECTIONS[slug] ||
+        DEFAULT_TEMPLATE_SECTIONS['mincom'] ||
+        DEFAULT_TEMPLATE_SECTIONS['default'] ||
+        [];
+      const updatedMap = {
+        ...sectionsMap,
+        [slug]: sectionsMap[slug] && sectionsMap[slug].length > 0 ? sectionsMap[slug] : defaultSections,
+      };
+      setSectionsMap(updatedMap);
+      const updatedConfig: ThemeConfigData = {
+        ...themeConfig,
+        activeTemplateSlug: slug,
+        homeSectionsJson: JSON.stringify(updatedMap),
+      };
+      setThemeConfig(updatedConfig);
+      await cmsService.updateStoreTheme(updatedConfig);
+      showToast(`Template "${slug}" published and homepage sections configured!`, 'success');
     } catch (err) {
       showToast('Failed to publish template.', 'error');
     } finally {
@@ -1828,7 +1932,15 @@ export const ThemeManager: React.FC = () => {
               real-time.
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsHomepageStudioOpen(true)}
+              className="px-5 py-2.5 rounded-2xl bg-[#ffd100] hover:bg-[#ffc400] text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer transform active:scale-95"
+            >
+              <Sparkles className="w-4 h-4 text-slate-950" />
+              <span>Customize Homepage (Studio) ↗</span>
+            </button>
             {isDirty && initialConfig && (
               <button
                 type="button"
@@ -2127,14 +2239,40 @@ export const ThemeManager: React.FC = () => {
               className={`lg:col-span-5 space-y-6 ${mobileEditorView === 'preview' ? 'hidden lg:block' : 'block'}`}
             >
               {activeTab === 'sections' && themeConfig && (
-                <HomepageSectionsCustomizer
-                  templateSlug={themeConfig.activeTemplateSlug || 'mincom'}
-                  templateName={activeTemplate?.name || 'Store Theme'}
-                  sections={getActiveTemplateSections(themeConfig.activeTemplateSlug || 'mincom')}
-                  availableForms={availableForms}
-                  onChange={handleSectionsChange}
-                  onResetToDefault={handleResetSectionsToDefault}
-                />
+                <div className="space-y-4">
+                  <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-amber-500/10 border border-amber-400/30 flex items-center justify-between gap-4 shadow-sm">
+                    <div className="space-y-0.5">
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-amber-500" />
+                        <span>Fullscreen Visual Studio Mode</span>
+                      </h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Open in an expansive email-builder style workspace with live canvas & inspector.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsHomepageStudioOpen(true)}
+                      className="px-4 py-2 rounded-xl bg-[#ffd100] hover:bg-[#ffc400] text-slate-950 text-xs font-black shrink-0 shadow-md transition transform active:scale-95 cursor-pointer whitespace-nowrap"
+                    >
+                      Open Fullscreen Studio ↗
+                    </button>
+                  </div>
+
+                  <HomepageSectionsCustomizer
+                    templateSlug={themeConfig.activeTemplateSlug || 'mincom'}
+                    templateName={activeTemplate?.name || 'Store Theme'}
+                    sections={getActiveTemplateSections(themeConfig.activeTemplateSlug || 'mincom')}
+                    availableForms={availableForms}
+                    selectedSectionId={selectedSectionId}
+                    onSelectSection={(id, type, idx) => {
+                      setSelectedSectionId(id);
+                      postHighlightToIframe(id, type, idx);
+                    }}
+                    onChange={handleSectionsChange}
+                    onResetToDefault={handleResetSectionsToDefault}
+                  />
+                </div>
               )}
               {activeTab === 'colors' && (
                 <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
@@ -2507,8 +2645,17 @@ export const ThemeManager: React.FC = () => {
                     </div>
                   </div>
                   <iframe
-                    key={`${activeTemplate?.slug}-${themeConfig.activeTemplateSlug}-${previewPage}-${themeConfig.themePrimaryColor}-${themeConfig.homeSectionsJson}`}
+                    ref={iframeRef}
+                    key={`${themeConfig.activeTemplateSlug || 'default'}-${previewPage}`}
                     src={`${STOREFRONT_URL}${previewPage === 'home' ? '' : previewPage === 'plp' ? '/products' : previewPage === 'pdp' ? '/products' : '/cart'}?previewTemplate=${themeConfig.activeTemplateSlug || activeTemplate?.slug || 'default'}`}
+                    onLoad={() => {
+                      if (themeConfig) {
+                        const currentSlug = themeConfig.activeTemplateSlug || 'mincom';
+                        const currentSections = getActiveTemplateSections(currentSlug);
+                        postSectionsToIframe(currentSections);
+                        postThemeToIframe(themeConfig);
+                      }
+                    }}
                     className="w-full h-[620px] border-0 bg-white"
                     title="Live Template Preview"
                   />
@@ -2752,6 +2899,27 @@ export const ThemeManager: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+      {/* ── FULLSCREEN HOMEPAGE STUDIO MODAL (Email Template Builder Studio Style) ── */}
+      {isHomepageStudioOpen && themeConfig && (
+        <HomepageStudioModal
+          isOpen={isHomepageStudioOpen}
+          onClose={() => setIsHomepageStudioOpen(false)}
+          templateSlug={themeConfig.activeTemplateSlug || 'mincom'}
+          templateName={activeTemplate?.name || 'Store Theme'}
+          sections={getActiveTemplateSections(themeConfig.activeTemplateSlug || 'mincom')}
+          availableForms={availableForms}
+          themeConfig={themeConfig}
+          selectedSectionId={selectedSectionId}
+          onSelectSection={(id, type, idx) => {
+            setSelectedSectionId(id);
+            postHighlightToIframe(id, type, idx);
+          }}
+          onChange={handleSectionsChange}
+          onResetToDefault={handleResetSectionsToDefault}
+          onSave={handleSaveTheme}
+          isSaving={isSaving}
+        />
       )}
     </div>
   );

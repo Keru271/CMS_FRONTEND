@@ -24,8 +24,8 @@ function LoginContent() {
     };
     cmsService.saveMerchantSession(updatedSession as any);
 
-    if (isRegisteredParam) {
-      router.push('/store-setup?first_time=true');
+    if (isRegisteredParam && !user.onboardingCompleted) {
+      router.push('/onboarding');
     } else {
       router.push('/dashboard');
     }

@@ -90,12 +90,15 @@ export const PaymentStudio: React.FC = () => {
 
   // Key visibility toggles
   const [showRzpSecret, setShowRzpSecret] = useState(false);
+  const [showPaypalSecret, setShowPaypalSecret] = useState(false);
   const [showStripeSecret, setShowStripeSecret] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Gateway Connection Test states
   const [testingRzp, setTestingRzp] = useState(false);
   const [rzpTestResult, setRzpTestResult] = useState<PaymentTestResponse | null>(null);
+  const [testingPaypal, setTestingPaypal] = useState(false);
+  const [paypalTestResult, setPaypalTestResult] = useState<PaymentTestResponse | null>(null);
   const [testingStripe, setTestingStripe] = useState(false);
   const [stripeTestResult, setStripeTestResult] = useState<PaymentTestResponse | null>(null);
 
@@ -127,6 +130,7 @@ export const PaymentStudio: React.FC = () => {
       setStripeConnect(stripeConnectData);
       setFormData({
         paymentRazorpayActive: settingsData?.paymentRazorpayActive ?? false,
+        paymentPaypalActive: settingsData?.paymentPaypalActive ?? false,
         paymentStripeActive: settingsData?.paymentStripeActive ?? false,
         paymentCodActive: settingsData?.paymentCodActive ?? true,
         paymentTestMode: settingsData?.paymentTestMode ?? true,
@@ -134,6 +138,10 @@ export const PaymentStudio: React.FC = () => {
         razorpayKeySecret: '',
         razorpayWebhookSecret: '',
         razorpayAutoCapture: settingsData?.razorpayAutoCapture ?? true,
+        paypalClientId: settingsData?.paypalClientId || '',
+        paypalClientSecret: '',
+        paypalWebhookId: '',
+        paypalMode: (settingsData?.paypalMode as any) || 'sandbox',
         stripePublishableKey: settingsData?.stripePublishableKey || '',
         stripeSecretKey: '',
         stripeWebhookSecret: '',
@@ -401,6 +409,34 @@ export const PaymentStudio: React.FC = () => {
       showToast('Razorpay verification failed', 'error');
     } finally {
       setTestingRzp(false);
+    }
+  };
+
+  const handleTestPaypal = async () => {
+    setTestingPaypal(true);
+    setPaypalTestResult(null);
+    try {
+      const res = await cmsService.testPaymentGateway({
+        gateway: 'PAYPAL',
+        clientId: formData.paypalClientId || settings?.paypalClientId || 'sb',
+        clientSecret: formData.paypalClientSecret || 'sb_demo_secret',
+        mode: formData.paypalMode || 'sandbox',
+        testMode: formData.paymentTestMode,
+      });
+      setPaypalTestResult(res);
+      showToast(res.message, 'success');
+    } catch (err: any) {
+      setPaypalTestResult({
+        success: false,
+        gateway: 'PAYPAL',
+        mode: (formData.paypalMode || 'sandbox').toUpperCase(),
+        message: err?.response?.data?.message || 'PayPal connection test failed',
+        supportedCurrencies: [],
+        features: [],
+      });
+      showToast('PayPal verification failed', 'error');
+    } finally {
+      setTestingPaypal(false);
     }
   };
 
@@ -906,6 +942,232 @@ export const PaymentStudio: React.FC = () => {
                   <span>Test Gateway</span>
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* 💙 PAYPAL GATEWAY CARD */}
+          <div className="p-6 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-sm space-y-5 flex flex-col justify-between">
+            <div className="space-y-5">
+              <div className="flex items-start justify-between pb-4 border-b border-[#cbd5e0]/60">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-[#003087] text-[#0079C1] flex items-center justify-center font-bold text-lg shadow-sm">
+                    <span className="text-white font-serif italic text-xl">P</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-serif font-bold text-lg text-[#191a1b]">PayPal</h3>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#003087]/10 text-[#003087]">
+                        GLOBAL CHECKOUT & BNPL
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800">
+                        {(formData.paypalMode || 'sandbox').toUpperCase()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#5e5a5a]">
+                      PayPal Wallet, 1-Click Checkout, Pay in 4 (Buy Now, Pay Later), and international debit/credit cards in 200+ countries.
+                    </p>
+                  </div>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.paymentPaypalActive}
+                    onChange={(e) =>
+                      setFormData({ ...formData, paymentPaypalActive: e.target.checked })
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#003087]"></div>
+                </label>
+              </div>
+
+              {/* Supported Badges */}
+              <div className="flex flex-wrap gap-2">
+                <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-blue-50 text-blue-800 border border-blue-200 flex items-center gap-1.5">
+                  <Wallet className="w-3 h-3 text-blue-600" />
+                  <span>PayPal Wallet & Smart Buttons</span>
+                </span>
+                <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
+                  <Zap className="w-3 h-3 text-emerald-600" />
+                  <span>Pay in 4 (BNPL)</span>
+                </span>
+                <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-indigo-50 text-indigo-800 border border-indigo-200 flex items-center gap-1.5">
+                  <Globe className="w-3 h-3 text-indigo-600" />
+                  <span>200+ Countries / 25+ FX</span>
+                </span>
+                <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>AES-256 Encrypted</span>
+                </span>
+              </div>
+
+              {/* Environment / Mode Selector */}
+              <div className="p-3.5 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-[#191a1b] block">PayPal Gateway Environment</span>
+                  <span className="text-[10px] text-[#5e5a5a]">
+                    Switch between Sandbox (Testing with mock accounts) and Live (Production buyer payments)
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-[#cbd5e0]">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, paypalMode: 'sandbox' })}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-md transition ${
+                      (formData.paypalMode || 'sandbox') === 'sandbox'
+                        ? 'bg-[#003087] text-white'
+                        : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                    }`}
+                  >
+                    Sandbox
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, paypalMode: 'live' })}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-md transition ${
+                      formData.paypalMode === 'live'
+                        ? 'bg-emerald-700 text-white'
+                        : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                    }`}
+                  >
+                    Live
+                  </button>
+                </div>
+              </div>
+
+              {/* Inputs */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[#191a1b] mb-1">
+                    PayPal Client ID
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.paypalClientId || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, paypalClientId: e.target.value })
+                    }
+                    placeholder={formData.paypalMode === 'live' ? 'AY... (Live Client ID)' : 'sb or Sandbox Client ID'}
+                    className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                  />
+                  <p className="text-[10px] text-[#5e5a5a] mt-1">
+                    Found under PayPal Developer Dashboard → Apps & Credentials.
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-[#191a1b]">
+                      PayPal Client Secret
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowPaypalSecret(!showPaypalSecret)}
+                      className="text-[10px] text-[#5e5a5a] hover:text-[#191a1b] flex items-center gap-1"
+                    >
+                      {showPaypalSecret ? (
+                        <EyeOff className="w-3 h-3" />
+                      ) : (
+                        <Eye className="w-3 h-3" />
+                      )}
+                      <span>{showPaypalSecret ? 'Hide' : 'Show/Edit'}</span>
+                    </button>
+                  </div>
+                  <input
+                    type={showPaypalSecret ? 'text' : 'password'}
+                    value={formData.paypalClientSecret ?? ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, paypalClientSecret: e.target.value })
+                    }
+                    placeholder={
+                      settings?.paypalClientSecretMasked || 'Enter PayPal client secret (EL...)'
+                    }
+                    className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#191a1b] mb-1">
+                    PayPal Webhook Endpoint URL
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={
+                        settings?.webhookUrls?.paypal ||
+                        'http://localhost:5001/api/storefront/checkout/paypal/webhook'
+                      }
+                      className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-gray-50 border border-[#cbd5e0] text-[#5e5a5a]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleCopy(
+                          settings?.webhookUrls?.paypal ||
+                            'http://localhost:5001/api/storefront/checkout/paypal/webhook',
+                          'paypal_webhook',
+                        )
+                      }
+                      className="p-2 bg-[#fdf1ef] hover:bg-[#cbd5e0]/40 rounded-xl border border-[#cbd5e0] transition text-xs cursor-pointer"
+                      title="Copy webhook URL"
+                    >
+                      {copiedField === 'paypal_webhook' ? (
+                        <Check className="w-4 h-4 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-[#5e5a5a]" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-[#5e5a5a] mt-1">
+                    Subscribe to <code className="font-mono text-neutral-800">CHECKOUT.ORDER.APPROVED</code> and <code className="font-mono text-neutral-800">PAYMENT.CAPTURE.COMPLETED</code> events.
+                  </p>
+                </div>
+
+                {paypalTestResult && (
+                  <div
+                    className={`p-3 rounded-xl text-xs flex items-start gap-2 border ${
+                      paypalTestResult.success
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        : 'bg-rose-50 text-rose-800 border-rose-200'
+                    }`}
+                  >
+                    {paypalTestResult.success ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    )}
+                    <div>
+                      <p className="font-semibold">{paypalTestResult.message}</p>
+                      {paypalTestResult.success && (
+                        <p className="text-[10px] text-emerald-700 mt-0.5 font-mono">
+                          Mode: {paypalTestResult.mode} • Currencies: {paypalTestResult.supportedCurrencies?.join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-[#cbd5e0]/60 flex items-center justify-between gap-2">
+              <span className="text-[11px] text-[#5e5a5a]">
+                Settlements: Direct to PayPal Account Balance
+              </span>
+              <button
+                type="button"
+                onClick={handleTestPaypal}
+                disabled={testingPaypal}
+                className="px-3.5 py-1.5 bg-[#003087] hover:bg-[#002266] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+              >
+                {testingPaypal ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                )}
+                <span>Test Gateway</span>
+              </button>
             </div>
           </div>
 

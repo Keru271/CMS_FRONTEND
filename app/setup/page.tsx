@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 
 export default function SetupPage() {
-  redirect('/store-setup');
+  redirect('/onboarding');
 }
+

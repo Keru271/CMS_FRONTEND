@@ -894,7 +894,7 @@ export const NavigationManager: React.FC = () => {
                                   <div className="col-span-7 grid grid-cols-1 gap-2">
                                     {previewCards.slice(0, 4).map((c, cIdx) => (
                                       <div
-                                        key={c.id || cIdx}
+                                        key={(c as any).id || cIdx}
                                         className="p-2 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-indigo-50/50 transition-colors"
                                       >
                                         <div className="flex items-center justify-between">

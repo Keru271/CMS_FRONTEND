@@ -35,6 +35,8 @@ import {
   Gift,
   Mail,
   CheckSquare,
+  Sparkles,
+  Box,
 } from 'lucide-react';
 import { MerchantOnboardingData } from '@/src/types';
 import { usePlanAccess } from '@/src/hooks/usePlanAccess';
@@ -43,6 +45,7 @@ import { useTranslation } from '@/src/context/LanguageContext';
 export type CMSView =
   | 'dashboard'
   | 'products'
+  | '3d'
   | 'categories'
   | 'orders'
   | 'customers'
@@ -152,6 +155,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: t('nav.products', 'Products Studio'),
       icon: Package,
       badge: productsCount,
+    },
+    {
+      id: '3d' as CMSView,
+      path: '/3d',
+      label: t('nav.three_d', '3D AI Studio'),
+      icon: Sparkles,
     },
     {
       id: 'notifications' as CMSView,
@@ -304,7 +313,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     // Role preset shortcuts for specific job functions:
     if (userRole === 'STOCK_CHECKER') {
-      return navId === 'products' || navId === 'categories' || navId === 'dashboard';
+      return navId === 'products' || navId === '3d' || navId === 'categories' || navId === 'dashboard';
     }
 
     if (userRole === 'FULFILLMENT') {
@@ -320,6 +329,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (userRole === 'EDITOR') {
       return (
         navId === 'themes' ||
+        navId === '3d' ||
         navId === 'pages' ||
         navId === 'blog' ||
         navId === 'navigation' ||
@@ -332,6 +342,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       return (
         navId === 'dashboard' ||
         navId === 'products' ||
+        navId === '3d' ||
         navId === 'categories' ||
         navId === 'orders' ||
         navId === 'customers' ||
@@ -347,6 +358,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (userPermissions) {
       if (navId === 'dashboard') return true;
       if (navId === 'products') return !!userPermissions.canManageProducts;
+      if (navId === '3d') return userPermissions.canManage3DModels !== false;
       if (navId === 'categories')
         return !!userPermissions.canManageProducts || !!userPermissions.canManageInventory;
       if (navId === 'orders') return !!userPermissions.canManageOrders;

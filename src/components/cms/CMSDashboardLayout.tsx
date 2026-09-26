@@ -83,7 +83,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // Role-specific shortcut allowances:
     if (userRole === 'STOCK_CHECKER') {
-      return path.startsWith('/products') || path.startsWith('/categories');
+      return path.startsWith('/products') || path.startsWith('/3d') || path.startsWith('/categories');
     }
 
     if (userRole === 'FULFILLMENT') {
@@ -99,6 +99,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     if (userRole === 'EDITOR') {
       return (
         path.startsWith('/themes') ||
+        path.startsWith('/3d') ||
         path.startsWith('/pages') ||
         path.startsWith('/forms') ||
         path.startsWith('/blog') ||
@@ -110,6 +111,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     if (userRole === 'MANAGER') {
       return (
         path.startsWith('/products') ||
+        path.startsWith('/3d') ||
         path.startsWith('/categories') ||
         path.startsWith('/orders') ||
         path.startsWith('/customers') ||
@@ -126,6 +128,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     // Granular permission checks:
     if (userPermissions) {
       if (path.startsWith('/products')) return !!userPermissions.canManageProducts;
+      if (path.startsWith('/3d')) return userPermissions.canManage3DModels !== false;
       if (path.startsWith('/categories'))
         return !!userPermissions.canManageProducts || !!userPermissions.canManageInventory;
       if (path.startsWith('/orders')) return !!userPermissions.canManageOrders;
@@ -151,12 +154,22 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
       if (path.startsWith('/tax') || path.startsWith('/payments') || path.startsWith('/payment'))
         return !!userPermissions.canManagePayments;
       if (path.startsWith('/loyalty')) return !!userPermissions.canManageCustomers;
+      if (path.startsWith('/email-templates'))
+        return (
+          isOwnerOrAdmin ||
+          userRole === 'EDITOR' ||
+          userRole === 'MANAGER' ||
+          !!userPermissions.canManageThemes ||
+          !!userPermissions.canManageAnalytics ||
+          !!userPermissions.canManageSettings
+        );
     }
 
     return false;
   };
 
   const isAuthorized = checkRouteAuthorization(pathname);
+  const isFullScreenRoute = pathname === '/email-templates' || pathname.startsWith('/email-templates');
 
   // Determine fallback redirect target for this role
   const getDefaultAllowedPath = () => {
@@ -166,6 +179,59 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     if (userRole === 'EDITOR') return '/themes';
     return '/dashboard';
   };
+
+  if (isFullScreenRoute) {
+    if (isLoading) {
+      return (
+        <div className="min-h-screen w-full flex items-center justify-center bg-[#fdf1ef]">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-4 border-[#191a1b] border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs font-semibold text-[#5e5a5a] tracking-wide animate-pulse">
+              Loading Email Template Builder...
+            </span>
+          </div>
+        </div>
+      );
+    }
+    if (isSuspended) {
+      return <StoreSuspendedModal />;
+    }
+    if (!isAuthorized) {
+      return (
+        <div className="min-h-screen w-full flex items-center justify-center bg-[#fdf1ef] p-6">
+          <div className="max-w-lg w-full p-8 rounded-3xl bg-white border border-rose-200 shadow-2xl text-center space-y-6">
+            <div className="w-16 h-16 rounded-3xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-lg shadow-rose-600/20">
+              <Lock className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-[10px] font-black uppercase tracking-wider">
+                Access Restricted
+              </span>
+              <h2 className="text-2xl font-black text-slate-900">
+                Email Templates Not Permitted
+              </h2>
+              <p className="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
+                Your assigned staff role ({userRole}) does not have permission to design email templates.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push(getDefaultAllowedPath())}
+              className="w-full py-3 rounded-lg bg-[#191a1b] text-[#d4ff4c] font-medium text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Return to Authorized Workspace</span>
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="min-h-screen w-full bg-[#fdf1ef] text-[#191a1b] font-sans selection:bg-[#191a1b] selection:text-[#d4ff4c]">
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-[#fdf1ef] text-[#191a1b] font-sans selection:bg-[#191a1b] selection:text-[#d4ff4c]">

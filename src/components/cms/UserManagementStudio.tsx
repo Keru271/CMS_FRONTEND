@@ -34,6 +34,7 @@ import {
   HelpCircle,
   FileCheck,
   Check,
+  Sparkles,
 } from 'lucide-react';
 
 const ROLE_PRESETS: {
@@ -52,6 +53,7 @@ const ROLE_PRESETS: {
     canManagePayments: boolean;
     canManageLogistics: boolean;
     canManageAnalytics: boolean;
+    canManage3DModels: boolean;
   };
 }[] = [
   {
@@ -71,6 +73,7 @@ const ROLE_PRESETS: {
       canManagePayments: true,
       canManageLogistics: true,
       canManageAnalytics: true,
+      canManage3DModels: true,
     },
   },
   {
@@ -90,6 +93,7 @@ const ROLE_PRESETS: {
       canManagePayments: false,
       canManageLogistics: false,
       canManageAnalytics: false,
+      canManage3DModels: true,
     },
   },
   {
@@ -109,6 +113,7 @@ const ROLE_PRESETS: {
       canManagePayments: false,
       canManageLogistics: true,
       canManageAnalytics: false,
+      canManage3DModels: false,
     },
   },
   {
@@ -128,6 +133,7 @@ const ROLE_PRESETS: {
       canManagePayments: false,
       canManageLogistics: true,
       canManageAnalytics: false,
+      canManage3DModels: false,
     },
   },
   {
@@ -147,6 +153,7 @@ const ROLE_PRESETS: {
       canManagePayments: false,
       canManageLogistics: false,
       canManageAnalytics: false,
+      canManage3DModels: true,
     },
   },
   {
@@ -166,6 +173,7 @@ const ROLE_PRESETS: {
       canManagePayments: false,
       canManageLogistics: false,
       canManageAnalytics: false,
+      canManage3DModels: true,
     },
   },
 ];
@@ -205,6 +213,7 @@ export const UserManagementStudio: React.FC = () => {
     canManagePayments: boolean;
     canManageLogistics: boolean;
     canManageAnalytics: boolean;
+    canManage3DModels: boolean;
   }>({
     name: '',
     email: '',
@@ -220,6 +229,7 @@ export const UserManagementStudio: React.FC = () => {
     canManagePayments: false,
     canManageLogistics: false,
     canManageAnalytics: false,
+    canManage3DModels: true,
   });
 
   // Created Credentials Popup
@@ -890,6 +900,11 @@ export const UserManagementStudio: React.FC = () => {
                       label: 'Analytics & Sales Reports',
                       icon: BarChart3,
                     },
+                    {
+                      key: 'canManage3DModels',
+                      label: '3D AI Modeling & AR Assets',
+                      icon: Sparkles,
+                    },
                   ].map((perm) => {
                     const Icon = perm.icon;
                     const isChecked = (addForm as any)[perm.key];
@@ -1021,6 +1036,7 @@ export const UserManagementStudio: React.FC = () => {
                     { key: 'canManageSettings', label: 'Store Settings' },
                     { key: 'canManagePayments', label: 'Payments & Payouts' },
                     { key: 'canManageAnalytics', label: 'Analytics Reports' },
+                    { key: 'canManage3DModels', label: '3D AI Modeling & AR' },
                   ].map((p) => {
                     const isChecked = (editingMember as any)[p.key];
                     return (
