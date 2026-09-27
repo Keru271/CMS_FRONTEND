@@ -65,6 +65,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     if (
       path === '/dashboard' ||
       path === '/' ||
+      path.startsWith('/ai') ||
       path.startsWith('/docs') ||
       path.startsWith('/settings')
     ) {

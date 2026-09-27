@@ -44,6 +44,7 @@ import { useTranslation } from '@/src/context/LanguageContext';
 
 export type CMSView =
   | 'dashboard'
+  | 'ai'
   | 'products'
   | '3d'
   | 'categories'
@@ -179,6 +180,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       path: '/seo',
       label: t('nav.seo', 'SEO Governance'),
       icon: Search,
+    },
+    {
+      id: 'ai' as CMSView,
+      path: '/ai',
+      label: t('nav.ai_studio', 'AI Commerce Studio'),
+      icon: Sparkles,
     },
     {
       id: 'orders' as CMSView,

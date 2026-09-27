@@ -7146,4 +7146,154 @@ export const cmsService = {
     const response = await apiClient.delete<{ message: string }>(`/three-d/${id}`);
     return response.data;
   },
+
+  // ─── AI Studio & Machine Learning Services ──────────────────────────────────
+  async getAiStatus(): Promise<{
+    success: boolean;
+    status: string;
+    provider: string;
+    model: string;
+    hasApiKey: boolean;
+    features: string[];
+  }> {
+    const response = await apiClient.get('/ai/status');
+    return response.data;
+  },
+
+  async optimizeSeoWithAi(payload: {
+    title: string;
+    description?: string;
+    category?: string;
+    targetKeywords?: string;
+    storeName?: string;
+    audience?: string;
+  }): Promise<{
+    success: boolean;
+    data: {
+      source: string;
+      metaTitle: string;
+      metaDescription: string;
+      primaryKeywords: string[];
+      secondaryKeywords: string[];
+      ogTitle: string;
+      ogDescription: string;
+      slugSuggestion: string;
+      seoScore: number;
+      optimizationTips: string[];
+    };
+  }> {
+    const response = await apiClient.post('/ai/seo-optimize', payload);
+    return response.data;
+  },
+
+  async generateProductDescriptionWithAi(payload: {
+    productName: string;
+    category?: string;
+    keyFeatures?: string;
+    tone?: 'persuasive' | 'luxurious' | 'minimalist' | 'technical' | 'casual' | 'urgent';
+    targetAudience?: string;
+    bulletCount?: number;
+  }): Promise<{
+    success: boolean;
+    data: {
+      source: string;
+      headline: string;
+      shortDescription: string;
+      longDescriptionHtml: string;
+      featureBullets: string[];
+      salesHooks: string[];
+      specifications: Record<string, string>;
+      suggestedTags: string[];
+    };
+  }> {
+    const response = await apiClient.post('/ai/product-description', payload);
+    return response.data;
+  },
+
+  async generateProductImageWithAi(payload: {
+    prompt: string;
+    productName?: string;
+    category?: string;
+    style?: 'studio_photography' | 'minimalist_podium' | 'lifestyle_scene' | 'cyberpunk_neon' | '3d_claymorphism' | 'luxury_editorial';
+    lighting?: 'softbox_diffused' | 'dramatic_rim_light' | 'natural_golden_hour' | 'cyber_neon' | 'high_key_clean';
+    aspectRatio?: '1:1' | '4:3' | '16:9' | '9:16';
+  }): Promise<{
+    success: boolean;
+    data: {
+      source: string;
+      imageUrl: string;
+      enhancedPrompt: string;
+      style: string;
+      lighting: string;
+      aspectRatio: string;
+      dimensions?: string;
+      tips?: string;
+    };
+  }> {
+    const response = await apiClient.post('/ai/generate-image', payload);
+    return response.data;
+  },
+
+  async generateMarketingCopyWithAi(payload: {
+    productName: string;
+    productDescription?: string;
+    campaignType?: 'flash_sale' | 'new_launch' | 'seasonal_promo' | 'vip_exclusive' | 'abandoned_cart';
+    discountCode?: string;
+    discountPercent?: number;
+    tone?: 'energetic' | 'exclusive' | 'friendly' | 'humorous' | 'premium';
+  }): Promise<{
+    success: boolean;
+    data: {
+      source: string;
+      instagram: { caption: string; hashtags: string[] };
+      email: { subjectLines: string[]; previewText: string; bodyHtml: string };
+      googleAds: { headlines: string[]; descriptions: string[] };
+      twitterX: { post: string; threadFollowUp?: string };
+    };
+  }> {
+    const response = await apiClient.post('/ai/marketing-copy', payload);
+    return response.data;
+  },
+
+  async generateBlogPostWithAi(payload: {
+    topic: string;
+    keywords?: string;
+    tone?: 'informative' | 'casual' | 'thought_leadership' | 'guide_tutorial' | 'listicle';
+    targetLength?: 'short' | 'medium' | 'in_depth';
+    storeName?: string;
+  }): Promise<{
+    success: boolean;
+    data: {
+      source: string;
+      title: string;
+      metaDescription: string;
+      readingTimeMinutes: number;
+      outline: string[];
+      contentMarkdown: string;
+      faqs: Array<{ question: string; answer: string }>;
+    };
+  }> {
+    const response = await apiClient.post('/ai/blog-writer', payload);
+    return response.data;
+  },
+
+  async generateSupportReplyWithAi(payload: {
+    customerMessage: string;
+    orderNumber?: string;
+    sentiment?: 'angry' | 'confused' | 'inquiry' | 'happy' | 'neutral';
+    policyContext?: string;
+    storeName?: string;
+  }): Promise<{
+    success: boolean;
+    data: {
+      source: string;
+      replyMessage: string;
+      sentimentDetected: string;
+      actionableSteps: string[];
+      suggestedRefund: boolean;
+    };
+  }> {
+    const response = await apiClient.post('/ai/support-reply', payload);
+    return response.data;
+  },
 };
