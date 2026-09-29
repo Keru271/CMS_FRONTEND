@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
 import { StoreSetupData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import { VendorSmtpSettings } from './VendorSmtpSettings';
 import {
   Store,
   Image as ImageIcon,
@@ -32,6 +33,10 @@ import {
   Truck,
   Percent,
   Receipt,
+  Wrench,
+  ShieldAlert,
+  Power,
+  Eye,
 } from 'lucide-react';
 
 interface StoreSetupProps {
@@ -44,7 +49,7 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    'general' | 'branding' | 'contact' | 'domain' | 'regional' | 'delivery_taxes'
+    'general' | 'branding' | 'contact' | 'domain' | 'regional' | 'delivery_taxes' | 'smtp' | 'maintenance'
   >('general');
   const [toastMessage, setToastMessage] = useState<{
     text: string;
@@ -80,6 +85,26 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
   const handleChange = (field: keyof StoreSetupData, value: any) => {
     if (!formData) return;
     setFormData({ ...formData, [field]: value });
+  };
+
+  const handleMaintenanceToggle = async (newVal: boolean) => {
+    if (!formData) return;
+    const nextFormData = { ...formData, maintenanceMode: newVal };
+    setFormData(nextFormData);
+    try {
+      const updated = await cmsService.updateStoreSetup(nextFormData);
+      setFormData(updated);
+      setInitialData(updated);
+      showToast(
+        newVal
+          ? '🚧 Store Maintenance Mode ENABLED: Public storefront is now in maintenance mode.'
+          : '✅ Store Maintenance Mode DISABLED: Public storefront is now LIVE.',
+        'success'
+      );
+      if (onSaved) onSaved(updated);
+    } catch (err) {
+      showToast('Failed to update maintenance mode.', 'error');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -150,24 +175,23 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
       )}
 
       {/* Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm relative overflow-hidden space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/30">
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-200/80 dark:border-indigo-800/60">
                 Merchant Control Center
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200/80 dark:border-emerald-800/60 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Live Storefront Sync
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <Store className="w-8 h-8 text-indigo-400" />
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground flex items-center gap-3">
+              <Store className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
               <span>Store Setup & Global Configuration</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
               Configure essential brand identity parameters, custom domains, visual assets, contact
               information, business address, social handles, and regional localization settings.
             </p>
@@ -178,7 +202,7 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
               <button
                 type="button"
                 onClick={handleReset}
-                className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition-all"
+                className="px-4 py-2.5 rounded-2xl bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200/80 dark:border-border transition-all cursor-pointer"
               >
                 Discard Changes
               </button>
@@ -187,7 +211,7 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
               type="button"
               onClick={handleSubmit}
               disabled={isSaving}
-              className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all disabled:opacity-50"
+              className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer active:scale-95"
             >
               {isSaving ? (
                 <>
@@ -205,7 +229,7 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
         </div>
 
         {/* Tab Navigation Pill Bar */}
-        <div className="flex items-center gap-2 pt-6 mt-6 border-t border-slate-700/60 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100/80 dark:bg-accent/40 rounded-2xl border border-slate-200/80 dark:border-border/60 overflow-x-auto no-scrollbar">
           {[
             { id: 'general', label: '1. Store Identity', icon: Store },
             { id: 'branding', label: '2. Logo & Favicon', icon: ImageIcon },
@@ -213,6 +237,8 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
             { id: 'domain', label: '4. Domain & SSL', icon: Globe },
             { id: 'regional', label: '5. Currency & Region', icon: DollarSign },
             { id: 'delivery_taxes', label: '6. Delivery & Taxes', icon: Truck },
+            { id: 'smtp', label: '7. Email & Custom SMTP', icon: Mail },
+            { id: 'maintenance', label: '8. Maintenance Mode', icon: Wrench },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -221,14 +247,14 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-white text-slate-900 shadow-md scale-105'
-                    : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                    ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/80 dark:border-border'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground hover:bg-white/60 dark:hover:bg-accent/60 border border-transparent'
                 }`}
               >
                 <Icon
-                  className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}
+                  className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`}
                 />
                 <span>{tab.label}</span>
               </button>
@@ -258,6 +284,69 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
               <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-accent text-slate-600 text-[10px] font-bold uppercase tracking-wider">
                 Public Profile
               </span>
+            </div>
+
+            {/* Maintenance Mode Quick Card */}
+            <div
+              className={`p-4 sm:p-5 rounded-2xl border transition-all ${
+                formData.maintenanceMode
+                  ? 'bg-amber-500/10 border-amber-500/30'
+                  : 'bg-slate-50/80 dark:bg-card border-slate-200/80 dark:border-border'
+              }`}
+            >
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      formData.maintenanceMode
+                        ? 'bg-amber-500 text-black'
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    <Wrench className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                        Store Maintenance Mode
+                      </h3>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          formData.maintenanceMode
+                            ? 'bg-amber-500 text-black'
+                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        }`}
+                      >
+                        {formData.maintenanceMode ? 'Active (Offline)' : 'Store Live'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {formData.maintenanceMode
+                        ? 'Storefront is currently in Maintenance Mode. Visitors see the dedicated maintenance screen.'
+                        : 'Store is online and accessible to customers.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 self-end sm:self-center">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('maintenance')}
+                    className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Configure Notice</span>
+                  </button>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!formData.maintenanceMode}
+                      onChange={(e) => handleMaintenanceToggle(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1128,6 +1217,167 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
                   />
                   <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 7: VENDOR EMAIL & CUSTOM SMTP ROUTING */}
+        {activeTab === 'smtp' && (
+          <VendorSmtpSettings storeId={formData.id} onSaved={() => loadStoreSetup()} />
+        )}
+
+        {/* TAB 8: MAINTENANCE MODE & DOWNTIME SCREEN */}
+        {activeTab === 'maintenance' && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600">
+                  <Wrench className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-black text-slate-900 dark:text-foreground">
+                    Store Maintenance Mode
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Control public storefront availability and customize the downtime screen message for visitors.
+                  </p>
+                </div>
+              </div>
+              <span
+                className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                  formData.maintenanceMode
+                    ? 'bg-amber-500 text-black'
+                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                }`}
+              >
+                {formData.maintenanceMode ? 'Maintenance Enabled' : 'Store Online'}
+              </span>
+            </div>
+
+            {/* Big Toggle Banner */}
+            <div
+              className={`p-6 rounded-2xl border transition-all ${
+                formData.maintenanceMode
+                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-950 dark:text-amber-200'
+                  : 'bg-slate-50/80 dark:bg-card border-slate-200 dark:border-border'
+              }`}
+            >
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Power
+                      className={`w-5 h-5 ${
+                        formData.maintenanceMode ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'
+                      }`}
+                    />
+                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                      Toggle Maintenance Mode
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed">
+                    When enabled, all public visitors will see your active template&apos;s tailored Maintenance Mode screen instead of the regular store pages. Store admins can still preview the store with bypass flags.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4 shrink-0">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!formData.maintenanceMode}
+                      onChange={(e) => handleMaintenanceToggle(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-14 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-amber-500 shadow-inner"></div>
+                  </label>
+                  <span className="text-xs font-bold font-mono">
+                    {formData.maintenanceMode ? 'OFFLINE' : 'ONLINE'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Maintenance Screen Customizer Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              {/* Headline Title */}
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Maintenance Screen Headline
+                </label>
+                <input
+                  type="text"
+                  value={formData.maintenanceTitle || ''}
+                  onChange={(e) => handleChange('maintenanceTitle', e.target.value)}
+                  placeholder="e.g. We'll Be Back Soon!"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white dark:focus:bg-accent transition-all"
+                />
+                <p className="text-[10px] text-slate-400">
+                  Main title headline shown on the visitor screen. If left empty, the template default title will be used.
+                </p>
+              </div>
+
+              {/* Maintenance Notice Message */}
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Visitor Notice / Message
+                </label>
+                <textarea
+                  rows={4}
+                  value={formData.maintenanceMessage || ''}
+                  onChange={(e) => handleChange('maintenanceMessage', e.target.value)}
+                  placeholder="e.g. We are currently performing scheduled maintenance to bring you an upgraded shopping experience..."
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white dark:focus:bg-accent transition-all leading-relaxed"
+                />
+                <p className="text-[10px] text-slate-400">
+                  Detailed message explaining the upgrade and reassuring customers.
+                </p>
+              </div>
+
+              {/* Expected Return / Launch ETA */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Expected Return Date / Note (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.maintenanceExpectedReturn || ''}
+                  onChange={(e) => handleChange('maintenanceExpectedReturn', e.target.value)}
+                  placeholder="e.g. Today at 6:00 PM EST or In 2 Hours"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white dark:focus:bg-accent transition-all"
+                />
+                <p className="text-[10px] text-slate-400">
+                  Optional timeframe or estimate displayed for customers.
+                </p>
+              </div>
+
+              {/* Live Preview Button */}
+              <div className="space-y-1.5 flex flex-col justify-end">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Test & Preview Screen
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sfUrl = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
+                    window.open(`${sfUrl}/maintenance`, '_blank');
+                  }}
+                  className="w-full px-4 py-2.5 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-800 dark:text-amber-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>Preview Active Template Maintenance Screen</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+                <p className="text-[10px] text-slate-400">
+                  Opens the current active template maintenance screen in a new tab.
+                </p>
+              </div>
+            </div>
+
+            {/* Template Notice Card */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-card border border-slate-200/80 dark:border-border flex items-start gap-3">
+              <Sparkles className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+              <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <strong>Template-Aware Screen:</strong> Each storefront template (Mincom, Nova/Minimal, Luxe, Funo, Pawzy, Demo, Pulse) features its own custom-tailored maintenance design matching its colors, typography, and theme styling.
               </div>
             </div>
           </div>

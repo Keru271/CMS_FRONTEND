@@ -274,43 +274,43 @@ export const OrderStudio: React.FC = () => {
         <div
           className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 ${
             toastMessage.type === 'success'
-              ? 'bg-emerald-900/90 text-white border-emerald-700'
-              : 'bg-rose-900/90 text-white border-rose-700'
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/90 dark:text-emerald-200 dark:border-emerald-800'
+              : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/90 dark:text-rose-200 dark:border-rose-800'
           }`}
         >
           {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
           ) : (
-            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
           )}
           <span className="text-xs font-bold">{toastMessage.text}</span>
         </div>
       )}
 
       {/* Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/30">
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-200/80 dark:border-indigo-800/60">
                 Fulfillment & Logistics
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200/80 dark:border-emerald-800/60 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 {orders.length} Total Orders Registered
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <ShoppingBag className="w-8 h-8 text-indigo-400" />
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground flex items-center gap-3">
+              <ShoppingBag className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
               <span>Orders Management Studio</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
               Track customer orders, manage payment & fulfillment statuses, assign shipping tracking
               numbers, issue refunds, print invoices, and record staff notes.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -318,9 +318,9 @@ export const OrderStudio: React.FC = () => {
                 window.open(url, '_blank');
                 showToast('Downloading Orders Excel export...', 'success');
               }}
-              className="px-5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition border border-white/20 flex items-center gap-2 shadow-sm"
+              className="px-4 py-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 dark:bg-accent dark:hover:bg-accent/80 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-border flex items-center gap-2 transition-all shadow-xs cursor-pointer"
             >
-              <Download className="w-4 h-4 text-emerald-400" />
+              <Download className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>Export Orders (Excel)</span>
             </button>
           </div>

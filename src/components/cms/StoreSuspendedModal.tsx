@@ -95,7 +95,7 @@ export const StoreSuspendedModal: React.FC = () => {
             {/* Top Header Section */}
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 border-b border-[#cbd5e0]/60 pb-6 text-center sm:text-left">
               {/* S-Mark / Suspension Emblem with Statamic styling */}
-              <div className="w-14 h-14 rounded-xl bg-[#191a1b] text-[#d4ff4c] flex items-center justify-center shrink-0 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+              <div className="w-14 h-14 rounded-xl bg-[#191a1b] text-[#00E5FF] flex items-center justify-center shrink-0 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
                 <Ban className="w-7 h-7 stroke-[2.2]" />
               </div>
 
@@ -106,7 +106,7 @@ export const StoreSuspendedModal: React.FC = () => {
                 </div>
 
                 {/* Editorial Serif Display Headline */}
-                <h2 className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b] tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-sans font-normal text-[#191a1b] tracking-tight">
                   Store Access <span className="italic font-normal">Suspended</span>
                 </h2>
 
@@ -117,8 +117,8 @@ export const StoreSuspendedModal: React.FC = () => {
               </div>
             </div>
 
-            {/* Store Target Info Card (Warm Shell background #fdf1ef with 8px radius) */}
-            <div className="bg-[#fdf1ef] border border-[#cbd5e0] rounded-lg p-4 space-y-3">
+            {/* Store Target Info Card (Warm Shell background #121212 with 8px radius) */}
+            <div className="bg-[#121212] border border-[#cbd5e0] rounded-lg p-4 space-y-3">
               <div className="flex items-center justify-between text-xs border-b border-[#cbd5e0]/70 pb-2">
                 <span className="text-[#5e5a5a] font-medium uppercase tracking-wider text-[10px]">
                   Store Profile
@@ -176,12 +176,12 @@ export const StoreSuspendedModal: React.FC = () => {
 
             {/* Actions Bar conforming to DESIGN.md Button Styles */}
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-              {/* Filled Primary Button: Background #191a1b, text #d4ff4c (Electric Lime), Lexend weight 500, 8px radius */}
+              {/* Filled Primary Button: Background #191a1b, text #00E5FF (Electric Lime), Lexend weight 500, 8px radius */}
               <button
                 type="button"
                 onClick={refreshStoreStatus}
                 disabled={isCheckingStatus}
-                className="w-full sm:flex-1 py-3 px-5 rounded-lg bg-[#191a1b] hover:bg-[#2e3033] text-[#d4ff4c] font-medium text-xs shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
+                className="w-full sm:flex-1 py-3 px-5 rounded-lg bg-[#191a1b] hover:bg-[#2e3033] text-[#00E5FF] font-medium text-xs shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
               >
                 <RefreshCw className={`w-4 h-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
                 <span>{isCheckingStatus ? 'Checking Status...' : 'Re-verify Store Status'}</span>
@@ -201,7 +201,7 @@ export const StoreSuspendedModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full sm:w-auto py-3 px-4 rounded-lg border border-[#cbd5e0] hover:bg-[#fdf1ef] text-[#5e5a5a] hover:text-[#191a1b] font-medium text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="w-full sm:w-auto py-3 px-4 rounded-lg border border-[#cbd5e0] hover:bg-[#121212] text-[#5e5a5a] hover:text-[#191a1b] font-medium text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Sign Out</span>
@@ -226,12 +226,12 @@ export const StoreSuspendedModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setViewMode('NOTICE')}
-                  className="p-2 rounded-lg hover:bg-[#fdf1ef] text-[#5e5a5a] hover:text-[#191a1b] transition-colors cursor-pointer"
+                  className="p-2 rounded-lg hover:bg-[#121212] text-[#5e5a5a] hover:text-[#191a1b] transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-serif font-normal text-[#191a1b]">
+                  <h2 className="text-xl sm:text-2xl font-sans font-normal text-[#191a1b]">
                     Submit Reinstatement <span className="italic font-normal">Appeal</span>
                   </h2>
                   <p className="text-xs text-[#5e5a5a]">
@@ -240,7 +240,7 @@ export const StoreSuspendedModal: React.FC = () => {
                 </div>
               </div>
 
-              <span className="px-2.5 py-1 rounded-full bg-[#fdf1ef] border border-[#cbd5e0] text-[10px] font-mono text-[#5e5a5a] hidden sm:inline-block">
+              <span className="px-2.5 py-1 rounded-full bg-[#121212] border border-[#cbd5e0] text-[10px] font-mono text-[#5e5a5a] hidden sm:inline-block">
                 /{storeSlug}
               </span>
             </div>
@@ -306,7 +306,7 @@ export const StoreSuspendedModal: React.FC = () => {
               </div>
 
               {/* Readonly Account Meta */}
-              <div className="p-3 rounded-lg bg-[#fdf1ef] border border-[#cbd5e0] grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-[#5e5a5a]">
+              <div className="p-3 rounded-lg bg-[#121212] border border-[#cbd5e0] grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-[#5e5a5a]">
                 <div>
                   <span className="font-semibold text-[#191a1b]">Merchant Email:</span>{' '}
                   {merchantEmail}
@@ -342,7 +342,7 @@ export const StoreSuspendedModal: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full sm:flex-1 py-3 px-5 rounded-lg bg-[#191a1b] hover:bg-[#2e3033] text-[#d4ff4c] font-medium text-xs shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
+                className="w-full sm:flex-1 py-3 px-5 rounded-lg bg-[#191a1b] hover:bg-[#2e3033] text-[#00E5FF] font-medium text-xs shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
               >
                 {isSubmitting ? (
                   <>
@@ -360,7 +360,7 @@ export const StoreSuspendedModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setViewMode('NOTICE')}
-                className="w-full sm:w-auto py-3 px-5 rounded-lg border border-[#cbd5e0] hover:bg-[#fdf1ef] text-[#5e5a5a] hover:text-[#191a1b] font-medium text-xs transition-all cursor-pointer"
+                className="w-full sm:w-auto py-3 px-5 rounded-lg border border-[#cbd5e0] hover:bg-[#121212] text-[#5e5a5a] hover:text-[#191a1b] font-medium text-xs transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -371,7 +371,7 @@ export const StoreSuspendedModal: React.FC = () => {
         {/* VIEW 3: SUCCESS CONFIRMATION */}
         {viewMode === 'SUCCESS' && (
           <div className="text-center py-4 space-y-6 animate-fadeIn">
-            <div className="w-16 h-16 rounded-2xl bg-[#fdf1ef] border-2 border-[#191a1b] text-[#191a1b] flex items-center justify-center mx-auto shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+            <div className="w-16 h-16 rounded-2xl bg-[#121212] border-2 border-[#191a1b] text-[#191a1b] flex items-center justify-center mx-auto shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
               <CheckCircle2 className="w-9 h-9 text-[#16a34a]" />
             </div>
 
@@ -379,7 +379,7 @@ export const StoreSuspendedModal: React.FC = () => {
               <span className="px-3 py-1 rounded-full bg-[#dcfce7] text-[#15803d] border border-[#bbf7d0] text-[11px] font-bold uppercase tracking-wider">
                 Appeal Submitted Successfully
               </span>
-              <h2 className="text-2xl sm:text-3xl font-serif font-normal text-[#191a1b]">
+              <h2 className="text-2xl sm:text-3xl font-sans font-normal text-[#191a1b]">
                 Under <span className="italic font-normal">Governance Review</span>
               </h2>
               <p className="text-xs sm:text-sm text-[#5e5a5a] max-w-md mx-auto leading-relaxed">
@@ -389,7 +389,7 @@ export const StoreSuspendedModal: React.FC = () => {
             </div>
 
             {submittedTicket && (
-              <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] max-w-md mx-auto text-left text-xs space-y-2">
+              <div className="p-4 rounded-xl bg-[#121212] border border-[#cbd5e0] max-w-md mx-auto text-left text-xs space-y-2">
                 <div className="flex items-center justify-between border-b border-[#cbd5e0]/60 pb-2">
                   <span className="text-[#5e5a5a] text-[11px]">Ticket ID</span>
                   <span className="font-mono font-bold text-[#191a1b] bg-white px-2 py-0.5 rounded border border-[#cbd5e0]">
@@ -414,7 +414,7 @@ export const StoreSuspendedModal: React.FC = () => {
                 type="button"
                 onClick={refreshStoreStatus}
                 disabled={isCheckingStatus}
-                className="w-full sm:flex-1 py-3 px-4 rounded-lg bg-[#191a1b] hover:bg-[#2e3033] text-[#d4ff4c] font-medium text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
+                className="w-full sm:flex-1 py-3 px-4 rounded-lg bg-[#191a1b] hover:bg-[#2e3033] text-[#00E5FF] font-medium text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
               >
                 <RefreshCw className={`w-4 h-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
                 <span>{isCheckingStatus ? 'Checking...' : 'Check If Reinstated'}</span>
@@ -423,7 +423,7 @@ export const StoreSuspendedModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setViewMode('NOTICE')}
-                className="w-full sm:flex-1 py-3 px-4 rounded-lg border border-[#cbd5e0] hover:bg-[#fdf1ef] text-[#191a1b] font-medium text-xs transition-all cursor-pointer"
+                className="w-full sm:flex-1 py-3 px-4 rounded-lg border border-[#cbd5e0] hover:bg-[#121212] text-[#191a1b] font-medium text-xs transition-all cursor-pointer"
               >
                 Back to Notice
               </button>

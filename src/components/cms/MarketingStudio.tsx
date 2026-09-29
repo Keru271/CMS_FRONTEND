@@ -263,6 +263,7 @@ export const MarketingStudio: React.FC = () => {
   const [campaigns, setCampaigns] = useState<CMSMarketingCampaign[]>([]);
   const [pixelConfig, setPixelConfig] = useState<CMSPixelConfig>({});
   const [abandonedCarts, setAbandonedCarts] = useState<AbandonedCartData[]>([]);
+  const [emailTemplates, setEmailTemplates] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
     'CAMPAIGNS' | 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PUSH' | 'ABANDONED_CART' | 'PIXELS' | 'UTM'
@@ -282,12 +283,14 @@ export const MarketingStudio: React.FC = () => {
     targetSegment: string;
     subject: string;
     body: string;
+    templateId?: string;
   }>({
     title: '',
     channel: 'EMAIL',
     targetSegment: 'All Subscribers',
     subject: '',
     body: '',
+    templateId: '',
   });
 
   // UTM Builder State
@@ -299,6 +302,10 @@ export const MarketingStudio: React.FC = () => {
   const [utmContent, setUtmContent] = useState('');
   const [copiedUtm, setCopiedUtm] = useState(false);
 
+  // Email Test Dispatch State
+  const [testRecipientEmail, setTestRecipientEmail] = useState('');
+  const [isSendingTest, setIsSendingTest] = useState(false);
+
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -308,14 +315,19 @@ export const MarketingStudio: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [campData, pixData, cartData] = await Promise.all([
+      const [campData, pixData, cartData, templatesData] = await Promise.all([
         cmsService.getMarketingCampaigns(),
         cmsService.getPixelConfig(),
         cmsService.getAbandonedCarts(),
+        cmsService.getEmailTemplates().catch(() => []),
       ]);
       setCampaigns(campData);
       setPixelConfig(pixData);
       setAbandonedCarts(cartData);
+      const rawTemplates = Array.isArray(templatesData)
+        ? templatesData
+        : (templatesData as any)?.templates || [];
+      setEmailTemplates(rawTemplates);
     } catch (err) {
       console.error('Failed to load marketing data:', err);
     } finally {
@@ -330,14 +342,32 @@ export const MarketingStudio: React.FC = () => {
 
   // CAMPAIGN CREATION
   const handleOpenCreateCampaign = (channel: MarketingChannel = 'EMAIL') => {
+    const defaultTmpl = emailTemplates.find((t) => t.category === 'MARKETING') || emailTemplates[0];
     setCampaignForm({
-      title: '',
+      title: defaultTmpl?.name || '',
       channel,
       targetSegment: 'All Customers',
-      subject: channel === 'EMAIL' ? '🔥 Special Offer Just for You!' : 'New Update',
+      subject: defaultTmpl?.subject || (channel === 'EMAIL' ? '🔥 Special Offer Just for You!' : 'New Update'),
       body: 'Explore our latest collections and enjoy exclusive discounts on your order today!',
+      templateId: defaultTmpl?.id || '',
     });
     setIsCampaignModalOpen(true);
+  };
+
+  const handleSelectTemplate = (templateId: string) => {
+    if (!templateId) {
+      setCampaignForm((prev) => ({ ...prev, templateId: '' }));
+      return;
+    }
+    const t = emailTemplates.find((tmpl) => tmpl.id === templateId);
+    if (t) {
+      setCampaignForm((prev) => ({
+        ...prev,
+        templateId,
+        title: prev.title || t.name,
+        subject: t.subject || prev.subject,
+      }));
+    }
   };
 
   const handleSaveCampaign = async (e: React.FormEvent) => {
@@ -350,6 +380,7 @@ export const MarketingStudio: React.FC = () => {
         targetSegment: campaignForm.targetSegment,
         subject: campaignForm.subject,
         body: campaignForm.body,
+        templateId: campaignForm.templateId || undefined,
         status: 'SENT',
       });
 
@@ -360,6 +391,28 @@ export const MarketingStudio: React.FC = () => {
       showToast(err.message || 'Failed to send broadcast.', 'error');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSendCampaignTest = async () => {
+    if (!testRecipientEmail || !testRecipientEmail.includes('@')) {
+      showToast('Please enter a valid recipient email for the test.', 'error');
+      return;
+    }
+    setIsSendingTest(true);
+    try {
+      const res = await cmsService.sendMarketingCampaignTestEmail({
+        recipientEmail: testRecipientEmail.trim(),
+        title: campaignForm.title || 'Special Announcement',
+        subject: campaignForm.subject || campaignForm.title,
+        body: campaignForm.body || '',
+        templateId: campaignForm.templateId || undefined,
+      });
+      showToast(res.message || `Test email dispatched to ${testRecipientEmail}!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to dispatch test email.', 'error');
+    } finally {
+      setIsSendingTest(false);
     }
   };
 
@@ -448,24 +501,26 @@ export const MarketingStudio: React.FC = () => {
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+      {/* Header Banner - Light Mode SaaS */}
+      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-50/60 dark:bg-indigo-950/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/30">
+              <span className="px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-200 dark:border-indigo-800">
                 Multi-Channel Growth Suite
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800">
                 ${campaigns.reduce((acc, c) => acc + c.revenueTotal, 0).toFixed(2)} Campaign Revenue
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <Megaphone className="w-8 h-8 text-indigo-400" />
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
+                <Megaphone className="w-6 h-6" />
+              </div>
               <span>Marketing & Growth Studio</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
               Execute Email, SMS, WhatsApp Business, & Web Push broadcasts, recover lost abandoned
               cart revenue, build UTM tracking links, and configure Google Analytics & Meta Pixels.
             </p>
@@ -474,7 +529,7 @@ export const MarketingStudio: React.FC = () => {
           <button
             type="button"
             onClick={() => handleOpenCreateCampaign('EMAIL')}
-            className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all shrink-0"
+            className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-md shadow-indigo-200 dark:shadow-none flex items-center gap-2 transition-all shrink-0 active:scale-[0.98]"
           >
             <Plus className="w-4 h-4" />
             <span>Create Campaign Broadcast</span>
@@ -538,8 +593,8 @@ export const MarketingStudio: React.FC = () => {
       </div>
 
       {/* 8 SUB-NAVIGATION TABS */}
-      <div className="p-4 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <div className="p-2 rounded-2xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs">
+        <div className="flex items-center gap-1.5 overflow-x-auto p-1 scrollbar-none">
           {[
             { id: 'CAMPAIGNS', label: 'All Campaigns', icon: Megaphone },
             { id: 'EMAIL', label: 'Email Marketing', icon: Mail },
@@ -557,10 +612,10 @@ export const MarketingStudio: React.FC = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 shrink-0 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
                   isActive
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md'
-                    : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200 dark:shadow-none'
+                    : 'bg-slate-50 dark:bg-accent/60 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-accent'
                 }`}
               >
                 <IconC className="w-3.5 h-3.5" />
@@ -1235,37 +1290,118 @@ export const MarketingStudio: React.FC = () => {
         </div>
       )}
 
-      {/* CREATE CAMPAIGN BROADCAST MODAL */}
+      {/* CREATE CAMPAIGN BROADCAST MODAL - Light Mode SaaS */}
       {isCampaignModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-              <h3 className="font-black text-lg">Create Campaign Broadcast</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95">
+            <div className="p-6 border-b border-slate-100 dark:border-border flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
+                  <Megaphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-lg text-slate-900 dark:text-foreground">Create Campaign Broadcast</h3>
+                  <p className="text-xs text-slate-500 dark:text-muted-foreground">Broadcast updates or special offers to your audience</p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsCampaignModalOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSaveCampaign} className="p-6 space-y-4">
+              {/* Template Selector for EMAIL channel */}
+              {campaignForm.channel === 'EMAIL' && (
+                <div className="space-y-1.5 p-3.5 rounded-2xl bg-slate-50/90 dark:bg-slate-900/40 border border-slate-200/80 dark:border-border">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                      <span>Choose Email Template</span>
+                    </label>
+                    <a
+                      href="/email-templates"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>Studio Builder</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+
+                  <select
+                    value={campaignForm.templateId || ''}
+                    onChange={(e) => handleSelectTemplate(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 text-xs font-semibold text-slate-900 dark:text-foreground transition shadow-xs"
+                  >
+                    <option value="">Standard Plain Layout (Write custom subject & body below)</option>
+                    
+                    {emailTemplates.filter((t) => !t.isDefault).length > 0 && (
+                      <optgroup label="🌟 Your Custom Saved Templates">
+                        {emailTemplates
+                          .filter((t) => !t.isDefault)
+                          .map((t) => (
+                            <option key={t.id} value={t.id}>
+                              ✨ {t.name} ({t.category || 'CUSTOM'})
+                            </option>
+                          ))}
+                      </optgroup>
+                    )}
+
+                    <optgroup label="📧 Default Starter Presets">
+                      {emailTemplates
+                        .filter((t) => t.isDefault)
+                        .map((t) => (
+                          <option key={t.id} value={t.id}>
+                            📨 {t.name} ({t.category || 'PRESET'})
+                          </option>
+                        ))}
+                    </optgroup>
+                  </select>
+
+                  {campaignForm.templateId && (() => {
+                    const selected = emailTemplates.find((t) => t.id === campaignForm.templateId);
+                    if (!selected) return null;
+                    return (
+                      <div className="flex items-center justify-between pt-1 text-[11px]">
+                        <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5 font-medium">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <span>Selected template: <strong className="text-slate-900 dark:text-foreground">{selected.name}</strong></span>
+                        </span>
+                        <a
+                          href={`/email-templates?id=${selected.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>Edit Blocks</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Broadcast Title *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Broadcast Title *</label>
                 <input
                   type="text"
                   required
                   value={campaignForm.title}
                   onChange={(e) => setCampaignForm({ ...campaignForm, title: e.target.value })}
                   placeholder="e.g. Summer Mega Sale Blast"
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-card focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 text-xs font-semibold text-slate-900 dark:text-foreground transition"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Channel</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Channel</label>
                   <select
                     value={campaignForm.channel}
                     onChange={(e) =>
@@ -1274,7 +1410,7 @@ export const MarketingStudio: React.FC = () => {
                         channel: e.target.value as MarketingChannel,
                       })
                     }
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-card focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 text-xs font-semibold text-slate-900 dark:text-foreground transition"
                   >
                     <option value="EMAIL">EMAIL</option>
                     <option value="SMS">SMS</option>
@@ -1284,13 +1420,13 @@ export const MarketingStudio: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Target Audience</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Target Audience</label>
                   <select
                     value={campaignForm.targetSegment}
                     onChange={(e) =>
                       setCampaignForm({ ...campaignForm, targetSegment: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-card focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 text-xs font-semibold text-slate-900 dark:text-foreground transition"
                   >
                     <option value="All Customers">All Customers</option>
                     <option value="VIP High Spenders">VIP Customers</option>
@@ -1300,21 +1436,21 @@ export const MarketingStudio: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Subject / Header</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Subject / Header</label>
                 <input
                   type="text"
                   required
                   value={campaignForm.subject}
                   onChange={(e) => setCampaignForm({ ...campaignForm, subject: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-semibold"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-card focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 text-xs font-semibold text-slate-900 dark:text-foreground transition"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-700">
+                <div className="flex justify-between items-center text-xs font-bold text-slate-700 dark:text-slate-300">
                   <span>Message Body</span>
                   {campaignForm.channel === 'SMS' && (
-                    <span className="text-[10px] font-mono text-indigo-600">
+                    <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400">
                       {campaignForm.body.length}/160 chars
                     </span>
                   )}
@@ -1324,22 +1460,53 @@ export const MarketingStudio: React.FC = () => {
                   required
                   value={campaignForm.body}
                   onChange={(e) => setCampaignForm({ ...campaignForm, body: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-medium"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-card focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 text-xs font-medium text-slate-900 dark:text-foreground transition"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              {/* Test Email Section for EMAIL channel */}
+              {campaignForm.channel === 'EMAIL' && (
+                <div className="p-3.5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                      <span>Send Live Test Preview to Inbox</span>
+                    </span>
+                    <span className="text-[10px] text-indigo-500 dark:text-indigo-400 font-medium">Dispatches via SMTP</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="email"
+                      placeholder="Enter test email (e.g. your-email@gmail.com)"
+                      value={testRecipientEmail}
+                      onChange={(e) => setTestRecipientEmail(e.target.value)}
+                      className="flex-1 px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-card text-xs font-medium text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                    <button
+                      type="button"
+                      disabled={isSendingTest}
+                      onClick={handleSendCampaignTest}
+                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs font-bold whitespace-nowrap shadow-sm shadow-indigo-200 dark:shadow-none transition flex items-center gap-1.5"
+                    >
+                      {isSendingTest ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                      <span>Send Test</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-border">
                 <button
                   type="button"
                   onClick={() => setIsCampaignModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold"
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-md shadow-indigo-200 dark:shadow-none flex items-center gap-2 transition active:scale-[0.98]"
                 >
                   <Send className="w-4 h-4" />
                   <span>Send Broadcast Now</span>

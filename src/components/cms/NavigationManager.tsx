@@ -477,20 +477,19 @@ export const NavigationManager: React.FC = () => {
       )}
 
       {/* Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/30">
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-200/80 dark:border-indigo-800/60">
                 Storefront Navigation Manager
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <Compass className="w-8 h-8 text-indigo-400" />
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground flex items-center gap-3">
+              <Compass className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
               <span>Navigation Studio</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
               Configure Header Navigation, Footer Navigation, and Mobile Drawer Navigation links.
               Customize visual mega menus with All Products, Featured Drops, promotional cards,
               badges, and subtitles.
@@ -502,7 +501,7 @@ export const NavigationManager: React.FC = () => {
               type="button"
               onClick={loadMenus}
               disabled={isLoading}
-              className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+              className="p-3 rounded-2xl bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200/80 dark:border-border transition-all flex items-center gap-2 cursor-pointer shadow-xs"
               title="Refresh Menus"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -512,7 +511,7 @@ export const NavigationManager: React.FC = () => {
             <button
               type="button"
               onClick={() => handleOpenAddItemModal(null)}
-              className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all cursor-pointer"
+              className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow flex items-center gap-2 transition-all cursor-pointer transform active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>Add Link to {activeSlot.title}</span>

@@ -35,6 +35,7 @@ import {
   FileCheck,
   Check,
   Sparkles,
+  Wand2,
 } from 'lucide-react';
 
 const ROLE_PRESETS: {
@@ -54,6 +55,7 @@ const ROLE_PRESETS: {
     canManageLogistics: boolean;
     canManageAnalytics: boolean;
     canManage3DModels: boolean;
+    canManageAiPageBuilder: boolean;
   };
 }[] = [
   {
@@ -74,6 +76,7 @@ const ROLE_PRESETS: {
       canManageLogistics: true,
       canManageAnalytics: true,
       canManage3DModels: true,
+      canManageAiPageBuilder: true,
     },
   },
   {
@@ -94,6 +97,7 @@ const ROLE_PRESETS: {
       canManageLogistics: false,
       canManageAnalytics: false,
       canManage3DModels: true,
+      canManageAiPageBuilder: false,
     },
   },
   {
@@ -114,6 +118,7 @@ const ROLE_PRESETS: {
       canManageLogistics: true,
       canManageAnalytics: false,
       canManage3DModels: false,
+      canManageAiPageBuilder: false,
     },
   },
   {
@@ -134,6 +139,7 @@ const ROLE_PRESETS: {
       canManageLogistics: true,
       canManageAnalytics: false,
       canManage3DModels: false,
+      canManageAiPageBuilder: false,
     },
   },
   {
@@ -154,6 +160,7 @@ const ROLE_PRESETS: {
       canManageLogistics: false,
       canManageAnalytics: false,
       canManage3DModels: true,
+      canManageAiPageBuilder: true,
     },
   },
   {
@@ -174,6 +181,7 @@ const ROLE_PRESETS: {
       canManageLogistics: false,
       canManageAnalytics: false,
       canManage3DModels: true,
+      canManageAiPageBuilder: true,
     },
   },
 ];
@@ -214,6 +222,7 @@ export const UserManagementStudio: React.FC = () => {
     canManageLogistics: boolean;
     canManageAnalytics: boolean;
     canManage3DModels: boolean;
+    canManageAiPageBuilder: boolean;
   }>({
     name: '',
     email: '',
@@ -230,6 +239,7 @@ export const UserManagementStudio: React.FC = () => {
     canManageLogistics: false,
     canManageAnalytics: false,
     canManage3DModels: true,
+    canManageAiPageBuilder: false,
   });
 
   // Created Credentials Popup
@@ -464,36 +474,35 @@ export const UserManagementStudio: React.FC = () => {
       )}
 
       {/* Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm relative overflow-hidden space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/30 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5" />
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-200/80 dark:border-indigo-800/60 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 <span>Store Team & Access Control</span>
               </span>
               <span
                 className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                   members.length >= maxStaff
-                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                    ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200/80 dark:border-rose-800/60'
+                    : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60'
                 }`}
               >
                 👥 {members.length} / {maxStaff >= 999 ? 'Unlimited' : maxStaff} Seats ({planName})
               </span>
               {owner && (
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30 flex items-center gap-1">
-                  <Crown className="w-3 h-3 text-amber-400" />
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 text-[10px] font-bold border border-amber-200/80 dark:border-amber-800/60 flex items-center gap-1">
+                  <Crown className="w-3 h-3 text-amber-500" />
                   <span>Owner: {owner.email}</span>
                 </span>
               )}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <KeyRound className="w-8 h-8 text-indigo-400" />
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground flex items-center gap-3">
+              <KeyRound className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
               <span>User Management & Roles</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
               Add team members to <strong>{storeName}</strong>, assign granular roles (Admin, Stock
               Checker, Logistics, Support, Designer), and safely transfer store ownership.
             </p>
@@ -504,16 +513,16 @@ export const UserManagementStudio: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsTransferModalOpen(true)}
-              className="px-4 py-3 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 text-xs font-extrabold flex items-center gap-2 transition-all"
+              className="px-4 py-3 rounded-2xl bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-accent text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/60 text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer transform active:scale-95 shadow-xs"
             >
-              <ArrowRightLeft className="w-4 h-4 text-amber-400" />
+              <ArrowRightLeft className="w-4 h-4 text-amber-500" />
               <span>Transfer Store Ownership</span>
             </button>
 
             <button
               type="button"
               onClick={handleOpenAddModal}
-              className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all"
+              className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow flex items-center gap-2 transition-all cursor-pointer transform active:scale-95"
             >
               <UserPlus className="w-4 h-4" />
               <span>Add Staff Member</span>
@@ -522,30 +531,30 @@ export const UserManagementStudio: React.FC = () => {
         </div>
 
         {/* Overview Stats Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-700/60">
-          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-slate-100 dark:border-border/60">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/60 dark:border-border/60 space-y-1">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
               Total Members
             </span>
-            <span className="text-xl font-black text-white">{members.length}</span>
+            <span className="text-xl font-black text-slate-900 dark:text-foreground">{members.length}</span>
           </div>
-          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/60 dark:border-border/60 space-y-1">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
               Admins & Owners
             </span>
-            <span className="text-xl font-black text-purple-300">{adminCount}</span>
+            <span className="text-xl font-black text-purple-600 dark:text-purple-400">{adminCount}</span>
           </div>
-          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/60 dark:border-border/60 space-y-1">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
               Stock Checkers
             </span>
-            <span className="text-xl font-black text-cyan-300">{stockCheckerCount}</span>
+            <span className="text-xl font-black text-cyan-600 dark:text-cyan-400">{stockCheckerCount}</span>
           </div>
-          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/60 dark:border-border/60 space-y-1">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
               Operations & Support
             </span>
-            <span className="text-xl font-black text-emerald-300">{opsCount}</span>
+            <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{opsCount}</span>
           </div>
         </div>
       </div>
@@ -706,6 +715,16 @@ export const UserManagementStudio: React.FC = () => {
                             {member.canManagePayments && (
                               <span className="px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
                                 Payments
+                              </span>
+                            )}
+                            {member.canManage3DModels && (
+                              <span className="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold">
+                                3D Studio
+                              </span>
+                            )}
+                            {member.canManageAiPageBuilder && (
+                              <span className="px-2 py-0.5 rounded-lg bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/40 dark:to-purple-950/40 text-pink-700 dark:text-pink-300 text-[10px] font-black border border-pink-200/50 dark:border-pink-800/40">
+                                ✨ Page Builder AI
                               </span>
                             )}
                           </>
@@ -905,6 +924,11 @@ export const UserManagementStudio: React.FC = () => {
                       label: '3D AI Modeling & AR Assets',
                       icon: Sparkles,
                     },
+                    {
+                      key: 'canManageAiPageBuilder',
+                      label: 'Page Builder AI (Block & Page Generation)',
+                      icon: Wand2,
+                    },
                   ].map((perm) => {
                     const Icon = perm.icon;
                     const isChecked = (addForm as any)[perm.key];
@@ -1037,6 +1061,7 @@ export const UserManagementStudio: React.FC = () => {
                     { key: 'canManagePayments', label: 'Payments & Payouts' },
                     { key: 'canManageAnalytics', label: 'Analytics Reports' },
                     { key: 'canManage3DModels', label: '3D AI Modeling & AR' },
+                    { key: 'canManageAiPageBuilder', label: 'Page Builder AI (Block & Page Gen)' },
                   ].map((p) => {
                     const isChecked = (editingMember as any)[p.key];
                     return (

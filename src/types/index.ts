@@ -491,6 +491,7 @@ export interface MerchantUser {
     canManageLogistics?: boolean;
     canManageAnalytics?: boolean;
     canManage3DModels?: boolean;
+    canManageAiPageBuilder?: boolean;
   };
 }
 
@@ -538,6 +539,10 @@ export interface StoreSetupData {
   taxRateStandard?: number | null;
   taxInclusive?: boolean | null;
   codFee?: number | null;
+  maintenanceMode?: boolean | null;
+  maintenanceTitle?: string | null;
+  maintenanceMessage?: string | null;
+  maintenanceExpectedReturn?: string | null;
 }
 
 export interface ThemeConfigData {
@@ -568,7 +573,36 @@ export interface ThemeConfigData {
   contactPhone?: string | null;
   contactEmail?: string | null;
   logoUrl?: string | null;
-  storeName?: string | null;
+  maintenanceMode?: boolean | null;
+  maintenanceTitle?: string | null;
+  maintenanceMessage?: string | null;
+  maintenanceExpectedReturn?: string | null;
+}
+
+export interface GenerateProductContentParams {
+  productName?: string;
+  category?: string;
+  keywords?: string | string[];
+  brandName?: string;
+  tone?: string;
+  targetAudience?: string;
+  material?: string;
+  generateMode?: 'all' | 'description' | 'seo' | 'features' | 'short_description';
+}
+
+export interface GeneratedProductContent {
+  name: string;
+  shortDescription: string;
+  description: string;
+  features: string[];
+  seoTitle: string;
+  metaDescription: string;
+  imageAltText: string;
+  tags: string[];
+  urlSlug: string;
+  material?: string;
+  suggestedPrice?: number;
+  suggestedCategory?: string;
 }
 
 export type HomepageSectionType =
@@ -740,6 +774,7 @@ export interface BackendUserResponse {
     canManageLogistics: boolean;
     canManageAnalytics: boolean;
     canManage3DModels?: boolean;
+    canManageAiPageBuilder?: boolean;
     store?: CMSStore;
   }[];
 }
@@ -1050,6 +1085,7 @@ export interface CMSMarketingCampaign {
   targetSegment: string;
   subject?: string | null;
   body?: string | null;
+  templateId?: string | null;
   sentCount: number;
   clickCount: number;
   conversionCount: number;
@@ -1121,6 +1157,7 @@ export interface CMSStoreMember {
   canManageLogistics: boolean;
   canManageAnalytics: boolean;
   canManage3DModels?: boolean;
+  canManageAiPageBuilder?: boolean;
   invitedAt?: string;
   acceptedAt?: string | null;
   createdAt: string;
@@ -1142,6 +1179,7 @@ export interface CreateStoreMemberPayload {
   canManageLogistics?: boolean;
   canManageAnalytics?: boolean;
   canManage3DModels?: boolean;
+  canManageAiPageBuilder?: boolean;
 }
 
 export interface TransferOwnershipPayload {
@@ -1425,6 +1463,8 @@ export interface PriceTierData {
   supportTier: string;
   popular: boolean;
   features: string[];
+  aiCreditsMonthly?: number;
+  threeDCreditsMonthly?: number;
 }
 
 export interface StoreBillingInvoiceData {
@@ -1437,6 +1477,30 @@ export interface StoreBillingInvoiceData {
   paymentMethod: string;
   paymentStatus: 'PAID' | 'PENDING' | 'FAILED' | string;
   paidAt: string;
+}
+
+export interface AiCreditTransactionData {
+  id: string;
+  action: string;
+  feature: string;
+  credits: number;
+  balanceAfter: number;
+  source: 'CMS' | 'STOREFRONT' | 'ADMIN' | 'PLAN_RENEWAL';
+  description?: string;
+  createdAt: string;
+}
+
+export interface AiCreditStatsData {
+  aiCredits: number;
+  aiCreditsTotal: number;
+  aiCreditsUsed: number;
+  aiCreditsStorefrontUsed: number;
+  aiCreditsCmsUsed: number;
+  threeDCredits: number;
+  threeDCreditsTotal: number;
+  threeDCreditsUsed: number;
+  plan: string;
+  recentTransactions?: AiCreditTransactionData[];
 }
 
 export interface StoreSubscriptionData {
@@ -1473,6 +1537,20 @@ export interface StoreSubscriptionData {
     staff: {
       current: number;
       max: number;
+      percent: number;
+    };
+    aiCredits?: {
+      remaining: number;
+      total: number;
+      used: number;
+      percent: number;
+      storefrontUsed: number;
+      cmsUsed: number;
+    };
+    threeDCredits?: {
+      remaining: number;
+      total: number;
+      used: number;
       percent: number;
     };
   };
@@ -1988,3 +2066,1014 @@ export interface ProductNotificationsResponse {
   limit: number;
   totalPages: number;
 }
+
+// ─── AI STORE BUILDER TYPES ──────────────────────────────────────────────────
+
+export interface AiStoreBuilderInput {
+  prompt: string;
+  industry?: string;
+  brandVibe?: string;
+  country?: string;
+  currency?: string;
+  storeName?: string;
+}
+
+export interface AiThemeBlueprint {
+  templateSlug: string;
+  templateName?: string;
+  primaryColor: string;
+  secondaryColor: string;
+  backgroundColor: string;
+  textColor: string;
+  accentColor: string;
+  headingFont: string;
+  bodyFont: string;
+  borderRadius?: string;
+  buttonStyle?: string;
+  layoutWidth?: string;
+  headerStyle?: string;
+  headerAnnouncement?: string;
+  footerStyle?: string;
+  footerCopyright?: string;
+}
+
+export interface AiProductBlueprint {
+  name: string;
+  description: string;
+  price: number;
+  compareAtPrice?: number | null;
+  costPrice?: number | null;
+  sku?: string;
+  inventory?: number;
+  categoryName: string;
+  collectionName?: string | null;
+  tags?: string;
+  images?: string[];
+  material?: string | null;
+  seoTitle?: string;
+  seoDescription?: string;
+}
+
+export interface AiCategoryBlueprint {
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+}
+
+export interface AiCollectionBlueprint {
+  name: string;
+  slug: string;
+  description?: string;
+  featured?: boolean;
+}
+
+export interface AiPageBlueprint {
+  title: string;
+  slug: string;
+  pageType?: string;
+  content: string;
+  metaTitle?: string;
+  metaDescription?: string;
+}
+
+export interface AiMenuItemBlueprint {
+  label: string;
+  url: string;
+}
+
+export interface AiSeoBlueprint {
+  siteTitle: string;
+  metaDescription: string;
+  ogTitle?: string;
+  ogDescription?: string;
+}
+
+export interface StoreBlueprint {
+  brand: {
+    name: string;
+    tagline: string;
+    description: string;
+    positioning?: string;
+    suggestedSlug: string;
+    currency: string;
+    country?: string;
+  };
+  theme: AiThemeBlueprint;
+  homeSections: any[];
+  navigation: AiMenuItemBlueprint[];
+  categories: AiCategoryBlueprint[];
+  collections: AiCollectionBlueprint[];
+  products: AiProductBlueprint[];
+  pages: AiPageBlueprint[];
+  seo: AiSeoBlueprint;
+  marketingCopy?: {
+    announcementBar: string;
+    heroHeadline: string;
+    heroSubheadline: string;
+    heroCta: string;
+    newsletterHeadline: string;
+    newsletterSubtitle: string;
+  };
+}
+
+export interface ApplyStoreBlueprintPayload {
+  storeId?: string;
+  blueprint: StoreBlueprint;
+  overwriteProducts?: boolean;
+  overwriteTheme?: boolean;
+  overwritePages?: boolean;
+  overwriteNavigation?: boolean;
+}
+
+export interface ApplyStoreBlueprintResponse {
+  success: boolean;
+  message: string;
+  store: CMSStore;
+}
+
+export interface ImageEnhancementSettings {
+  autoEnhance?: boolean;
+  sharpness?: number;
+  brightness?: number;
+  contrast?: number;
+  shadowIntensity?: number;
+  reflection?: boolean;
+}
+
+export interface ImageStudioVariation {
+  id: string;
+  type: 'original' | 'white_bg' | 'studio_bg' | 'lifestyle' | 'social_media' | 'product_thumbnail' | 'custom' | string;
+  title: string;
+  description: string;
+  url: string;
+  previewUrl: string;
+  width: number;
+  height: number;
+  aspectRatio: string;
+  badge: string;
+  tagline: string;
+  promptUsed?: string;
+}
+
+export interface ProcessImageStudioPayload {
+  imageUrl: string;
+  productName?: string;
+  productCategory?: string;
+  customPrompt?: string;
+  enhancements?: ImageEnhancementSettings;
+  selectedStyles?: string[];
+  storeId?: string;
+}
+
+export interface ProcessImageStudioResult {
+  sourceImage: string;
+  cutoutImage: string;
+  pipelineStatus: {
+    bgRemoval: string;
+    enhancement: string;
+    backgroundGen: string;
+    variationsCount: number;
+  };
+  productName?: string;
+  category?: string;
+  variations: ImageStudioVariation[];
+  suggestedTags: string[];
+}
+
+export interface SaveVariationToProductPayload {
+  productId: string;
+  imageUrl: string;
+  isCoverImage?: boolean;
+  storeId?: string;
+}
+
+export interface CategoryMetricDelta {
+  category: string;
+  currentRevenue: number;
+  previousRevenue: number;
+  revenueChangePercent: number;
+  currentOrders: number;
+  previousOrders: number;
+  ordersChangePercent: number;
+  currentTraffic: number;
+  previousTraffic: number;
+  trafficChangePercent: number;
+  currentConversionRate: number;
+  previousConversionRate: number;
+  conversionChangePercent: number;
+}
+
+export interface ProductMover {
+  id: string;
+  name: string;
+  category: string;
+  currentUnitsSold: number;
+  previousUnitsSold: number;
+  unitsChangePercent: number;
+  currentRevenue: number;
+  previousRevenue: number;
+  revenueDelta: number;
+  revenueChangePercent: number;
+  currentStock: number;
+  isOutOfStock: boolean;
+  reason: string;
+}
+
+export interface CalculatedStoreAnalytics {
+  timeRange: '7d' | '30d' | '90d' | string;
+  currentPeriodLabel: string;
+  previousPeriodLabel: string;
+  currentRevenue: number;
+  previousRevenue: number;
+  revenueChangePercent: number;
+  revenueDelta: number;
+  currentOrders: number;
+  previousOrders: number;
+  ordersChangePercent: number;
+  ordersDelta: number;
+  currentAov: number;
+  previousAov: number;
+  aovChangePercent: number;
+  currentSessions: number;
+  previousSessions: number;
+  trafficChangePercent: number;
+  currentConversionRate: number;
+  previousConversionRate: number;
+  conversionChangePercent: number;
+  conversionDeltaPctPoints: number;
+  currentCartsCreated: number;
+  currentAbandonedCarts: number;
+  currentAbandonmentRate: number;
+  previousAbandonmentRate: number;
+  abandonmentChangePercent: number;
+  outOfStockCount: number;
+  lowStockCount: number;
+  estimatedLostRevenueDueToStockouts: number;
+  categories: CategoryMetricDelta[];
+  topDecliners: ProductMover[];
+  topGainers: ProductMover[];
+  activeCampaignsCount: number;
+  currencySymbol: string;
+}
+
+export interface AiAnalyticsActionPlanItem {
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  title: string;
+  description: string;
+  estimatedImpact: string;
+  actionType: 'RESTOCK' | 'DISCOUNT' | 'EMAIL_TRIGGER' | 'MARKETING' | 'PRICING' | string;
+}
+
+export interface AiAnalyticsResult {
+  question: string;
+  executiveSummary: string;
+  headlineMetric: string;
+  status: 'positive' | 'negative' | 'neutral';
+  categoryInsight: {
+    primaryCategory: string;
+    trafficChange: number;
+    conversionChange: number;
+    ordersChange: number;
+    revenueChange: number;
+    summaryText: string;
+  };
+  productDeclineDrivers: Array<{
+    productName: string;
+    declineReason: string;
+    revenueLoss: number;
+  }>;
+  rootCauses: string[];
+  actionPlan: AiAnalyticsActionPlanItem[];
+  calculatedMetrics: CalculatedStoreAnalytics;
+}
+
+export interface AiAnalyticsQueryPayload {
+  question?: string;
+  timeRange?: '7d' | '30d' | '90d';
+  storeId?: string;
+}
+
+// ── AI Sales Forecasting Types ─────────────────────────────────────────────
+export interface CategoryForecastData {
+  category: string;
+  expectedRevenue: number;
+  revenueRange: { min: number; max: number };
+  expectedOrders: number;
+  sharePercent: number;
+  growthVsHistoricalPercent: number;
+  topProducts: Array<{
+    id: string;
+    name: string;
+    expectedUnits: number;
+    expectedRevenue: number;
+    currentStock: number;
+    stockoutRisk: 'CRITICAL' | 'MODERATE' | 'SAFE';
+    daysUntilStockout: number;
+  }>;
+}
+
+export interface DailyForecastPointData {
+  date: string;
+  dayLabel: string;
+  type: 'HISTORICAL' | 'PROJECTED';
+  revenueExpected: number;
+  revenueLow: number;
+  revenueHigh: number;
+  ordersExpected: number;
+}
+
+export interface CalculatedSalesForecastData {
+  storeId: string;
+  currency: string;
+  currencySymbol: string;
+  forecastHorizon: '30d' | '60d' | '90d';
+  horizonLabel: string;
+  historicalPeriodLabel: string;
+  historicalTotalRevenue: number;
+  historicalTotalOrders: number;
+  historicalAov: number;
+  historicalAvgDailyRevenue: number;
+  historicalAvgDailyOrders: number;
+  projectedRevenueExpected: number;
+  projectedRevenueMin: number;
+  projectedRevenueMax: number;
+  projectedRevenueFormatted: string;
+  projectedOrdersExpected: number;
+  projectedOrdersMin: number;
+  projectedOrdersMax: number;
+  projectedOrdersFormatted: string;
+  projectedAov: number;
+  projectedGrowthPercent: number;
+  confidenceScore: number;
+  seasonalityMultiplier: number;
+  promotionsImpactMultiplier: number;
+  activePromotionsCount: number;
+  categories: CategoryForecastData[];
+  dailyTrajectory: DailyForecastPointData[];
+  stockoutRisks: Array<{
+    productId: string;
+    productName: string;
+    category: string;
+    currentInventory: number;
+    projectedDemandUnits: number;
+    estimatedRevenueAtRisk: number;
+    recommendedRestockUnits: number;
+    urgency: 'CRITICAL' | 'HIGH' | 'MEDIUM';
+  }>;
+}
+
+export interface AiForecastResult {
+  question: string;
+  executiveSummary: string;
+  headlineExpectedRevenue: string;
+  headlineExpectedOrders: string;
+  projectedGrowthLabel: string;
+  topExpectedCategories: Array<{
+    rank: number;
+    category: string;
+    expectedRevenue: string;
+    expectedOrders: number;
+    sharePercent: number;
+  }>;
+  keyDrivers: string[];
+  riskFactors: string[];
+  actionPlan: Array<{
+    priority: 'HIGH' | 'MEDIUM' | 'LOW';
+    title: string;
+    description: string;
+    timeline: string;
+    estimatedImpact: string;
+  }>;
+  calculatedForecast: CalculatedSalesForecastData;
+}
+
+export interface ForecastSalesPayload {
+  question?: string;
+  horizon?: '30d' | '60d' | '90d';
+  storeId?: string;
+}
+
+// ── AI Inventory Prediction Types ──────────────────────────────────────────
+export type InventoryAlertLevel = 'CRITICAL' | 'WARNING' | 'HEALTHY';
+
+export interface ProductInventoryPredictionData {
+  id: string;
+  name: string;
+  sku: string;
+  category: string;
+  price: number;
+  currentStock: number;
+  avgDailySales: number;
+  velocityTrend: 'ACCELERATING' | 'STEADY' | 'DECELERATING';
+  velocityChangePercent: number;
+  seasonalMultiplier: number;
+  promotionalMultiplier: number;
+  adjustedDailySales: number;
+  daysRemaining: number;
+  estimatedStockoutDate: string;
+  estimatedStockoutDateFormatted: string;
+  supplierLeadTimeDays: number;
+  reorderPointUnits: number;
+  safetyStockBufferUnits: number;
+  recommendedReorderUnits: number;
+  recommendedReorderDate: string;
+  estimatedReorderCost: number;
+  alertLevel: InventoryAlertLevel;
+  alertBadge: string;
+  urgencyText: string;
+  estimatedRevenueAtRisk: number;
+}
+
+export interface InventoryPredictionSummaryData {
+  storeId: string;
+  currency: string;
+  currencySymbol: string;
+  totalSkusAnalyzed: number;
+  criticalCount: number;
+  warningCount: number;
+  healthyCount: number;
+  totalRevenueAtRisk: number;
+  totalRecommendedRestockUnits: number;
+  totalEstimatedRestockCost: number;
+  averageDaysOfSupply: number;
+  predictions: ProductInventoryPredictionData[];
+}
+
+export interface AiInventoryPredictionResult {
+  question: string;
+  executiveSummary: string;
+  headlineSummary: string;
+  criticalAlerts: Array<{
+    productName: string;
+    daysRemaining: number;
+    recommendedReorder: string;
+    alertLevel: 'CRITICAL';
+  }>;
+  warningAlerts: Array<{
+    productName: string;
+    daysRemaining: number;
+    recommendedReorder: string;
+    alertLevel: 'WARNING';
+  }>;
+  healthyAlerts: Array<{
+    productName: string;
+    daysRemaining: number;
+    recommendedReorder: string;
+    alertLevel: 'HEALTHY';
+  }>;
+  keyDrivers: string[];
+  actionPlan: Array<{
+    priority: 'HIGH' | 'MEDIUM' | 'LOW';
+    productName?: string;
+    title: string;
+    description: string;
+    replenishmentUnits: number;
+    targetDeadline: string;
+    estimatedCost: string;
+  }>;
+  summary: InventoryPredictionSummaryData;
+}
+
+export interface PredictInventoryPayload {
+  question?: string;
+  category?: string;
+  supplierLeadTimeDays?: number;
+  targetDaysOfCoverage?: number;
+  storeId?: string;
+}
+
+export interface PricingScenarioData {
+  id: string;
+  name: string;
+  price: number;
+  compareAtPrice?: number;
+  discountBadge?: string;
+  unitCost: number;
+  unitMarginAmount: number;
+  unitMarginPercent: number;
+  projectedMonthlyVolume: number;
+  projectedMonthlyRevenue: number;
+  projectedGrossProfit: number;
+  profitDeltaVsBaseline: number;
+  profitDeltaPercent: number;
+  conversionRateProjected: number;
+  assumptions: {
+    priceElasticityFactor: number;
+    expectedConversionDeltaPercent: number;
+    volumeElasticityDeltaPercent: number;
+    rationale: string;
+  };
+}
+
+export interface ProductPricingAnalysisData {
+  productId: string;
+  productName: string;
+  sku: string;
+  category: string;
+  currentPrice: number;
+  costPrice: number;
+  currentMarginPercent: number;
+  currentMonthlyUnits: number;
+  currentMonthlyRevenue: number;
+  currentMonthlyProfit: number;
+  priceChangeHistory?: {
+    previousPrice: number;
+    priceDeltaPercent: number;
+    dateChanged: string;
+    salesVolumeChangePercent: number;
+    conversionChangePercent: number;
+    diagnosis: string;
+  };
+  scenarios: PricingScenarioData[];
+  recommendedScenarioId: string;
+  recommendationReason: string;
+}
+
+export interface BundlePricingRecommendationData {
+  id: string;
+  title: string;
+  description: string;
+  primaryProduct: { id: string; name: string; regularPrice: number };
+  secondaryProduct: { id: string; name: string; regularPrice: number };
+  combinedRegularPrice: number;
+  bundlePrice: number;
+  savingsAmount: number;
+  savingsPercent: number;
+  combinedUnitCost: number;
+  bundleMarginPercent: number;
+  projectedMonthlyBundleSales: number;
+  projectedAdditionalGrossProfit: number;
+  suggestedDiscountCode: string;
+}
+
+export interface DiscountRecommendationData {
+  id: string;
+  title: string;
+  productOrCategory: string;
+  suggestedDiscountPercent: number;
+  minOrderAmount: number;
+  currentVolume: number;
+  projectedVolumeWithDiscount: number;
+  currentGrossProfit: number;
+  projectedGrossProfit: number;
+  profitImpactPercent: number;
+  expectedMarginPreservation: string;
+  rationale: string;
+}
+
+export interface PricingInsightsSummaryData {
+  storeId: string;
+  currency: string;
+  currencySymbol: string;
+  totalProductsAnalyzed: number;
+  averageCatalogMarginPercent: number;
+  potentialAnnualProfitLift: number;
+  productsWithPriceElasticityOpportunities: number;
+  productAnalyses: ProductPricingAnalysisData[];
+  bundleRecommendations: BundlePricingRecommendationData[];
+  discountRecommendations: DiscountRecommendationData[];
+}
+
+export interface AiPricingInsightsResult {
+  question: string;
+  executiveSummary: string;
+  headlineProfitLift: string;
+  primaryProductDiagnostic: {
+    productName: string;
+    currentPrice: string;
+    identifiedProblem: string;
+    salesDropPercent: number;
+    conversionDropPercent: number;
+  };
+  scenariosComparison: Array<{
+    scenarioName: string;
+    price: string;
+    expectedUnits: number;
+    unitMargin: string;
+    totalGrossProfit: string;
+    profitLiftVsBaseline: string;
+    underlyingAssumptions: string;
+  }>;
+  keyInsights: string[];
+  actionPlan: Array<{
+    priority: 'HIGH' | 'MEDIUM' | 'LOW';
+    productName?: string;
+    actionType: 'PRICE_ADJUST' | 'PROMOTION' | 'BUNDLE' | 'MARGIN_GUARD';
+    title: string;
+    description: string;
+    estimatedImpact: string;
+  }>;
+  summary: PricingInsightsSummaryData;
+}
+
+export interface QueryPricingInsightsPayload {
+  question?: string;
+  productId?: string;
+  storeId?: string;
+}
+
+export interface PricingScenarioSimulatePayload {
+  productId: string;
+  simulatedPrice: number;
+  costPrice?: number;
+  baseUnits?: number;
+}
+
+export type CustomerSegmentType =
+  | 'HIGH_VALUE'
+  | 'NEW_CUSTOMERS'
+  | 'REPEAT_CUSTOMERS'
+  | 'AT_RISK'
+  | 'ONE_TIME'
+  | 'DORMANT'
+  | 'VIP';
+
+export interface SegmentCustomerProfileData {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  segment: CustomerSegmentType;
+  segmentLabel: string;
+  segmentBadgeColor: string;
+  totalOrders: number;
+  totalSpent: number;
+  aov: number;
+  lastOrderDate: string;
+  daysSinceLastOrder: number;
+  topCategories: string[];
+  lastPurchasedProducts: string[];
+  rfmScore: {
+    recency: number;
+    frequency: number;
+    monetary: number;
+    composite: number;
+  };
+  predictedChurnRiskPercent: number;
+  recommendedAction: string;
+}
+
+export interface SegmentGroupSummaryData {
+  segment: CustomerSegmentType;
+  title: string;
+  description: string;
+  badgeColor: string;
+  customerCount: number;
+  percentageOfBase: number;
+  totalSegmentRevenue: number;
+  averageAov: number;
+  averageRecencyDays: number;
+  suggestedCampaignStrategy: string;
+  defaultDiscountOffer: string;
+  primaryMarketingChannel: 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PUSH';
+  sampleCustomers: SegmentCustomerProfileData[];
+}
+
+export interface TargetedCampaignDraftData {
+  id: string;
+  title: string;
+  targetSegment: string;
+  matchedCustomerCount: number;
+  matchedCustomerEmails: string[];
+  channel: 'EMAIL' | 'SMS' | 'WHATSAPP';
+  subjectLine: string;
+  previewText?: string;
+  messageContent: string;
+  discountCode: string;
+  discountValue: string;
+  recommendedProducts: string[];
+  estimatedReach: number;
+  projectedOpenRate: string;
+  projectedConversionRate: string;
+  projectedRevenueLift: string;
+  criteriaExplanation: string;
+}
+
+export interface CustomerSegmentationSummaryData {
+  storeId: string;
+  currency: string;
+  currencySymbol: string;
+  totalCustomers: number;
+  activeCustomerBase: number;
+  totalCatalogRevenue: number;
+  averageLtv: number;
+  segments: SegmentGroupSummaryData[];
+  customers: SegmentCustomerProfileData[];
+  topCategoryAffinities: Array<{
+    category: string;
+    customerCount: number;
+    sharePercent: number;
+  }>;
+}
+
+export interface AiCustomerSegmentationResult {
+  question: string;
+  executiveSummary: string;
+  headlineSummary: string;
+  segmentBreakdown: Array<{
+    segmentName: string;
+    count: number;
+    share: string;
+    revenue: string;
+    strategy: string;
+  }>;
+  targetedCampaign: TargetedCampaignDraftData;
+  keyInsights: string[];
+  actionPlan: Array<{
+    priority: 'HIGH' | 'MEDIUM' | 'LOW';
+    segment: string;
+    title: string;
+    description: string;
+    estimatedImpact: string;
+  }>;
+  summary: CustomerSegmentationSummaryData;
+}
+
+export interface QueryCustomerSegmentationPayload {
+  prompt?: string;
+  storeId?: string;
+}
+
+export interface CreateTargetedCampaignPayload {
+  title: string;
+  targetSegment?: string;
+  channel?: 'EMAIL' | 'SMS' | 'WHATSAPP';
+  subject?: string;
+  body: string;
+  discountCode?: string;
+  discountValue?: number;
+  storeId?: string;
+}
+
+// ─── AI CAMPAIGN OPTIMIZATION & MULTI-CHANNEL GENERATOR ─────────────────────
+
+export interface ChannelPerformanceBenchmark {
+  channel: 'EMAIL' | 'WHATSAPP' | 'SMS' | 'PUSH' | 'INSTAGRAM';
+  label: string;
+  openRate: number;
+  clickRate: number;
+  conversionRate: number;
+  averageOrderValue: number;
+  roiMultiple: string;
+  optimalDayTime: string;
+  bestAudienceSegment: string;
+  historicalVolume: number;
+}
+
+export interface CampaignObservationData {
+  id: string;
+  type: 'CHANNEL_EFFICIENCY' | 'TIMING_SWEETSPOT' | 'OFFER_ELASTICITY' | 'SEGMENT_RESONANCE';
+  title: string;
+  observation: string;
+  comparisonMetric: string;
+  confidenceScore: number;
+  recommendedNextAction: string;
+}
+
+export interface GeneratedEmailAsset {
+  subjectLine: string;
+  preheaderText: string;
+  headerBadge: string;
+  headline: string;
+  bodyMarkdown: string;
+  callToActionText: string;
+  callToActionUrl: string;
+  personalizedMergeTags: string[];
+}
+
+export interface GeneratedWhatsAppAsset {
+  messageText: string;
+  emojiHeader: string;
+  quickReplyButtons: string[];
+  broadcastListRecommendation: string;
+  mediaAssetSuggestion: string;
+}
+
+export interface GeneratedPushAsset {
+  title: string;
+  body: string;
+  deepLink: string;
+  bannerImageUrl: string;
+  icon: string;
+  urgencyTag: string;
+}
+
+export interface GeneratedCouponAsset {
+  code: string;
+  discountType: 'PERCENTAGE' | 'FIXED';
+  discountValue: number;
+  minOrderAmount: number;
+  marginImpactExplanation: string;
+  expiryHours: number;
+  oncePerCustomer: boolean;
+}
+
+export interface GeneratedBundleAsset {
+  bundleName: string;
+  primaryProduct: string;
+  pairedProduct: string;
+  bundleRegularPrice: number;
+  bundleOfferPrice: number;
+  customerSavingsAmount: number;
+  merchantMarginPercent: number;
+  crossSellRationale: string;
+}
+
+export interface GeneratedSocialContentAsset {
+  platform: 'INSTAGRAM' | 'FACEBOOK';
+  postCaption: string;
+  storyText: string;
+  hashtags: string[];
+  suggestedCreativeType: string;
+  carouselSlideDescriptions: string[];
+}
+
+export interface GeneratedMultiChannelCampaign {
+  id: string;
+  title: string;
+  theme: string;
+  targetSegment: string;
+  targetProducts: string[];
+  email: GeneratedEmailAsset;
+  whatsapp: GeneratedWhatsAppAsset;
+  push: GeneratedPushAsset;
+  coupon: GeneratedCouponAsset;
+  bundle: GeneratedBundleAsset;
+  social: GeneratedSocialContentAsset;
+  expectedOverallRevenueLift: string;
+  projectedBlendedRoas: string;
+}
+
+export interface CampaignOptimizationSummaryData {
+  storeId: string;
+  currency: string;
+  currencySymbol: string;
+  benchmarkPeriod: string;
+  totalHistoricalCampaigns: number;
+  topChannelByConversion: string;
+  channelBenchmarks: ChannelPerformanceBenchmark[];
+  activeObservations: CampaignObservationData[];
+}
+
+export interface AiCampaignOptimizationResult {
+  question: string;
+  executiveSummary: string;
+  headlineObservation: string;
+  channelComparisonMatrix: Array<{
+    channel: string;
+    openRate: string;
+    conversionRate: string;
+    roi: string;
+    bestFor: string;
+  }>;
+  generatedCampaign: GeneratedMultiChannelCampaign;
+  observations: CampaignObservationData[];
+  actionPlan: Array<{
+    priority: 'HIGH' | 'MEDIUM' | 'LOW';
+    channel: string;
+    title: string;
+    description: string;
+    estimatedImpact: string;
+  }>;
+  summary: CampaignOptimizationSummaryData;
+}
+
+export interface QueryCampaignOptimizationPayload {
+  prompt?: string;
+  storeId?: string;
+  targetProduct?: string;
+}
+
+// ─── UNIFIED AI COMMERCE INTELLIGENCE ENGINE ────────────────────────────────
+
+export interface OrchestratedIntelligenceStepData {
+  stepIndex: number;
+  engine: 'FORECASTING' | 'INVENTORY' | 'SEGMENTATION' | 'CAMPAIGN' | 'PRICING';
+  title: string;
+  badge: string;
+  badgeColor: string;
+  keyMetric: string;
+  observation: string;
+  dataSummary: Record<string, any>;
+  actionableDecision: string;
+}
+
+export interface OrchestratedScenarioData {
+  id: string;
+  name: string;
+  description: string;
+  triggerEvent: string;
+  expectedRevenueImpact: string;
+  expectedMarginPreservation: string;
+  riskReductionSummary: string;
+  steps: OrchestratedIntelligenceStepData[];
+}
+
+export interface CommerceIntelligenceResponseData {
+  architecturePrinciples: {
+    dataPipeline: string[];
+    roleOfMlStatisticalModels: string;
+    roleOfLlm: string;
+    safetyGatewayValidation: string;
+  };
+  headlineOrchestration: string;
+  executiveSummary: string;
+  activeScenario: OrchestratedScenarioData;
+  availableScenarios: Array<{
+    id: string;
+    name: string;
+    tagline: string;
+    impact: string;
+  }>;
+  forecastSnapshot: any;
+  inventorySnapshot: any;
+  segmentationSnapshot: any;
+  campaignSnapshot: any;
+  pricingSnapshot: any;
+  timestamp: string;
+}
+
+export interface CommerceIntelligenceExecuteResult {
+  success: boolean;
+  message: string;
+  executedActions: Array<{
+    engine: string;
+    action: string;
+    result: string;
+  }>;
+}
+
+// ─── AI PAGE BUILDER ────────────────────────────────────────────────────────
+
+export interface GenerateAiPagePayload {
+  prompt: string;
+  pageType?: 'LANDING_PAGE' | 'PRODUCT_LAUNCH' | 'HOLIDAY_SALE' | 'FLASH_SALE' | 'BRAND_STORY' | 'VIP_LOYALTY' | 'FAQ_SUPPORT' | 'LEAD_CAPTURE';
+  themePreset?: 'minimal_luxe' | 'modern_clean' | 'vibrant_ecommerce' | 'warm_boutique' | 'cyber_neon';
+  targetAudience?: string;
+  tone?: 'high_conversion' | 'luxury' | 'energetic' | 'friendly' | 'urgency';
+  selectedSections?: string[];
+  storeId?: string;
+}
+
+export interface GeneratedAiPageResult {
+  title: string;
+  slug: string;
+  metaTitle: string;
+  metaDescription: string;
+  themePreset: string;
+  tone: string;
+  pageType: string;
+  targetAudience: string;
+  blocksCount: number;
+  blocks: Array<{
+    id: string;
+    type: string;
+    isVisible: boolean;
+    data: Record<string, any>;
+  }>;
+  explanation: string;
+}
+
+export interface RewriteBlockPayload {
+  blockType: string;
+  currentData: Record<string, any>;
+  instruction?: string;
+  tone?: string;
+}
+
+export interface RewriteBlockResult {
+  blockType: string;
+  instruction: string;
+  tone: string;
+  data: Record<string, any>;
+  explanation: string;
+}
+
+export interface GenerateBlockPayload {
+  prompt: string;
+  blockType?: string;
+  themePreset?: string;
+  tone?: string;
+  targetAudience?: string;
+  storeId?: string;
+}
+
+export interface GeneratedAiBlockResult {
+  block: {
+    id: string;
+    type: string;
+    isVisible: boolean;
+    data: Record<string, any>;
+  };
+  blockType: string;
+  explanation: string;
+}
+
+
+
+
+
+
+
+

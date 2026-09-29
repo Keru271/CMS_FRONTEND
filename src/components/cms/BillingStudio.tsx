@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
-import { PriceTierData, StoreSubscriptionData, StoreBillingInvoiceData } from '@/src/types';
+import { PriceTierData, StoreSubscriptionData, StoreBillingInvoiceData, AiCreditStatsData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import {
   CreditCard,
@@ -38,6 +38,9 @@ import {
   Flame,
   ChevronDown,
   ChevronLeft,
+  Bot,
+  History,
+  TrendingUp,
 } from 'lucide-react';
 
 const loadRazorpayScript = (): Promise<boolean> => {
@@ -158,6 +161,7 @@ export const BillingStudio: React.FC = () => {
   >('RAZORPAY_UPI');
   const [updatePaymentMethodDetails, setUpdatePaymentMethodDetails] = useState('');
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
+  const [aiCreditStats, setAiCreditStats] = useState<AiCreditStatsData | null>(null);
 
   useEffect(() => {
     loadBillingData();
@@ -168,12 +172,14 @@ export const BillingStudio: React.FC = () => {
   const loadBillingData = async () => {
     setIsLoading(true);
     try {
-      const [tiersRes, subRes] = await Promise.all([
+      const [tiersRes, subRes, aiRes] = await Promise.all([
         cmsService.getPriceTiers(),
         cmsService.getStoreSubscription(),
+        cmsService.getAiCredits(),
       ]);
       setTiers((tiersRes.tiers || []).filter((t: any) => t.id !== 'API'));
       setSubscription(subRes);
+      setAiCreditStats(aiRes);
       if (subRes.billingCycle) {
         setBillingCycle(subRes.billingCycle as any);
       }
@@ -545,11 +551,11 @@ export const BillingStudio: React.FC = () => {
             <span className="text-xs font-bold uppercase tracking-widest text-[#5e5a5a]">
               SaaS Billing & Subscriptions
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#d4ff4c] text-[#191a1b]">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#00E5FF] text-[#191a1b]">
               Secure Payments Active
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-[#191a1b] flex items-center gap-3 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-sans font-bold tracking-tight text-[#191a1b] flex items-center gap-3 mt-1">
             <Zap className="w-8 h-8 text-amber-500 fill-amber-500" />
             <span>Store Pricing Tiers & Billing</span>
           </h1>
@@ -607,7 +613,7 @@ export const BillingStudio: React.FC = () => {
           <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <span className="px-3 py-1 rounded-full text-xs font-black bg-[#d4ff4c] text-[#191a1b] uppercase tracking-wider">
+                <span className="px-3 py-1 rounded-full text-xs font-black bg-[#00E5FF] text-[#191a1b] uppercase tracking-wider">
                   Active Tier: {subscription.planConfig?.name || subscription.plan}
                 </span>
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
@@ -616,7 +622,7 @@ export const BillingStudio: React.FC = () => {
                 </span>
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-serif font-bold">
+              <h2 className="text-2xl sm:text-3xl font-sans font-bold">
                 {subscription.planConfig?.name || 'Store Subscription'}
               </h2>
 
@@ -660,7 +666,7 @@ export const BillingStudio: React.FC = () => {
                     setUpdatePaymentMethodDetails(subscription.planPaymentMethodDetails || '');
                     setIsPaymentMethodModalOpen(true);
                   }}
-                  className="text-xs font-bold text-[#d4ff4c] hover:underline cursor-pointer"
+                  className="text-xs font-bold text-[#00E5FF] hover:underline cursor-pointer"
                 >
                   Edit
                 </button>
@@ -698,13 +704,171 @@ export const BillingStudio: React.FC = () => {
                 </div>
                 <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#d4ff4c] rounded-full"
+                    className="h-full bg-[#00E5FF] rounded-full"
                     style={{ width: `${subscription.usage?.products?.percent || 5}%` }}
                   />
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* AI CREDITS & INTELLIGENCE QUOTA DASHBOARD */}
+      {aiCreditStats && (
+        <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-950/40 via-slate-900 to-indigo-950/20 border border-indigo-500/30 shadow-lg space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-500/20 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-black shadow-inner">
+                <Sparkles className="w-6 h-6 text-indigo-400 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-black text-slate-100">
+                    AI Credits & Store Intelligence
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider">
+                    Plan: {aiCreditStats.plan || 'ACTIVE'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Your store uses these allocated credits for Storefront AI Chatbots, AI Search, and CMS Studio Generators.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 bg-slate-950/80 px-4 py-2.5 rounded-2xl border border-indigo-500/30">
+              <div className="text-right">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Available AI Balance
+                </span>
+                <span className="text-lg font-black text-indigo-300">
+                  {aiCreditStats.aiCredits.toLocaleString()}{' '}
+                  <span className="text-xs font-normal text-slate-500">
+                    / {aiCreditStats.aiCreditsTotal.toLocaleString()} credits
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Usage Breakdown Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Storefront AI Card */}
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-emerald-500/20 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                  <Bot className="w-4 h-4" />
+                  <span>Storefront AI Features</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                  Customer Facing
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black text-emerald-300">
+                  {aiCreditStats.aiCreditsStorefrontUsed.toLocaleString()}
+                </span>
+                <span className="text-xs text-slate-400">credits consumed</span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Live customer chatbot consultations, conversational queries & AI catalog search.
+              </p>
+            </div>
+
+            {/* CMS Studio AI Card */}
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-purple-500/20 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-purple-400 flex items-center gap-1.5">
+                  <Layers className="w-4 h-4" />
+                  <span>CMS Studio AI Features</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                  Admin Tools
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black text-purple-300">
+                  {aiCreditStats.aiCreditsCmsUsed.toLocaleString()}
+                </span>
+                <span className="text-xs text-slate-400">credits consumed</span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                AI Store Builder, theme generators, product copywriter, radar, & 3D AR models.
+              </p>
+            </div>
+
+            {/* Total Used & Consumption Meter */}
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-indigo-500/20 space-y-2 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+                    <TrendingUp className="w-4 h-4" />
+                    <span>Monthly Quota Progress</span>
+                  </span>
+                  <span className="text-xs font-bold text-slate-300">
+                    {aiCreditStats.aiCreditsTotal > 0
+                      ? Math.round((aiCreditStats.aiCreditsUsed / aiCreditStats.aiCreditsTotal) * 100)
+                      : 0}
+                    % Used
+                  </span>
+                </div>
+                <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 transition-all rounded-full"
+                    style={{
+                      width: `${
+                        aiCreditStats.aiCreditsTotal > 0
+                          ? Math.min(
+                              100,
+                              Math.round((aiCreditStats.aiCreditsUsed / aiCreditStats.aiCreditsTotal) * 100),
+                            )
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                <span>{aiCreditStats.aiCreditsUsed} Total Used</span>
+                <span>{aiCreditStats.aiCredits} Remaining</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent AI Telemetry & Transaction Activity Log */}
+          {aiCreditStats.recentTransactions && aiCreditStats.recentTransactions.length > 0 && (
+            <div className="pt-2 border-t border-indigo-500/20 space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <History className="w-3.5 h-3.5" />
+                <span>Recent AI Feature Invocations</span>
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {aiCreditStats.recentTransactions.slice(0, 3).map((tx) => (
+                  <div
+                    key={tx.id}
+                    className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <div className="font-bold text-slate-200 truncate max-w-[140px]">
+                        {tx.feature || tx.action}
+                      </div>
+                      <div className="text-[10px] text-slate-500">
+                        {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} •{' '}
+                        <span className={tx.source === 'STOREFRONT' ? 'text-emerald-400' : 'text-purple-400'}>
+                          {tx.source}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="font-bold text-rose-400 shrink-0">
+                      -{tx.credits} cr
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -831,7 +995,7 @@ export const BillingStudio: React.FC = () => {
         </div>
 
         <div>
-          <h2 className="text-2xl sm:text-3xl font-serif font-black tracking-tight text-[#191a1b]">
+          <h2 className="text-2xl sm:text-3xl font-sans font-black tracking-tight text-[#191a1b]">
             Transparent Pricing for Every Stage of Growth
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto mt-1">
@@ -996,7 +1160,7 @@ export const BillingStudio: React.FC = () => {
                               {currencySymbol}
                               {isStarter ? '0' : isAnnual ? monthlyEquivalent.toLocaleString() : upgradeDiffPrice.toLocaleString()}
                             </span>
-                            <span className="text-xl sm:text-2xl font-serif italic text-slate-500 font-normal">
+                            <span className="text-xl sm:text-2xl font-sans italic text-slate-500 font-normal">
                               /month
                             </span>
                           </div>
@@ -1007,6 +1171,26 @@ export const BillingStudio: React.FC = () => {
                                 ? `${currencySymbol}${price.toLocaleString()} billed annually (${currencySymbol}${monthlyEquivalent.toLocaleString()}/mo)`
                                 : 'Billed monthly'}
                           </div>
+                        </div>
+
+                        {/* AI Credits Highlight Card */}
+                        <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 flex items-center justify-between">
+                          <span className="text-xs font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                            <span>AI Intelligence Credits</span>
+                          </span>
+                          <span className="text-xs font-black text-indigo-700 dark:text-indigo-300">
+                            {tier.aiCreditsMonthly !== undefined
+                              ? tier.aiCreditsMonthly.toLocaleString()
+                              : isStarter
+                              ? '100'
+                              : isGrowth
+                              ? '500'
+                              : isEnterprise
+                              ? '2,500'
+                              : '10,000'}{' '}
+                            /mo
+                          </span>
                         </div>
 
                         {/* Divider */}
@@ -1292,7 +1476,7 @@ export const BillingStudio: React.FC = () => {
       <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#cbd5e0] shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
           <div>
-            <h3 className="text-base font-serif font-bold text-[#191a1b] flex items-center gap-2">
+            <h3 className="text-base font-sans font-bold text-[#191a1b] flex items-center gap-2">
               <FileText className="w-5 h-5 text-indigo-600" />
               <span>Subscription Invoices & Tax Receipts</span>
             </h3>
@@ -1384,7 +1568,7 @@ export const BillingStudio: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-base text-white">Secure Checkout</span>
-                    <span className="px-1.5 py-0.5 rounded bg-[#d4ff4c]/20 text-[#d4ff4c] text-[10px] font-mono font-bold">
+                    <span className="px-1.5 py-0.5 rounded bg-[#00E5FF]/20 text-[#00E5FF] text-[10px] font-mono font-bold">
                       256-bit SSL
                     </span>
                   </div>
@@ -1581,7 +1765,7 @@ export const BillingStudio: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 py-3 rounded-2xl bg-[#191a1b] hover:bg-black text-[#d4ff4c] font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 py-3 rounded-2xl bg-[#191a1b] hover:bg-black text-[#00E5FF] font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Lock className="w-4 h-4" />
                       <span>Pay Now</span>
@@ -1617,7 +1801,7 @@ export const BillingStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsRazorpayModalOpen(false)}
-                    className="px-6 py-2.5 rounded-xl bg-[#191a1b] text-[#d4ff4c] text-xs font-bold shadow-md cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl bg-[#191a1b] text-[#00E5FF] text-xs font-bold shadow-md cursor-pointer"
                   >
                     Done
                   </button>
@@ -1805,7 +1989,7 @@ export const BillingStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsPaypalModalOpen(false)}
-                    className="px-6 py-2.5 rounded-xl bg-[#191a1b] text-[#d4ff4c] text-xs font-bold shadow-md cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl bg-[#191a1b] text-[#00E5FF] text-xs font-bold shadow-md cursor-pointer"
                   >
                     Done
                   </button>
@@ -1910,7 +2094,7 @@ export const BillingStudio: React.FC = () => {
                   onClick={() => {
                     window.print();
                   }}
-                  className="flex-1 py-3 rounded-2xl bg-[#191a1b] hover:bg-black text-[#d4ff4c] font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  className="flex-1 py-3 rounded-2xl bg-[#191a1b] hover:bg-black text-[#00E5FF] font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Printer className="w-4 h-4" />
                   <span>Print Receipt</span>
@@ -1982,7 +2166,7 @@ export const BillingStudio: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isUpdatingPayment}
-                  className="flex-1 py-3 rounded-2xl bg-[#191a1b] hover:bg-black text-[#d4ff4c] font-bold shadow-lg disabled:opacity-50 cursor-pointer"
+                  className="flex-1 py-3 rounded-2xl bg-[#191a1b] hover:bg-black text-[#00E5FF] font-bold shadow-lg disabled:opacity-50 cursor-pointer"
                 >
                   {isUpdatingPayment ? 'Saving...' : 'Save Payment Details'}
                 </button>

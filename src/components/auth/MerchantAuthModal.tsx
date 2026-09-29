@@ -303,11 +303,11 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full bg-background flex items-center justify-center p-3 sm:p-6 md:p-10 selection:bg-sage-primary selection:text-white">
+    <div className="min-h-screen w-full bg-slate-100 dark:bg-[#121212] flex items-center justify-center p-3 sm:p-6 md:p-10 selection:bg-[#00E5FF] selection:text-black">
       {/* Main Split Layout Container */}
-      <div className="w-full max-w-5xl bg-white dark:bg-card border border-sage-border rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row min-h-0 md:min-h-[620px]">
+      <div className="w-full max-w-5xl bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2C2C2E] rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row min-h-0 md:min-h-[620px]">
         {/* Left Column: Botanical Greenhouse Artwork */}
-        <div className="w-full md:w-1/2 bg-[#fafcfb] dark:bg-muted/20 p-4 sm:p-8 flex items-center justify-center border-b md:border-b-0 md:border-r border-sage-border">
+        <div className="w-full md:w-1/2 bg-slate-50 dark:bg-[#181818] p-4 sm:p-8 flex items-center justify-center border-b md:border-b-0 md:border-r border-slate-200 dark:border-[#2C2C2E]">
           <div className="relative w-full max-w-xs sm:max-w-md flex items-center justify-center py-2 sm:py-6">
             <img
               src="/auth_illustration.png"
@@ -318,20 +318,20 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
         </div>
 
         {/* Right Column: Form Panel */}
-        <div className="w-full md:w-1/2 p-5 sm:p-8 md:p-12 flex flex-col justify-between relative bg-white dark:bg-card text-sage-text">
+        <div className="w-full md:w-1/2 p-5 sm:p-8 md:p-12 flex flex-col justify-between relative bg-white dark:bg-[#1E1E1E] text-slate-900 dark:text-white">
           {/* Top Right Action Button */}
           <div className="flex justify-end mb-4 md:mb-6">
             {authMode === 'signin' ? (
               <Link
                 href="/register"
-                className="px-5 sm:px-6 py-1.5 rounded-full border border-sage-border text-sage-muted font-medium text-xs hover:border-sage-primary hover:text-sage-primary transition-all"
+                className="px-5 sm:px-6 py-1.5 rounded-full border border-slate-300 dark:border-[#2C2C2E] text-slate-700 dark:text-slate-300 font-semibold text-xs hover:border-slate-900 dark:hover:border-[#00E5FF] hover:text-slate-900 dark:hover:text-[#00E5FF] transition-all bg-slate-50 dark:bg-[#252525]"
               >
                 Sign up
               </Link>
             ) : (
               <Link
                 href="/login"
-                className="px-5 sm:px-6 py-1.5 rounded-full border border-sage-border text-sage-muted font-medium text-xs hover:border-sage-primary hover:text-sage-primary transition-all"
+                className="px-5 sm:px-6 py-1.5 rounded-full border border-slate-300 dark:border-[#2C2C2E] text-slate-700 dark:text-slate-300 font-semibold text-xs hover:border-slate-900 dark:hover:border-[#00E5FF] hover:text-slate-900 dark:hover:text-[#00E5FF] transition-all bg-slate-50 dark:bg-[#252525]"
               >
                 Sign in
               </Link>
@@ -341,7 +341,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
           <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
             {/* Header Title & Subtitle */}
             <div className="mb-5 sm:mb-6">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-sage-text tracking-tight">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {authMode === 'verify'
                   ? 'Verify Your Email'
                   : authMode === 'forgot'
@@ -350,7 +350,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                       ? 'Create Merchant Account'
                       : 'Welcome back'}
               </h1>
-              <p className="text-xs text-sage-muted mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {authMode === 'verify'
                   ? `We've sent a 6-digit verification code to ${emailForVerification}. Enter the code below to activate your account.`
                   : authMode === 'forgot'
@@ -399,7 +399,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <button
                   type="button"
                   onClick={() => verifyFormik.setFieldValue('otp', latestToken)}
-                  className="px-2 py-1 bg-emerald-600 text-white rounded text-[11px] font-bold hover:bg-emerald-700 transition-colors"
+                  className="px-2 py-1 bg-emerald-600 text-white rounded text-[11px] font-bold hover:bg-emerald-700 transition-colors cursor-pointer"
                 >
                   Use Code
                 </button>
@@ -411,15 +411,15 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
               <form onSubmit={verifyFormik.handleSubmit} className="space-y-4">
                 <div>
                   <div
-                    className={`border rounded-xl px-4 py-3 min-h-[48px] bg-sage-input-bg flex items-center gap-3.5 transition-all ${
+                    className={`border rounded-xl px-4 py-3 min-h-[48px] bg-slate-50 dark:bg-[#161616] flex items-center gap-3.5 transition-all ${
                       verifyFormik.touched.otp && verifyFormik.errors.otp
-                        ? 'border-sage-danger focus-within:border-sage-danger'
-                        : 'border-sage-border focus-within:border-sage-primary'
+                        ? 'border-red-500 focus-within:border-red-500'
+                        : 'border-slate-300 dark:border-[#2C2C2E] focus-within:border-slate-900 dark:focus-within:border-[#00E5FF]'
                     }`}
                   >
-                    <KeyRound className="w-5 h-5 text-sage-primary shrink-0" />
+                    <KeyRound className="w-5 h-5 text-slate-500 dark:text-[#00E5FF] shrink-0" />
                     <div className="flex-1">
-                      <label className="text-[11px] font-medium text-sage-muted block leading-tight">
+                      <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block leading-tight">
                         6-Digit Verification Code
                       </label>
                       <input
@@ -430,24 +430,24 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                         value={verifyFormik.values.otp}
                         onChange={verifyFormik.handleChange}
                         onBlur={verifyFormik.handleBlur}
-                        className="w-full bg-transparent text-sm sm:text-base font-mono font-bold tracking-widest text-sage-text outline-none"
+                        className="w-full bg-transparent text-sm sm:text-base font-mono font-bold tracking-widest text-slate-900 dark:text-white outline-none"
                       />
                     </div>
                   </div>
                   {verifyFormik.touched.otp && verifyFormik.errors.otp && (
-                    <span className="text-[11px] text-sage-danger font-medium mt-1 block">
+                    <span className="text-[11px] text-red-500 font-medium mt-1 block">
                       {verifyFormik.errors.otp}
                     </span>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-sage-muted pt-1">
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1">
                   <span>Didn't receive the code?</span>
                   <button
                     type="button"
                     disabled={resendCooldown > 0}
                     onClick={handleResendCode}
-                    className="font-semibold text-sage-primary hover:underline disabled:opacity-50"
+                    className="font-semibold text-slate-900 dark:text-[#00E5FF] hover:underline disabled:opacity-50 cursor-pointer"
                   >
                     {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
                   </button>
@@ -456,7 +456,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <Button
                   type="submit"
                   isDisabled={isSubmitting}
-                  className="w-full min-h-[44px] py-3.5 bg-sage-primary hover:bg-sage-hover text-white font-bold text-xs sm:text-sm rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2"
+                  className="w-full min-h-[46px] py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] text-white dark:text-[#121212] font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -471,7 +471,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <div className="text-center pt-2">
                   <Link
                     href="/register"
-                    className="text-xs font-semibold text-sage-primary hover:underline inline-flex items-center gap-1.5"
+                    className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-[#00E5FF] hover:underline inline-flex items-center gap-1.5"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Back to Registration</span>
@@ -485,13 +485,13 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
               <div className="w-full space-y-4">
                 {resetSent ? (
                   <div className="space-y-4 py-2">
-                    <div className="p-4 rounded-xl bg-sage-accent text-sage-primary text-xs font-semibold flex items-center gap-2 border border-sage-border">
-                      <CheckCircle2 className="w-5 h-5 shrink-0" />
+                    <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2 border border-emerald-200 dark:border-emerald-800">
+                      <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
                       <span>Password reset link sent! Check your email.</span>
                     </div>
                     <Link
                       href="/login"
-                      className="text-xs font-semibold text-sage-primary hover:underline inline-flex items-center gap-1.5"
+                      className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-[#00E5FF] hover:underline inline-flex items-center gap-1.5"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
                       <span>Back to Login</span>
@@ -499,10 +499,10 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                   </div>
                 ) : (
                   <form onSubmit={forgotFormik.handleSubmit} className="space-y-4">
-                    <div className="border border-sage-border rounded-xl px-4 py-2.5 min-h-[48px] bg-sage-input-bg flex items-center gap-3.5 focus-within:border-sage-primary transition-all">
-                      <Mail className="w-5 h-5 text-sage-primary shrink-0" />
+                    <div className="border border-slate-300 dark:border-[#2C2C2E] rounded-xl px-4 py-2.5 min-h-[48px] bg-slate-50 dark:bg-[#161616] flex items-center gap-3.5 focus-within:border-slate-900 dark:focus-within:border-[#00E5FF] transition-all">
+                      <Mail className="w-5 h-5 text-slate-500 dark:text-[#00E5FF] shrink-0" />
                       <div className="flex-1">
-                        <label className="text-[11px] font-medium text-sage-muted block leading-tight">
+                        <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block leading-tight">
                           Email
                         </label>
                         <input
@@ -512,12 +512,12 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                           value={forgotFormik.values.email}
                           onChange={forgotFormik.handleChange}
                           onBlur={forgotFormik.handleBlur}
-                          className="w-full bg-transparent text-xs sm:text-sm font-semibold text-sage-text placeholder:text-sage-muted outline-none"
+                          className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                         />
                       </div>
                     </div>
                     {forgotFormik.touched.email && forgotFormik.errors.email && (
-                      <span className="text-[11px] text-sage-danger font-medium block -mt-2">
+                      <span className="text-[11px] text-red-500 font-medium block -mt-2">
                         {forgotFormik.errors.email}
                       </span>
                     )}
@@ -525,7 +525,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                     <Button
                       type="submit"
                       isDisabled={isSubmitting}
-                      className="w-full min-h-[44px] py-3 bg-sage-primary hover:bg-sage-hover text-white font-bold text-xs sm:text-sm rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                      className="w-full min-h-[46px] py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] text-white dark:text-[#121212] font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
                     >
                       {isSubmitting ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -537,7 +537,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                     <div className="text-center pt-2">
                       <Link
                         href="/login"
-                        className="text-xs font-semibold text-sage-primary hover:underline inline-flex items-center gap-1.5"
+                        className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-[#00E5FF] hover:underline inline-flex items-center gap-1.5"
                       >
                         <ArrowLeft className="w-3.5 h-3.5" />
                         <span>Back to Login</span>
@@ -554,15 +554,15 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <div
-                      className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
+                      className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-slate-50 dark:bg-[#161616] flex items-center gap-3 transition-all ${
                         registerFormik.touched.firstName && registerFormik.errors.firstName
-                          ? 'border-sage-danger focus-within:border-sage-danger'
-                          : 'border-sage-border focus-within:border-sage-primary'
+                          ? 'border-red-500 focus-within:border-red-500'
+                          : 'border-slate-300 dark:border-[#2C2C2E] focus-within:border-slate-900 dark:focus-within:border-[#00E5FF]'
                       }`}
                     >
-                      <User className="w-4 h-4 text-sage-primary shrink-0" />
+                      <User className="w-4 h-4 text-slate-500 dark:text-[#00E5FF] shrink-0" />
                       <div className="flex-1">
-                        <label className="text-[10px] font-medium text-sage-muted block leading-tight">
+                        <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block leading-tight">
                           First Name
                         </label>
                         <input
@@ -571,12 +571,12 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                           value={registerFormik.values.firstName}
                           onChange={registerFormik.handleChange}
                           onBlur={registerFormik.handleBlur}
-                          className="w-full bg-transparent text-xs font-semibold text-sage-text outline-none"
+                          className="w-full bg-transparent text-xs font-semibold text-slate-900 dark:text-white outline-none"
                         />
                       </div>
                     </div>
                     {registerFormik.touched.firstName && registerFormik.errors.firstName && (
-                      <span className="text-[10px] text-sage-danger font-medium mt-1 block">
+                      <span className="text-[10px] text-red-500 font-medium mt-1 block">
                         {registerFormik.errors.firstName}
                       </span>
                     )}
@@ -584,15 +584,15 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
 
                   <div>
                     <div
-                      className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
+                      className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-slate-50 dark:bg-[#161616] flex items-center gap-3 transition-all ${
                         registerFormik.touched.lastName && registerFormik.errors.lastName
-                          ? 'border-sage-danger focus-within:border-sage-danger'
-                          : 'border-sage-border focus-within:border-sage-primary'
+                          ? 'border-red-500 focus-within:border-red-500'
+                          : 'border-slate-300 dark:border-[#2C2C2E] focus-within:border-slate-900 dark:focus-within:border-[#00E5FF]'
                       }`}
                     >
-                      <User className="w-4 h-4 text-sage-primary shrink-0" />
+                      <User className="w-4 h-4 text-slate-500 dark:text-[#00E5FF] shrink-0" />
                       <div className="flex-1">
-                        <label className="text-[10px] font-medium text-sage-muted block leading-tight">
+                        <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block leading-tight">
                           Last Name
                         </label>
                         <input
@@ -601,12 +601,12 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                           value={registerFormik.values.lastName}
                           onChange={registerFormik.handleChange}
                           onBlur={registerFormik.handleBlur}
-                          className="w-full bg-transparent text-xs font-semibold text-sage-text outline-none"
+                          className="w-full bg-transparent text-xs font-semibold text-slate-900 dark:text-white outline-none"
                         />
                       </div>
                     </div>
                     {registerFormik.touched.lastName && registerFormik.errors.lastName && (
-                      <span className="text-[10px] text-sage-danger font-medium mt-1 block">
+                      <span className="text-[10px] text-red-500 font-medium mt-1 block">
                         {registerFormik.errors.lastName}
                       </span>
                     )}
@@ -615,15 +615,15 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
 
                 <div>
                   <div
-                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
+                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-slate-50 dark:bg-[#161616] flex items-center gap-3 transition-all ${
                       registerFormik.touched.mobileNumber && registerFormik.errors.mobileNumber
-                        ? 'border-sage-danger focus-within:border-sage-danger'
-                        : 'border-sage-border focus-within:border-sage-primary'
+                        ? 'border-red-500 focus-within:border-red-500'
+                        : 'border-slate-300 dark:border-[#2C2C2E] focus-within:border-slate-900 dark:focus-within:border-[#00E5FF]'
                     }`}
                   >
-                    <Phone className="w-4 h-4 text-sage-primary shrink-0" />
+                    <Phone className="w-4 h-4 text-slate-500 dark:text-[#00E5FF] shrink-0" />
                     <div className="flex-1">
-                      <label className="text-[10px] font-medium text-sage-muted block leading-tight">
+                      <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block leading-tight">
                         Mobile Number
                       </label>
                       <input
@@ -633,12 +633,12 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                         value={registerFormik.values.mobileNumber}
                         onChange={registerFormik.handleChange}
                         onBlur={registerFormik.handleBlur}
-                        className="w-full bg-transparent text-xs font-semibold text-sage-text outline-none"
+                        className="w-full bg-transparent text-xs font-semibold text-slate-900 dark:text-white outline-none"
                       />
                     </div>
                   </div>
                   {registerFormik.touched.mobileNumber && registerFormik.errors.mobileNumber && (
-                    <span className="text-[10px] text-sage-danger font-medium mt-1 block">
+                    <span className="text-[10px] text-red-500 font-medium mt-1 block">
                       {registerFormik.errors.mobileNumber}
                     </span>
                   )}
@@ -646,15 +646,15 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
 
                 <div>
                   <div
-                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
+                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-slate-50 dark:bg-[#161616] flex items-center gap-3 transition-all ${
                       registerFormik.touched.email && registerFormik.errors.email
-                        ? 'border-sage-danger focus-within:border-sage-danger'
-                        : 'border-sage-border focus-within:border-sage-primary'
+                        ? 'border-red-500 focus-within:border-red-500'
+                        : 'border-slate-300 dark:border-[#2C2C2E] focus-within:border-slate-900 dark:focus-within:border-[#00E5FF]'
                     }`}
                   >
-                    <Mail className="w-4 h-4 text-sage-primary shrink-0" />
+                    <Mail className="w-4 h-4 text-slate-500 dark:text-[#00E5FF] shrink-0" />
                     <div className="flex-1">
-                      <label className="text-[10px] font-medium text-sage-muted block leading-tight">
+                      <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block leading-tight">
                         Email
                       </label>
                       <input
@@ -664,12 +664,12 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                         value={registerFormik.values.email}
                         onChange={registerFormik.handleChange}
                         onBlur={registerFormik.handleBlur}
-                        className="w-full bg-transparent text-xs font-semibold text-sage-text outline-none"
+                        className="w-full bg-transparent text-xs font-semibold text-slate-900 dark:text-white outline-none"
                       />
                     </div>
                   </div>
                   {registerFormik.touched.email && registerFormik.errors.email && (
-                    <span className="text-[10px] text-sage-danger font-medium mt-1 block">
+                    <span className="text-[10px] text-red-500 font-medium mt-1 block">
                       {registerFormik.errors.email}
                     </span>
                   )}
@@ -677,15 +677,15 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
 
                 <div>
                   <div
-                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-sage-input-bg flex items-center gap-3 transition-all ${
+                    className={`border rounded-xl px-3.5 py-2 min-h-[46px] bg-slate-50 dark:bg-[#161616] flex items-center gap-3 transition-all ${
                       registerFormik.touched.password && registerFormik.errors.password
-                        ? 'border-sage-danger focus-within:border-sage-danger'
-                        : 'border-sage-border focus-within:border-sage-primary'
+                        ? 'border-red-500 focus-within:border-red-500'
+                        : 'border-slate-300 dark:border-[#2C2C2E] focus-within:border-slate-900 dark:focus-within:border-[#00E5FF]'
                     }`}
                   >
-                    <Lock className="w-4 h-4 text-sage-primary shrink-0" />
+                    <Lock className="w-4 h-4 text-slate-500 dark:text-[#00E5FF] shrink-0" />
                     <div className="flex-1">
-                      <label className="text-[10px] font-medium text-sage-muted block leading-tight">
+                      <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block leading-tight">
                         Password
                       </label>
                       <input
@@ -695,34 +695,34 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                         value={registerFormik.values.password}
                         onChange={registerFormik.handleChange}
                         onBlur={registerFormik.handleBlur}
-                        className="w-full bg-transparent text-xs font-semibold text-sage-text outline-none"
+                        className="w-full bg-transparent text-xs font-semibold text-slate-900 dark:text-white outline-none"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                      className="p-1 text-sage-muted hover:text-sage-primary transition focus:outline-none"
+                      className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white transition focus:outline-none cursor-pointer"
                       tabIndex={-1}
                       aria-label={showRegisterPassword ? 'Hide password' : 'Show password'}
                     >
                       {showRegisterPassword ? (
-                        <EyeOff className="w-4 h-4 text-sage-muted hover:text-sage-text" />
+                        <EyeOff className="w-4 h-4 text-slate-400 hover:text-slate-600" />
                       ) : (
-                        <Eye className="w-4 h-4 text-sage-primary" />
+                        <Eye className="w-4 h-4 text-slate-500 dark:text-[#00E5FF]" />
                       )}
                     </button>
                   </div>
                   {registerFormik.touched.password && registerFormik.errors.password && (
-                    <span className="text-[10px] text-sage-danger font-medium mt-1 block">
+                    <span className="text-[10px] text-red-500 font-medium mt-1 block">
                       {registerFormik.errors.password}
                     </span>
                   )}
 
                   {/* Password Strength Meter & Live Checklist */}
                   {registerFormik.values.password && (
-                    <div className="mt-2 p-2.5 rounded-xl bg-sage-input-bg/70 border border-sage-border/60 space-y-2 text-[11px]">
+                    <div className="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-[#161616] border border-slate-200 dark:border-[#2C2C2E] space-y-2 text-[11px]">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-semibold text-sage-muted">
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                           Strength:{' '}
                           <span
                             className={
@@ -751,13 +751,17 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                               className={`flex-1 h-full rounded-full transition-all duration-300 ${
                                 lvl <= pwdStrength.score
                                   ? pwdStrength.score <= 1
-                                    ? 'bg-red-500'
-                                    : pwdStrength.score === 2
-                                      ? 'bg-orange-500'
-                                      : pwdStrength.score <= 4
-                                        ? 'bg-amber-500'
-                                        : 'bg-emerald-500'
-                                  : 'bg-gray-200 dark:bg-gray-700'
+                                  : 'bg-slate-200 dark:bg-slate-700'
+                              } ${
+                                lvl <= pwdStrength.score && pwdStrength.score === 1
+                                  ? 'bg-red-500'
+                                  : lvl <= pwdStrength.score && pwdStrength.score === 2
+                                    ? 'bg-orange-500'
+                                    : lvl <= pwdStrength.score && pwdStrength.score <= 4
+                                      ? 'bg-amber-500'
+                                      : lvl <= pwdStrength.score
+                                        ? 'bg-emerald-500'
+                                        : ''
                               }`}
                             />
                           ))}
@@ -769,7 +773,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                           className={`flex items-center gap-1.5 font-medium ${
                             pwdStrength.checks.uppercase
                               ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-sage-muted'
+                              : 'text-slate-400 dark:text-slate-500'
                           }`}
                         >
                           <span>{pwdStrength.checks.uppercase ? '✓' : '○'}</span>
@@ -779,7 +783,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                           className={`flex items-center gap-1.5 font-medium ${
                             pwdStrength.checks.lowercase
                               ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-sage-muted'
+                              : 'text-slate-400 dark:text-slate-500'
                           }`}
                         >
                           <span>{pwdStrength.checks.lowercase ? '✓' : '○'}</span>
@@ -789,7 +793,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                           className={`flex items-center gap-1.5 font-medium ${
                             pwdStrength.checks.number
                               ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-sage-muted'
+                              : 'text-slate-400 dark:text-slate-500'
                           }`}
                         >
                           <span>{pwdStrength.checks.number ? '✓' : '○'}</span>
@@ -799,7 +803,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                           className={`flex items-center gap-1.5 font-medium ${
                             pwdStrength.checks.special
                               ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-sage-muted'
+                              : 'text-slate-400 dark:text-slate-500'
                           }`}
                         >
                           <span>{pwdStrength.checks.special ? '✓' : '○'}</span>
@@ -813,7 +817,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <Button
                   type="submit"
                   isDisabled={isSubmitting}
-                  className="w-full min-h-[44px] py-3 bg-sage-primary hover:bg-sage-hover text-white font-bold text-xs sm:text-sm rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2"
+                  className="w-full min-h-[46px] py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] text-white dark:text-[#121212] font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -828,10 +832,10 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
             {authMode === 'signin' && (
               <form onSubmit={loginFormik.handleSubmit} className="space-y-4">
                 <div>
-                  <div className="border border-sage-border rounded-xl px-4 py-2.5 min-h-[48px] bg-sage-input-bg flex items-center gap-3.5 focus-within:border-sage-primary transition-all">
-                    <Mail className="w-5 h-5 text-sage-primary shrink-0" />
+                  <div className="border border-slate-300 dark:border-[#2C2C2E] rounded-xl px-4 py-2.5 min-h-[48px] bg-slate-50 dark:bg-[#161616] flex items-center gap-3.5 focus-within:border-slate-900 dark:focus-within:border-[#00E5FF] transition-all">
+                    <Mail className="w-5 h-5 text-slate-500 dark:text-[#00E5FF] shrink-0" />
                     <div className="flex-1">
-                      <label className="text-[11px] font-medium text-sage-muted block leading-tight">
+                      <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block leading-tight">
                         Email
                       </label>
                       <input
@@ -841,22 +845,22 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                         value={loginFormik.values.email}
                         onChange={loginFormik.handleChange}
                         onBlur={loginFormik.handleBlur}
-                        className="w-full bg-transparent text-xs sm:text-sm font-semibold text-sage-text placeholder:text-sage-muted outline-none"
+                        className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                       />
                     </div>
                   </div>
                   {loginFormik.touched.email && loginFormik.errors.email && (
-                    <span className="text-[11px] text-sage-danger font-medium mt-1 block">
+                    <span className="text-[11px] text-red-500 font-medium mt-1 block">
                       {loginFormik.errors.email}
                     </span>
                   )}
                 </div>
 
                 <div>
-                  <div className="border border-sage-border rounded-xl px-4 py-2.5 min-h-[48px] bg-sage-input-bg flex items-center gap-3.5 focus-within:border-sage-primary transition-all">
-                    <Lock className="w-5 h-5 text-sage-primary shrink-0" />
+                  <div className="border border-slate-300 dark:border-[#2C2C2E] rounded-xl px-4 py-2.5 min-h-[48px] bg-slate-50 dark:bg-[#161616] flex items-center gap-3.5 focus-within:border-slate-900 dark:focus-within:border-[#00E5FF] transition-all">
+                    <Lock className="w-5 h-5 text-slate-500 dark:text-[#00E5FF] shrink-0" />
                     <div className="flex-1">
-                      <label className="text-[11px] font-medium text-sage-muted block leading-tight">
+                      <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block leading-tight">
                         Password
                       </label>
                       <input
@@ -866,25 +870,25 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                         value={loginFormik.values.password}
                         onChange={loginFormik.handleChange}
                         onBlur={loginFormik.handleBlur}
-                        className="w-full bg-transparent text-xs sm:text-sm font-semibold text-sage-text placeholder:text-sage-muted outline-none"
+                        className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={() => setShowLoginPassword(!showLoginPassword)}
-                      className="p-1 text-sage-muted hover:text-sage-primary transition focus:outline-none"
+                      className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white transition focus:outline-none cursor-pointer"
                       tabIndex={-1}
                       aria-label={showLoginPassword ? 'Hide password' : 'Show password'}
                     >
                       {showLoginPassword ? (
-                        <EyeOff className="w-4 h-4 text-sage-muted hover:text-sage-text" />
+                        <EyeOff className="w-4 h-4 text-slate-400 hover:text-slate-600" />
                       ) : (
-                        <Eye className="w-4 h-4 text-sage-primary" />
+                        <Eye className="w-4 h-4 text-slate-500 dark:text-[#00E5FF]" />
                       )}
                     </button>
                   </div>
                   {loginFormik.touched.password && loginFormik.errors.password && (
-                    <span className="text-[11px] text-sage-danger font-medium mt-1 block">
+                    <span className="text-[11px] text-red-500 font-medium mt-1 block">
                       {loginFormik.errors.password}
                     </span>
                   )}
@@ -893,25 +897,29 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <div className="flex items-center justify-between pt-1 gap-2">
                   <div
                     onClick={() => setRememberMe(!rememberMe)}
-                    className="flex items-center gap-2 cursor-pointer select-none"
+                    className="flex items-center gap-2.5 cursor-pointer select-none group"
                   >
                     <div
                       className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 flex items-center ${
-                        rememberMe ? 'bg-sage-primary' : 'bg-sage-border'
+                        rememberMe
+                          ? 'bg-slate-900 dark:bg-[#00E5FF]'
+                          : 'bg-slate-300 dark:bg-[#2C2C2E]'
                       }`}
                     >
                       <div
-                        className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+                        className={`w-4 h-4 rounded-full bg-white dark:bg-[#121212] shadow-md transform transition-transform duration-200 ${
                           rememberMe ? 'translate-x-4' : 'translate-x-0'
                         }`}
                       />
                     </div>
-                    <span className="text-xs font-medium text-sage-text">Remember me</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                      Remember me
+                    </span>
                   </div>
 
                   <Link
                     href="/forgot-password"
-                    className="text-xs font-semibold text-sage-danger hover:underline shrink-0"
+                    className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-[#00E5FF] hover:underline shrink-0"
                   >
                     Forgot Password?
                   </Link>
@@ -920,9 +928,13 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <Button
                   type="submit"
                   isDisabled={isSubmitting}
-                  className="w-full min-h-[44px] py-3.5 bg-sage-primary hover:bg-sage-hover text-white font-bold text-xs sm:text-sm rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2"
+                  className="w-full min-h-[46px] py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] text-white dark:text-[#121212] font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2 cursor-pointer"
                 >
-                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Login</span>}
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <span>Login</span>
+                  )}
                 </Button>
               </form>
             )}
@@ -931,8 +943,8 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
             {authMode !== 'verify' && (
               <div className="mt-6 sm:mt-8">
                 <div className="relative flex items-center justify-center my-4">
-                  <div className="border-t border-dashed border-sage-border w-full" />
-                  <span className="bg-white dark:bg-card px-3 text-[11px] text-sage-muted font-medium absolute">
+                  <div className="border-t border-slate-200 dark:border-[#2C2C2E] w-full" />
+                  <span className="bg-white dark:bg-[#1E1E1E] px-3 text-[11px] text-slate-500 dark:text-slate-400 font-semibold absolute">
                     Or Login with
                   </span>
                 </div>
@@ -946,10 +958,10 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                       setIsGoogleLoading(true);
                       triggerGoogleAuth();
                     }}
-                    className="w-full sm:w-auto flex-1 px-5 py-2.5 rounded-full border border-sage-border hover:border-sage-primary text-xs font-semibold text-sage-text flex items-center justify-center gap-2.5 transition-all bg-white dark:bg-card hover:bg-sage-accent/50 min-h-[42px] cursor-pointer shadow-xs active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full sm:w-auto flex-1 px-5 py-2.5 rounded-full border border-slate-300 dark:border-[#2C2C2E] hover:border-slate-400 dark:hover:border-[#00E5FF] text-xs font-semibold text-slate-800 dark:text-white flex items-center justify-center gap-2.5 transition-all bg-white dark:bg-[#252525] hover:bg-slate-50 dark:hover:bg-[#2a2a2a] min-h-[42px] cursor-pointer shadow-xs active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isGoogleLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-sage-primary" />
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-900 dark:text-[#00E5FF]" />
                     ) : (
                       <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                         <path

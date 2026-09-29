@@ -9,23 +9,24 @@ import {
   ChevronDown,
   LogOut,
   Menu,
-  Sparkles,
   Store,
   Check,
   Globe,
   ExternalLink,
-  MessageSquareCode,
   ShieldCheck,
   CreditCard,
-  Sliders,
+  Sparkles,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { MerchantOnboardingData } from '@/src/types';
 import { useCMS } from '@/src/context/CMSContext';
 import { useTranslation } from '@/src/context/LanguageContext';
-import { SupportedLanguage } from '@/src/lib/i18n';
+import { useTheme } from '@/src/context/ThemeContext';
 
 interface AdminHeaderProps {
   onSearch?: (query: string) => void;
+  onOpenSpotlight?: () => void;
   onAddProduct?: () => void;
   merchantData?: MerchantOnboardingData | null;
   onLogout?: () => void;
@@ -34,12 +35,14 @@ interface AdminHeaderProps {
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({
   onSearch,
+  onOpenSpotlight,
   onAddProduct,
   merchantData,
   onLogout,
   onToggleMobileSidebar,
 }) => {
   const router = useRouter();
+  const { isDark, toggleTheme } = useTheme();
   const { stores, activeStore, switchActiveStore, setIsCreateStoreModalOpen } = useCMS();
   const { t, language, setLanguage, languages, currentLanguageOption } = useTranslation();
 
@@ -53,7 +56,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   const userMenuRef = useRef<HTMLDivElement>(null);
   const langMenuRef = useRef<HTMLDivElement>(null);
 
-  const currentStoreName = activeStore?.name || merchantData?.store?.storeName || 'No Store Setup';
+  const currentStoreName = activeStore?.name || merchantData?.store?.storeName || 'My Store';
   const currentCurrency = activeStore?.currency || merchantData?.store?.currency || 'USD';
   const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
 
@@ -95,405 +98,290 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   );
 
   return (
-    <header className="px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3 bg-[#fdf1ef]/80 backdrop-blur-md sticky top-0 z-30 border-b border-[#cbd5e0]/60">
-      {/* Left Store Selector Dropdown Pill */}
+    <header className="px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-[#2C2C2E]">
+      {/* Left Store Selector Dropdown */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0" ref={storeMenuRef}>
-        {onToggleMobileSidebar && (
-          <button
-            onClick={onToggleMobileSidebar}
-            className="md:hidden p-2 rounded-lg bg-[#ffffff] border border-[#cbd5e0] text-[#191a1b] hover:bg-[#fdf1ef] transition-colors shrink-0"
-            aria-label="Open Navigation Drawer"
-          >
-            <Menu className="w-4 h-4" />
-          </button>
-        )}
+        {/* Mobile Menu Drawer Toggle Button */}
+        <button
+          onClick={onToggleMobileSidebar}
+          className="p-1.5 rounded-xl border border-slate-200 dark:border-[#2C2C2E] bg-slate-50 dark:bg-[#1E1E1E] text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white md:hidden transition-colors cursor-pointer"
+          aria-label="Open Navigation Drawer"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
 
-        {/* Store Selector Pill & Dropdown */}
-        <div className="relative min-w-0">
+        {/* Store Selector Pill */}
+        <div className="relative">
           <button
-            type="button"
             onClick={() => setIsStoreMenuOpen(!isStoreMenuOpen)}
-            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#ffffff] border border-[#cbd5e0] shadow-xs hover:border-[#191a1b] transition-all cursor-pointer group max-w-full"
+            className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-800 dark:text-white hover:border-sky-500 dark:hover:border-[#00E5FF]/60 transition-all text-xs font-semibold max-w-[180px] sm:max-w-xs truncate cursor-pointer shadow-xs"
           >
-            <span className="w-2 h-2 rounded-full bg-[#10b981] shrink-0 animate-pulse" />
-            <span className="text-xs font-sans font-bold text-[#191a1b] truncate max-w-[90px] min-[400px]:max-w-[130px] sm:max-w-[200px]">
-              {currentStoreName}
-            </span>
-            <span className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-mono font-bold text-[#5e5a5a]">
-              {currentCurrency}
-            </span>
+            <div className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-[#32D74B] animate-pulse shrink-0" />
+            <span className="truncate">{currentStoreName}</span>
             <ChevronDown
-              className={`w-3.5 h-3.5 text-[#5e5a5a] shrink-0 ml-0.5 transition-transform duration-200 ${
-                isStoreMenuOpen ? 'rotate-180 text-[#191a1b]' : ''
+              className={`w-3.5 h-3.5 text-slate-400 dark:text-[#98989D] shrink-0 transition-transform ${
+                isStoreMenuOpen ? 'rotate-180 text-sky-600 dark:text-[#00E5FF]' : ''
               }`}
             />
           </button>
 
-          {/* Multi-Store Dropdown Menu */}
+          {/* Store Dropdown Menu */}
           {isStoreMenuOpen && (
-            <div className="absolute left-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm bg-white border border-[#cbd5e0] rounded-2xl shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 space-y-2">
-              {/* Dropdown Header */}
-              <div className="flex items-center justify-between px-2 pb-2 border-b border-[#cbd5e0]/60">
-                <div className="flex items-center gap-1.5">
-                  <Store className="w-4 h-4 text-[#191a1b]" />
-                  <span className="text-xs font-bold text-[#191a1b]">Your Store Portfolio</span>
-                </div>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                  {stores.length} {stores.length === 1 ? 'Store' : 'Stores'}
+            <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2C2C2E] rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="p-2 border-b border-slate-200 dark:border-[#2C2C2E] flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-[#98989D] uppercase tracking-wider">
+                  Select Active Store
                 </span>
+                <button
+                  onClick={() => {
+                    setIsStoreMenuOpen(false);
+                    setIsCreateStoreModalOpen(true);
+                  }}
+                  className="text-[11px] font-semibold text-sky-600 dark:text-[#00E5FF] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>New</span>
+                </button>
               </div>
 
-              {/* Quick Search if multiple stores */}
-              {stores.length > 2 && (
-                <div className="relative px-1">
-                  <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 top-2.5" />
+              {/* Search Stores */}
+              {stores.length > 3 && (
+                <div className="p-2">
                   <input
                     type="text"
+                    placeholder="Search stores..."
                     value={storeFilterQuery}
                     onChange={(e) => setStoreFilterQuery(e.target.value)}
-                    placeholder="Search stores..."
-                    className="w-full pl-8 pr-3 py-1.5 text-xs font-sans rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                    className="w-full bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-[#2C2C2E] rounded-xl px-2.5 py-1 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 dark:focus:border-[#00E5FF]"
                   />
                 </div>
               )}
 
-              {/* Store List */}
-              <div className="max-h-60 overflow-y-auto space-y-1 px-1">
-                {filteredStores.length === 0 && (
-                  <div className="py-6 text-center text-xs text-gray-500">
-                    <Store className="w-8 h-8 text-gray-400 mx-auto mb-2 opacity-50" />
-                    <p className="font-semibold text-gray-700">No stores created yet</p>
-                    <p className="text-[11px] text-gray-500 mt-0.5">
-                      Click below to setup and launch your store.
-                    </p>
-                  </div>
-                )}
+              {/* Stores List */}
+              <div className="max-h-48 overflow-y-auto space-y-1 py-1">
                 {filteredStores.map((st) => {
-                  const isActive = activeStore?.id === st.id;
+                  const isSelected = activeStore?.id === st.id;
                   const isSwitching = switchingStoreId === st.id;
                   return (
-                    <div
+                    <button
                       key={st.id}
                       onClick={() => handleSelectStore(st.id)}
-                      className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                        isActive
-                          ? 'border-[#191a1b] bg-[#191a1b] text-white shadow-xs'
-                          : 'border-transparent hover:border-[#cbd5e0] hover:bg-[#fdf1ef] text-[#191a1b]'
+                      disabled={isSwitching}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-sky-50 dark:bg-[#00E5FF]/10 text-sky-700 dark:text-[#00E5FF] border border-sky-200 dark:border-[#00E5FF]/30 font-semibold'
+                          : 'text-slate-700 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#252525] hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs ${
-                            isActive ? 'bg-[#d4ff4c] text-[#191a1b]' : 'bg-gray-100 text-[#191a1b]'
-                          }`}
-                        >
-                          {st.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p
-                              className={`text-xs font-bold truncate ${isActive ? 'text-white' : 'text-[#191a1b]'}`}
-                            >
-                              {st.name}
-                            </p>
-                          </div>
-                          <p
-                            className={`text-[10px] font-mono truncate ${isActive ? 'text-gray-300' : 'text-[#5e5a5a]'}`}
-                          >
-                            {st.slug}.onlinestore.io
-                          </p>
-                        </div>
+                      <div className="truncate">
+                        <div className="font-medium text-slate-900 dark:text-white truncate">{st.name}</div>
+                        <div className="text-[10px] text-slate-400 dark:text-[#98989D] font-mono">/{st.slug}</div>
                       </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span
-                          className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                            isActive ? 'bg-white/20 text-[#d4ff4c]' : 'bg-gray-100 text-[#5e5a5a]'
-                          }`}
-                        >
-                          {st.currency || 'INR'}
-                        </span>
-                        {isActive && (
-                          <div className="w-5 h-5 rounded-full bg-[#d4ff4c] text-[#191a1b] flex items-center justify-center">
-                            <Check className="w-3 h-3 stroke-[3]" />
-                          </div>
-                        )}
-                        {isSwitching && (
-                          <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-2 border-t border-[#cbd5e0]/60 space-y-1.5 px-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsStoreMenuOpen(false);
-                    setIsCreateStoreModalOpen(true);
-                  }}
-                  className="w-full py-2 px-3 bg-[#191a1b] hover:bg-black text-[#d4ff4c] rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition cursor-pointer"
-                >
-                  <Plus className="w-4 h-4 text-[#d4ff4c]" />
-                  <span>{t('header.create_store', 'Create New Store')}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsStoreMenuOpen(false);
-                    router.push('/store-setup');
-                  }}
-                  className="w-full py-1.5 px-3 hover:bg-[#fdf1ef] text-[#191a1b] rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
-                >
-                  <Sliders className="w-3.5 h-3.5 text-[#5e5a5a]" />
-                  <span className="text-[#191a1b]">Store Configuration Settings</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Header Actions Right */}
-      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-        {/* Search Bar - expands on focus for mobile */}
-        <div className="relative w-24 min-[420px]:w-32 sm:w-52 focus-within:w-36 min-[420px]:focus-within:w-44 sm:focus-within:w-60 transition-all duration-300">
-          <Search className="w-3.5 h-3.5 text-[#5e5a5a] absolute left-2.5 sm:left-3 top-2.5" />
-          <input
-            type="text"
-            placeholder={t('header.search_placeholder', 'Search CMS...')}
-            onChange={(e) => onSearch && onSearch(e.target.value)}
-            className="w-full pl-7 sm:pl-8 pr-2 sm:pr-3 py-1.5 rounded-lg bg-[#ffffff] border border-[#cbd5e0] text-xs font-sans text-[#191a1b] placeholder:text-[#beb9b3] outline-none focus:border-[#cbc2ea] focus:ring-2 focus:ring-[#cbc2ea]/40 transition-all"
-          />
-        </div>
-
-        {/* Regional Language Switcher Dropdown */}
-        <div className="relative" ref={langMenuRef}>
-          <button
-            type="button"
-            onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-[#ffffff] border border-[#cbd5e0] text-[#191a1b] hover:border-[#191a1b] hover:bg-[#fdf1ef] transition-all cursor-pointer shadow-xs group"
-            title="Change CMS Regional Language / भाषा बदलें / மொழி மாற்றுக"
-          >
-            <Globe className="w-3.5 h-3.5 text-emerald-600 group-hover:rotate-45 transition-transform shrink-0" />
-            <span className="text-xs font-sans font-bold text-[#191a1b] hidden min-[480px]:inline">
-              {currentLanguageOption.nativeName}
-            </span>
-            <span className="px-1 py-0.2 rounded bg-emerald-50 text-[10px] font-mono font-bold text-emerald-700">
-              {currentLanguageOption.badge}
-            </span>
-            <ChevronDown
-              className={`w-3 h-3 text-[#5e5a5a] transition-transform duration-200 ${
-                isLangMenuOpen ? 'rotate-180 text-[#191a1b]' : ''
-              }`}
-            />
-          </button>
-
-          {/* Language Menu Dropdown */}
-          {isLangMenuOpen && (
-            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-72 max-w-xs bg-white border border-[#cbd5e0] rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 space-y-1">
-              <div className="px-3 py-2 border-b border-[#cbd5e0]/60">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#191a1b] flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Regional Languages</span>
-                  </span>
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                    {languages.length} Locales
-                  </span>
-                </div>
-                <p className="text-[10px] text-gray-500 mt-0.5">
-                  Select your preferred regional language for CMS dashboard.
-                </p>
-              </div>
-
-              <div className="max-h-72 overflow-y-auto space-y-0.5 py-1">
-                {languages.map((langItem) => {
-                  const isCurrent = langItem.code === language;
-                  return (
-                    <button
-                      key={langItem.code}
-                      type="button"
-                      onClick={() => {
-                        setLanguage(langItem.code);
-                        setIsLangMenuOpen(false);
-                      }}
-                      className={`w-full px-3 py-2 rounded-xl text-left transition-all flex items-center justify-between cursor-pointer ${
-                        isCurrent
-                          ? 'bg-[#191a1b] text-white font-bold'
-                          : 'hover:bg-[#fdf1ef] text-[#191a1b]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span
-                          className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-mono font-bold ${
-                            isCurrent
-                              ? 'bg-[#d4ff4c] text-[#191a1b]'
-                              : 'bg-emerald-50 text-emerald-700'
-                          }`}
-                        >
-                          {langItem.badge}
-                        </span>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-bold">{langItem.nativeName}</span>
-                            <span
-                              className={`text-[10px] ${
-                                isCurrent ? 'text-gray-300' : 'text-gray-500'
-                              }`}
-                            >
-                              ({langItem.name})
-                            </span>
-                          </div>
-                          <p
-                            className={`text-[9px] ${
-                              isCurrent ? 'text-gray-300' : 'text-gray-400'
-                            }`}
-                          >
-                            {langItem.region}
-                          </p>
-                        </div>
-                      </div>
-
-                      {isCurrent && (
-                        <div className="w-4 h-4 rounded-full bg-[#d4ff4c] text-[#191a1b] flex items-center justify-center shrink-0">
-                          <Check className="w-2.5 h-2.5 stroke-[3]" />
-                        </div>
-                      )}
+                      {isSelected && <Check className="w-4 h-4 text-sky-600 dark:text-[#00E5FF] shrink-0" />}
                     </button>
                   );
                 })}
               </div>
+
+              {/* Storefront Link */}
+              <div className="p-2 pt-2 border-t border-slate-200 dark:border-[#2C2C2E]">
+                <a
+                  href={STOREFRONT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-[#2C2C2E] text-xs text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white hover:border-sky-500 dark:hover:border-[#00E5FF] transition-all"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open Live Storefront</span>
+                </a>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Live Storefront Quick Link */}
-        <a
-          href={STOREFRONT_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ffffff] border border-[#cbd5e0] text-[#191a1b] font-sans font-medium text-xs shadow-xs hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50/50 transition-all cursor-pointer group"
-          title="Open Hosted Live Storefront"
-        >
-          <ExternalLink className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
-          <span>{t('header.view_storefront', 'Live Store')}</span>
-        </a>
+        {/* Maintenance Mode Status Indicator */}
+        {(activeStore as any)?.maintenanceMode && (
+          <button
+            onClick={() => router.push('/store-setup')}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[11px] font-bold cursor-pointer hover:bg-amber-500/20 transition shrink-0"
+            title="Store is currently in Maintenance Mode. Click to configure."
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            <span>Maintenance Mode</span>
+          </button>
+        )}
+      </div>
 
-        {/* Quick Action Add Button */}
+      {/* Right Controls & User Profile */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Apple Spotlight Search Trigger (Desktop) */}
+        <button
+          onClick={onOpenSpotlight}
+          type="button"
+          className="hidden sm:flex items-center justify-between gap-3 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] hover:border-indigo-400 dark:hover:border-indigo-500 rounded-xl px-3 py-1.5 text-xs text-slate-500 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer shadow-2xs group w-48 md:w-56 lg:w-64"
+          title="Search (Ctrl+F or ⌘F)"
+        >
+          <div className="flex items-center gap-2 truncate">
+            <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
+            <span className="truncate text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200">
+              Search everywhere...
+            </span>
+          </div>
+          <div className="flex items-center gap-0.5 shrink-0">
+            <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-[#2C2C2E] text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-2xs">
+              Ctrl+F
+            </kbd>
+          </div>
+        </button>
+
+        {/* Mobile Spotlight Search Trigger Button */}
+        <button
+          onClick={onOpenSpotlight}
+          type="button"
+          className="sm:hidden p-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+          title="Search"
+          aria-label="Open Search"
+        >
+          <Search className="w-4 h-4" />
+        </button>
+
+        {/* Add Product Button (Primary Action) */}
         {onAddProduct && (
           <button
             onClick={onAddProduct}
-            className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#191a1b] text-[#d4ff4c] font-sans font-medium text-xs shadow-xs hover:bg-[#000000] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 dark:bg-[#00E5FF] dark:hover:bg-[#00b4cc] text-white dark:text-[#121212] font-bold text-xs transition-all shadow-sm cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 text-[#d4ff4c]" />
-            <span>{t('header.add_product', 'New Item')}</span>
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Add Product</span>
           </button>
         )}
 
-        {/* Bell Notification Button */}
+        {/* Language Selector */}
+        <div className="relative" ref={langMenuRef}>
+          <button
+            onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+            className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-700 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all text-xs font-medium flex items-center gap-1 cursor-pointer shadow-2xs"
+            title="Language"
+          >
+            <Globe className="w-4 h-4" />
+            <span className="hidden sm:inline uppercase text-[11px] font-bold">
+              {currentLanguageOption?.code || 'EN'}
+            </span>
+          </button>
+
+          {isLangMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2C2C2E] rounded-2xl shadow-2xl p-1.5 z-50 animate-in fade-in">
+              <div className="px-2.5 py-1 text-[10px] font-bold uppercase text-slate-500 dark:text-[#98989D] tracking-wider border-b border-slate-200 dark:border-[#2C2C2E]">
+                Language
+              </div>
+              <div className="max-h-48 overflow-y-auto space-y-0.5 py-1">
+                {languages.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => {
+                      setLanguage(lang.code as any);
+                      setIsLangMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between cursor-pointer ${
+                      language === lang.code
+                        ? 'bg-sky-50 dark:bg-[#00E5FF]/10 text-sky-600 dark:text-[#00E5FF] font-bold'
+                        : 'text-slate-700 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#252525] hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <span>{lang.nativeName || lang.name}</span>
+                    {language === lang.code && <Check className="w-3.5 h-3.5 text-sky-600 dark:text-[#00E5FF]" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Theme Mode Toggle (Light / Dark) */}
         <button
-          onClick={() => router.push('/notifications')}
-          className="relative p-2 rounded-lg bg-[#ffffff] border border-[#cbd5e0] text-[#191a1b] hover:bg-[#fdf1ef] hover:border-[#cbc2ea] transition-colors shadow-xs cursor-pointer"
-          aria-label="Notifications"
+          onClick={toggleTheme}
+          className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-700 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all text-xs font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs"
+          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          aria-label="Toggle Theme Mode"
         >
-          <Bell className="w-4 h-4" />
+          {isDark ? (
+            <>
+              <Sun className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="hidden sm:inline text-[11px] font-semibold">Light</span>
+            </>
+          ) : (
+            <>
+              <Moon className="w-4 h-4 text-sky-600 dark:text-[#00E5FF] shrink-0" />
+              <span className="hidden sm:inline text-[11px] font-semibold">Dark</span>
+            </>
+          )}
         </button>
 
-        {/* Merchant User Profile Avatar & Menu */}
+        {/* User Profile Menu */}
         <div className="relative" ref={userMenuRef}>
           <button
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className="w-8 h-8 rounded-full bg-[#191a1b] text-[#d4ff4c] font-sans font-bold flex items-center justify-center text-xs shadow-xs hover:ring-2 hover:ring-[#cbc2ea] transition-all overflow-hidden cursor-pointer"
+            className="flex items-center gap-2 p-1 sm:px-2 sm:py-1 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-800 dark:text-white hover:border-sky-500 dark:hover:border-[#00E5FF]/60 transition-all cursor-pointer shadow-2xs"
           >
-            {merchantData?.merchant?.firstName?.charAt(0) || 'S'}
+            <div className="w-6 h-6 rounded-lg bg-sky-100 dark:bg-[#00E5FF]/20 border border-sky-300 dark:border-[#00E5FF]/40 text-sky-700 dark:text-[#00E5FF] flex items-center justify-center font-mono font-bold text-xs">
+              {(merchantData?.merchant?.firstName || 'M')[0].toUpperCase()}
+            </div>
+            <span className="hidden md:inline text-xs font-semibold max-w-[90px] truncate">
+              {merchantData?.merchant?.firstName || 'Merchant'}
+            </span>
           </button>
 
-          {/* Dropdown Menu */}
           {isUserMenuOpen && (
-            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-[#ffffff] border border-[#cbd5e0] rounded-2xl shadow-2xl p-2 z-50 space-y-1 animate-in fade-in zoom-in-95">
-              <div className="px-3 py-2 border-b border-[#cbd5e0]/60">
-                <span className="text-xs font-sans font-bold text-[#191a1b] block">
-                  {merchantData?.merchant?.firstName || 'Admin'}{' '}
-                  {merchantData?.merchant?.lastName || 'Owner'}
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2C2C2E] rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="p-2 border-b border-slate-200 dark:border-[#2C2C2E]">
+                <div className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                  {merchantData?.merchant
+                    ? `${merchantData.merchant.firstName || ''} ${merchantData.merchant.lastName || ''}`.trim() || 'Store Owner'
+                    : 'Store Owner'}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-[#98989D] truncate">
+                  {merchantData?.merchant?.email || 'owner@store.com'}
+                </div>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-[#00E5FF]/10 text-sky-700 dark:text-[#00E5FF] border border-sky-200 dark:border-[#00E5FF]/30">
+                  {merchantData?.merchant?.role || 'OWNER'}
                 </span>
-                <span className="text-[11px] font-sans text-[#5e5a5a] block truncate">
-                  {merchantData?.merchant?.email || 'merchant@omnistore.com'}
-                </span>
               </div>
 
-              <div className="px-3 py-2 text-[11px] font-sans text-[#5e5a5a] space-y-1.5 border-b border-[#cbd5e0]/60">
-                <div className="flex justify-between items-center">
-                  <span>Current Store:</span>
-                  <strong className="text-[#191a1b] font-bold truncate max-w-[120px]">
-                    {currentStoreName}
-                  </strong>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Language:</span>
-                  <span className="font-sans font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    {currentLanguageOption.nativeName} ({currentLanguageOption.name})
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Total Stores:</span>
-                  <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    {stores.length} Active
-                  </span>
-                </div>
-              </div>
-
-              <div className="py-1">
+              <div className="space-y-1 py-1.5">
                 <button
-                  type="button"
                   onClick={() => {
                     setIsUserMenuOpen(false);
-                    router.push('/settings?tab=preferences');
+                    router.push('/settings');
                   }}
-                  className="w-full px-3 py-1.5 text-left text-xs text-[#191a1b] hover:bg-[#fdf1ef] rounded-lg transition-colors flex items-center gap-2 cursor-pointer font-medium"
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-700 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#252525] hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                 >
-                  <Sliders className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{t('nav.user_preferences', 'User Preferences & Profile')}</span>
+                  Store Settings
                 </button>
-
                 <button
-                  type="button"
                   onClick={() => {
                     setIsUserMenuOpen(false);
-                    setIsCreateStoreModalOpen(true);
+                    router.push('/billing');
                   }}
-                  className="w-full px-3 py-1.5 text-left text-xs text-[#191a1b] hover:bg-[#fdf1ef] rounded-lg transition-colors flex items-center gap-2 cursor-pointer font-medium"
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-700 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#252525] hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{t('header.create_store', 'Add Another Store')}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsUserMenuOpen(false);
-                    router.push('/payments');
-                  }}
-                  className="w-full px-3 py-1.5 text-left text-xs text-[#191a1b] hover:bg-[#fdf1ef] rounded-lg transition-colors flex items-center gap-2 cursor-pointer font-medium"
-                >
-                  <CreditCard className="w-3.5 h-3.5 text-[#191a1b]" />
-                  <span>{t('nav.payments', 'Payment Gateway Studio')}</span>
+                  Subscription & Plan
                 </button>
               </div>
 
-              <div className="pt-1 border-t border-[#cbd5e0]/60">
-                <button
-                  onClick={onLogout}
-                  className="w-full px-3 py-1.5 text-left text-xs font-sans text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2 cursor-pointer font-semibold"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>{t('nav.logout', 'Sign Out')}</span>
-                </button>
-              </div>
+              {onLogout && (
+                <div className="pt-1 border-t border-slate-200 dark:border-[#2C2C2E]">
+                  <button
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      onLogout();
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs text-rose-600 dark:text-[#FF453A] hover:bg-rose-50 dark:hover:bg-[#3A1C1C] transition-colors flex items-center gap-2 cursor-pointer font-semibold"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -501,3 +389,4 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
     </header>
   );
 };
+

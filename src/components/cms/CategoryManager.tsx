@@ -401,34 +401,33 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
         <div
           className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 ${
             toastMessage.type === 'success'
-              ? 'bg-emerald-900/90 text-white border-emerald-700'
-              : 'bg-rose-900/90 text-white border-rose-700'
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/90 dark:text-emerald-200 dark:border-emerald-800'
+              : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/90 dark:text-rose-200 dark:border-rose-800'
           }`}
         >
           {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
           ) : (
-            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
           )}
           <span className="text-xs font-bold">{toastMessage.text}</span>
         </div>
       )}
 
       {/* Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/30">
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-200/80 dark:border-indigo-800/60">
                 Taxonomy & Catalog Management
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <FolderTree className="w-8 h-8 text-indigo-400" />
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground flex items-center gap-3">
+              <FolderTree className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
               <span>Taxonomy Studio</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
               Add, edit, and manage Categories, Manufacturer Brands, and Curated Product Collections
               linked with Fastify backend APIs & PostgreSQL storage.
             </p>
@@ -439,7 +438,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               <button
                 type="button"
                 onClick={handleOpenCreateCategory}
-                className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg flex items-center gap-2 transition-all"
+                className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md shadow-indigo-600/20 flex items-center gap-2 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Category</span>
@@ -449,7 +448,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               <button
                 type="button"
                 onClick={handleOpenCreateBrand}
-                className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg flex items-center gap-2 transition-all"
+                className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md shadow-indigo-600/20 flex items-center gap-2 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Brand</span>
@@ -459,7 +458,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
               <button
                 type="button"
                 onClick={handleOpenCreateCollection}
-                className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg flex items-center gap-2 transition-all"
+                className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md shadow-indigo-600/20 flex items-center gap-2 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Collection</span>
@@ -472,19 +471,25 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
       {/* NAVIGATION TABS & SEARCH BAR */}
       <div className="p-4 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100/80 dark:bg-accent/40 rounded-2xl border border-slate-200/80 dark:border-border/60 overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => setActiveTab('CATEGORIES')}
-            className={`px-5 py-3 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2.5 shrink-0 ${
+            className={`px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'CATEGORIES'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md'
-                : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 font-extrabold shadow-xs border border-slate-200/80 dark:border-border'
+                : 'text-slate-600 dark:text-slate-400 font-bold hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-accent'
             }`}
           >
-            <FolderTree className="w-4 h-4" />
+            <FolderTree className={`w-4 h-4 ${activeTab === 'CATEGORIES' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
             <span>Categories</span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white/20">
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                activeTab === 'CATEGORIES'
+                  ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                  : 'bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+              }`}
+            >
               {categories.length}
             </span>
           </button>
@@ -492,15 +497,21 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
           <button
             type="button"
             onClick={() => setActiveTab('BRANDS')}
-            className={`px-5 py-3 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2.5 shrink-0 ${
+            className={`px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'BRANDS'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md'
-                : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 font-extrabold shadow-xs border border-slate-200/80 dark:border-border'
+                : 'text-slate-600 dark:text-slate-400 font-bold hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-accent'
             }`}
           >
-            <Tag className="w-4 h-4" />
+            <Tag className={`w-4 h-4 ${activeTab === 'BRANDS' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
             <span>Brands</span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white/20">
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                activeTab === 'BRANDS'
+                  ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                  : 'bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+              }`}
+            >
               {brands.length}
             </span>
           </button>
@@ -508,15 +519,21 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
           <button
             type="button"
             onClick={() => setActiveTab('COLLECTIONS')}
-            className={`px-5 py-3 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2.5 shrink-0 ${
+            className={`px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === 'COLLECTIONS'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md'
-                : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 font-extrabold shadow-xs border border-slate-200/80 dark:border-border'
+                : 'text-slate-600 dark:text-slate-400 font-bold hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-accent'
             }`}
           >
-            <Layers className="w-4 h-4" />
+            <Layers className={`w-4 h-4 ${activeTab === 'COLLECTIONS' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
             <span>Collections</span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-white/20">
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                activeTab === 'COLLECTIONS'
+                  ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                  : 'bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+              }`}
+            >
               {collections.length}
             </span>
           </button>

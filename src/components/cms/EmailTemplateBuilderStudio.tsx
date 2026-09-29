@@ -106,7 +106,7 @@ const AVAILABLE_BLOCKS: {
       text: 'Shop the Collection Now →',
       url: '{{store.url}}/collections/all',
       backgroundColor: '#191a1b',
-      textColor: '#d4ff4c',
+      textColor: '#00E5FF',
       borderRadius: 8,
       align: 'center',
       fullWidth: false,
@@ -217,7 +217,7 @@ const AVAILABLE_BLOCKS: {
       storeName: '{{store.name}}',
       address: '123 Commerce Avenue, Tech City, India',
       unsubscribeUrl: '{{store.url}}/unsubscribe',
-      backgroundColor: '#fdf1ef',
+      backgroundColor: '#121212',
       padding: '24px 24px 32px 24px',
     },
   },
@@ -330,7 +330,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
   const [previewText, setPreviewText] = useState('');
   const [blocks, setBlocks] = useState<EmailTemplateBlock[]>([]);
   const [designConfig, setDesignConfig] = useState<EmailDesignConfig>({
-    backgroundColor: '#fdf1ef',
+    backgroundColor: '#121212',
     canvasBackgroundColor: '#ffffff',
     fontFamily:
       "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
@@ -458,7 +458,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
     const parsedConfig: EmailDesignConfig =
       t.designConfig || JSON.parse(t.designConfigJson || '{}');
     setDesignConfig({
-      backgroundColor: parsedConfig.backgroundColor || '#fdf1ef',
+      backgroundColor: parsedConfig.backgroundColor || '#121212',
       canvasBackgroundColor: parsedConfig.canvasBackgroundColor || '#ffffff',
       fontFamily:
         parsedConfig.fontFamily ||
@@ -739,7 +739,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
           text: 'Discover Now →',
           url: '{{store.url}}',
           backgroundColor: '#191a1b',
-          textColor: '#d4ff4c',
+          textColor: '#00E5FF',
           align: 'center',
         },
       },
@@ -780,9 +780,9 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#fdf1ef] text-[#191a1b] p-8">
-        <div className="w-10 h-10 border-4 border-[#191a1b] border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-[#5e5a5a] text-sm font-medium animate-pulse">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-50 text-slate-900 p-8">
+        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-slate-500 text-sm font-medium animate-pulse">
           Loading Email Template Studio...
         </p>
       </div>
@@ -790,43 +790,43 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col w-screen h-screen bg-[#fdf1ef] text-[#191a1b] font-sans selection:bg-[#191a1b] selection:text-[#d4ff4c] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex flex-col w-screen h-screen bg-slate-100 text-slate-900 font-sans selection:bg-indigo-500 selection:text-white overflow-hidden">
       {/* Toast Alert */}
       {notification && (
         <div
-          className={`fixed top-5 right-5 z-[60] flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border text-xs font-medium transition-all transform animate-in fade-in slide-in-from-top-4 ${
+          className={`fixed top-5 right-5 z-[60] flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-xs font-semibold transition-all transform animate-in fade-in slide-in-from-top-4 ${
             notification.type === 'success'
-              ? 'bg-[#191a1b] text-[#ffffff] border-[#cbd5e0]'
-              : 'bg-rose-50 text-rose-900 border-rose-300'
+              ? 'bg-emerald-600 text-white border-emerald-700 shadow-emerald-500/20'
+              : 'bg-rose-50 text-rose-900 border-rose-300 shadow-rose-500/10'
           }`}
         >
           {notification.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-[#d4ff4c]" />
+            <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
           ) : (
-            <AlertCircle className="w-4 h-4 text-rose-600" />
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
           )}
           <span>{notification.msg}</span>
         </div>
       )}
 
-      {/* ─── STUDIO TOP BAR (Statamic Clean Top Bar) ────────────────────────── */}
-      <header className="flex flex-wrap items-center justify-between px-5 py-2.5 bg-[#ffffff] border-b border-[#cbd5e0] shrink-0 gap-3 z-20 shadow-xs">
+      {/* ─── STUDIO TOP BAR ────────────────────────── */}
+      <header className="flex flex-wrap items-center justify-between px-5 py-2.5 bg-white border-b border-slate-200 shrink-0 gap-3 z-20 shadow-2xs">
         {/* Left: Close Button, Logo & Template Name */}
         <div className="flex items-center gap-3">
           {/* Prominent Close Modal Button */}
           <button
             onClick={handleClose}
             title="Close Email Template Builder"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#cbd5e0] hover:border-[#191a1b] hover:bg-[#fdf1ef] text-[#191a1b] text-xs font-medium transition-all shadow-xs cursor-pointer group"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer group"
           >
-            <X className="w-4 h-4 text-[#5e5a5a] group-hover:text-[#191a1b]" />
+            <X className="w-4 h-4 text-slate-500 group-hover:text-slate-900" />
             <span className="hidden sm:inline">Close</span>
           </button>
 
-          <div className="h-5 w-px bg-[#cbd5e0]" />
+          <div className="h-5 w-px bg-slate-200" />
 
-          {/* Statamic S-Mark Pill */}
-          <div className="w-7 h-7 rounded-lg bg-[#191a1b] text-[#d4ff4c] flex items-center justify-center font-serif font-black text-sm shrink-0 shadow-xs">
+          {/* S-Mark Brand Icon */}
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-sans font-black text-sm shrink-0 shadow-md shadow-indigo-500/20">
             S
           </div>
 
@@ -837,31 +837,31 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Template Name..."
-                className="bg-transparent text-sm sm:text-base font-bold text-[#191a1b] hover:bg-[#fdf1ef] focus:bg-[#ffffff] px-2 py-0.5 rounded-lg border border-transparent hover:border-[#cbd5e0] focus:border-[#191a1b] focus:outline-none transition-all w-48 sm:w-64"
+                className="bg-transparent text-sm sm:text-base font-extrabold text-slate-900 hover:bg-slate-50 focus:bg-white px-2 py-0.5 rounded-lg border border-transparent hover:border-slate-200 focus:border-indigo-500 focus:outline-none transition-all w-48 sm:w-64"
               />
               <span
-                className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
                   category === 'MARKETING'
-                    ? 'bg-[#f5ddee] text-[#4c305a] border-[#f5ddee]'
+                    ? 'bg-pink-50 text-pink-700 border-pink-200'
                     : category === 'NOTIFICATION'
-                      ? 'bg-[#d7e5fe] text-[#002339] border-[#d7e5fe]'
-                      : 'bg-[#fdf1ef] text-[#5e5a5a] border-[#cbd5e0]'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                      : 'bg-slate-100 text-slate-700 border-slate-200'
                 }`}
               >
                 {category}
               </span>
               {trigger && (
-                <span className="hidden xl:inline-flex text-[10px] font-medium text-[#5e5a5a] bg-[#fdf1ef] px-2 py-0.5 rounded border border-[#cbd5e0]">
+                <span className="hidden xl:inline-flex text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
                   ⚡ {trigger}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-[#5e5a5a] px-2">
+            <div className="flex items-center gap-2 text-[11px] text-slate-500 px-2 font-medium">
               <span>{templates.length} templates</span>
               <span>&bull;</span>
               <button
                 onClick={handleNewTemplate}
-                className="text-[#191a1b] hover:underline flex items-center gap-0.5 font-medium"
+                className="text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-0.5 font-bold cursor-pointer"
               >
                 <Plus className="w-3 h-3" /> New Template
               </button>
@@ -870,15 +870,15 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
         </div>
 
         {/* Center: Template Quick Switcher */}
-        <div className="hidden lg:flex items-center gap-2 bg-[#fdf1ef] px-2 py-1 rounded-lg border border-[#cbd5e0]">
-          <span className="text-xs font-medium text-[#5e5a5a]">Switch:</span>
+        <div className="hidden lg:flex items-center gap-2 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
+          <span className="text-xs font-bold text-slate-500">Switch:</span>
           <select
             value={selectedTemplate?.id || ''}
             onChange={(e) => {
               const match = templates.find((t) => t.id === e.target.value);
               if (match) selectTemplate(match);
             }}
-            className="bg-[#ffffff] text-xs text-[#191a1b] rounded-lg px-2.5 py-1 border border-[#cbd5e0] focus:outline-none focus:border-[#191a1b]"
+            className="bg-white text-xs font-bold text-slate-900 rounded-lg px-2.5 py-1 border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
           >
             {templates.map((t) => (
               <option key={t.id} value={t.id}>
@@ -892,14 +892,14 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
         {/* Right: Viewport Switcher, View Modes & Actions */}
         <div className="flex items-center gap-2 sm:gap-2.5">
           {/* Viewport Switcher */}
-          <div className="flex items-center bg-[#fdf1ef] p-0.5 rounded-lg border border-[#cbd5e0]">
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
             <button
               onClick={() => setPreviewViewport('desktop')}
               title="Desktop Preview (Max Width)"
-              className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${
+              className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                 previewViewport === 'desktop'
-                  ? 'bg-[#191a1b] text-[#d4ff4c] shadow-xs'
-                  : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                  ? 'bg-white text-indigo-600 shadow-2xs border border-slate-200'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               <Monitor className="w-3.5 h-3.5" />
@@ -907,10 +907,10 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
             <button
               onClick={() => setPreviewViewport('mobile')}
               title="Mobile Preview (375px)"
-              className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${
+              className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                 previewViewport === 'mobile'
-                  ? 'bg-[#191a1b] text-[#d4ff4c] shadow-xs'
-                  : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                  ? 'bg-white text-indigo-600 shadow-2xs border border-slate-200'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               <Smartphone className="w-3.5 h-3.5" />
@@ -918,13 +918,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
           </div>
 
           {/* View Modes */}
-          <div className="flex items-center bg-[#fdf1ef] p-0.5 rounded-lg border border-[#cbd5e0]">
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
             <button
               onClick={() => setViewMode('builder')}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                 viewMode === 'builder'
-                  ? 'bg-[#191a1b] text-[#ffffff] font-medium shadow-xs'
-                  : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                  ? 'bg-white text-indigo-600 shadow-2xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Layout className="w-3 h-3" />
@@ -932,10 +932,10 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
             </button>
             <button
               onClick={() => setViewMode('split')}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                 viewMode === 'split'
-                  ? 'bg-[#191a1b] text-[#ffffff] font-medium shadow-xs'
-                  : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                  ? 'bg-white text-indigo-600 shadow-2xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Eye className="w-3 h-3" />
@@ -943,10 +943,10 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
             </button>
             <button
               onClick={() => setViewMode('code')}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                 viewMode === 'code'
-                  ? 'bg-[#191a1b] text-[#ffffff] font-medium shadow-xs'
-                  : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                  ? 'bg-white text-indigo-600 shadow-2xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Code className="w-3 h-3" />
@@ -954,20 +954,20 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
             </button>
           </div>
 
-          {/* Test Email Ghost Outlined Button */}
+          {/* Test Email Button */}
           <button
             onClick={() => setShowTestModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#cbc2ea] hover:bg-[#cbc2ea]/20 text-[#191a1b] transition-all shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-700 transition-all shadow-2xs cursor-pointer"
           >
-            <Send className="w-3.5 h-3.5" />
+            <Send className="w-3.5 h-3.5 text-indigo-600" />
             <span className="hidden sm:inline">Send Test</span>
           </button>
 
-          {/* Filled Primary CTA Button (#191a1b bg, #d4ff4c text) */}
+          {/* Filled Primary Save CTA */}
           <button
             onClick={handleSaveTemplate}
             disabled={saving}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-[#191a1b] hover:bg-[#2e2f30] text-[#d4ff4c] shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition-all disabled:opacity-50 cursor-pointer"
           >
             <Save className="w-3.5 h-3.5" />
             <span>{saving ? 'Saving...' : 'Save Template'}</span>
@@ -976,35 +976,35 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
       </header>
 
       {/* ─── EMAIL META DETAILS BAR ────────────────────────────────────────── */}
-      <div className="px-5 py-2 bg-[#ffffff] border-b border-[#cbd5e0] flex flex-wrap items-center gap-3 text-xs shrink-0">
+      <div className="px-5 py-2.5 bg-white border-b border-slate-200 flex flex-wrap items-center gap-3 text-xs shrink-0 shadow-2xs">
         <div className="flex-1 min-w-[220px] flex items-center gap-2">
-          <span className="font-medium text-[#5e5a5a] shrink-0">Subject:</span>
+          <span className="font-extrabold text-slate-600 shrink-0">Subject:</span>
           <input
             type="text"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="e.g. Your order #{{order.number}} is confirmed! 🚀"
-            className="w-full bg-[#fdf1ef] text-[#191a1b] px-3 py-1 rounded-lg border border-[#cbd5e0] focus:border-[#191a1b] focus:bg-[#ffffff] focus:outline-none text-xs"
+            className="w-full bg-slate-50 hover:bg-white focus:bg-white text-slate-900 font-medium px-3 py-1.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none text-xs transition shadow-2xs"
           />
         </div>
 
         <div className="flex-1 min-w-[180px] flex items-center gap-2">
-          <span className="font-medium text-[#5e5a5a] shrink-0">Preheader:</span>
+          <span className="font-extrabold text-slate-600 shrink-0">Preheader:</span>
           <input
             type="text"
             value={previewText}
             onChange={(e) => setPreviewText(e.target.value)}
             placeholder="Inbox preview snippet..."
-            className="w-full bg-[#fdf1ef] text-[#191a1b] px-3 py-1 rounded-lg border border-[#cbd5e0] focus:border-[#191a1b] focus:bg-[#ffffff] focus:outline-none text-xs"
+            className="w-full bg-slate-50 hover:bg-white focus:bg-white text-slate-900 font-medium px-3 py-1.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none text-xs transition shadow-2xs"
           />
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="font-medium text-[#5e5a5a]">Type:</span>
+          <span className="font-extrabold text-slate-600">Type:</span>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as any)}
-            className="bg-[#ffffff] text-[#191a1b] px-2.5 py-1 rounded-lg border border-[#cbd5e0] text-xs focus:outline-none focus:border-[#191a1b]"
+            className="bg-slate-50 hover:bg-white focus:bg-white text-slate-900 font-bold px-3 py-1.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
           >
             <option value="MARKETING">Marketing Campaign</option>
             <option value="NOTIFICATION">Transactional Notification</option>
@@ -1013,11 +1013,11 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="font-medium text-[#5e5a5a]">Trigger:</span>
+          <span className="font-extrabold text-slate-600">Trigger:</span>
           <select
             value={trigger || ''}
             onChange={(e) => setTrigger(e.target.value || null)}
-            className="bg-[#ffffff] text-[#191a1b] px-2.5 py-1 rounded-lg border border-[#cbd5e0] text-xs focus:outline-none focus:border-[#191a1b]"
+            className="bg-slate-50 hover:bg-white focus:bg-white text-slate-900 font-bold px-3 py-1.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
           >
             <option value="">None (Broadcast)</option>
             <option value="ORDER_CONFIRMATION">Order Confirmation</option>
@@ -1034,15 +1034,15 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
       {/* ─── MAIN WORKSPACE (LEFT: PALETTE / CENTER: PREVIEW / RIGHT: INSPECTOR) ── */}
       <div className="flex flex-1 overflow-hidden">
         {/* ─── LEFT: BLOCK PALETTE & SETTINGS (w-72 lg:w-80) ────────────────── */}
-        <aside className="w-72 lg:w-80 bg-[#ffffff] border-r border-[#cbd5e0] flex flex-col shrink-0 overflow-hidden">
+        <aside className="w-72 lg:w-80 bg-white border-r border-slate-200 flex flex-col shrink-0 overflow-hidden shadow-2xs">
           {/* Sidebar Tab Selector */}
-          <div className="flex border-b border-[#cbd5e0] bg-[#fdf1ef] p-1 gap-1">
+          <div className="flex border-b border-slate-200 bg-slate-100 p-1.5 gap-1.5">
             <button
               onClick={() => setSidebarTab('blocks')}
-              className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+              className={`flex-1 py-1.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 sidebarTab === 'blocks'
-                  ? 'bg-[#191a1b] text-[#d4ff4c] shadow-xs'
-                  : 'text-[#5e5a5a] hover:text-[#191a1b] hover:bg-[#ffffff]'
+                  ? 'bg-white text-indigo-600 shadow-2xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
@@ -1050,10 +1050,10 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
             </button>
             <button
               onClick={() => setSidebarTab('design')}
-              className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+              className={`flex-1 py-1.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 sidebarTab === 'design'
-                  ? 'bg-[#191a1b] text-[#d4ff4c] shadow-xs'
-                  : 'text-[#5e5a5a] hover:text-[#191a1b] hover:bg-[#ffffff]'
+                  ? 'bg-white text-indigo-600 shadow-2xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               <Settings2 className="w-3.5 h-3.5" />
@@ -1061,10 +1061,10 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
             </button>
             <button
               onClick={() => setSidebarTab('variables')}
-              className={`flex-1 py-1.5 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+              className={`flex-1 py-1.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 sidebarTab === 'variables'
-                  ? 'bg-[#191a1b] text-[#d4ff4c] shadow-xs'
-                  : 'text-[#5e5a5a] hover:text-[#191a1b] hover:bg-[#ffffff]'
+                  ? 'bg-white text-indigo-600 shadow-2xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               <Tag className="w-3.5 h-3.5" />
@@ -1073,33 +1073,33 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
           </div>
 
           {/* Sidebar Content Area */}
-          <div className="flex-1 overflow-y-auto p-3.5 space-y-4 scrollbar-thin">
+          <div className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-thin">
             {/* ── TAB 1: BLOCKS & CANVAS TREE ── */}
             {sidebarTab === 'blocks' && (
               <>
                 {/* Add Block Palette */}
                 <div>
-                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#5e5a5a] mb-2 flex items-center gap-1.5">
-                    <Plus className="w-3.5 h-3.5 text-[#191a1b]" />
+                  <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-2.5 flex items-center gap-1.5">
+                    <Plus className="w-3.5 h-3.5 text-indigo-600" />
                     Insert Block
                   </h4>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="grid grid-cols-2 gap-2">
                     {AVAILABLE_BLOCKS.map((b) => {
                       const Icon = b.icon;
                       return (
                         <button
                           key={b.type}
                           onClick={() => addBlock(b.type)}
-                          className="flex items-start gap-1.5 p-2 bg-[#fdf1ef] hover:bg-[#ffffff] border border-[#cbd5e0] hover:border-[#191a1b] rounded-lg text-left transition-all group shadow-xs cursor-pointer"
+                          className="flex items-start gap-2 p-2.5 bg-slate-50 hover:bg-indigo-50/70 border border-slate-200 hover:border-indigo-300 rounded-xl text-left transition-all group shadow-2xs cursor-pointer"
                         >
-                          <div className="p-1 bg-[#191a1b] text-[#d4ff4c] rounded-md transition-all shrink-0">
-                            <Icon className="w-3 h-3" />
+                          <div className="p-1.5 bg-white group-hover:bg-indigo-600 text-indigo-600 group-hover:text-white rounded-lg border border-slate-200 group-hover:border-indigo-600 shadow-2xs transition-all shrink-0">
+                            <Icon className="w-3.5 h-3.5" />
                           </div>
                           <div className="min-w-0">
-                            <div className="text-[11px] font-semibold text-[#191a1b] truncate">
+                            <div className="text-[11px] font-bold text-slate-900 group-hover:text-indigo-900 truncate">
                               {b.label}
                             </div>
-                            <div className="text-[9px] text-[#5e5a5a] leading-tight truncate">
+                            <div className="text-[9px] text-slate-500 leading-tight truncate">
                               {b.type}
                             </div>
                           </div>
@@ -1111,15 +1111,15 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
 
                 {/* Blocks Layer Tree */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#5e5a5a] flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-[#191a1b]" />
+                  <div className="flex items-center justify-between mb-2.5">
+                    <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-indigo-600" />
                       Email Structure ({blocks.length})
                     </h4>
                     {blocks.length > 0 && (
                       <button
                         onClick={() => setBlocks([])}
-                        className="text-[10px] text-rose-600 hover:underline cursor-pointer font-medium"
+                        className="text-[10px] text-rose-600 hover:text-rose-700 hover:underline cursor-pointer font-bold"
                       >
                         Clear All
                       </button>
@@ -1127,12 +1127,12 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                   </div>
 
                   {blocks.length === 0 ? (
-                    <div className="p-5 text-center border border-dashed border-[#cbd5e0] rounded-lg bg-[#fdf1ef] text-[#5e5a5a] text-xs">
-                      <Mail className="w-5 h-5 mx-auto mb-1.5 text-[#beb9b3]" />
+                    <div className="p-6 text-center border border-dashed border-slate-300 rounded-xl bg-slate-50 text-slate-500 text-xs">
+                      <Mail className="w-6 h-6 mx-auto mb-2 text-slate-400" />
                       Click any block above to assemble your email.
                     </div>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       {blocks.map((block, index) => {
                         const blockDef = AVAILABLE_BLOCKS.find((b) => b.type === block.type);
                         const Icon = blockDef?.icon || Layout;
@@ -1142,26 +1142,26 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                           <div
                             key={block.id}
                             onClick={() => setSelectedBlockId(block.id)}
-                            className={`flex items-center justify-between p-2 rounded-lg border text-xs cursor-pointer transition-all ${
+                            className={`flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
                               isSelected
-                                ? 'bg-[#fdf1ef] border-[#191a1b] text-[#191a1b] font-semibold shadow-xs'
-                                : 'bg-[#ffffff] border-[#cbd5e0] text-[#5e5a5a] hover:bg-[#fdf1ef] hover:text-[#191a1b]'
+                                ? 'bg-indigo-50/90 border-indigo-300 text-indigo-950 font-bold shadow-2xs'
+                                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
                             }`}
                           >
                             <div className="flex items-center gap-2 min-w-0">
-                              <span className="text-[10px] font-mono text-[#beb9b3] w-3">
+                              <span className="text-[10px] font-mono text-slate-400 font-bold w-3.5">
                                 {index + 1}
                               </span>
                               <div
-                                className={`p-1 rounded ${
+                                className={`p-1.5 rounded-lg transition-all ${
                                   isSelected
-                                    ? 'bg-[#191a1b] text-[#d4ff4c]'
-                                    : 'bg-[#fdf1ef] text-[#191a1b] border border-[#cbd5e0]'
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'bg-slate-100 text-slate-600 border border-slate-200'
                                 }`}
                               >
-                                <Icon className="w-3 h-3" />
+                                <Icon className="w-3.5 h-3.5" />
                               </div>
-                              <span className="truncate text-xs">{blockDef?.label || block.type}</span>
+                              <span className="truncate text-xs font-semibold">{blockDef?.label || block.type}</span>
                             </div>
 
                             {/* Block Controls */}
@@ -1170,7 +1170,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                                 onClick={(e) => moveBlock(index, 'up', e)}
                                 disabled={index === 0}
                                 title="Move Up"
-                                className="p-0.5 text-[#5e5a5a] hover:text-[#191a1b] disabled:opacity-20"
+                                className="p-1 text-slate-400 hover:text-slate-800 disabled:opacity-20 cursor-pointer"
                               >
                                 <ChevronUp className="w-3.5 h-3.5" />
                               </button>
@@ -1178,23 +1178,23 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                                 onClick={(e) => moveBlock(index, 'down', e)}
                                 disabled={index === blocks.length - 1}
                                 title="Move Down"
-                                className="p-0.5 text-[#5e5a5a] hover:text-[#191a1b] disabled:opacity-20"
+                                className="p-1 text-slate-400 hover:text-slate-800 disabled:opacity-20 cursor-pointer"
                               >
                                 <ChevronDown className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={(e) => duplicateBlock(block.id, e)}
                                 title="Duplicate"
-                                className="p-0.5 text-[#5e5a5a] hover:text-[#191a1b]"
+                                className="p-1 text-slate-400 hover:text-slate-800 cursor-pointer"
                               >
-                                <Copy className="w-3 h-3" />
+                                <Copy className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 onClick={(e) => removeBlock(block.id, e)}
                                 title="Delete Block"
-                                className="p-0.5 text-[#5e5a5a] hover:text-rose-600"
+                                className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
                               >
-                                <Trash2 className="w-3 h-3" />
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </div>
@@ -1208,40 +1208,40 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
 
             {/* ── TAB 2: DESIGN CONFIGURATION ── */}
             {sidebarTab === 'design' && (
-              <div className="space-y-3.5">
+              <div className="space-y-4">
                 <div>
-                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#5e5a5a] mb-2 flex items-center gap-1.5">
-                    <Settings2 className="w-3.5 h-3.5 text-[#191a1b]" />
+                  <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+                    <Settings2 className="w-3.5 h-3.5 text-indigo-600" />
                     Canvas Theme
                   </h4>
                 </div>
 
                 <div>
-                  <label className="text-[11px] text-[#5e5a5a] font-medium block mb-1">
+                  <label className="text-xs text-slate-700 font-extrabold block mb-1">
                     Backdrop Background
                   </label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
-                      value={designConfig.backgroundColor || '#fdf1ef'}
+                      value={designConfig.backgroundColor || '#f1f5f9'}
                       onChange={(e) =>
                         setDesignConfig({ ...designConfig, backgroundColor: e.target.value })
                       }
-                      className="w-7 h-7 rounded-lg border border-[#cbd5e0] bg-transparent cursor-pointer"
+                      className="w-8 h-8 rounded-lg border border-slate-300 bg-transparent cursor-pointer"
                     />
                     <input
                       type="text"
-                      value={designConfig.backgroundColor || '#fdf1ef'}
+                      value={designConfig.backgroundColor || '#f1f5f9'}
                       onChange={(e) =>
                         setDesignConfig({ ...designConfig, backgroundColor: e.target.value })
                       }
-                      className="flex-1 bg-[#ffffff] text-xs px-2.5 py-1 rounded-lg border border-[#cbd5e0] text-[#191a1b]"
+                      className="flex-1 bg-slate-50 hover:bg-white focus:bg-white text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-900 font-medium shadow-2xs"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[11px] text-[#5e5a5a] font-medium block mb-1">
+                  <label className="text-xs text-slate-700 font-extrabold block mb-1">
                     Card Container Background
                   </label>
                   <div className="flex items-center gap-2">
@@ -1251,7 +1251,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                       onChange={(e) =>
                         setDesignConfig({ ...designConfig, canvasBackgroundColor: e.target.value })
                       }
-                      className="w-7 h-7 rounded-lg border border-[#cbd5e0] bg-transparent cursor-pointer"
+                      className="w-8 h-8 rounded-lg border border-slate-300 bg-transparent cursor-pointer"
                     />
                     <input
                       type="text"
@@ -1259,61 +1259,61 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                       onChange={(e) =>
                         setDesignConfig({ ...designConfig, canvasBackgroundColor: e.target.value })
                       }
-                      className="flex-1 bg-[#ffffff] text-xs px-2.5 py-1 rounded-lg border border-[#cbd5e0] text-[#191a1b]"
+                      className="flex-1 bg-slate-50 hover:bg-white focus:bg-white text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-900 font-medium shadow-2xs"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[11px] text-[#5e5a5a] font-medium block mb-1">
+                  <label className="text-xs text-slate-700 font-extrabold block mb-1">
                     Primary Accent Color
                   </label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
-                      value={designConfig.primaryColor || '#191a1b'}
+                      value={designConfig.primaryColor || '#4f46e5'}
                       onChange={(e) =>
                         setDesignConfig({ ...designConfig, primaryColor: e.target.value })
                       }
-                      className="w-7 h-7 rounded-lg border border-[#cbd5e0] bg-transparent cursor-pointer"
+                      className="w-8 h-8 rounded-lg border border-slate-300 bg-transparent cursor-pointer"
                     />
                     <input
                       type="text"
-                      value={designConfig.primaryColor || '#191a1b'}
+                      value={designConfig.primaryColor || '#4f46e5'}
                       onChange={(e) =>
                         setDesignConfig({ ...designConfig, primaryColor: e.target.value })
                       }
-                      className="flex-1 bg-[#ffffff] text-xs px-2.5 py-1 rounded-lg border border-[#cbd5e0] text-[#191a1b]"
+                      className="flex-1 bg-slate-50 hover:bg-white focus:bg-white text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-900 font-medium shadow-2xs"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[11px] text-[#5e5a5a] font-medium block mb-1">
+                  <label className="text-xs text-slate-700 font-extrabold block mb-1">
                     Default Text Color
                   </label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
-                      value={designConfig.textColor || '#191a1b'}
+                      value={designConfig.textColor || '#0f172a'}
                       onChange={(e) =>
                         setDesignConfig({ ...designConfig, textColor: e.target.value })
                       }
-                      className="w-7 h-7 rounded-lg border border-[#cbd5e0] bg-transparent cursor-pointer"
+                      className="w-8 h-8 rounded-lg border border-slate-300 bg-transparent cursor-pointer"
                     />
                     <input
                       type="text"
-                      value={designConfig.textColor || '#191a1b'}
+                      value={designConfig.textColor || '#0f172a'}
                       onChange={(e) =>
                         setDesignConfig({ ...designConfig, textColor: e.target.value })
                       }
-                      className="flex-1 bg-[#ffffff] text-xs px-2.5 py-1 rounded-lg border border-[#cbd5e0] text-[#191a1b]"
+                      className="flex-1 bg-slate-50 hover:bg-white focus:bg-white text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-900 font-medium shadow-2xs"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[11px] text-[#5e5a5a] font-medium block mb-1">
+                  <label className="text-xs text-slate-700 font-extrabold block mb-1">
                     Corner Radius ({designConfig.borderRadius || 8}px)
                   </label>
                   <input
@@ -1325,12 +1325,12 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     onChange={(e) =>
                       setDesignConfig({ ...designConfig, borderRadius: Number(e.target.value) })
                     }
-                    className="w-full accent-[#191a1b]"
+                    className="w-full accent-indigo-600 cursor-pointer"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[11px] text-[#5e5a5a] font-medium block mb-1">
+                  <label className="text-xs text-slate-700 font-extrabold block mb-1">
                     Typography System (Font Family)
                   </label>
                   <select
@@ -1338,7 +1338,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     onChange={(e) =>
                       setDesignConfig({ ...designConfig, fontFamily: e.target.value })
                     }
-                    className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] focus:outline-none focus:border-[#191a1b] focus:ring-1 focus:ring-[#cbc2ea]"
+                    className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                   >
                     <optgroup label="Modern Sans-Serif">
                       {TYPOGRAPHY_PRESETS.filter((f) => f.group === 'Modern Sans').map((f) => (
@@ -1364,12 +1364,12 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                   </select>
                 </div>
 
-                <div className="pt-2.5 border-t border-[#cbd5e0]">
+                <div className="pt-3 border-t border-slate-200">
                   <button
                     onClick={handleResetPresets}
-                    className="w-full py-1.5 bg-[#ffffff] hover:bg-[#fdf1ef] text-[#191a1b] text-xs font-medium rounded-lg border border-[#cbc2ea] flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
                   >
-                    <RotateCcw className="w-3.5 h-3.5" />
+                    <RotateCcw className="w-3.5 h-3.5 text-indigo-600" />
                     Restore Default Presets
                   </button>
                 </div>
@@ -1378,18 +1378,18 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
 
             {/* ── TAB 3: DYNAMIC VARIABLES ── */}
             {sidebarTab === 'variables' && (
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 <div>
-                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#5e5a5a] mb-1 flex items-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-[#191a1b]" />
+                  <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1 flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-indigo-600" />
                     Dynamic Variables
                   </h4>
-                  <p className="text-[10px] text-[#5e5a5a]">
+                  <p className="text-[10px] text-slate-500">
                     Click any tag to copy it. Paste into any text field or button URL.
                   </p>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   {VARIABLE_PILLS.map((p) => (
                     <button
                       key={p.tag}
@@ -1397,15 +1397,15 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         navigator.clipboard.writeText(p.tag);
                         showNotification('success', `Copied ${p.tag} to clipboard!`);
                       }}
-                      className="w-full flex items-center justify-between p-1.5 rounded-lg bg-[#fdf1ef] hover:bg-[#ffffff] border border-[#cbd5e0] hover:border-[#191a1b] text-left transition-all group cursor-pointer"
+                      className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-indigo-50/80 border border-slate-200 hover:border-indigo-300 text-left transition-all group cursor-pointer shadow-2xs"
                     >
                       <div>
-                        <div className="font-mono text-[11px] text-[#191a1b] font-bold">
+                        <div className="font-mono text-[11px] text-slate-900 font-bold group-hover:text-indigo-900">
                           {p.tag}
                         </div>
-                        <div className="text-[9px] text-[#5e5a5a]">{p.label}</div>
+                        <div className="text-[10px] text-slate-500">{p.label}</div>
                       </div>
-                      <span className="text-[9px] font-medium text-[#5e5a5a] bg-[#ffffff] px-1.5 py-0.5 rounded border border-[#cbd5e0]">
+                      <span className="text-[9px] font-extrabold text-slate-600 bg-white px-2 py-0.5 rounded-md border border-slate-200">
                         {p.category}
                       </span>
                     </button>
@@ -1417,13 +1417,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
         </aside>
 
         {/* ─── CENTER: LIVE DUAL PREVIEW OR HTML CODE (flex-1) ───────────────── */}
-        <main className="flex-1 bg-[#fdf1ef] flex flex-col overflow-hidden min-w-0">
+        <main className="flex-1 bg-slate-100/90 [radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] flex flex-col overflow-hidden min-w-0">
           {viewMode === 'code' ? (
             /* HTML Code View */
             <div className="flex-1 flex flex-col p-5 overflow-hidden">
-              <div className="flex items-center justify-between pb-3 mb-2 border-b border-[#cbd5e0]">
-                <div className="flex items-center gap-2 text-xs text-[#5e5a5a]">
-                  <Code className="w-4 h-4 text-[#191a1b]" />
+              <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-200 bg-white px-4 py-2.5 rounded-xl shadow-2xs">
+                <div className="flex items-center gap-2 text-xs text-slate-700 font-bold">
+                  <Code className="w-4 h-4 text-indigo-600" />
                   <span>Compiled Email HTML (Ready to export into any ESP)</span>
                 </div>
                 <button
@@ -1431,7 +1431,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     navigator.clipboard.writeText(compiledHtml);
                     showNotification('success', 'Email HTML copied to clipboard!');
                   }}
-                  className="px-3.5 py-1.5 bg-[#191a1b] hover:bg-[#2e2f30] text-[#d4ff4c] text-xs font-medium rounded-lg flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                  className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
                 >
                   <Copy className="w-3.5 h-3.5" /> Copy HTML
                 </button>
@@ -1439,12 +1439,12 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
               <textarea
                 readOnly
                 value={compiledHtml}
-                className="flex-1 w-full bg-[#ffffff] font-mono text-xs text-[#191a1b] p-4 rounded-xl border border-[#cbd5e0] focus:outline-none custom-scrollbar select-all shadow-xs leading-relaxed"
+                className="flex-1 w-full bg-white font-mono text-xs text-slate-900 p-4 rounded-xl border border-slate-200 focus:outline-none custom-scrollbar select-all shadow-2xs leading-relaxed"
               />
             </div>
           ) : (
             /* Live Iframe Sandbox Preview (Center Max-Width Canvas) */
-            <div className="flex-1 flex flex-col items-center justify-start p-4 md:p-6 overflow-y-auto scrollbar-thin bg-[#fdf1ef]">
+            <div className="flex-1 flex flex-col items-center justify-start p-4 md:p-6 overflow-y-auto scrollbar-thin">
               {/* Preview Container Frame (Dynamic Max-Width or Mobile) */}
               <div
                 style={{
@@ -1452,17 +1452,17 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                   maxWidth: previewViewport === 'desktop' ? '100%' : '385px',
                   transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   boxShadow:
-                    'rgba(94, 90, 90, 0.1) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 16px 40px -8px',
+                    'rgba(15, 23, 42, 0.08) 0px 0px 0px 1px, rgba(15, 23, 42, 0.12) 0px 20px 40px -12px',
                 }}
-                className="w-full my-2 mb-20 flex flex-col rounded-2xl border border-[#cbd5e0] bg-[#ffffff] shadow-lg shrink-0 overflow-hidden"
+                className="w-full my-2 mb-20 flex flex-col rounded-2xl border border-slate-200 bg-white shadow-xl shrink-0 overflow-hidden"
               >
                 {/* Simulated Email Client Browser Header */}
-                <div className="px-4 py-2.5 bg-[#ffffff] border-b border-[#cbd5e0] flex items-center justify-between text-xs text-[#5e5a5a]">
+                <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#beb9b3]" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#cbd5e0]" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#cbd5e0]" />
-                    <span className="ml-2 text-[11px] font-medium text-[#191a1b]">
+                    <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                    <span className="ml-2 text-[11px] font-bold text-slate-800">
                       {previewViewport === 'desktop'
                         ? 'Desktop Preview (Full Width)'
                         : 'Mobile Preview (375px)'}
@@ -1470,39 +1470,41 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     {htmlLoading ? (
-                      <span className="text-[10px] text-[#191a1b] animate-pulse font-medium">
+                      <span className="text-[10px] text-indigo-600 animate-pulse font-bold">
                         Updating...
                       </span>
                     ) : (
-                      <span className="text-[10px] text-[#5e5a5a]">Live Sandbox</span>
+                      <span className="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-2xs">
+                        Live Sandbox
+                      </span>
                     )}
                   </div>
                 </div>
 
                 {/* Simulated Inbox Subject line */}
-                <div className="px-4 py-2 bg-[#fdf1ef] border-b border-[#cbd5e0] text-xs">
-                  <div className="font-bold text-[#191a1b] truncate">
+                <div className="px-4 py-2.5 bg-white border-b border-slate-200 text-xs">
+                  <div className="font-extrabold text-slate-900 truncate">
                     Subject: {subject || 'No subject specified'}
                   </div>
                   {previewText && (
-                    <div className="text-[11px] text-[#5e5a5a] truncate mt-0.5">
+                    <div className="text-[11px] text-slate-500 truncate mt-0.5 font-medium">
                       Preheader: {previewText}
                     </div>
                   )}
                 </div>
 
                 {/* Sandboxed Iframe with dynamic height and bottom padding */}
-                <div className="bg-[#fdf1ef] flex justify-center p-3 pb-8">
+                <div className="bg-slate-100 flex justify-center p-3 pb-8">
                   <iframe
                     ref={iframeRef}
                     onLoad={updateIframeHeight}
                     title="Live Email Preview"
                     srcDoc={renderedSrcDoc}
-                    className="w-full border-0 rounded-lg shadow-xs transition-all"
+                    className="w-full border-0 rounded-xl shadow-2xs transition-all"
                     style={{
                       height: `${iframeHeight}px`,
                       minHeight: '650px',
-                      backgroundColor: designConfig.backgroundColor || '#fdf1ef',
+                      backgroundColor: designConfig.backgroundColor || '#f1f5f9',
                     }}
                   />
                 </div>
@@ -1512,14 +1514,14 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
         </main>
 
         {/* ─── RIGHT: ACTIVE BLOCK INSPECTOR (w-80 lg:w-[340px]) ─────────────── */}
-        <aside className="w-80 lg:w-[340px] bg-[#ffffff] border-l border-[#cbd5e0] flex flex-col shrink-0 overflow-hidden">
-          <div className="p-3 border-b border-[#cbd5e0] bg-[#fdf1ef] flex items-center justify-between">
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#191a1b] flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#191a1b]" />
+        <aside className="w-80 lg:w-[340px] bg-white border-l border-slate-200 flex flex-col shrink-0 overflow-hidden shadow-2xs">
+          <div className="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+            <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
               Block Inspector
             </h3>
             {selectedBlock && (
-              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-[#191a1b] text-[#d4ff4c]">
+              <span className="text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
                 {selectedBlock.type}
               </span>
             )}
@@ -1527,7 +1529,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
             {!selectedBlock ? (
-              <div className="p-8 text-center text-[#5e5a5a] text-xs">
+              <div className="p-8 text-center text-slate-500 text-xs font-medium">
                 Select any block from the left structure or click a section to edit its properties.
               </div>
             ) : (
@@ -1536,18 +1538,18 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 {selectedBlock.type === 'header' && (
                   <>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Brand Name / Title
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.brandName || ''}
                         onChange={(e) => updateSelectedBlockContent('brandName', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] focus:bg-[#ffffff] focus:border-[#191a1b]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs font-medium"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Logo Image URL (Optional)
                       </label>
                       <input
@@ -1555,17 +1557,17 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         value={selectedBlock.content.logoUrl || ''}
                         onChange={(e) => updateSelectedBlockContent('logoUrl', e.target.value)}
                         placeholder="https://..."
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] focus:bg-[#ffffff] focus:border-[#191a1b]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs font-medium"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Typography (Brand Font)
                       </label>
                       <select
                         value={selectedBlock.content.fontFamily || ''}
                         onChange={(e) => updateSelectedBlockContent('fontFamily', e.target.value)}
-                        className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                       >
                         <option value="">Default (Inherit Theme)</option>
                         {TYPOGRAPHY_PRESETS.map((f) => (
@@ -1577,13 +1579,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Font Size
                         </label>
                         <select
                           value={selectedBlock.content.fontSize || '20px'}
                           onChange={(e) => updateSelectedBlockContent('fontSize', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="16px">16px - Subtle</option>
                           <option value="18px">18px - Medium</option>
@@ -1593,13 +1595,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Font Weight
                         </label>
                         <select
                           value={selectedBlock.content.fontWeight || '800'}
                           onChange={(e) => updateSelectedBlockContent('fontWeight', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="500">Medium (500)</option>
                           <option value="600">SemiBold (600)</option>
@@ -1610,13 +1612,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Alignment
                       </label>
                       <select
                         value={selectedBlock.content.align || 'center'}
                         onChange={(e) => updateSelectedBlockContent('align', e.target.value)}
-                        className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                       >
                         <option value="center">Center</option>
                         <option value="left">Left</option>
@@ -1630,24 +1632,24 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 {selectedBlock.type === 'hero' && (
                   <>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Hero Headline
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.title || ''}
                         onChange={(e) => updateSelectedBlockContent('title', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] font-semibold focus:bg-[#ffffff]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Headline Typography (Font)
                       </label>
                       <select
                         value={selectedBlock.content.fontFamily || ''}
                         onChange={(e) => updateSelectedBlockContent('fontFamily', e.target.value)}
-                        className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                       >
                         <option value="">Default (Inherit Theme)</option>
                         {TYPOGRAPHY_PRESETS.map((f) => (
@@ -1659,13 +1661,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Headline Size
                         </label>
                         <select
                           value={selectedBlock.content.fontSize || selectedBlock.content.titleFontSize || '26px'}
                           onChange={(e) => updateSelectedBlockContent('fontSize', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="20px">20px - Small</option>
                           <option value="24px">24px - Medium</option>
@@ -1675,13 +1677,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Headline Weight
                         </label>
                         <select
                           value={selectedBlock.content.fontWeight || '800'}
                           onChange={(e) => updateSelectedBlockContent('fontWeight', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="300">Light (300)</option>
                           <option value="400">Regular (400)</option>
@@ -1693,18 +1695,18 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Subheadline / Description
                       </label>
                       <textarea
                         rows={3}
                         value={selectedBlock.content.subtitle || ''}
                         onChange={(e) => updateSelectedBlockContent('subtitle', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] focus:bg-[#ffffff]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-medium p-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Background Image URL (Optional)
                       </label>
                       <input
@@ -1712,32 +1714,32 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         value={selectedBlock.content.imageUrl || ''}
                         onChange={(e) => updateSelectedBlockContent('imageUrl', e.target.value)}
                         placeholder="https://..."
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] focus:bg-[#ffffff]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-medium p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           BG Color
                         </label>
                         <input
                           type="color"
-                          value={selectedBlock.content.backgroundColor || '#191a1b'}
+                          value={selectedBlock.content.backgroundColor || '#1e293b'}
                           onChange={(e) =>
                             updateSelectedBlockContent('backgroundColor', e.target.value)
                           }
-                          className="w-full h-8 rounded-lg border border-[#cbd5e0] bg-transparent cursor-pointer"
+                          className="w-full h-8 rounded-lg border border-slate-300 bg-transparent cursor-pointer"
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Text Color
                         </label>
                         <input
                           type="color"
                           value={selectedBlock.content.textColor || '#ffffff'}
                           onChange={(e) => updateSelectedBlockContent('textColor', e.target.value)}
-                          className="w-full h-8 rounded-lg border border-[#cbd5e0] bg-transparent cursor-pointer"
+                          className="w-full h-8 rounded-lg border border-slate-300 bg-transparent cursor-pointer"
                         />
                       </div>
                     </div>
@@ -1748,24 +1750,24 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 {selectedBlock.type === 'text' && (
                   <>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Body Content (HTML & Variables Supported)
                       </label>
                       <textarea
                         rows={6}
                         value={selectedBlock.content.text || ''}
                         onChange={(e) => updateSelectedBlockContent('text', e.target.value)}
-                        className="w-full bg-[#fdf1ef] font-mono text-xs text-[#191a1b] p-2.5 rounded-lg border border-[#cbd5e0] focus:bg-[#ffffff] focus:border-[#191a1b]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white font-mono text-xs text-slate-900 p-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs leading-relaxed"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Typography (Font Family)
                       </label>
                       <select
                         value={selectedBlock.content.fontFamily || ''}
                         onChange={(e) => updateSelectedBlockContent('fontFamily', e.target.value)}
-                        className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                       >
                         <option value="">Default (Inherit Theme)</option>
                         {TYPOGRAPHY_PRESETS.map((f) => (
@@ -1777,13 +1779,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Font Size
                         </label>
                         <select
                           value={selectedBlock.content.fontSize || '15px'}
                           onChange={(e) => updateSelectedBlockContent('fontSize', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="12px">12px - Tiny</option>
                           <option value="13px">13px - Small</option>
@@ -1795,13 +1797,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Font Weight
                         </label>
                         <select
                           value={selectedBlock.content.fontWeight || '400'}
                           onChange={(e) => updateSelectedBlockContent('fontWeight', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="300">Light (300)</option>
                           <option value="400">Regular (400)</option>
@@ -1813,13 +1815,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Line Height
                         </label>
                         <select
                           value={selectedBlock.content.lineHeight || '1.6'}
                           onChange={(e) => updateSelectedBlockContent('lineHeight', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="1.3">1.3 - Compact</option>
                           <option value="1.4">1.4 - Normal</option>
@@ -1829,13 +1831,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Align
                         </label>
                         <select
                           value={selectedBlock.content.align || 'left'}
                           onChange={(e) => updateSelectedBlockContent('align', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="left">Left</option>
                           <option value="center">Center</option>
@@ -1850,18 +1852,18 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 {selectedBlock.type === 'button' && (
                   <>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Button Label
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.text || ''}
                         onChange={(e) => updateSelectedBlockContent('text', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] focus:bg-[#ffffff]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Destination URL
                       </label>
                       <input
@@ -1869,17 +1871,17 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         value={selectedBlock.content.url || ''}
                         onChange={(e) => updateSelectedBlockContent('url', e.target.value)}
                         placeholder="https://..."
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] focus:bg-[#ffffff]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-medium p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Typography (Button Font)
                       </label>
                       <select
                         value={selectedBlock.content.fontFamily || ''}
                         onChange={(e) => updateSelectedBlockContent('fontFamily', e.target.value)}
-                        className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                       >
                         <option value="">Default (Inherit Theme)</option>
                         {TYPOGRAPHY_PRESETS.map((f) => (
@@ -1891,13 +1893,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Font Size
                         </label>
                         <select
                           value={selectedBlock.content.fontSize || '15px'}
                           onChange={(e) => updateSelectedBlockContent('fontSize', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="13px">13px - Compact</option>
                           <option value="15px">15px - Standard</option>
@@ -1906,13 +1908,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Font Weight
                         </label>
                         <select
                           value={selectedBlock.content.fontWeight || '600'}
                           onChange={(e) => updateSelectedBlockContent('fontWeight', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="400">Regular (400)</option>
                           <option value="500">Medium (500)</option>
@@ -1924,27 +1926,27 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Button Color
                         </label>
                         <input
                           type="color"
-                          value={selectedBlock.content.backgroundColor || '#191a1b'}
+                          value={selectedBlock.content.backgroundColor || '#0f172a'}
                           onChange={(e) =>
                             updateSelectedBlockContent('backgroundColor', e.target.value)
                           }
-                          className="w-full h-8 rounded-lg border border-[#cbd5e0] bg-transparent cursor-pointer"
+                          className="w-full h-8 rounded-lg border border-slate-300 bg-transparent cursor-pointer"
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Text Color
                         </label>
                         <input
                           type="color"
-                          value={selectedBlock.content.textColor || '#d4ff4c'}
+                          value={selectedBlock.content.textColor || '#ffffff'}
                           onChange={(e) => updateSelectedBlockContent('textColor', e.target.value)}
-                          className="w-full h-8 rounded-lg border border-[#cbd5e0] bg-transparent cursor-pointer"
+                          className="w-full h-8 rounded-lg border border-slate-300 bg-transparent cursor-pointer"
                         />
                       </div>
                     </div>
@@ -1955,24 +1957,24 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 {selectedBlock.type === 'products' && (
                   <>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Section Headline
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.title || ''}
                         onChange={(e) => updateSelectedBlockContent('title', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] font-semibold focus:bg-[#ffffff]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Typography (Font Family)
                       </label>
                       <select
                         value={selectedBlock.content.fontFamily || ''}
                         onChange={(e) => updateSelectedBlockContent('fontFamily', e.target.value)}
-                        className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                       >
                         <option value="">Default (Inherit Theme)</option>
                         {TYPOGRAPHY_PRESETS.map((f) => (
@@ -1984,13 +1986,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Headline Size
                         </label>
                         <select
                           value={selectedBlock.content.fontSize || selectedBlock.content.titleFontSize || '18px'}
                           onChange={(e) => updateSelectedBlockContent('fontSize', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="16px">16px - Subtle</option>
                           <option value="18px">18px - Standard</option>
@@ -1999,13 +2001,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Headline Weight
                         </label>
                         <select
                           value={selectedBlock.content.fontWeight || '700'}
                           onChange={(e) => updateSelectedBlockContent('fontWeight', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="500">Medium (500)</option>
                           <option value="600">SemiBold (600)</option>
@@ -2016,56 +2018,56 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     </div>
 
                     <div className="space-y-3 pt-2">
-                      <label className="text-xs text-[#5e5a5a] font-medium block">
+                      <label className="text-xs text-slate-700 font-extrabold block">
                         Showcase Items ({(selectedBlock.content.items || []).length})
                       </label>
                       {(selectedBlock.content.items || []).map((item: any, i: number) => (
                         <div
                           key={i}
-                          className="p-2.5 rounded-lg border border-[#cbd5e0] bg-[#fdf1ef] space-y-2 text-xs"
+                          className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-2 text-xs shadow-2xs"
                         >
-                          <div className="font-bold text-[#191a1b] flex items-center justify-between">
+                          <div className="font-bold text-slate-900 flex items-center justify-between">
                             <span>Item #{i + 1}</span>
-                            <span className="text-[10px] bg-[#ffffff] px-1.5 py-0.5 rounded border border-[#cbd5e0]">
+                            <span className="text-[10px] bg-white font-extrabold text-indigo-700 px-2 py-0.5 rounded-md border border-slate-200">
                               {item.badge || 'CARD'}
                             </span>
                           </div>
                           <div>
-                            <span className="text-[10px] text-[#5e5a5a] block mb-0.5">Product Title</span>
+                            <span className="text-[10px] text-slate-600 font-bold block mb-0.5">Product Title</span>
                             <input
                               type="text"
                               value={item.name || ''}
                               onChange={(e) => updateProductItem(i, 'name', e.target.value)}
-                              className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-1.5 rounded border border-[#cbd5e0]"
+                              className="w-full bg-white text-xs text-slate-900 p-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:outline-none font-medium"
                             />
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <span className="text-[10px] text-[#5e5a5a] block mb-0.5">Price</span>
+                              <span className="text-[10px] text-slate-600 font-bold block mb-0.5">Price</span>
                               <input
                                 type="text"
                                 value={item.price || ''}
                                 onChange={(e) => updateProductItem(i, 'price', e.target.value)}
-                                className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-1.5 rounded border border-[#cbd5e0]"
+                                className="w-full bg-white text-xs text-slate-900 p-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:outline-none font-medium"
                               />
                             </div>
                             <div>
-                              <span className="text-[10px] text-[#5e5a5a] block mb-0.5">Original</span>
+                              <span className="text-[10px] text-slate-600 font-bold block mb-0.5">Original</span>
                               <input
                                 type="text"
                                 value={item.originalPrice || ''}
                                 onChange={(e) => updateProductItem(i, 'originalPrice', e.target.value)}
-                                className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-1.5 rounded border border-[#cbd5e0]"
+                                className="w-full bg-white text-xs text-slate-900 p-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:outline-none font-medium"
                               />
                             </div>
                           </div>
                           <div>
-                            <span className="text-[10px] text-[#5e5a5a] block mb-0.5">Image URL</span>
+                            <span className="text-[10px] text-slate-600 font-bold block mb-0.5">Image URL</span>
                             <input
                               type="text"
                               value={item.imageUrl || ''}
                               onChange={(e) => updateProductItem(i, 'imageUrl', e.target.value)}
-                              className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-1.5 rounded border border-[#cbd5e0]"
+                              className="w-full bg-white text-xs text-slate-900 p-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:outline-none font-medium"
                             />
                           </div>
                         </div>
@@ -2078,35 +2080,35 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 {selectedBlock.type === 'coupon' && (
                   <>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Promo Code
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.code || ''}
                         onChange={(e) => updateSelectedBlockContent('code', e.target.value)}
-                        className="w-full bg-[#fdf1ef] font-mono text-xs text-[#191a1b] font-bold p-2 rounded-lg border border-[#cbd5e0] focus:bg-[#ffffff]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white font-mono text-xs text-slate-900 font-black p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Discount Headline
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.discountText || ''}
                         onChange={(e) => updateSelectedBlockContent('discountText', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] focus:bg-[#ffffff]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Typography (Font Family)
                       </label>
                       <select
                         value={selectedBlock.content.fontFamily || ''}
                         onChange={(e) => updateSelectedBlockContent('fontFamily', e.target.value)}
-                        className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                       >
                         <option value="">Default (Inherit Theme)</option>
                         {TYPOGRAPHY_PRESETS.map((f) => (
@@ -2118,13 +2120,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Headline Size
                         </label>
                         <select
                           value={selectedBlock.content.fontSize || '22px'}
                           onChange={(e) => updateSelectedBlockContent('fontSize', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="18px">18px - Compact</option>
                           <option value="22px">22px - Standard</option>
@@ -2133,13 +2135,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Headline Weight
                         </label>
                         <select
                           value={selectedBlock.content.fontWeight || '800'}
                           onChange={(e) => updateSelectedBlockContent('fontWeight', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="600">SemiBold (600)</option>
                           <option value="700">Bold (700)</option>
@@ -2149,25 +2151,25 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Expiry Terms
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.expiryText || ''}
                         onChange={(e) => updateSelectedBlockContent('expiryText', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] focus:bg-[#ffffff]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-medium p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Button CTA Text
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.buttonText || ''}
                         onChange={(e) => updateSelectedBlockContent('buttonText', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] focus:bg-[#ffffff]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                   </>
@@ -2177,13 +2179,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 {selectedBlock.type === 'order-summary' && (
                   <>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Typography (Font Family)
                       </label>
                       <select
                         value={selectedBlock.content.fontFamily || ''}
                         onChange={(e) => updateSelectedBlockContent('fontFamily', e.target.value)}
-                        className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                       >
                         <option value="">Default (Inherit Theme)</option>
                         {TYPOGRAPHY_PRESETS.map((f) => (
@@ -2194,36 +2196,36 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Order Number Tag
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.orderNumber || ''}
                         onChange={(e) => updateSelectedBlockContent('orderNumber', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] font-mono"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-mono font-bold p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Order Total Tag / Amount
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.total || ''}
                         onChange={(e) => updateSelectedBlockContent('total', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] font-bold"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Order Status Badge
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.status || ''}
                         onChange={(e) => updateSelectedBlockContent('status', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-medium p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                   </>
@@ -2233,13 +2235,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 {selectedBlock.type === 'tracking-card' && (
                   <>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Typography (Font Family)
                       </label>
                       <select
                         value={selectedBlock.content.fontFamily || ''}
                         onChange={(e) => updateSelectedBlockContent('fontFamily', e.target.value)}
-                        className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                       >
                         <option value="">Default (Inherit Theme)</option>
                         {TYPOGRAPHY_PRESETS.map((f) => (
@@ -2250,36 +2252,36 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Carrier Name
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.carrier || ''}
                         onChange={(e) => updateSelectedBlockContent('carrier', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         AWB Tracking Number
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.awb || ''}
                         onChange={(e) => updateSelectedBlockContent('awb', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0] font-mono"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-mono font-bold p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Tracking URL
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.trackingUrl || ''}
                         onChange={(e) => updateSelectedBlockContent('trackingUrl', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-medium p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                   </>
@@ -2290,18 +2292,18 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                   <>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Divider Color
                         </label>
                         <input
                           type="color"
-                          value={selectedBlock.content.color || '#cbd5e0'}
+                          value={selectedBlock.content.color || '#cbd5e1'}
                           onChange={(e) => updateSelectedBlockContent('color', e.target.value)}
-                          className="w-full h-8 rounded-lg border border-[#cbd5e0] bg-transparent cursor-pointer"
+                          className="w-full h-8 rounded-lg border border-slate-300 bg-transparent cursor-pointer"
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Thickness ({selectedBlock.content.thickness || 1}px)
                         </label>
                         <input
@@ -2310,18 +2312,18 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                           max="8"
                           value={selectedBlock.content.thickness || 1}
                           onChange={(e) => updateSelectedBlockContent('thickness', Number(e.target.value))}
-                          className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-1.5 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none font-bold"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Divider Style
                       </label>
                       <select
                         value={selectedBlock.content.style || 'solid'}
                         onChange={(e) => updateSelectedBlockContent('style', e.target.value)}
-                        className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                       >
                         <option value="solid">Solid Line</option>
                         <option value="dashed">Dashed Line</option>
@@ -2335,7 +2337,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 {selectedBlock.type === 'social' && (
                   <>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Instagram Profile URL
                       </label>
                       <input
@@ -2343,11 +2345,11 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         value={selectedBlock.content.links?.instagram || ''}
                         onChange={(e) => updateSocialLink('instagram', e.target.value)}
                         placeholder="https://instagram.com/yourstore"
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-medium p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Facebook Page URL
                       </label>
                       <input
@@ -2355,11 +2357,11 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         value={selectedBlock.content.links?.facebook || ''}
                         onChange={(e) => updateSocialLink('facebook', e.target.value)}
                         placeholder="https://facebook.com/yourstore"
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-medium p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Twitter / X URL
                       </label>
                       <input
@@ -2367,17 +2369,17 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         value={selectedBlock.content.links?.twitter || ''}
                         onChange={(e) => updateSocialLink('twitter', e.target.value)}
                         placeholder="https://x.com/yourstore"
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-medium p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Alignment
                       </label>
                       <select
                         value={selectedBlock.content.align || 'center'}
                         onChange={(e) => updateSelectedBlockContent('align', e.target.value)}
-                        className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                       >
                         <option value="center">Center</option>
                         <option value="left">Left</option>
@@ -2391,35 +2393,35 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 {selectedBlock.type === 'footer' && (
                   <>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Store Name
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.storeName || ''}
                         onChange={(e) => updateSelectedBlockContent('storeName', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Postal Address
                       </label>
                       <input
                         type="text"
                         value={selectedBlock.content.address || ''}
                         onChange={(e) => updateSelectedBlockContent('address', e.target.value)}
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-medium p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Typography (Font Family)
                       </label>
                       <select
                         value={selectedBlock.content.fontFamily || ''}
                         onChange={(e) => updateSelectedBlockContent('fontFamily', e.target.value)}
-                        className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                       >
                         <option value="">Default (Inherit Theme)</option>
                         {TYPOGRAPHY_PRESETS.map((f) => (
@@ -2431,13 +2433,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Font Size
                         </label>
                         <select
                           value={selectedBlock.content.fontSize || '12px'}
                           onChange={(e) => updateSelectedBlockContent('fontSize', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="11px">11px - Micro</option>
                           <option value="12px">12px - Standard</option>
@@ -2446,13 +2448,13 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                        <label className="text-xs text-slate-700 font-extrabold block mb-1">
                           Line Height
                         </label>
                         <select
                           value={selectedBlock.content.lineHeight || '1.6'}
                           onChange={(e) => updateSelectedBlockContent('lineHeight', e.target.value)}
-                          className="w-full bg-[#ffffff] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-bold p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
                         >
                           <option value="1.4">1.4 - Compact</option>
                           <option value="1.6">1.6 - Standard</option>
@@ -2461,7 +2463,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-[#5e5a5a] font-medium block mb-1">
+                      <label className="text-xs text-slate-700 font-extrabold block mb-1">
                         Unsubscribe URL
                       </label>
                       <input
@@ -2470,17 +2472,17 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                         onChange={(e) =>
                           updateSelectedBlockContent('unsubscribeUrl', e.target.value)
                         }
-                        className="w-full bg-[#fdf1ef] text-xs text-[#191a1b] p-2 rounded-lg border border-[#cbd5e0]"
+                        className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 font-medium p-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition shadow-2xs"
                       />
                     </div>
                   </>
                 )}
 
                 {/* Common Delete Action */}
-                <div className="pt-3 border-t border-[#cbd5e0]">
+                <div className="pt-3 border-t border-slate-200">
                   <button
                     onClick={() => removeBlock(selectedBlock.id)}
-                    className="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-medium rounded-lg border border-rose-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl border border-rose-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Delete This Block
@@ -2492,35 +2494,35 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
         </aside>
       </div>
 
-      {/* ─── TEST EMAIL MODAL (Statamic Style) ─────────────────────────────── */}
+      {/* ─── TEST EMAIL MODAL ─────────────────────────────── */}
       {showTestModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#191a1b]/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-md bg-[#ffffff] border border-[#cbd5e0] rounded-2xl shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#cbd5e0]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-[#191a1b] text-[#d4ff4c] rounded-lg shadow-xs">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100 shadow-2xs">
                   <Send className="w-4 h-4" />
                 </div>
-                <h3 className="text-sm font-bold text-[#191a1b]">Send Simulated Test Email</h3>
+                <h3 className="text-sm font-black text-slate-900">Send Simulated Test Email</h3>
               </div>
               <button
                 onClick={() => {
                   setShowTestModal(false);
                   setTestResult(null);
                 }}
-                className="p-1 rounded-lg text-[#5e5a5a] hover:text-[#191a1b] hover:bg-[#fdf1ef] transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-[#5e5a5a] leading-relaxed">
+            <p className="text-xs text-slate-500 leading-relaxed font-medium">
               Verify how this template renders in inbox environments with sample dynamic customer,
               order & tracking tags.
             </p>
 
             <div>
-              <label className="text-xs text-[#191a1b] font-medium block mb-1">
+              <label className="text-xs text-slate-700 font-extrabold block mb-1">
                 Recipient Email Address
               </label>
               <input
@@ -2528,36 +2530,36 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 value={testRecipient}
                 onChange={(e) => setTestRecipient(e.target.value)}
                 placeholder="merchant@example.com"
-                className="w-full bg-[#ffffff] text-xs text-[#191a1b] px-3.5 py-2.5 rounded-lg border border-[#cbd5e0] focus:border-[#191a1b] focus:ring-2 focus:ring-[#cbc2ea] focus:outline-none"
+                className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition shadow-2xs font-medium"
               />
             </div>
 
             {testResult && (
-              <div className="p-3 bg-[#fdf1ef] border border-[#cbd5e0] rounded-lg text-xs text-[#191a1b] space-y-1">
-                <div className="font-bold flex items-center gap-1.5 text-[#191a1b]">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Test Email Simulated!
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-950 space-y-1">
+                <div className="font-bold flex items-center gap-1.5 text-emerald-800">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Test Email Simulated!
                 </div>
-                <div className="text-[11px] text-[#5e5a5a]">
+                <div className="text-[11px] text-emerald-700 font-medium">
                   Dispatched at {new Date(testResult.dispatchedAt).toLocaleTimeString()} to{' '}
-                  <strong className="text-[#191a1b]">{testResult.recipientEmail}</strong>
+                  <strong className="text-emerald-950">{testResult.recipientEmail}</strong>
                 </div>
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#cbd5e0]">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
               <button
                 onClick={() => {
                   setShowTestModal(false);
                   setTestResult(null);
                 }}
-                className="px-4 py-2 rounded-lg text-xs font-medium border border-[#cbc2ea] text-[#191a1b] hover:bg-[#fdf1ef] transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSendTestEmail}
                 disabled={sendingTest}
-                className="px-5 py-2 rounded-lg text-xs font-medium bg-[#191a1b] hover:bg-[#2e2f30] text-[#d4ff4c] flex items-center gap-1.5 shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all disabled:opacity-50 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
                 {sendingTest ? 'Sending...' : 'Send Test Now'}

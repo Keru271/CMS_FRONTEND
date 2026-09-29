@@ -6,9 +6,11 @@ import { useCMSContext } from '@/src/context/CMSContext';
 import { cmsService } from '@/src/services/cmsService';
 import { StoreSetupData, CMSProduct } from '@/src/types';
 import { getCurrencySymbol } from '@/src/lib/currency';
+import { AiStoreBuilderModal } from '@/src/components/ai/AiStoreBuilderModal';
 import {
   Store,
   Sparkles,
+  Wand2,
   Globe,
   ArrowRight,
   ArrowLeft,
@@ -123,6 +125,7 @@ export const OnboardingWizard: React.FC = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -201,10 +204,10 @@ export const OnboardingWizard: React.FC = () => {
 
   if (!isReady) {
     return (
-      <div className="min-h-screen bg-[#fdf1ef] flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-[#191a1b] border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-semibold text-[#5e5a5a] tracking-wide animate-pulse">
+          <div className="w-10 h-10 border-4 border-zinc-200 border-t-black rounded-full animate-spin" />
+          <span className="text-xs font-mono font-semibold text-zinc-600 tracking-wide animate-pulse">
             Checking Setup Status from Database...
           </span>
         </div>
@@ -383,26 +386,26 @@ export const OnboardingWizard: React.FC = () => {
   const currentCurrencySymbol = getCurrencySymbol(formData.currency);
 
   return (
-    <div className="min-h-screen bg-[#fdf1ef] text-[#191a1b] flex flex-col justify-between font-sans selection:bg-[#191a1b] selection:text-[#d4ff4c]">
+    <div className="min-h-screen bg-white text-zinc-950 flex flex-col justify-between font-sans selection:bg-black selection:text-white">
       {/* Top Brand Header */}
-      <header className="border-b border-[#cbd5e0] bg-white/80 backdrop-blur-md sticky top-0 z-50">
+      <header className="border-b border-zinc-200 bg-white/90 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#191a1b] text-[#d4ff4c] flex items-center justify-center shadow-xs font-black text-sm">
+            <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center shadow-md font-black text-sm">
               ⚡
             </div>
             <div>
-              <span className="font-serif font-bold text-base text-[#191a1b] block">OmniStore CMS</span>
-              <span className="text-[11px] text-[#5e5a5a] font-semibold block">Storefront Launch Onboarding</span>
+              <span className="font-sans font-bold text-base text-zinc-950 block">OmniStore CMS</span>
+              <span className="text-[11px] text-zinc-500 font-mono block">Storefront Launch Onboarding</span>
             </div>
           </div>
 
           {/* Step Pill & Progress */}
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-[#5e5a5a]">Step {currentStep} of {totalSteps}</span>
-            <div className="w-24 h-2 bg-[#e2e8f0] rounded-full overflow-hidden">
+            <span className="text-xs font-mono font-bold text-zinc-600">Step {currentStep} of {totalSteps}</span>
+            <div className="w-24 h-2 bg-zinc-100 rounded-full overflow-hidden border border-zinc-200">
               <div
-                className="h-full bg-[#191a1b] transition-all duration-300 rounded-full"
+                className="h-full bg-black transition-all duration-300 rounded-full"
                 style={{ width: `${(currentStep / totalSteps) * 100}%` }}
               />
             </div>
@@ -413,28 +416,36 @@ export const OnboardingWizard: React.FC = () => {
       {/* Main Wizard Container */}
       <main className="max-w-4xl w-full mx-auto px-6 py-8 md:py-10 flex-1 flex flex-col justify-center space-y-6">
         
-        {/* Header Hero Banner (Existing Design Pattern) */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+        {/* Header Hero Banner */}
+        <div className="p-6 sm:p-8 rounded-2xl bg-zinc-50 text-zinc-950 border-2 border-zinc-200 shadow-sm relative overflow-hidden">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/30">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-3 py-1 rounded-md bg-zinc-200/80 text-zinc-800 font-mono font-bold text-[10px] uppercase tracking-widest border border-zinc-300">
                   Store Setup Wizard
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#d4ff4c]/20 text-[#d4ff4c] text-[10px] font-bold border border-[#d4ff4c]/30 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#d4ff4c] animate-pulse" />
+                <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 font-mono text-[10px] font-bold border border-emerald-200 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Quick Launch Mode
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-                <Store className="w-8 h-8 text-indigo-400" />
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-950 flex items-center gap-3 uppercase">
+                <Store className="w-8 h-8 text-black" />
                 <span>Configure Your New Storefront</span>
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+              <p className="text-xs sm:text-sm text-zinc-600 max-w-2xl leading-relaxed">
                 Complete these essential steps to configure your store brand identity, currency, contact channels, and storefront layout.
               </p>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsAiModalOpen(true)}
+              className="px-5 py-2.5 rounded-xl bg-black hover:bg-zinc-800 text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 border border-black shadow-md transition-all cursor-pointer transform active:scale-95 shrink-0"
+            >
+              <Wand2 className="w-4 h-4 text-amber-300 animate-pulse" />
+              <span>Auto-Build with AI 🪄</span>
+            </button>
           </div>
         </div>
 
@@ -459,27 +470,27 @@ export const OnboardingWizard: React.FC = () => {
                   if (s.step < currentStep) setCurrentStep(s.step);
                 }}
                 disabled={s.step > currentStep}
-                className={`flex items-center justify-center gap-2 p-3 rounded-2xl border text-center transition-all ${
+                className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-center transition-all ${
                   isCurrent
-                    ? 'bg-[#191a1b] text-white border-[#191a1b] shadow-md scale-102'
+                    ? 'bg-black text-white border-2 border-black shadow-sm scale-[1.02]'
                     : isDone
-                      ? 'bg-white border-[#cbd5e0] text-[#191a1b] hover:bg-slate-50 cursor-pointer shadow-xs'
-                      : 'bg-white/50 border-[#e2e8f0] text-[#94a3b8] cursor-not-allowed opacity-60'
+                      ? 'bg-zinc-50 border-zinc-300 text-zinc-800 hover:border-zinc-400 cursor-pointer'
+                      : 'bg-zinc-50/50 border-zinc-200 text-zinc-400 cursor-not-allowed opacity-60'
                 }`}
               >
-                <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black ${
-                  isCurrent ? 'bg-[#d4ff4c] text-[#191a1b]' : isDone ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'
+                <div className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-black font-mono ${
+                  isCurrent ? 'bg-white text-black' : isDone ? 'bg-emerald-100 border border-emerald-300 text-emerald-800' : 'bg-zinc-200 text-zinc-500'
                 }`}>
                   {isDone ? <Check className="w-3.5 h-3.5" /> : s.step}
                 </div>
-                <span className="text-xs font-bold hidden sm:inline-block">{s.title}</span>
+                <span className={`text-xs uppercase tracking-wider hidden sm:inline-block ${isCurrent ? 'font-black text-white' : 'font-bold text-zinc-700'}`}>{s.title}</span>
               </button>
             );
           })}
         </div>
 
         {/* Form Body Card */}
-        <div className="bg-white border border-[#cbd5e0] rounded-3xl p-6 sm:p-8 shadow-statamic space-y-6">
+        <div className="bg-white border-2 border-zinc-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6 text-zinc-950">
 
           {/* ─────────────────────────────────────────────────────────────
               STEP 1: STORE IDENTITY & BASICS
@@ -487,13 +498,13 @@ export const OnboardingWizard: React.FC = () => {
           {currentStep === 1 && (
             <div className="space-y-6">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-[#5e5a5a] block mb-1">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500 block mb-1">
                   Step 1 of 5 • Store Brand Identity
                 </span>
-                <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#191a1b]">
+                <h2 className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">
                   What is the name of your online store?
                 </h2>
-                <p className="text-xs text-[#5e5a5a] mt-1">
+                <p className="text-xs text-zinc-600 mt-1">
                   Give your storefront a recognizable brand name. You can modify this anytime in Store Settings.
                 </p>
               </div>
@@ -501,7 +512,7 @@ export const OnboardingWizard: React.FC = () => {
               <div className="space-y-4">
                 {/* Store Name */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[#191a1b]">
+                  <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
                     Store Brand Name <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -510,31 +521,31 @@ export const OnboardingWizard: React.FC = () => {
                     value={formData.storeName}
                     onChange={(e) => handleStoreNameChange(e.target.value)}
                     placeholder="e.g. Apex Streetwear & Gear"
-                    className="w-full px-4 py-3 rounded-2xl border border-[#cbd5e0] bg-slate-50 text-xs font-bold text-[#191a1b] focus:outline-none focus:ring-2 focus:ring-[#191a1b] focus:bg-white transition-all"
+                    className="w-full px-4 py-3 rounded-lg border border-zinc-300 bg-white text-xs font-bold text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                   />
                 </div>
 
                 {/* Subdomain Preview */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[#191a1b]">
+                  <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
                     Store Subdomain URL
                   </label>
-                  <div className="flex items-center rounded-2xl border border-[#cbd5e0] bg-slate-50 px-4 py-2.5 text-xs font-mono">
-                    <span className="text-[#5e5a5a] select-none">https://</span>
+                  <div className="flex items-center rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-xs font-mono">
+                    <span className="text-zinc-500 select-none">https://</span>
                     <input
                       type="text"
                       value={formData.slug}
                       onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
                       placeholder="my-store"
-                      className="bg-transparent text-[#191a1b] font-bold focus:outline-none flex-1 px-1"
+                      className="bg-transparent text-zinc-950 font-bold focus:outline-none flex-1 px-1"
                     />
-                    <span className="text-[#5e5a5a] select-none">.omnistore.internal</span>
+                    <span className="text-zinc-500 select-none">.omnistore.internal</span>
                   </div>
                 </div>
 
                 {/* Tagline */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[#191a1b]">
+                  <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
                     Brand Catchphrase / Tagline
                   </label>
                   <input
@@ -542,13 +553,13 @@ export const OnboardingWizard: React.FC = () => {
                     value={formData.tagline}
                     onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
                     placeholder="e.g. Curated apparel, footwear, and limited drops"
-                    className="w-full px-4 py-3 rounded-2xl border border-[#cbd5e0] bg-slate-50 text-xs font-semibold text-[#191a1b] focus:outline-none focus:ring-2 focus:ring-[#191a1b] focus:bg-white transition-all"
+                    className="w-full px-4 py-3 rounded-lg border border-zinc-300 bg-white text-xs font-semibold text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                   />
                 </div>
 
                 {/* Category Selection */}
                 <div className="space-y-2 pt-2">
-                  <label className="block text-xs font-bold text-[#191a1b]">
+                  <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
                     Primary Industry / Product Category
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -559,14 +570,14 @@ export const OnboardingWizard: React.FC = () => {
                           key={cat.id}
                           type="button"
                           onClick={() => setFormData({ ...formData, category: cat.name })}
-                          className={`p-3 rounded-2xl border text-left flex flex-col gap-1 transition-all ${
+                          className={`p-3 rounded-xl border text-left flex flex-col gap-1 transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-[#191a1b] text-white border-[#191a1b] shadow-md scale-102'
-                              : 'bg-white border-[#cbd5e0] text-[#191a1b] hover:bg-slate-50'
+                              ? 'bg-zinc-100 border-2 border-black text-zinc-950 shadow-sm'
+                              : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50'
                           }`}
                         >
                           <span className="text-xl">{cat.icon}</span>
-                          <span className="text-xs font-bold truncate">{cat.name}</span>
+                          <span className={`text-xs truncate ${isSelected ? 'font-black text-black' : 'font-bold'}`}>{cat.name}</span>
                         </button>
                       );
                     })}
@@ -582,13 +593,13 @@ export const OnboardingWizard: React.FC = () => {
           {currentStep === 2 && (
             <div className="space-y-6">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-[#5e5a5a] block mb-1">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500 block mb-1">
                   Step 2 of 5 • Regional & Currency Configuration
                 </span>
-                <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#191a1b]">
+                <h2 className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">
                   Where is your business located?
                 </h2>
-                <p className="text-xs text-[#5e5a5a] mt-1">
+                <p className="text-xs text-zinc-600 mt-1">
                   OmniStore formats all catalog pricing, payment gateway settlements, and cart totals in this currency.
                 </p>
               </div>
@@ -596,7 +607,7 @@ export const OnboardingWizard: React.FC = () => {
               <div className="space-y-5">
                 {/* Currency Grid */}
                 <div className="space-y-2">
-                  <label className="block text-xs font-bold text-[#191a1b]">
+                  <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
                     Store Currency <span className="text-rose-500">*</span>
                   </label>
                   <div className="grid grid-cols-3 sm:grid-cols-3 gap-2.5">
@@ -607,20 +618,20 @@ export const OnboardingWizard: React.FC = () => {
                           key={cur.code}
                           type="button"
                           onClick={() => setFormData({ ...formData, currency: cur.code })}
-                          className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all ${
+                          className={`p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-[#191a1b] text-white border-[#191a1b] shadow-md scale-102'
-                              : 'bg-white border-[#cbd5e0] text-[#191a1b] hover:bg-slate-50'
+                              ? 'bg-zinc-100 border-2 border-black text-zinc-950 shadow-sm'
+                              : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50'
                           }`}
                         >
                           <div className="flex items-center gap-2">
                             <span className="text-lg">{cur.flag}</span>
                             <div>
-                              <span className="text-xs font-black block">{cur.code}</span>
-                              <span className={`text-[10px] ${isSelected ? 'text-slate-300' : 'text-[#5e5a5a]'}`}>{cur.name}</span>
+                              <span className="text-xs font-black block text-zinc-950">{cur.code}</span>
+                              <span className={`text-[10px] ${isSelected ? 'text-zinc-700' : 'text-zinc-500'}`}>{cur.name}</span>
                             </div>
                           </div>
-                          <span className={`text-sm font-black font-mono ${isSelected ? 'text-[#d4ff4c]' : 'text-slate-900'}`}>{cur.symbol}</span>
+                          <span className={`text-sm font-black font-mono ${isSelected ? 'text-black' : 'text-zinc-600'}`}>{cur.symbol}</span>
                         </button>
                       );
                     })}
@@ -630,16 +641,16 @@ export const OnboardingWizard: React.FC = () => {
                 {/* Country & Timezone */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-[#191a1b]">
+                    <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
                       Operating Country
                     </label>
                     <select
                       value={formData.country}
                       onChange={(e) => handleCountryChange(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border border-[#cbd5e0] bg-slate-50 text-xs font-bold text-[#191a1b] focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                      className="w-full px-4 py-3 rounded-lg border border-zinc-300 bg-white text-xs font-bold text-zinc-950 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                     >
                       {COUNTRIES.map((c) => (
-                        <option key={c.code} value={c.name}>
+                        <option key={c.code} value={c.name} className="bg-white text-zinc-950">
                           {c.flag} {c.name} ({c.currency})
                         </option>
                       ))}
@@ -647,21 +658,21 @@ export const OnboardingWizard: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-[#191a1b]">
+                    <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
                       Store Timezone
                     </label>
                     <select
                       value={formData.timezone}
                       onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                      className="w-full px-4 py-3 rounded-2xl border border-[#cbd5e0] bg-slate-50 text-xs font-mono font-bold text-[#191a1b] focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                      className="w-full px-4 py-3 rounded-lg border border-zinc-300 bg-white text-xs font-mono font-bold text-zinc-950 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                     >
-                      <option value="Asia/Kolkata">Asia/Kolkata (IST +5:30)</option>
-                      <option value="America/New_York">America/New_York (EST -5:00)</option>
-                      <option value="Europe/London">Europe/London (GMT +0:00)</option>
-                      <option value="Asia/Dubai">Asia/Dubai (GST +4:00)</option>
-                      <option value="America/Los_Angeles">America/Los_Angeles (PST -8:00)</option>
-                      <option value="Asia/Singapore">Asia/Singapore (SGT +8:00)</option>
-                      <option value="Asia/Tokyo">Asia/Tokyo (JST +9:00)</option>
+                      <option value="Asia/Kolkata" className="bg-white text-zinc-950">Asia/Kolkata (IST +5:30)</option>
+                      <option value="America/New_York" className="bg-white text-zinc-950">America/New_York (EST -5:00)</option>
+                      <option value="Europe/London" className="bg-white text-zinc-950">Europe/London (GMT +0:00)</option>
+                      <option value="Asia/Dubai" className="bg-white text-zinc-950">Asia/Dubai (GST +4:00)</option>
+                      <option value="America/Los_Angeles" className="bg-white text-zinc-950">America/Los_Angeles (PST -8:00)</option>
+                      <option value="Asia/Singapore" className="bg-white text-zinc-950">Asia/Singapore (SGT +8:00)</option>
+                      <option value="Asia/Tokyo" className="bg-white text-zinc-950">Asia/Tokyo (JST +9:00)</option>
                     </select>
                   </div>
                 </div>
@@ -675,13 +686,13 @@ export const OnboardingWizard: React.FC = () => {
           {currentStep === 3 && (
             <div className="space-y-6">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-[#5e5a5a] block mb-1">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500 block mb-1">
                   Step 3 of 5 • Customer Support & Invoicing
                 </span>
-                <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#191a1b]">
+                <h2 className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">
                   Contact & Support Details
                 </h2>
-                <p className="text-xs text-[#5e5a5a] mt-1">
+                <p className="text-xs text-zinc-600 mt-1">
                   Displayed on customer order invoice receipts, tracking emails, and footer links.
                 </p>
               </div>
@@ -689,18 +700,18 @@ export const OnboardingWizard: React.FC = () => {
               <div className="space-y-4">
                 {/* Support Email */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[#191a1b]">
+                  <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
                     Customer Support Email <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <Mail className="w-4 h-4 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2" />
                     <input
                       type="email"
                       required
                       value={formData.contactEmail}
                       onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
                       placeholder="support@yourstore.com"
-                      className="w-full pl-11 pr-4 py-3 rounded-2xl border border-[#cbd5e0] bg-slate-50 text-xs font-bold text-[#191a1b] focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                      className="w-full pl-11 pr-4 py-3 rounded-lg border border-zinc-300 bg-white text-xs font-bold text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                     />
                   </div>
                 </div>
@@ -708,23 +719,23 @@ export const OnboardingWizard: React.FC = () => {
                 {/* Phone Numbers */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-[#191a1b]">
+                    <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
                       Support Phone Number
                     </label>
                     <div className="relative">
-                      <Phone className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                      <Phone className="w-4 h-4 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2" />
                       <input
                         type="tel"
                         value={formData.contactPhone}
                         onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
                         placeholder="+91 98765 43210"
-                        className="w-full pl-11 pr-4 py-3 rounded-2xl border border-[#cbd5e0] bg-slate-50 text-xs font-mono font-semibold text-[#191a1b] focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                        className="w-full pl-11 pr-4 py-3 rounded-lg border border-zinc-300 bg-white text-xs font-mono font-semibold text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-[#191a1b]">
+                    <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
                       WhatsApp Business Support (Optional)
                     </label>
                     <div className="relative">
@@ -734,7 +745,7 @@ export const OnboardingWizard: React.FC = () => {
                         value={formData.whatsappNumber}
                         onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
                         placeholder="+91 98765 43210"
-                        className="w-full pl-11 pr-4 py-3 rounded-2xl border border-[#cbd5e0] bg-slate-50 text-xs font-mono font-semibold text-[#191a1b] focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                        className="w-full pl-11 pr-4 py-3 rounded-lg border border-zinc-300 bg-white text-xs font-mono font-semibold text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                       />
                     </div>
                   </div>
@@ -743,23 +754,23 @@ export const OnboardingWizard: React.FC = () => {
                 {/* Physical Location */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-[#191a1b]">
+                    <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
                       Headquarters / City
                     </label>
                     <div className="relative">
-                      <MapPin className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                      <MapPin className="w-4 h-4 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
                         value={formData.addressCity}
                         onChange={(e) => setFormData({ ...formData, addressCity: e.target.value })}
                         placeholder="e.g. Mumbai, New York, London"
-                        className="w-full pl-11 pr-4 py-3 rounded-2xl border border-[#cbd5e0] bg-slate-50 text-xs font-semibold text-[#191a1b] focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                        className="w-full pl-11 pr-4 py-3 rounded-lg border border-zinc-300 bg-white text-xs font-semibold text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-[#191a1b]">
+                    <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
                       State / Province
                     </label>
                     <input
@@ -767,7 +778,7 @@ export const OnboardingWizard: React.FC = () => {
                       value={formData.addressState}
                       onChange={(e) => setFormData({ ...formData, addressState: e.target.value })}
                       placeholder="e.g. Maharashtra, NY, England"
-                      className="w-full px-4 py-3 rounded-2xl border border-[#cbd5e0] bg-slate-50 text-xs font-semibold text-[#191a1b] focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                      className="w-full px-4 py-3 rounded-lg border border-zinc-300 bg-white text-xs font-semibold text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
                     />
                   </div>
                 </div>
@@ -781,13 +792,13 @@ export const OnboardingWizard: React.FC = () => {
           {currentStep === 4 && (
             <div className="space-y-6">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-[#5e5a5a] block mb-1">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500 block mb-1">
                   Step 4 of 5 • Storefront Template & Catalog Starter
                 </span>
-                <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#191a1b]">
+                <h2 className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">
                   Select your initial storefront theme
                 </h2>
-                <p className="text-xs text-[#5e5a5a] mt-1">
+                <p className="text-xs text-zinc-600 mt-1">
                   Choose a high-converting storefront layout. You can customize colors, fonts, and banners in Theme Studio anytime.
                 </p>
               </div>
@@ -802,23 +813,23 @@ export const OnboardingWizard: React.FC = () => {
                         key={th.id}
                         type="button"
                         onClick={() => setFormData({ ...formData, theme: th.id })}
-                        className={`p-4 rounded-2xl border text-left flex flex-col justify-between gap-3 transition-all ${
+                        className={`p-4 rounded-xl border text-left flex flex-col justify-between gap-3 transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-[#191a1b] text-white border-[#191a1b] shadow-xl ring-2 ring-[#191a1b]'
-                            : 'bg-white border-[#cbd5e0] text-[#191a1b] hover:bg-slate-50'
+                            ? 'bg-zinc-50 border-2 border-black text-zinc-950 shadow-md ring-1 ring-black'
+                            : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: th.accent }} />
-                            <span className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-[#191a1b]'}`}>{th.name}</span>
+                            <span className={`text-sm font-bold ${isSelected ? 'text-black' : 'text-zinc-900'}`}>{th.name}</span>
                           </div>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${isSelected ? 'bg-white/20 text-[#d4ff4c]' : 'bg-slate-100 text-slate-700'}`}>
+                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${isSelected ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-600'}`}>
                             {th.tag}
                           </span>
                         </div>
-                        <p className={`text-xs ${isSelected ? 'text-slate-300' : 'text-[#5e5a5a]'}`}>{th.desc}</p>
-                        <div className={`h-10 w-full rounded-xl bg-gradient-to-r ${th.previewBg} border border-black/10 flex items-center px-3 justify-between text-white text-[10px] font-mono font-bold`}>
+                        <p className={`text-xs ${isSelected ? 'text-zinc-600' : 'text-zinc-500'}`}>{th.desc}</p>
+                        <div className={`h-10 w-full rounded-lg bg-gradient-to-r ${th.previewBg} border border-zinc-200 flex items-center px-3 justify-between text-white text-[10px] font-mono font-bold shadow-xs`}>
                           <span>LIVE TEMPLATE</span>
                           <span className="bg-white/20 px-2 py-0.5 rounded">PREVIEW</span>
                         </div>
@@ -828,13 +839,13 @@ export const OnboardingWizard: React.FC = () => {
                 </div>
 
                 {/* Seed Demo Products */}
-                <div className="p-4 rounded-2xl bg-[#f0fdf4] border border-[#bbf7d0] flex items-start gap-3">
+                <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-200 flex items-start gap-3">
                   <input
                     type="checkbox"
                     id="seed-checkbox"
                     checked={formData.seedSampleProducts}
                     onChange={(e) => setFormData({ ...formData, seedSampleProducts: e.target.checked })}
-                    className="mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                    className="mt-1 w-4 h-4 rounded text-black focus:ring-black border-zinc-300 bg-white cursor-pointer"
                   />
                   <label htmlFor="seed-checkbox" className="cursor-pointer">
                     <span className="text-xs font-bold text-emerald-950 block">
@@ -855,53 +866,53 @@ export const OnboardingWizard: React.FC = () => {
           {currentStep === 5 && (
             <div className="space-y-6">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 block mb-1">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500 block mb-1">
                   Step 5 of 5 • Review & Ready for Launch
                 </span>
-                <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#191a1b]">
+                <h2 className="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">
                   Ready to launch your online storefront!
                 </h2>
-                <p className="text-xs text-[#5e5a5a] mt-1">
+                <p className="text-xs text-zinc-600 mt-1">
                   Review your initial configuration below before entering the Master Admin Control Panel.
                 </p>
               </div>
 
               {/* Review Card */}
-              <div className="p-6 rounded-2xl bg-slate-50 border border-[#cbd5e0] space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-[#cbd5e0]">
+              <div className="p-6 rounded-xl bg-zinc-50 border border-zinc-200 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
                   <div>
-                    <span className="text-[10px] font-mono uppercase text-[#5e5a5a] block">Storefront Name</span>
-                    <h3 className="text-lg font-serif font-bold text-[#191a1b]">{formData.storeName}</h3>
-                    <span className="text-xs text-indigo-600 font-mono font-semibold">https://{formData.slug}.omnistore.internal</span>
+                    <span className="text-[10px] font-mono uppercase text-zinc-500 block">Storefront Name</span>
+                    <h3 className="text-lg font-bold text-zinc-950">{formData.storeName}</h3>
+                    <span className="text-xs text-zinc-700 font-mono font-semibold">https://{formData.slug}.omnistore.internal</span>
                   </div>
-                  <span className="px-3 py-1 rounded-full bg-[#d4ff4c] text-[#191a1b] border border-[#191a1b] text-xs font-extrabold">
+                  <span className="px-3 py-1 rounded-md bg-black text-white border border-black text-xs font-mono font-black uppercase">
                     ✓ Verified
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div>
-                    <span className="text-[10px] font-mono text-[#5e5a5a] block uppercase">Currency</span>
-                    <span className="text-xs font-bold text-[#191a1b]">{formData.currency} ({currentCurrencySymbol})</span>
+                    <span className="text-[10px] font-mono text-zinc-500 block uppercase">Currency</span>
+                    <span className="text-xs font-bold text-zinc-950">{formData.currency} ({currentCurrencySymbol})</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-mono text-[#5e5a5a] block uppercase">Category</span>
-                    <span className="text-xs font-bold text-[#191a1b] truncate block">{formData.category}</span>
+                    <span className="text-[10px] font-mono text-zinc-500 block uppercase">Category</span>
+                    <span className="text-xs font-bold text-zinc-950 truncate block">{formData.category}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-mono text-[#5e5a5a] block uppercase">Country</span>
-                    <span className="text-xs font-bold text-[#191a1b]">{formData.country}</span>
+                    <span className="text-[10px] font-mono text-zinc-500 block uppercase">Country</span>
+                    <span className="text-xs font-bold text-zinc-950">{formData.country}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-mono text-[#5e5a5a] block uppercase">Storefront Theme</span>
-                    <span className="text-xs font-bold text-indigo-700 capitalize">{formData.theme.replace('-', ' ')}</span>
+                    <span className="text-[10px] font-mono text-zinc-500 block uppercase">Storefront Theme</span>
+                    <span className="text-xs font-bold text-zinc-950 capitalize">{formData.theme.replace('-', ' ')}</span>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#cbd5e0] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#5e5a5a]">
+                <div className="pt-3 border-t border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-zinc-600">
                   <div className="flex items-center gap-2">
-                    <Mail className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="font-semibold text-[#191a1b]">{formData.contactEmail}</span>
+                    <Mail className="w-3.5 h-3.5 text-zinc-400" />
+                    <span className="font-semibold text-zinc-950">{formData.contactEmail}</span>
                   </div>
                   {formData.seedSampleProducts && (
                     <span className="text-emerald-700 font-bold">✨ 3 Demo Products Included</span>
@@ -910,8 +921,8 @@ export const OnboardingWizard: React.FC = () => {
               </div>
 
               {/* Status Note */}
-              <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center gap-3 text-xs text-indigo-900">
-                <ShieldCheck className="w-5 h-5 text-indigo-600 shrink-0" />
+              <div className="p-4 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center gap-3 text-xs text-zinc-800">
+                <ShieldCheck className="w-5 h-5 text-black shrink-0" />
                 <span>
                   All settings are saved directly to your store tenant and can be customized anytime from the dashboard.
                 </span>
@@ -922,13 +933,13 @@ export const OnboardingWizard: React.FC = () => {
           {/* ─────────────────────────────────────────────────────────────
               BOTTOM ACTIONS (BACK & NEXT / LAUNCH)
              ───────────────────────────────────────────────────────────── */}
-          <div className="flex items-center justify-between pt-6 border-t border-[#cbd5e0]">
+          <div className="flex items-center justify-between pt-6 border-t border-zinc-200">
             {currentStep > 1 ? (
               <button
                 type="button"
                 onClick={handleBack}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-2xl bg-white hover:bg-slate-100 border border-[#cbd5e0] text-[#191a1b] text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-lg bg-white hover:bg-zinc-100 border border-zinc-300 text-zinc-800 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back</span>
@@ -942,17 +953,17 @@ export const OnboardingWizard: React.FC = () => {
                 type="button"
                 onClick={handleNext}
                 disabled={!validateStep(currentStep)}
-                className="px-6 py-2.5 rounded-2xl bg-[#191a1b] hover:bg-[#2e2f30] text-[#d4ff4c] text-xs font-extrabold flex items-center gap-2 shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="px-6 py-2.5 rounded-lg bg-black hover:bg-zinc-800 text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 border-2 border-black shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transform active:scale-95"
               >
                 <span>Continue</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 text-white" />
               </button>
             ) : (
               <button
                 type="button"
                 onClick={handleCompleteLaunch}
                 disabled={isSubmitting || isCompleted}
-                className="px-8 py-3 rounded-2xl bg-[#191a1b] hover:bg-[#2e2f30] text-[#d4ff4c] text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg transition-all disabled:opacity-50 cursor-pointer"
+                className="px-8 py-3 rounded-lg bg-black hover:bg-zinc-800 text-white text-xs font-black uppercase tracking-wider flex items-center gap-2 border-2 border-black shadow-lg transition-all disabled:opacity-50 cursor-pointer transform active:scale-95"
               >
                 {isCompleted ? (
                   <>
@@ -961,12 +972,12 @@ export const OnboardingWizard: React.FC = () => {
                   </>
                 ) : isSubmitting ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
                     <span>Configuring Storefront...</span>
                   </>
                 ) : (
                   <>
-                    <Rocket className="w-4 h-4" />
+                    <Rocket className="w-4 h-4 text-white" />
                     <span>Launch Store &amp; Go to Dashboard 🚀</span>
                   </>
                 )}
@@ -978,9 +989,26 @@ export const OnboardingWizard: React.FC = () => {
       </main>
 
       {/* Footer copyright */}
-      <footer className="py-4 text-center text-xs text-[#5e5a5a] font-medium border-t border-[#cbd5e0]/60">
+      <footer className="py-4 text-center text-xs text-zinc-500 font-mono border-t border-zinc-200 bg-white">
         OmniStore CMS Engine • Headless E-Commerce Platform
       </footer>
+
+      {/* AI Store Builder Modal */}
+      {isAiModalOpen && (
+        <AiStoreBuilderModal
+          isOpen={isAiModalOpen}
+          onClose={() => setIsAiModalOpen(false)}
+          onBlueprintApplied={async () => {
+            try {
+              await cmsService.completeOnboarding();
+            } catch (err) {
+              console.warn('Onboarding complete hook failed:', err);
+            }
+            setIsAiModalOpen(false);
+            router.push('/dashboard');
+          }}
+        />
+      )}
     </div>
   );
 };

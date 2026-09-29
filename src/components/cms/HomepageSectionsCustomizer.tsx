@@ -1031,17 +1031,17 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner Card */}
-      <div className="p-5 rounded-3xl bg-slate-900 text-white shadow-lg space-y-4">
+      <div className="p-5 rounded-2xl bg-[#1E1E1E] border border-[#2C2C2E] text-white shadow-lg space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase tracking-wider border border-amber-500/30">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#00E5FF]/10 text-[#00E5FF] text-[10px] font-mono font-bold uppercase tracking-wider border border-[#00E5FF]/30">
                 Template Sections
               </span>
               <span className="text-[11px] text-slate-400 font-mono">({templateSlug})</span>
             </div>
             <h2 className="text-base font-black text-white flex items-center gap-2">
-              <Layers className="w-4 h-4 text-amber-400" />
+              <Layers className="w-4 h-4 text-[#00E5FF]" />
               <span>{templateName} Homepage Customizer</span>
             </h2>
           </div>
@@ -1049,7 +1049,7 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             <button
               type="button"
               onClick={onResetToDefault}
-              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition-all flex items-center gap-1"
+              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-[#121212] hover:bg-[#252525] text-[#98989D] hover:text-white text-xs font-semibold border border-[#2C2C2E] transition-all flex items-center gap-1 cursor-pointer"
               title="Reset to default template sections"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -1058,7 +1058,7 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setShowAddMenu(!showAddMenu)}
-              className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black shadow-md flex items-center gap-1.5 transition-all"
+              className="px-3.5 py-1.5 rounded-xl bg-[#00E5FF] hover:bg-[#38e1ff] text-[#121212] text-xs font-bold shadow-md flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Add Block</span>
@@ -1069,9 +1069,9 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
 
       {/* Add Section Modal / Dropdown */}
       {showAddMenu && (
-        <div className="p-5 rounded-3xl bg-slate-50 dark:bg-card border border-slate-200 dark:border-border shadow-md space-y-3 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-border pb-2">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground">
+        <div className="p-5 rounded-2xl bg-[#1E1E1E] border border-[#2C2C2E] shadow-xl space-y-3 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between border-b border-[#2C2C2E] pb-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">
               Add a Section Block
             </h3>
             <button
@@ -1090,16 +1090,16 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
                   key={item.type}
                   type="button"
                   onClick={() => handleAddSection(item)}
-                  className="p-3 rounded-2xl border border-slate-200 dark:border-border bg-white dark:bg-accent/40 hover:border-amber-500 hover:bg-amber-50/40 text-left transition-all group flex items-start gap-3"
+                  className="p-3 rounded-xl border border-[#2C2C2E] bg-[#161616] hover:border-[#00E5FF] hover:bg-[#1E1E1E] text-left transition-all group flex items-start gap-3 cursor-pointer"
                 >
-                  <div className="p-2 rounded-xl bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-200 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors shrink-0">
+                  <div className="p-2 rounded-xl bg-[#121212] text-[#00E5FF] group-hover:bg-[#00E5FF] group-hover:text-[#121212] transition-colors shrink-0">
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-foreground">
+                    <h4 className="text-xs font-bold text-white">
                       {item.name}
                     </h4>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
+                    <p className="text-[11px] text-[#98989D] line-clamp-2 mt-0.5">
                       {item.desc}
                     </p>
                   </div>
@@ -1111,10 +1111,10 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
       )}
 
       {/* Sections List Card */}
-      <div className="p-5 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-3">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-3">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-foreground flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-amber-500" />
+      <div className="p-5 rounded-2xl bg-[#1E1E1E] border border-[#2C2C2E] shadow-sm space-y-3">
+        <div className="flex items-center justify-between border-b border-[#2C2C2E] pb-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+            <Sliders className="w-4 h-4 text-[#00E5FF]" />
             <span>Layout Structure ({sections.length} Blocks)</span>
           </h3>
           <span className="text-[10px] text-slate-400 font-medium">Click any row to configure</span>
@@ -1133,25 +1133,25 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
                 onClick={() => handleSelectSection(sec, idx)}
                 className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                   isSelected
-                    ? 'border-amber-500 bg-amber-50/60 dark:bg-amber-950/30 ring-2 ring-amber-500/20 shadow-sm'
+                    ? 'border-[#00E5FF] bg-[#00E5FF]/10 text-white shadow-sm ring-1 ring-[#00E5FF]/40'
                     : sec.enabled
-                      ? 'border-slate-200/80 dark:border-border bg-slate-50/40 dark:bg-card hover:border-slate-300 shadow-xs'
-                      : 'border-slate-200/40 dark:border-border/40 bg-slate-100/50 dark:bg-card/40 opacity-60'
+                      ? 'border-[#2C2C2E] bg-[#161616] hover:bg-[#222222] text-white shadow-xs'
+                      : 'border-[#2C2C2E]/50 bg-[#121212] opacity-60 text-[#98989D]'
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div
                     className={`p-2 rounded-xl text-xs font-bold shrink-0 ${
                       isSelected
-                        ? 'bg-amber-500 text-slate-950'
-                        : 'bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300'
+                        ? 'bg-[#00E5FF] text-[#121212]'
+                        : 'bg-[#121212] border border-[#2C2C2E] text-[#98989D]'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-black text-slate-900 dark:text-foreground truncate">
+                      <span className="text-xs font-bold text-white truncate">
                         {sec.title || sec.type}
                       </span>
                       {!sec.enabled && (
@@ -1192,7 +1192,7 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
                     className={`p-1 rounded-lg transition ${
                       sec.enabled
                         ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-200 dark:hover:bg-accent'
-                        : 'text-amber-500 bg-amber-50 dark:bg-amber-950/40'
+                        : 'text-[#00E5FF] bg-amber-50 dark:bg-amber-950/40'
                     }`}
                     title={sec.enabled ? 'Hide Section' : 'Show Section'}
                   >
@@ -1215,20 +1215,20 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
 
       {/* Selected Section Property Inspector */}
       {selectedSection && (
-        <div className="p-6 rounded-3xl border border-slate-200/80 dark:border-border bg-white dark:bg-card shadow-sm space-y-4 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-3">
+        <div className="p-5 sm:p-6 rounded-2xl border border-[#2C2C2E] bg-[#1E1E1E] shadow-sm space-y-4 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between border-b border-[#2C2C2E] pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+              <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-[#00E5FF] border border-amber-200 dark:border-amber-800">
                 <Edit3 className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-xs font-black text-slate-900 dark:text-foreground">
+                <h3 className="text-xs font-bold text-white">
                   Editing: {selectedSection.title || selectedSection.type}
                 </h3>
                 <span className="text-[10px] text-slate-400">Configure parameters below</span>
               </div>
             </div>
-            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300">
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#121212] border border-[#2C2C2E] text-[#98989D]">
               {selectedSection.type}
             </span>
           </div>
@@ -1238,87 +1238,87 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'hero' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Promo Badge Tag</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Promo Badge Tag</label>
                   <input
                     type="text"
                     value={selectedSection.config.badge || ''}
                     onChange={(e) => handleUpdateConfig('badge', e.target.value)}
                     placeholder="✨ NEW 2026 COLLECTION"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Headline</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Headline</label>
                   <input
                     type="text"
                     value={selectedSection.config.headline || ''}
                     onChange={(e) => handleUpdateConfig('headline', e.target.value)}
                     placeholder="Elevate Your Living Space"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Subheadline / Description</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Subheadline / Description</label>
                   <textarea
                     rows={2}
                     value={selectedSection.config.subheadline || ''}
                     onChange={(e) => handleUpdateConfig('subheadline', e.target.value)}
                     placeholder="Handcrafted solid timber..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="space-y-1">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Primary Button Label</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Primary Button Label</label>
                     <input
                       type="text"
                       value={selectedSection.config.ctaLabel || ''}
                       onChange={(e) => handleUpdateConfig('ctaLabel', e.target.value)}
                       placeholder="Shop Collection →"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Primary Button Link</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Primary Button Link</label>
                     <input
                       type="text"
                       value={selectedSection.config.ctaHref || ''}
                       onChange={(e) => handleUpdateConfig('ctaHref', e.target.value)}
                       placeholder="/products"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="space-y-1">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Secondary Button Label</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Secondary Button Label</label>
                     <input
                       type="text"
                       value={selectedSection.config.secondaryCtaLabel || ''}
                       onChange={(e) => handleUpdateConfig('secondaryCtaLabel', e.target.value)}
                       placeholder="Explore Rooms"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Secondary Button Link</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Secondary Button Link</label>
                     <input
                       type="text"
                       value={selectedSection.config.secondaryCtaHref || ''}
                       onChange={(e) => handleUpdateConfig('secondaryCtaHref', e.target.value)}
                       placeholder="/collections"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                     />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Background Image URL</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Background Image URL</label>
                   <input
                     type="text"
                     value={selectedSection.config.backgroundImage || ''}
                     onChange={(e) => handleUpdateConfig('backgroundImage', e.target.value)}
                     placeholder="https://images.unsplash.com/..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium font-mono text-[11px]"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium font-mono text-[11px]"
                   />
                 </div>
               </>
@@ -1328,67 +1328,67 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'deal-countdown' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Badge Label</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Badge Label</label>
                   <input
                     type="text"
                     value={selectedSection.config.badge || ''}
                     onChange={(e) => handleUpdateConfig('badge', e.target.value)}
                     placeholder="⚡ LIMITED TIME PROMOTION"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Deal Title</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Deal Title</label>
                   <input
                     type="text"
                     value={selectedSection.config.title || ''}
                     onChange={(e) => handleUpdateConfig('title', e.target.value)}
                     placeholder="Deal of the Day"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Deal Product Name</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Deal Product Name</label>
                   <input
                     type="text"
                     value={selectedSection.config.productName || ''}
                     onChange={(e) => handleUpdateConfig('productName', e.target.value)}
                     placeholder="Mid-Century Nordic Ergonomic Lounge Chair"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="space-y-1">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Deal Price ($)</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Deal Price ($)</label>
                     <input
                       type="number"
                       step="any"
                       value={selectedSection.config.price || ''}
                       onChange={(e) => handleUpdateConfig('price', parseFloat(e.target.value) || 0)}
                       placeholder="249.00"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Original Price ($)</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Original Price ($)</label>
                     <input
                       type="number"
                       step="any"
                       value={selectedSection.config.compareAtPrice || ''}
                       onChange={(e) => handleUpdateConfig('compareAtPrice', parseFloat(e.target.value) || 0)}
                       placeholder="349.00"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                     />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Product Image URL</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Product Image URL</label>
                   <input
                     type="text"
                     value={selectedSection.config.image || ''}
                     onChange={(e) => handleUpdateConfig('image', e.target.value)}
                     placeholder="https://..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-mono text-[11px]"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-mono text-[11px]"
                   />
                 </div>
               </>
@@ -1398,27 +1398,27 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'room-grid' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Tagline</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Tagline</label>
                   <input
                     type="text"
                     value={selectedSection.config.tagline || ''}
                     onChange={(e) => handleUpdateConfig('tagline', e.target.value)}
                     placeholder="INSPIRATION"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Section Title</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Section Title</label>
                   <input
                     type="text"
                     value={selectedSection.config.title || ''}
                     onChange={(e) => handleUpdateConfig('title', e.target.value)}
                     placeholder="Shop by Living Space"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-2 pt-2">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Room Cards (4)</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Room Cards (4)</label>
                   {(selectedSection.config.items || []).map((card: any, cIdx: number) => (
                     <div key={cIdx} className="p-3 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent space-y-2">
                       <div className="grid grid-cols-2 gap-2">
@@ -1466,41 +1466,41 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'featured-products' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Badge Label</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Badge Label</label>
                   <input
                     type="text"
                     value={selectedSection.config.badge || ''}
                     onChange={(e) => handleUpdateConfig('badge', e.target.value)}
                     placeholder="CURATED SELECTION"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Section Title</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Section Title</label>
                   <input
                     type="text"
                     value={selectedSection.config.title || ''}
                     onChange={(e) => handleUpdateConfig('title', e.target.value)}
                     placeholder="Trending Furniture & Pieces"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Subtitle</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Subtitle</label>
                   <input
                     type="text"
                     value={selectedSection.config.subtitle || ''}
                     onChange={(e) => handleUpdateConfig('subtitle', e.target.value)}
                     placeholder="Our most sought-after handcrafted pieces..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Max Products Shown</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Max Products Shown</label>
                   <select
                     value={selectedSection.config.limit || 8}
                     onChange={(e) => handleUpdateConfig('limit', parseInt(e.target.value, 10))}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   >
                     <option value={4}>4 Products</option>
                     <option value={8}>8 Products (Standard)</option>
@@ -1515,43 +1515,43 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'lookbook' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Badge Label</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Badge Label</label>
                   <input
                     type="text"
                     value={selectedSection.config.badge || ''}
                     onChange={(e) => handleUpdateConfig('badge', e.target.value)}
                     placeholder="ARTISAN SPOTLIGHT"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Editorial Title</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Editorial Title</label>
                   <input
                     type="text"
                     value={selectedSection.config.lookbookTitle || ''}
                     onChange={(e) => handleUpdateConfig('lookbookTitle', e.target.value)}
                     placeholder="Crafted by Master Joiners in Småland"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Story Copy</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Story Copy</label>
                   <textarea
                     rows={3}
                     value={selectedSection.config.lookbookDesc || ''}
                     onChange={(e) => handleUpdateConfig('lookbookDesc', e.target.value)}
                     placeholder="Crafted by master joiners..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Editorial Image URL</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Editorial Image URL</label>
                   <input
                     type="text"
                     value={selectedSection.config.lookbookImage || ''}
                     onChange={(e) => handleUpdateConfig('lookbookImage', e.target.value)}
                     placeholder="https://..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-mono text-[11px]"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-mono text-[11px]"
                   />
                 </div>
               </>
@@ -1561,7 +1561,7 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'custom_form' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Select Form from Form Builder</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Select Form from Form Builder</label>
                   <select
                     value={selectedSection.config.formId || selectedSection.config.formSlug || ''}
                     onChange={(e) => {
@@ -1589,23 +1589,23 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Form Section Heading</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Form Section Heading</label>
                   <input
                     type="text"
                     value={selectedSection.config.heading || ''}
                     onChange={(e) => handleUpdateConfig('heading', e.target.value)}
                     placeholder="Get in Touch with our Team"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Subtitle</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Subtitle</label>
                   <input
                     type="text"
                     value={selectedSection.config.subtitle || ''}
                     onChange={(e) => handleUpdateConfig('subtitle', e.target.value)}
                     placeholder="We reply within 24 hours..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
               </>
@@ -1617,39 +1617,39 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
                 {(selectedSection.config.leftBadges || selectedSection.config.rightBadges) ? (
                   <div className="space-y-4">
                     <div className="space-y-1">
-                      <label className="block font-bold text-slate-700 dark:text-slate-300">Kicker</label>
+                      <label className="block font-semibold text-xs text-[#98989D]">Kicker</label>
                       <input
                         type="text"
                         value={selectedSection.config.kicker || ''}
                         onChange={(e) => handleUpdateConfig('kicker', e.target.value)}
                         placeholder="Our Services"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                        className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="block font-bold text-slate-700 dark:text-slate-300">Section Title</label>
+                      <label className="block font-semibold text-xs text-[#98989D]">Section Title</label>
                       <input
                         type="text"
                         value={selectedSection.config.title || ''}
                         onChange={(e) => handleUpdateConfig('title', e.target.value)}
                         placeholder="Care You Can Trust"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                        className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="block font-bold text-slate-700 dark:text-slate-300">Center Image URL</label>
+                      <label className="block font-semibold text-xs text-[#98989D]">Center Image URL</label>
                       <input
                         type="text"
                         value={selectedSection.config.centerImage || ''}
                         onChange={(e) => handleUpdateConfig('centerImage', e.target.value)}
                         placeholder="https://images.unsplash.com/..."
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                        className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                       />
                     </div>
 
                     {/* Left Badges */}
                     <div className="space-y-2">
-                      <label className="block font-bold text-slate-700 dark:text-slate-300">Left Side Services</label>
+                      <label className="block font-semibold text-xs text-[#98989D]">Left Side Services</label>
                       {(selectedSection.config.leftBadges || []).map((b: any, bIdx: number) => (
                         <div key={bIdx} className="p-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent space-y-1.5">
                           <div className="grid grid-cols-4 gap-1.5">
@@ -1693,7 +1693,7 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
 
                     {/* Right Badges */}
                     <div className="space-y-2">
-                      <label className="block font-bold text-slate-700 dark:text-slate-300">Right Side Services</label>
+                      <label className="block font-semibold text-xs text-[#98989D]">Right Side Services</label>
                       {(selectedSection.config.rightBadges || []).map((b: any, bIdx: number) => (
                         <div key={bIdx} className="p-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent space-y-1.5">
                           <div className="grid grid-cols-4 gap-1.5">
@@ -1737,7 +1737,7 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Trust Badges Overview</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Trust Badges Overview</label>
                     {(selectedSection.config.badges || []).map((badge: any, bIdx: number) => (
                       <div key={bIdx} className="p-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent space-y-1.5">
                         <input
@@ -1773,44 +1773,44 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'banner' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Banner Title</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Banner Title</label>
                   <input
                     type="text"
                     value={selectedSection.config.title || ''}
                     onChange={(e) => handleUpdateConfig('title', e.target.value)}
                     placeholder="Mid-Season Sale"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Description</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Description</label>
                   <input
                     type="text"
                     value={selectedSection.config.description || ''}
                     onChange={(e) => handleUpdateConfig('description', e.target.value)}
                     placeholder="Special promo details..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="space-y-1">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">CTA Label</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">CTA Label</label>
                     <input
                       type="text"
                       value={selectedSection.config.ctaLabel || ''}
                       onChange={(e) => handleUpdateConfig('ctaLabel', e.target.value)}
                       placeholder="Shop Now"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">CTA Link</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">CTA Link</label>
                     <input
                       type="text"
                       value={selectedSection.config.ctaHref || ''}
                       onChange={(e) => handleUpdateConfig('ctaHref', e.target.value)}
                       placeholder="/products"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                     />
                   </div>
                 </div>
@@ -1821,34 +1821,34 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'categories' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Section Heading</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Section Heading</label>
                   <input
                     type="text"
                     value={selectedSection.config.title || ''}
                     onChange={(e) => handleUpdateConfig('title', e.target.value)}
                     placeholder="Everything Your Pet Needs"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Kicker / Subtitle</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Kicker / Subtitle</label>
                   <input
                     type="text"
                     value={selectedSection.config.subtitle || ''}
                     onChange={(e) => handleUpdateConfig('subtitle', e.target.value)}
                     placeholder="Pet Picks"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Visible Item Limit</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Visible Item Limit</label>
                   <input
                     type="number"
                     min={2}
                     max={12}
                     value={selectedSection.config.limit || 6}
                     onChange={(e) => handleUpdateConfig('limit', parseInt(e.target.value) || 6)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="p-3.5 rounded-2xl bg-sky-50/70 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-900 space-y-2">
@@ -1867,28 +1867,28 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'testimonials' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Section Title</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Section Title</label>
                   <input
                     type="text"
                     value={selectedSection.config.title || ''}
                     onChange={(e) => handleUpdateConfig('title', e.target.value)}
                     placeholder="What Pet Parents Say"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Subtitle</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Subtitle</label>
                   <input
                     type="text"
                     value={selectedSection.config.subtitle || ''}
                     onChange={(e) => handleUpdateConfig('subtitle', e.target.value)}
                     placeholder="Real customer experiences..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Reviews List</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Reviews List</label>
                     <button
                       type="button"
                       onClick={() => {
@@ -1903,7 +1903,7 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
                         ];
                         handleUpdateConfig('testimonials', newReviews);
                       }}
-                      className="text-[10px] font-black text-amber-600 dark:text-amber-400 hover:underline uppercase"
+                      className="text-[10px] font-black text-amber-600 dark:text-[#00E5FF] hover:underline uppercase"
                     >
                       + Add Review
                     </button>
@@ -1957,7 +1957,7 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
                                 newReviews[rIdx] = { ...newReviews[rIdx], rating: star };
                                 handleUpdateConfig('testimonials', newReviews);
                               }}
-                              className={`text-xs ${star <= (review.rating || 5) ? 'text-amber-500' : 'text-slate-300'}`}
+                              className={`text-xs ${star <= (review.rating || 5) ? 'text-[#00E5FF]' : 'text-slate-300'}`}
                             >
                               ★
                             </button>
@@ -1984,34 +1984,34 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'collections' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Title</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Title</label>
                   <input
                     type="text"
                     value={selectedSection.config.title || ''}
                     onChange={(e) => handleUpdateConfig('title', e.target.value)}
                     placeholder="Featured Collections"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Subtitle</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Subtitle</label>
                   <input
                     type="text"
                     value={selectedSection.config.subtitle || ''}
                     onChange={(e) => handleUpdateConfig('subtitle', e.target.value)}
                     placeholder="Curated seasonal drops..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Limit</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Limit</label>
                   <input
                     type="number"
                     min={1}
                     max={12}
                     value={selectedSection.config.limit || 3}
                     onChange={(e) => handleUpdateConfig('limit', parseInt(e.target.value) || 3)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
               </>
@@ -2021,34 +2021,34 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'product-matrix' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Title</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Title</label>
                   <input
                     type="text"
                     value={selectedSection.config.title || ''}
                     onChange={(e) => handleUpdateConfig('title', e.target.value)}
                     placeholder="Explore Catalog Matrix"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Subtitle</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Subtitle</label>
                   <input
                     type="text"
                     value={selectedSection.config.subtitle || ''}
                     onChange={(e) => handleUpdateConfig('subtitle', e.target.value)}
                     placeholder="Top rated, best selling, on sale..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Items per Column</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Items per Column</label>
                   <input
                     type="number"
                     min={1}
                     max={6}
                     value={selectedSection.config.limit || 3}
                     onChange={(e) => handleUpdateConfig('limit', parseInt(e.target.value) || 3)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
               </>
@@ -2058,23 +2058,23 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'newsletter' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Title</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Title</label>
                   <input
                     type="text"
                     value={selectedSection.config.title || ''}
                     onChange={(e) => handleUpdateConfig('title', e.target.value)}
                     placeholder="Join the Mincom Collective"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Description</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Description</label>
                   <input
                     type="text"
                     value={selectedSection.config.description || ''}
                     onChange={(e) => handleUpdateConfig('description', e.target.value)}
                     placeholder="Get 10% off your first order..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
               </>
@@ -2083,14 +2083,14 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {/* 14. Spacer Inspector */}
             {selectedSection.type === 'spacer' && (
               <div className="space-y-1">
-                <label className="block font-bold text-slate-700 dark:text-slate-300">Height (Pixels)</label>
+                <label className="block font-semibold text-xs text-[#98989D]">Height (Pixels)</label>
                 <input
                   type="number"
                   min={8}
                   max={200}
                   value={selectedSection.config.height || 32}
                   onChange={(e) => handleUpdateConfig('height', parseInt(e.target.value) || 32)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                  className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                 />
               </div>
             )}
@@ -2099,51 +2099,51 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'split-features' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Kicker</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Kicker</label>
                   <input
                     type="text"
                     value={selectedSection.config.kicker || ''}
                     onChange={(e) => handleUpdateConfig('kicker', e.target.value)}
                     placeholder="Gentle Service"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="space-y-1">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Title Prefix</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Title Prefix</label>
                     <input
                       type="text"
                       value={selectedSection.config.titlePrefix || ''}
                       onChange={(e) => handleUpdateConfig('titlePrefix', e.target.value)}
                       placeholder="Complete Care For"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Title Highlight</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Title Highlight</label>
                     <input
                       type="text"
                       value={selectedSection.config.titleHighlight || ''}
                       onChange={(e) => handleUpdateConfig('titleHighlight', e.target.value)}
                       placeholder="Happy Pets!"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                     />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Left Image URL</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Left Image URL</label>
                   <input
                     type="text"
                     value={selectedSection.config.image || ''}
                     onChange={(e) => handleUpdateConfig('image', e.target.value)}
                     placeholder="https://images.unsplash.com/..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Feature Tabs List</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Feature Tabs List</label>
                     <button
                       type="button"
                       onClick={() => {
@@ -2153,7 +2153,7 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
                         ];
                         handleUpdateConfig('tabs', newTabs);
                       }}
-                      className="text-[10px] font-black text-amber-600 dark:text-amber-400 hover:underline uppercase"
+                      className="text-[10px] font-black text-amber-600 dark:text-[#00E5FF] hover:underline uppercase"
                     >
                       + Add Tab
                     </button>
@@ -2217,26 +2217,26 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
             {selectedSection.type === 'faq-locations' && (
               <>
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Store Locations Title</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Store Locations Title</label>
                   <input
                     type="text"
                     value={selectedSection.config.locationsTitle || ''}
                     onChange={(e) => handleUpdateConfig('locationsTitle', e.target.value)}
                     placeholder="Store Location"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Branch Addresses</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Branch Addresses</label>
                     <button
                       type="button"
                       onClick={() => {
                         const newLocs = [...(selectedSection.config.locations || []), 'New Store Address, City'];
                         handleUpdateConfig('locations', newLocs);
                       }}
-                      className="text-[10px] font-black text-amber-600 dark:text-amber-400 hover:underline uppercase"
+                      className="text-[10px] font-black text-amber-600 dark:text-[#00E5FF] hover:underline uppercase"
                     >
                       + Add Address
                     </button>
@@ -2270,52 +2270,52 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
 
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="space-y-1">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Contact CTA Label</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Contact CTA Label</label>
                     <input
                       type="text"
                       value={selectedSection.config.contactCtaLabel || ''}
                       onChange={(e) => handleUpdateConfig('contactCtaLabel', e.target.value)}
                       placeholder="Contact Now"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">Contact Link</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">Contact Link</label>
                     <input
                       type="text"
                       value={selectedSection.config.contactCtaHref || ''}
                       onChange={(e) => handleUpdateConfig('contactCtaHref', e.target.value)}
                       placeholder="/contact"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">Center Image URL</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">Center Image URL</label>
                   <input
                     type="text"
                     value={selectedSection.config.centerImage || ''}
                     onChange={(e) => handleUpdateConfig('centerImage', e.target.value)}
                     placeholder="https://images.unsplash.com/..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block font-bold text-slate-700 dark:text-slate-300">FAQ Heading</label>
+                  <label className="block font-semibold text-xs text-[#98989D]">FAQ Heading</label>
                   <input
                     type="text"
                     value={selectedSection.config.faqTitle || ''}
                     onChange={(e) => handleUpdateConfig('faqTitle', e.target.value)}
                     placeholder="Frequently Asked Questions"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-slate-900 dark:text-foreground font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2C2C2E] bg-[#161616] text-white focus:border-[#00E5FF] font-medium outline-none transition-colors text-xs"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="block font-bold text-slate-700 dark:text-slate-300">FAQs List</label>
+                    <label className="block font-semibold text-xs text-[#98989D]">FAQs List</label>
                     <button
                       type="button"
                       onClick={() => {
@@ -2325,7 +2325,7 @@ export const HomepageSectionsCustomizer: React.FC<Props> = ({
                         ];
                         handleUpdateConfig('faqs', newFaqs);
                       }}
-                      className="text-[10px] font-black text-amber-600 dark:text-amber-400 hover:underline uppercase"
+                      className="text-[10px] font-black text-amber-600 dark:text-[#00E5FF] hover:underline uppercase"
                     >
                       + Add Question
                     </button>

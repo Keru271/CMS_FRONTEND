@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { NotificationConfigData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import { VendorSmtpSettings } from './VendorSmtpSettings';
+import { VendorWhatsAppSettings } from './VendorWhatsAppSettings';
 import {
   Bell,
   Mail,
@@ -26,6 +28,8 @@ import {
   KeyRound,
   Eye,
   ExternalLink,
+  Settings,
+  X,
 } from 'lucide-react';
 
 export const NotificationStudio: React.FC = () => {
@@ -40,6 +44,12 @@ export const NotificationStudio: React.FC = () => {
     text: string;
     type: 'success' | 'error';
   } | null>(null);
+
+  // SMTP Settings Modal
+  const [isSmtpModalOpen, setIsSmtpModalOpen] = useState(false);
+
+  // Meta WhatsApp Cloud API Settings Modal
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
   // Test Dispatch Modal
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
@@ -194,11 +204,29 @@ export const NotificationStudio: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setIsWhatsAppModalOpen(true)}
+            className="px-4 py-2 rounded-2xl bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>Meta WhatsApp API</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsSmtpModalOpen(true)}
+            className="px-4 py-2 rounded-2xl bg-slate-100 dark:bg-accent hover:bg-slate-200 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+          >
+            <Mail className="w-3.5 h-3.5" />
+            <span>Custom SMTP</span>
+          </button>
+
           <button
             type="button"
             onClick={loadConfigs}
-            className="p-2.5 rounded-2xl bg-slate-100 dark:bg-accent hover:bg-slate-200 text-slate-700 dark:text-slate-300 transition"
+            className="p-2.5 rounded-2xl bg-slate-100 dark:bg-accent hover:bg-slate-200 text-slate-700 dark:text-slate-300 transition cursor-pointer"
             title="Refresh"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -208,7 +236,7 @@ export const NotificationStudio: React.FC = () => {
             type="button"
             disabled={isSaving}
             onClick={handleSaveConfig}
-            className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-lg transition active:scale-95 flex items-center gap-2"
+            className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-lg transition active:scale-95 flex items-center gap-2 cursor-pointer"
           >
             <Save className="w-4 h-4" />
             <span>{isSaving ? 'Saving...' : 'Save Notification Workflows'}</span>
@@ -218,18 +246,26 @@ export const NotificationStudio: React.FC = () => {
 
       {/* CHANNELS HERO STATUS BAR */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 rounded-3xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl shadow-md">
-            💬
+        <div
+          onClick={() => setIsWhatsAppModalOpen(true)}
+          className="p-5 rounded-3xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between gap-4 cursor-pointer hover:border-emerald-500/50 transition group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl shadow-md group-hover:scale-105 transition-transform">
+              💬
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-black tracking-wider text-emerald-800 dark:text-emerald-300 block">
+                WhatsApp Business API
+              </span>
+              <span className="font-extrabold text-emerald-900 dark:text-emerald-200 text-sm">
+                Meta Cloud API Active
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="text-[10px] uppercase font-black tracking-wider text-emerald-800 dark:text-emerald-300 block">
-              WhatsApp Business API
-            </span>
-            <span className="font-extrabold text-emerald-900 dark:text-emerald-200 text-sm">
-              Live & Connected (98.4% Open Rate)
-            </span>
-          </div>
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
+            Configure ⚙️
+          </span>
         </div>
 
         <div className="p-5 rounded-3xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 flex items-center gap-4">
@@ -518,28 +554,54 @@ export const NotificationStudio: React.FC = () => {
                 {/* EMAIL EDITOR */}
                 {activeChannelTab === 'EMAIL' && (
                   <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-indigo-950/40 border border-indigo-500/30 rounded-2xl gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-md">
-                          <Sparkles className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-slate-100">
-                            Visual Block Email Builder
+                    {/* Visual Builder & SMTP Quick Access Banners */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-indigo-950/40 border border-indigo-500/30 rounded-2xl gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-md">
+                            <Sparkles className="w-4 h-4" />
                           </div>
-                          <div className="text-[11px] text-slate-400">
-                            Design rich responsive templates with product grids, coupon codes & live
-                            mobile previews
+                          <div>
+                            <div className="text-xs font-bold text-slate-100">
+                              Visual Template Builder
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              Product grids & live previews
+                            </div>
                           </div>
                         </div>
+                        <a
+                          href={`/email-templates`}
+                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-600/30 flex items-center gap-1 shrink-0"
+                        >
+                          <span>Open</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
                       </div>
-                      <a
-                        href={`/email-templates`}
-                        className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-600/30 flex items-center gap-1.5 shrink-0"
-                      >
-                        <span>Open Visual Builder</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
+
+                      <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-slate-900/40 border border-blue-500/30 rounded-2xl gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 bg-blue-600 text-white rounded-xl shadow-md">
+                            <Settings className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-slate-100">
+                              Vendor Email & SMTP
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              Connect Gmail / Custom server
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsSmtpModalOpen(true)}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-blue-600/30 flex items-center gap-1 shrink-0 cursor-pointer"
+                        >
+                          <span>Configure</span>
+                          <Settings className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
 
                     <div>
@@ -794,6 +856,73 @@ export const NotificationStudio: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* VENDOR SMTP DELIVERY CONFIGURATION MODAL */}
+      {isSmtpModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-card rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-border space-y-6 my-8 max-h-[90vh] overflow-y-auto animate-in fade-in">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-border">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-md">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-foreground">
+                    Vendor Email & SMTP Delivery Configuration
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Send store receipts and customer notifications through your personal or business email account.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSmtpModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-accent hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <VendorSmtpSettings onSaved={() => setIsSmtpModalOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* META WHATSAPP CLOUD API CONFIGURATION MODAL */}
+      {isWhatsAppModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 my-8 max-h-[90vh] overflow-y-auto animate-in fade-in">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-md">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                    <span>Meta WhatsApp Business API Settings</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200">
+                      Cloud Gateway
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Configure your direct Meta WhatsApp Business credentials for high-speed automated notifications.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsWhatsAppModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <VendorWhatsAppSettings onSaved={() => setIsWhatsAppModalOpen(false)} />
           </div>
         </div>
       )}

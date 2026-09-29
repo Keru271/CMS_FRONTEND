@@ -40,6 +40,7 @@ import {
   AlignLeft,
   Search,
   Sparkles,
+  Wand2,
   AlertCircle,
   ExternalLink,
   Globe,
@@ -63,6 +64,8 @@ import { CMSPageData, PageFormData, CMSForm } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
 import { PublicFormRenderer } from './PublicFormRenderer';
+import { AiPageBuilderModal } from './AiPageBuilderModal';
+import { AiBlockGeneratorModal } from './AiBlockGeneratorModal';
 
 function InstagramIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -959,7 +962,7 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+      <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wide">
         {label}
       </label>
       {children}
@@ -968,7 +971,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const inputCls =
-  'w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:border-indigo-500 transition placeholder:text-slate-600';
+  'w-full px-3 py-2 rounded-xl bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition placeholder:text-slate-400 shadow-2xs';
 
 // ─── Inspector Panel ────────────────────────────────────────────────────────
 
@@ -1008,10 +1011,10 @@ function BlockInspector({
   };
 
   return (
-    <div className="space-y-5 text-xs">
+    <div className="space-y-5 text-xs text-slate-800">
       {/* Block Controls */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-        <span className="font-black text-indigo-400 text-[11px] uppercase tracking-wider">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+        <span className="font-black text-indigo-600 text-[11px] uppercase tracking-wider">
           {type.replace(/_/g, ' ')} Settings
         </span>
         <div className="flex items-center gap-1">
@@ -1019,19 +1022,19 @@ function BlockInspector({
             type="button"
             onClick={onToggleVisible}
             title={block.isVisible ? 'Hide' : 'Show'}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
           >
             {block.isVisible ? (
-              <Eye className="w-3.5 h-3.5 text-emerald-400" />
+              <Eye className="w-3.5 h-3.5 text-emerald-600" />
             ) : (
-              <EyeOff className="w-3.5 h-3.5 text-rose-400" />
+              <EyeOff className="w-3.5 h-3.5 text-rose-500" />
             )}
           </button>
           <button
             type="button"
             onClick={onDuplicate}
             title="Duplicate"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
           >
             <Copy className="w-3.5 h-3.5" />
           </button>
@@ -1039,7 +1042,7 @@ function BlockInspector({
             type="button"
             onClick={onDelete}
             title="Delete"
-            className="p-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 transition"
+            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50 transition"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -1047,13 +1050,13 @@ function BlockInspector({
       </div>
 
       {/* ── UNIVERSAL LAYOUT & CONTAINER WIDTH (EVERY COMPONENT) ── */}
-      <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+      <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-            <LayoutTemplate className="w-3.5 h-3.5 text-indigo-400" />
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+            <LayoutTemplate className="w-3.5 h-3.5 text-indigo-600" />
             Component Layout Width
           </span>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-indigo-300 font-bold">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white border border-slate-200 text-indigo-700 font-bold shadow-2xs">
             {data.containerWidth === 'full' ? '100% Full Screen' : 'Max-Width Container'}
           </span>
         </div>
@@ -1064,13 +1067,13 @@ function BlockInspector({
             onClick={() => set('containerWidth', 'full')}
             className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
               data.containerWidth === 'full'
-                ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-sm ring-1 ring-indigo-500'
-                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'
+                ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs ring-1 ring-indigo-500'
+                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 shadow-2xs'
             }`}
           >
-            <Maximize2 className="w-4 h-4 mb-1 text-indigo-400" />
+            <Maximize2 className={`w-4 h-4 mb-1 ${data.containerWidth === 'full' ? 'text-white' : 'text-indigo-600'}`} />
             <span className="text-xs font-bold">Full Screen</span>
-            <span className="text-[9px] text-slate-500">100% Edge-to-Edge</span>
+            <span className={`text-[9px] ${data.containerWidth === 'full' ? 'text-indigo-100' : 'text-slate-500'}`}>100% Edge-to-Edge</span>
           </button>
 
           <button
@@ -1078,18 +1081,18 @@ function BlockInspector({
             onClick={() => set('containerWidth', 'container')}
             className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
               data.containerWidth !== 'full'
-                ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-sm ring-1 ring-indigo-500'
-                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'
+                ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs ring-1 ring-indigo-500'
+                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 shadow-2xs'
             }`}
           >
-            <Minimize2 className="w-4 h-4 mb-1 text-indigo-400" />
+            <Minimize2 className={`w-4 h-4 mb-1 ${data.containerWidth !== 'full' ? 'text-white' : 'text-indigo-600'}`} />
             <span className="text-xs font-bold">Max-Width</span>
-            <span className="text-[9px] text-slate-500">Boxed & Centered</span>
+            <span className={`text-[9px] ${data.containerWidth !== 'full' ? 'text-indigo-100' : 'text-slate-500'}`}>Boxed & Centered</span>
           </button>
         </div>
 
         {data.containerWidth !== 'full' && (
-          <div className="pt-2 border-t border-slate-800/80 space-y-2.5">
+          <div className="pt-2 border-t border-slate-200 space-y-2.5">
             <Field label="Container Max Width">
               <select
                 className={inputCls}
@@ -1117,8 +1120,8 @@ function BlockInspector({
                     onClick={() => set('containerPadding', pad.id)}
                     className={`py-1 rounded-lg text-[11px] font-bold border transition ${
                       (data.containerPadding || 'normal') === pad.id
-                        ? 'bg-indigo-600 border-indigo-500 text-white'
-                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
                     {pad.label}
@@ -1142,8 +1145,8 @@ function BlockInspector({
                   onClick={() => set('level', lvl)}
                   className={`py-1.5 rounded-lg font-black text-xs uppercase border transition ${
                     data.level === lvl
-                      ? 'bg-indigo-600 border-indigo-500 text-white'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   {lvl}
@@ -1185,8 +1188,8 @@ function BlockInspector({
                   onClick={() => set('textAlign', a)}
                   className={`flex-1 py-1.5 rounded-lg font-bold capitalize border transition ${
                     data.textAlign === a
-                      ? 'bg-indigo-600 border-indigo-500 text-white'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   {a}
@@ -1208,10 +1211,10 @@ function BlockInspector({
               <option value="6xl">6X Giant (6XL)</option>
             </select>
           </Field>
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 shadow-2xs">
             <div>
-              <span className="font-bold text-white block">Gradient Text Effect</span>
-              <span className="text-[10px] text-slate-400">
+              <span className="font-bold text-slate-900 block">Gradient Text Effect</span>
+              <span className="text-[10px] text-slate-500">
                 Apply vibrant gradient colors across heading
               </span>
             </div>
@@ -1222,10 +1225,10 @@ function BlockInspector({
               className="w-4 h-4 accent-indigo-600 rounded"
             />
           </div>
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 shadow-2xs">
             <div>
-              <span className="font-bold text-white block">Decorative Bottom Accent</span>
-              <span className="text-[10px] text-slate-400">
+              <span className="font-bold text-slate-900 block">Decorative Bottom Accent</span>
+              <span className="text-[10px] text-slate-500">
                 Show subtle center accent underline
               </span>
             </div>
@@ -1267,8 +1270,8 @@ function BlockInspector({
                   onClick={() => set('colorPreset', cp)}
                   className={`py-1.5 rounded-lg font-bold capitalize border transition ${
                     data.colorPreset === cp
-                      ? 'bg-indigo-600 border-indigo-500 text-white'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   {cp}
@@ -1285,8 +1288,8 @@ function BlockInspector({
                   onClick={() => set('variant', v)}
                   className={`py-1.5 rounded-lg font-bold capitalize border transition ${
                     data.variant === v
-                      ? 'bg-indigo-600 border-indigo-500 text-white'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   {v}
@@ -1336,7 +1339,7 @@ function BlockInspector({
                 type="color"
                 value={data.bgColor?.startsWith('#') ? data.bgColor : '#f8fafc'}
                 onChange={(e) => set('bgColor', e.target.value)}
-                className="w-8 h-8 rounded border border-slate-700 bg-transparent cursor-pointer"
+                className="w-8 h-8 rounded border border-slate-300 bg-transparent cursor-pointer"
               />
               <input
                 className={`${inputCls} font-mono flex-1`}
@@ -1382,8 +1385,8 @@ function BlockInspector({
                   onClick={() => set('borderStyle', b)}
                   className={`flex-1 py-1.5 rounded-lg font-bold capitalize border transition ${
                     data.borderStyle === b
-                      ? 'bg-indigo-600 border-indigo-500 text-white'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   {b}
@@ -1428,8 +1431,8 @@ function BlockInspector({
                   onClick={() => set('textAlign', a)}
                   className={`flex-1 py-1.5 rounded-lg font-bold capitalize border transition ${
                     data.textAlign === a
-                      ? 'bg-indigo-600 border-indigo-500 text-white'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   {a}
@@ -1452,8 +1455,8 @@ function BlockInspector({
                   onClick={() => set('align', a)}
                   className={`flex-1 py-1.5 rounded-lg font-bold capitalize border transition ${
                     data.align === a
-                      ? 'bg-indigo-600 border-indigo-500 text-white'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   {a}
@@ -1462,13 +1465,13 @@ function BlockInspector({
             </div>
           </Field>
           <div className="space-y-3">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+            <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wide">
               Buttons List
             </label>
             {(data.buttons || []).map((btn: any, i: number) => (
               <div
                 key={i}
-                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+                className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 shadow-2xs"
               >
                 <div className="flex items-center gap-2">
                   <input
@@ -1480,7 +1483,7 @@ function BlockInspector({
                   <button
                     type="button"
                     onClick={() => removeListItem('buttons', i)}
-                    className="p-1 text-rose-400 hover:text-rose-300 shrink-0"
+                    className="p-1 text-rose-500 hover:text-rose-600 shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -1524,7 +1527,7 @@ function BlockInspector({
                   size: 'md',
                 })
               }
-              className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
+              className="w-full py-2 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs font-bold transition flex items-center justify-center gap-1 shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" /> Add CTA Button
             </button>
@@ -1560,20 +1563,20 @@ function BlockInspector({
             </Field>
           </div>
           <div className="space-y-4">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+            <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wide">
               Carousel Slides
             </label>
             {(data.slides || []).map((s: any, i: number) => (
               <div
                 key={i}
-                className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2.5"
+                className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 shadow-2xs"
               >
-                <div className="flex items-center justify-between pb-1 border-b border-slate-800">
-                  <span className="font-bold text-white text-xs">Slide #{i + 1}</span>
+                <div className="flex items-center justify-between pb-1 border-b border-slate-200">
+                  <span className="font-bold text-slate-900 text-xs">Slide #{i + 1}</span>
                   <button
                     type="button"
                     onClick={() => removeListItem('slides', i)}
-                    className="text-rose-400 hover:text-rose-300 p-1"
+                    className="text-rose-500 hover:text-rose-600 p-1"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -1634,7 +1637,7 @@ function BlockInspector({
                   textAlign: 'center',
                 })
               }
-              className="w-full py-2.5 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs"
             >
               <Plus className="w-4 h-4" /> Add Slide to Carousel
             </button>
@@ -1660,13 +1663,13 @@ function BlockInspector({
             />
           </Field>
           <div className="space-y-3">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+            <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wide">
               Products In Slider
             </label>
             {(data.items || []).map((p: any, i: number) => (
               <div
                 key={i}
-                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+                className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 shadow-2xs"
               >
                 <div className="flex items-center justify-between">
                   <input
@@ -1678,7 +1681,7 @@ function BlockInspector({
                   <button
                     type="button"
                     onClick={() => removeListItem('items', i)}
-                    className="p-1 text-rose-400 ml-2 shrink-0"
+                    className="p-1 text-rose-500 ml-2 shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -1718,7 +1721,7 @@ function BlockInspector({
                   url: '/products',
                 })
               }
-              className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
+              className="w-full py-2 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs font-bold transition flex items-center justify-center gap-1 shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" /> Add Product Card
             </button>
@@ -1800,15 +1803,15 @@ function BlockInspector({
             </select>
           </Field>
           <div className="space-y-4">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+            <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wide">
               Pricing Plans
             </label>
             {(data.plans || []).map((plan: any, i: number) => (
               <div
                 key={i}
-                className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2"
+                className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 shadow-2xs"
               >
-                <div className="flex items-center justify-between pb-1 border-b border-slate-800">
+                <div className="flex items-center justify-between pb-1 border-b border-slate-200">
                   <input
                     className={inputCls}
                     value={plan.name || ''}
@@ -1818,7 +1821,7 @@ function BlockInspector({
                   <button
                     type="button"
                     onClick={() => removeListItem('plans', i)}
-                    className="text-rose-400 hover:text-rose-300 ml-2 p-1"
+                    className="text-rose-500 hover:text-rose-600 ml-2 p-1"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -1837,8 +1840,8 @@ function BlockInspector({
                     placeholder="/ month"
                   />
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-[11px] text-slate-300 font-medium">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200">
+                  <span className="text-[11px] text-slate-700 font-medium">
                     Highlight / Popular
                   </span>
                   <input
@@ -1880,7 +1883,7 @@ function BlockInspector({
                   buttonUrl: '/checkout',
                 })
               }
-              className="w-full py-2.5 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs"
             >
               <Plus className="w-4 h-4" /> Add Pricing Tier
             </button>
@@ -1899,13 +1902,13 @@ function BlockInspector({
             />
           </Field>
           <div className="space-y-3">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+            <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wide">
               Trust Badges
             </label>
             {(data.badges || []).map((b: any, i: number) => (
               <div
                 key={i}
-                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+                className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 shadow-2xs"
               >
                 <div className="flex items-center gap-2">
                   <input
@@ -1923,7 +1926,7 @@ function BlockInspector({
                   <button
                     type="button"
                     onClick={() => removeListItem('badges', i)}
-                    className="p-1 text-rose-400 shrink-0"
+                    className="p-1 text-rose-500 shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -1945,7 +1948,7 @@ function BlockInspector({
                   desc: 'Verified 5-star customer experience',
                 })
               }
-              className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
+              className="w-full py-2 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs font-bold transition flex items-center justify-center gap-1 shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" /> Add Trust Badge
             </button>
@@ -1972,8 +1975,8 @@ function BlockInspector({
                   onClick={() => set('columns', c)}
                   className={`flex-1 py-1.5 rounded-lg font-bold border transition ${
                     data.columns === c
-                      ? 'bg-indigo-600 border-indigo-500 text-white'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   {c} Columns
@@ -1985,7 +1988,7 @@ function BlockInspector({
             {(data.banners || []).map((b: any, i: number) => (
               <div
                 key={i}
-                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+                className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 shadow-2xs"
               >
                 <div className="flex items-center justify-between">
                   <input
@@ -1997,7 +2000,7 @@ function BlockInspector({
                   <button
                     type="button"
                     onClick={() => removeListItem('banners', i)}
-                    className="p-1 text-rose-400 ml-2 shrink-0"
+                    className="p-1 text-rose-500 ml-2 shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -2041,7 +2044,7 @@ function BlockInspector({
                   url: '/collections',
                 })
               }
-              className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
+              className="w-full py-2 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs font-bold transition flex items-center justify-center gap-1 shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" /> Add Category Banner
             </button>
@@ -2078,7 +2081,7 @@ function BlockInspector({
             {(data.items || []).map((it: any, i: number) => (
               <div
                 key={i}
-                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+                className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 shadow-2xs"
               >
                 <div className="flex items-center justify-between">
                   <input
@@ -2090,7 +2093,7 @@ function BlockInspector({
                   <button
                     type="button"
                     onClick={() => removeListItem('items', i)}
-                    className="p-1 text-rose-400 ml-2 shrink-0"
+                    className="p-1 text-rose-500 ml-2 shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -2122,7 +2125,7 @@ function BlockInspector({
                   caption: 'Community lookbook',
                 })
               }
-              className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
+              className="w-full py-2 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs font-bold transition flex items-center justify-center gap-1 shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" /> Add Social Photo
             </button>
@@ -2200,7 +2203,7 @@ function BlockInspector({
             />
           </Field>
           <div className="space-y-1.5 pt-1 pb-1">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+            <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wide">
               Hero Background Image
             </label>
             <DragDropUpload
@@ -2232,9 +2235,9 @@ function BlockInspector({
                 max={100}
                 value={data.overlayOpacity ?? 50}
                 onChange={(e) => set('overlayOpacity', Number(e.target.value))}
-                className="flex-1 accent-indigo-500"
+                className="flex-1 accent-indigo-600"
               />
-              <span className="text-slate-400 w-8">{data.overlayOpacity ?? 50}%</span>
+              <span className="text-slate-600 font-bold w-8">{data.overlayOpacity ?? 50}%</span>
             </div>
           </Field>
           <Field label="Text Alignment">
@@ -2244,7 +2247,7 @@ function BlockInspector({
                   key={a}
                   type="button"
                   onClick={() => set('textAlign', a)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.textAlign === a ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.textAlign === a ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'}`}
                 >
                   {a}
                 </button>
@@ -2299,7 +2302,7 @@ function BlockInspector({
                   key={c}
                   type="button"
                   onClick={() => set('columns', c)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.columns === c ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.columns === c ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'}`}
                 >
                   {c}
                 </button>
@@ -2307,13 +2310,13 @@ function BlockInspector({
             </div>
           </Field>
           <div className="space-y-3">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+            <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wide">
               Feature Cards
             </label>
             {(data.features || []).map((f: any, i: number) => (
               <div
                 key={i}
-                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+                className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 shadow-2xs"
               >
                 <div className="flex items-center gap-2">
                   <input
@@ -2331,7 +2334,7 @@ function BlockInspector({
                   <button
                     type="button"
                     onClick={() => removeListItem('features', i)}
-                    className="p-1 text-rose-400 hover:text-rose-300 shrink-0"
+                    className="p-1 text-rose-500 hover:text-rose-600 shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -2353,7 +2356,7 @@ function BlockInspector({
                   desc: 'Feature description.',
                 })
               }
-              className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
+              className="w-full py-2 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs font-bold transition flex items-center justify-center gap-1 shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" /> Add Feature Card
             </button>
@@ -2387,7 +2390,7 @@ function BlockInspector({
             />
           </Field>
           <div className="space-y-1.5 pt-1 pb-1">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+            <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wide">
               Section Image
             </label>
             <DragDropUpload
@@ -2416,14 +2419,14 @@ function BlockInspector({
               <button
                 type="button"
                 onClick={() => set('imagePosition', 'left')}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.imagePosition === 'left' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.imagePosition === 'left' ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'}`}
               >
                 Left
               </button>
               <button
                 type="button"
                 onClick={() => set('imagePosition', 'right')}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.imagePosition === 'right' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition ${data.imagePosition === 'right' ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'}`}
               >
                 Right
               </button>
@@ -2457,13 +2460,13 @@ function BlockInspector({
             />
           </Field>
           <div className="space-y-3">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+            <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wide">
               Reviews
             </label>
             {(data.reviews || []).map((r: any, i: number) => (
               <div
                 key={i}
-                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+                className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 shadow-2xs"
               >
                 <div className="flex items-center gap-2">
                   <input
@@ -2475,7 +2478,7 @@ function BlockInspector({
                   <button
                     type="button"
                     onClick={() => removeListItem('reviews', i)}
-                    className="p-1 text-rose-400 shrink-0"
+                    className="p-1 text-rose-500 shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -2493,7 +2496,7 @@ function BlockInspector({
                         key={s}
                         type="button"
                         onClick={() => updateListItem('reviews', i, 'rating', s)}
-                        className={`text-lg transition ${s <= (r.rating || 5) ? 'text-amber-400' : 'text-slate-700'}`}
+                        className={`text-lg transition ${s <= (r.rating || 5) ? 'text-amber-400' : 'text-slate-300'}`}
                       >
                         ★
                       </button>
@@ -2519,7 +2522,7 @@ function BlockInspector({
                   quote: 'Great product!',
                 })
               }
-              className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
+              className="w-full py-2 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs font-bold transition flex items-center justify-center gap-1 shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" /> Add Review
             </button>
@@ -2545,13 +2548,13 @@ function BlockInspector({
             />
           </Field>
           <div className="space-y-3">
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+            <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wide">
               FAQ Items
             </label>
             {(data.items || []).map((item: any, i: number) => (
               <div
                 key={i}
-                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+                className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 shadow-2xs"
               >
                 <div className="flex items-start gap-2">
                   <textarea
@@ -2564,7 +2567,7 @@ function BlockInspector({
                   <button
                     type="button"
                     onClick={() => removeListItem('items', i)}
-                    className="p-1 text-rose-400 shrink-0 mt-1"
+                    className="p-1 text-rose-500 shrink-0 mt-1"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -2583,7 +2586,7 @@ function BlockInspector({
               onClick={() =>
                 addListItem('items', { question: 'New Question?', answer: 'Answer here.' })
               }
-              className="w-full py-2 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:text-white hover:border-indigo-500 text-xs font-bold transition flex items-center justify-center gap-1"
+              className="w-full py-2 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs font-bold transition flex items-center justify-center gap-1 shadow-2xs"
             >
               <Plus className="w-3.5 h-3.5" /> Add FAQ Item
             </button>
@@ -2622,8 +2625,8 @@ function BlockInspector({
               onChange={(e) => set('buttonText', e.target.value)}
             />
           </Field>
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-            <span className="font-bold text-white">Dark Background Style</span>
+          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 shadow-2xs">
+            <span className="font-bold text-slate-900">Dark Background Style</span>
             <input
               type="checkbox"
               checked={Boolean(data.bgDark)}
@@ -2752,35 +2755,35 @@ function BlockInspector({
           </Field>
 
           {data.formId ? (
-            <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 shadow-2xs">
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400">Selected Form:</span>
-                <span className="font-bold text-indigo-400">{data.formTitle || data.formId}</span>
+                <span className="text-slate-600 font-medium">Selected Form:</span>
+                <span className="font-bold text-indigo-600">{data.formTitle || data.formId}</span>
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <a
                   href={`/forms/${data.formId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 py-1.5 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-[10px] font-bold border border-slate-700 flex items-center justify-center gap-1 transition"
+                  className="flex-1 py-1.5 px-2.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200 flex items-center justify-center gap-1 transition shadow-2xs"
                 >
-                  <ExternalLink className="w-3 h-3 text-indigo-400" />
+                  <ExternalLink className="w-3 h-3 text-indigo-600" />
                   <span>Edit in Form Builder</span>
                 </a>
                 <a
                   href={`/forms/submissions?formId=${data.formId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 py-1.5 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-[10px] font-bold border border-slate-700 flex items-center justify-center gap-1 transition"
+                  className="flex-1 py-1.5 px-2.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200 flex items-center justify-center gap-1 transition shadow-2xs"
                 >
-                  <Inbox className="w-3 h-3 text-indigo-400" />
+                  <Inbox className="w-3 h-3 text-indigo-600" />
                   <span>Submissions</span>
                 </a>
               </div>
             </div>
           ) : (
-            <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-800/50 text-[11px] text-amber-300 flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-start gap-2 shadow-2xs">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
               <div className="space-y-1">
                 <p>
                   No form selected. Choose an existing form created in Form Builder above, or create a
@@ -2790,7 +2793,7 @@ function BlockInspector({
                   href="/forms/builder"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-indigo-400 font-bold hover:underline"
+                  className="inline-flex items-center gap-1 text-indigo-600 font-bold hover:underline"
                 >
                   <Plus className="w-3 h-3" />
                   <span>Create New Form</span>
@@ -3843,6 +3846,86 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
     'canvas',
   );
   const [availableForms, setAvailableForms] = useState<CMSForm[]>([]);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [isAiBlockModalOpen, setIsAiBlockModalOpen] = useState(false);
+  const [isRewritingBlock, setIsRewritingBlock] = useState(false);
+
+  // User privileges for AI Page & Block Generation
+  const currentUser = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('user') || localStorage.getItem('cms_user') || '{}')
+    : null;
+  const isOwnerOrAdmin = currentUser?.role === 'OWNER' || currentUser?.role === 'ADMIN' || !currentUser?.role;
+  const userPermissions = currentUser?.permissions || currentUser?.storeMemberships?.[0];
+  const hasAiPageBuilderPrivilege = isOwnerOrAdmin || userPermissions?.canManageAiPageBuilder !== false;
+
+  const handleAiRewriteBlock = async () => {
+    if (!selectedBlock) return;
+    if (!hasAiPageBuilderPrivilege) {
+      showToast("Your staff role lacks the 'canManageAiPageBuilder' privilege to use AI features.", 'error');
+      return;
+    }
+    setIsRewritingBlock(true);
+    try {
+      const res = await cmsService.rewriteBlockWithAi({
+        blockType: selectedBlock.type,
+        currentData: selectedBlock.data,
+        instruction: 'make punchier, modern and high-converting',
+        tone: 'high_conversion',
+      });
+      if (res && res.data) {
+        updateBlock(selectedBlock.id, res.data);
+        showToast('Block copy enhanced with AI!');
+      }
+    } catch (err: any) {
+      showToast('Failed to rewrite block with AI', 'error');
+    } finally {
+      setIsRewritingBlock(false);
+    }
+  };
+
+  const handleApplyAiBlock = (newBlock: PageBlock, position: 'bottom' | 'top' | 'after_selected' = 'bottom') => {
+    if (position === 'top') {
+      setBlocks([newBlock, ...blocks]);
+    } else if (position === 'after_selected' && activeBlockId) {
+      const idx = blocks.findIndex((b) => b.id === activeBlockId);
+      if (idx !== -1) {
+        const copy = [...blocks];
+        copy.splice(idx + 1, 0, newBlock);
+        setBlocks(copy);
+      } else {
+        setBlocks([...blocks, newBlock]);
+      }
+    } else {
+      setBlocks([...blocks, newBlock]);
+    }
+    setActiveBlockId(newBlock.id);
+    showToast(`Added AI "${newBlock.type.replace(/_/g, ' ')}" block to canvas!`);
+    setMobileWorkspaceView('canvas');
+  };
+
+  const handleApplyAiBlocks = (
+    newBlocks: any[],
+    meta?: { title: string; slug: string; metaTitle: string; metaDescription: string },
+    mode: 'replace' | 'append' = 'replace'
+  ) => {
+    if (meta) {
+      if (meta.title && (!pageTitle || pageTitle === 'New Page')) setPageTitle(meta.title);
+      if (meta.slug && (!pageSlug || pageSlug === '/pages/new-page')) setPageSlug(meta.slug);
+      if (meta.metaTitle) setMetaTitle(meta.metaTitle);
+      if (meta.metaDescription) setMetaDescription(meta.metaDescription);
+    }
+
+    if (mode === 'replace') {
+      setBlocks(newBlocks);
+      setActiveBlockId(newBlocks[0]?.id || null);
+      showToast(`AI generated ${newBlocks.length} blocks replaced canvas!`);
+    } else {
+      const updated = [...blocks, ...newBlocks];
+      setBlocks(updated);
+      setActiveBlockId(newBlocks[0]?.id || null);
+      showToast(`Appended ${newBlocks.length} AI blocks to canvas!`);
+    }
+  };
 
   // Fetch pre-existing forms for Form embed block
   useEffect(() => {
@@ -4030,34 +4113,34 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950 text-slate-100 flex flex-col select-none font-sans">
+    <div className="fixed inset-0 z-50 bg-slate-100 text-slate-900 flex flex-col select-none font-sans">
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold border transition-all animate-bounce ${
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold border transition-all animate-bounce ${
             toast.type === 'success'
-              ? 'bg-emerald-950 border-emerald-800 text-emerald-300'
-              : 'bg-rose-950 border-rose-800 text-rose-300'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
           }`}
         >
           {toast.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           ) : (
-            <AlertCircle className="w-4 h-4 text-rose-400" />
+            <AlertCircle className="w-4 h-4 text-rose-600" />
           )}
           <span>{toast.text}</span>
         </div>
       )}
 
       {/* ── TOP BAR ─────────────────────────────────────────────────── */}
-      <header className="h-14 px-4 border-b border-slate-800 bg-slate-900/95 backdrop-blur-md flex items-center justify-between shrink-0 gap-4">
+      <header className="h-14 px-4 border-b border-slate-200 bg-white/95 backdrop-blur-md flex items-center justify-between shrink-0 gap-4 shadow-2xs">
         {/* Left: Logo + Title */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center shadow-md shadow-indigo-600/30 shrink-0">
             <LayoutTemplate className="w-4 h-4 text-white" />
           </div>
           <div className="min-w-0">
-            <div className="text-[9px] font-black uppercase text-indigo-400 tracking-wider leading-none mb-0.5">
+            <div className="text-[9px] font-black uppercase text-indigo-600 tracking-wider leading-none mb-0.5">
               {initialPage?.id ? 'Edit Page Builder' : 'New Page Builder'}
             </div>
             <input
@@ -4074,16 +4157,16 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                   setPageSlug(slugified);
                 }
               }}
-              className="font-black text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 -ml-1 text-white hover:bg-slate-800/60 truncate max-w-[200px]"
+              className="font-black text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 -ml-1 text-slate-900 hover:bg-slate-100 truncate max-w-[200px]"
             />
           </div>
-          <div className="hidden md:flex items-center gap-1 bg-slate-950/80 px-2.5 py-1 rounded-lg border border-slate-800 text-[10px] font-mono text-slate-400">
-            <span className="text-slate-600">Slug:</span>
+          <div className="hidden md:flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 text-[10px] font-mono text-slate-600">
+            <span className="text-slate-400">Slug:</span>
             <input
               type="text"
               value={pageSlug}
               onChange={(e) => setPageSlug(e.target.value)}
-              className="bg-transparent border-none text-indigo-400 font-bold focus:outline-none w-36"
+              className="bg-transparent border-none text-indigo-600 font-bold focus:outline-none w-36"
             />
           </div>
         </div>
@@ -4096,7 +4179,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
               onClick={() => dispatch({ type: 'UNDO' })}
               disabled={historyState.past.length === 0}
               title="Undo (Ctrl+Z)"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 transition"
             >
               <Undo2 className="w-4 h-4" />
             </button>
@@ -4105,13 +4188,13 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
               onClick={() => dispatch({ type: 'REDO' })}
               disabled={historyState.future.length === 0}
               title="Redo (Ctrl+Y)"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 transition"
             >
               <Redo2 className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="flex items-center gap-0.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center gap-0.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
             {(
               [
                 ['desktop', Laptop],
@@ -4124,7 +4207,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                 type="button"
                 onClick={() => setViewport(vp)}
                 title={vp}
-                className={`p-1.5 rounded-lg transition-all ${viewport === vp ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+                className={`p-1.5 rounded-lg transition-all ${viewport === vp ? 'bg-indigo-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'}`}
               >
                 <Icon className="w-3.5 h-3.5" />
               </button>
@@ -4132,13 +4215,31 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
           </div>
         </div>
 
-        {/* Right: Live Preview + Settings + Save + Close */}
+        {/* Right: AI Block + AI Builder + Live Preview + Settings + Save + Close */}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsAiBlockModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs font-black shadow-md shadow-pink-600/20 transition cursor-pointer"
+            title="Generate and synthesize a single block using AI"
+          >
+            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+            <span>AI Block</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAiModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white text-xs font-black shadow-md shadow-indigo-600/20 transition cursor-pointer"
+            title="Generate complete page layout using AI"
+          >
+            <Wand2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">AI Page</span>
+          </button>
           <a
             href={`${STOREFRONT_URL}${pageRoute}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 text-xs font-bold border border-slate-700 transition"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-emerald-700 hover:text-emerald-800 text-xs font-bold border border-slate-200 transition"
             title="Open Live Page on Storefront"
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -4147,7 +4248,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
           <button
             type="button"
             onClick={() => setShowPageSettings((s) => !s)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition ${showPageSettings ? 'bg-slate-800 border-slate-700 text-white' : 'text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'}`}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition ${showPageSettings ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'text-slate-600 border-slate-200 hover:text-slate-900 hover:bg-slate-100'}`}
           >
             <Settings className="w-3.5 h-3.5" />
             <span className="hidden sm:block">Settings</span>
@@ -4156,7 +4257,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
             type="button"
             onClick={handleSavePage}
             disabled={isSaving}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 transition disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md shadow-indigo-600/20 transition disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5" />
             <span>{isSaving ? 'Saving…' : 'Save & Publish'}</span>
@@ -4164,7 +4265,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition"
           >
             <X className="w-4 h-4" />
           </button>
@@ -4172,15 +4273,15 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
       </header>
 
       {/* Mobile/Tablet Workspace View Switcher (< xl) */}
-      <div className="xl:hidden bg-slate-900/95 border-b border-slate-800 px-3 py-2 flex items-center justify-center shrink-0">
-        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 max-w-sm w-full">
+      <div className="xl:hidden bg-white border-b border-slate-200 px-3 py-2 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 max-w-sm w-full">
           <button
             type="button"
             onClick={() => setMobileWorkspaceView('blocks')}
             className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
               mobileWorkspaceView === 'blocks'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-indigo-600 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Grid3X3 className="w-3.5 h-3.5" />
@@ -4191,8 +4292,8 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
             onClick={() => setMobileWorkspaceView('canvas')}
             className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
               mobileWorkspaceView === 'canvas'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-indigo-600 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
@@ -4203,8 +4304,8 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
             onClick={() => setMobileWorkspaceView('inspector')}
             className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
               mobileWorkspaceView === 'inspector'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-indigo-600 text-white shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Settings className="w-3.5 h-3.5" />
@@ -4215,13 +4316,13 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
 
       {/* ── PAGE SETTINGS BAR ─────────────────────────────────────────── */}
       {showPageSettings && (
-        <div className="bg-slate-900/95 border-b border-slate-800 px-6 py-4 flex flex-wrap items-start gap-4 shrink-0">
+        <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-wrap items-start gap-4 shrink-0 shadow-inner">
           <div className="space-y-1 min-w-40">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block">
               Page Type
             </label>
             <select
-              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:border-indigo-500"
+              className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-indigo-600 shadow-2xs"
               value={pageType}
               onChange={(e) => setPageType(e.target.value)}
             >
@@ -4232,11 +4333,11 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
             </select>
           </div>
           <div className="space-y-1 min-w-40">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block">
               Status
             </label>
             <select
-              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:border-indigo-500"
+              className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-indigo-600 shadow-2xs"
               value={pageStatus}
               onChange={(e) => setPageStatus(e.target.value)}
             >
@@ -4245,22 +4346,22 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
             </select>
           </div>
           <div className="space-y-1 flex-1 min-w-48">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block">
               SEO Title
             </label>
             <input
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-indigo-600 shadow-2xs"
               value={metaTitle}
               onChange={(e) => setMetaTitle(e.target.value)}
               placeholder="SEO page title..."
             />
           </div>
           <div className="space-y-1 flex-1 min-w-48">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block">
               SEO Description
             </label>
             <input
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-indigo-500"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-semibold focus:outline-none focus:border-indigo-600 shadow-2xs"
               value={metaDescription}
               onChange={(e) => setMetaDescription(e.target.value)}
               placeholder="SEO meta description..."
@@ -4273,21 +4374,21 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
       <div className="flex-1 flex overflow-hidden">
         {/* LEFT PANEL: Library + Layers */}
         <aside
-          className={`w-full xl:w-80 border-r border-slate-800 bg-slate-900/90 flex flex-col shrink-0 overflow-hidden ${mobileWorkspaceView === 'blocks' ? 'flex' : 'hidden xl:flex'}`}
+          className={`w-full xl:w-80 border-r border-slate-200 bg-white flex flex-col shrink-0 overflow-hidden ${mobileWorkspaceView === 'blocks' ? 'flex' : 'hidden xl:flex'}`}
         >
           {/* Panel tabs */}
-          <div className="flex border-b border-slate-800 shrink-0">
+          <div className="flex border-b border-slate-200 shrink-0 bg-slate-50/50">
             <button
               type="button"
               onClick={() => setLeftPanel('library')}
-              className={`flex-1 py-3 text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition ${leftPanel === 'library' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-slate-800/50' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`flex-1 py-3 text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition ${leftPanel === 'library' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white shadow-2xs' : 'text-slate-500 hover:text-slate-900'}`}
             >
               <Grid3X3 className="w-3.5 h-3.5" /> Blocks
             </button>
             <button
               type="button"
               onClick={() => setLeftPanel('layers')}
-              className={`flex-1 py-3 text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition ${leftPanel === 'layers' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-slate-800/50' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`flex-1 py-3 text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition ${leftPanel === 'layers' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white shadow-2xs' : 'text-slate-500 hover:text-slate-900'}`}
             >
               <Layers className="w-3.5 h-3.5" /> Layers ({blocks.length})
             </button>
@@ -4296,27 +4397,74 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
           {leftPanel === 'library' && (
             <>
               {/* Search */}
-              <div className="p-3 border-b border-slate-800 shrink-0">
+              <div className="p-3 border-b border-slate-200 shrink-0 bg-white">
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                   <input
                     type="text"
                     value={libSearch}
                     onChange={(e) => setLibSearch(e.target.value)}
                     placeholder="Search elements & blocks..."
-                    className="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                    className="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white transition"
                   />
                 </div>
               </div>
 
+              {/* AI Quick Generator Banners */}
+              <div className="p-3 border-b border-slate-200 shrink-0 space-y-2 bg-slate-50/60">
+                {/* 1. Add Single Block with AI */}
+                <button
+                  type="button"
+                  onClick={() => setIsAiBlockModalOpen(true)}
+                  className="w-full p-2.5 rounded-2xl bg-gradient-to-r from-pink-50 via-purple-50 to-indigo-50 border border-pink-200/80 hover:border-pink-400 text-left transition flex items-center justify-between group cursor-pointer shadow-2xs hover:shadow-sm"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-md shadow-pink-500/30">
+                      <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-slate-900 group-hover:text-pink-600 transition flex items-center gap-1.5">
+                        <span>✨ Generate Block with AI</span>
+                      </div>
+                      <div className="text-[10px] text-slate-500">
+                        Synthesize any section by prompt
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-pink-500 group-hover:translate-x-0.5 transition" />
+                </button>
+
+                {/* 2. Full Page Layout Wizard */}
+                <button
+                  type="button"
+                  onClick={() => setIsAiModalOpen(true)}
+                  className="w-full p-2 rounded-2xl bg-white border border-slate-200 hover:border-indigo-400 text-left transition flex items-center justify-between group cursor-pointer shadow-2xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-xl bg-slate-100 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition">
+                      <Wand2 className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-bold text-slate-800 group-hover:text-indigo-600 transition">
+                        Full Page AI Builder
+                      </div>
+                      <div className="text-[9px] text-slate-500">
+                        Multi-block layout generator
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition" />
+                </button>
+              </div>
+
               {/* Category filter */}
-              <div className="flex gap-1 p-2 border-b border-slate-800 flex-wrap shrink-0">
+              <div className="flex gap-1 p-2 border-b border-slate-200 flex-wrap shrink-0 bg-white">
                 {BLOCK_CATEGORIES.map((cat) => (
                   <button
                     key={cat.id}
                     type="button"
                     onClick={() => setLibCategory(cat.id)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition ${libCategory === cat.id ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition ${libCategory === cat.id ? 'bg-indigo-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-slate-50 border border-slate-200/60'}`}
                   >
                     {cat.label}
                   </button>
@@ -4324,7 +4472,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
               </div>
 
               {/* Block grid */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-2 no-scrollbar">
+              <div className="flex-1 overflow-y-auto p-3 space-y-2 no-scrollbar bg-slate-50/40">
                 <div className="grid grid-cols-1 gap-2">
                   {filteredLibrary.map((def) => (
                     <button
@@ -4334,21 +4482,21 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                         addBlock(def);
                       }}
                       title={def.desc}
-                      className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-indigo-500 hover:bg-indigo-950/30 text-left transition-all group flex items-start gap-3"
+                      className="p-3 rounded-2xl bg-white border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/20 text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer"
                     >
-                      <div className="w-8 h-8 rounded-xl bg-slate-800 group-hover:bg-indigo-600/30 flex items-center justify-center text-indigo-400 group-hover:text-indigo-300 shrink-0 mt-0.5">
+                      <div className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-indigo-100 flex items-center justify-center text-slate-700 group-hover:text-indigo-600 shrink-0 mt-0.5 transition">
                         {def.icon}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-xs text-white group-hover:text-indigo-300 truncate">
+                          <span className="font-bold text-xs text-slate-900 group-hover:text-indigo-600 truncate transition">
                             {def.label}
                           </span>
-                          <span className="text-[9px] font-black uppercase text-slate-500 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">
+                          <span className="text-[9px] font-black uppercase text-slate-500 px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">
                             {def.category}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5 leading-relaxed">
+                        <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5 leading-relaxed">
                           {def.desc}
                         </p>
                       </div>
@@ -4360,9 +4508,9 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
           )}
 
           {leftPanel === 'layers' && (
-            <div className="flex-1 overflow-y-auto p-3 space-y-1.5 no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 space-y-1.5 no-scrollbar bg-slate-50/40">
               {blocks.length === 0 && (
-                <div className="text-center py-12 text-slate-600 text-xs">
+                <div className="text-center py-12 text-slate-400 text-xs">
                   No blocks on page.
                   <br />
                   Add some from the library.
@@ -4381,12 +4529,12 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                   }}
                   className={`group flex items-center gap-2 p-2.5 rounded-xl border text-xs cursor-pointer transition ${
                     activeBlockId === block.id
-                      ? 'bg-indigo-950/80 border-indigo-500 text-white shadow-sm'
-                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:bg-slate-800/60 hover:text-white'
-                  } ${dropIndex === idx ? 'border-t-2 border-t-indigo-400' : ''}`}
+                      ? 'bg-indigo-50 border-indigo-300 text-indigo-950 font-bold shadow-2xs ring-1 ring-indigo-300'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-2xs'
+                  } ${dropIndex === idx ? 'border-t-2 border-t-indigo-500' : ''}`}
                 >
-                  <GripVertical className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-400 cursor-grab shrink-0" />
-                  <span className="w-4 text-[10px] text-slate-600 font-mono shrink-0">
+                  <GripVertical className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 cursor-grab shrink-0" />
+                  <span className="w-4 text-[10px] text-slate-400 font-mono shrink-0">
                     {idx + 1}
                   </span>
                   <span className="font-bold truncate flex-1 capitalize">
@@ -4399,12 +4547,12 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                         e.stopPropagation();
                         toggleBlockVisibility(block.id);
                       }}
-                      className="p-1 hover:text-white"
+                      className="p-1 hover:text-slate-900 text-slate-400"
                     >
                       {block.isVisible ? (
-                        <Eye className="w-3 h-3 text-emerald-400" />
+                        <Eye className="w-3 h-3 text-emerald-600" />
                       ) : (
-                        <EyeOff className="w-3 h-3 text-rose-400" />
+                        <EyeOff className="w-3 h-3 text-rose-500" />
                       )}
                     </button>
                     <button
@@ -4413,7 +4561,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                         e.stopPropagation();
                         deleteBlock(block.id);
                       }}
-                      className="p-1 hover:text-rose-400"
+                      className="p-1 text-slate-400 hover:text-rose-600"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -4426,7 +4574,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
 
         {/* CENTER PANEL: Visual Canvas */}
         <main
-          className={`flex-1 bg-slate-950 overflow-y-auto flex flex-col items-center p-4 sm:p-8 no-scrollbar ${mobileWorkspaceView === 'canvas' ? 'flex' : 'hidden xl:flex'}`}
+          className={`flex-1 bg-slate-100/90 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] overflow-y-auto flex flex-col items-center p-4 sm:p-8 no-scrollbar ${mobileWorkspaceView === 'canvas' ? 'flex' : 'hidden xl:flex'}`}
         >
           <div
             className={`w-full transition-all duration-300 ${
@@ -4438,10 +4586,10 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
             }`}
           >
             {/* Canvas Container Shell */}
-            <div className="bg-white text-slate-900 rounded-3xl shadow-2xl overflow-hidden min-h-[600px] border border-slate-800/40 relative">
+            <div className="bg-white text-slate-900 rounded-3xl shadow-xl shadow-slate-300/50 overflow-hidden min-h-[600px] border border-slate-200 relative">
               {blocks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-28 text-center p-8 space-y-4">
-                  <div className="w-16 h-16 rounded-3xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-lg">
+                  <div className="w-16 h-16 rounded-3xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/10">
                     <LayoutTemplate className="w-8 h-8" />
                   </div>
                   <div>
@@ -4451,13 +4599,23 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                       from the left sidebar.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setLeftPanel('library')}
-                    className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md shadow-indigo-600/30 hover:bg-indigo-700 transition"
-                  >
-                    Browse Block Library
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsAiBlockModalOpen(true)}
+                      className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-black text-xs shadow-md shadow-pink-600/20 flex items-center gap-2 transition cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4 animate-pulse" />
+                      <span>✨ Generate Block with AI</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLeftPanel('library')}
+                      className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition cursor-pointer"
+                    >
+                      Browse Block Library
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
@@ -4473,7 +4631,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                         }}
                         className={`relative transition-all cursor-pointer ${
                           isSelected
-                            ? 'ring-2 ring-indigo-500 ring-inset z-10 bg-indigo-50/5'
+                            ? 'ring-2 ring-indigo-500 ring-inset z-10 bg-indigo-50/10'
                             : 'hover:outline hover:outline-1 hover:outline-indigo-300'
                         }`}
                       >
@@ -4506,6 +4664,26 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                       </div>
                     );
                   })}
+
+                  {/* Bottom Canvas Quick Add Bar */}
+                  <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsAiBlockModalOpen(true)}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-black text-xs shadow-md shadow-pink-600/20 flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                      <span>✨ Add Block with AI</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLeftPanel('library')}
+                      className="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Section from Library</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -4514,20 +4692,34 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
 
         {/* RIGHT PANEL: Inspector / Settings */}
         <aside
-          className={`w-full xl:w-80 border-l border-slate-800 bg-slate-900/90 flex flex-col shrink-0 overflow-hidden ${mobileWorkspaceView === 'inspector' ? 'flex' : 'hidden xl:flex'}`}
+          className={`w-full xl:w-80 border-l border-slate-200 bg-white flex flex-col shrink-0 overflow-hidden ${mobileWorkspaceView === 'inspector' ? 'flex' : 'hidden xl:flex'}`}
         >
-          <div className="p-3 border-b border-slate-800 flex items-center justify-between shrink-0">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+          <div className="p-3 border-b border-slate-200 flex items-center justify-between shrink-0 bg-slate-50/50">
+            <span className="text-[11px] font-black uppercase tracking-wider text-slate-700">
               Block Inspector
             </span>
-            {selectedBlock && (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-950 text-indigo-400 border border-slate-800 uppercase">
-                {selectedBlock.type}
-              </span>
-            )}
+            <div className="flex items-center gap-1.5">
+              {selectedBlock && (
+                <button
+                  type="button"
+                  onClick={handleAiRewriteBlock}
+                  disabled={isRewritingBlock}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:text-indigo-800 hover:bg-indigo-100 text-[10px] font-bold transition disabled:opacity-50 cursor-pointer shadow-2xs"
+                  title="Enhance block copy with AI"
+                >
+                  <Sparkles className="w-3 h-3 text-pink-500" />
+                  <span>{isRewritingBlock ? 'Polishing…' : 'AI Polish'}</span>
+                </button>
+              )}
+              {selectedBlock && (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-indigo-700 border border-slate-200 uppercase font-semibold">
+                  {selectedBlock.type}
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 no-scrollbar bg-white">
             {selectedBlock ? (
               <BlockInspector
                 block={selectedBlock}
@@ -4538,8 +4730,8 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
                 onToggleVisible={() => toggleBlockVisibility(selectedBlock.id)}
               />
             ) : (
-              <div className="text-center py-20 text-slate-600 text-xs space-y-2">
-                <Settings className="w-8 h-8 mx-auto text-slate-700" />
+              <div className="text-center py-20 text-slate-400 text-xs space-y-2">
+                <Settings className="w-8 h-8 mx-auto text-slate-300" />
                 <p>
                   Select any block on the canvas or layers list to inspect and edit its properties.
                 </p>
@@ -4548,6 +4740,22 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
           </div>
         </aside>
       </div>
+
+      {/* ── AI SINGLE BLOCK GENERATOR MODAL ───────────────────────── */}
+      <AiBlockGeneratorModal
+        isOpen={isAiBlockModalOpen}
+        onClose={() => setIsAiBlockModalOpen(false)}
+        onApplyBlock={handleApplyAiBlock}
+        selectedBlockId={activeBlockId}
+      />
+
+      {/* ── AI PAGE BUILDER GENERATOR MODAL ─────────────────────────── */}
+      <AiPageBuilderModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        onApplyBlocks={handleApplyAiBlocks}
+        currentPageTitle={pageTitle}
+      />
     </div>
   );
 };

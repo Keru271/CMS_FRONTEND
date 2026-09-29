@@ -8,6 +8,7 @@ import {
   DEFAULT_TEMPLATE_SECTIONS,
 } from './HomepageSectionsCustomizer';
 import { HomepageStudioModal } from './HomepageStudioModal';
+import { AiStoreBuilderModal } from '@/src/components/ai/AiStoreBuilderModal';
 import {
   Palette,
   Layout,
@@ -15,6 +16,7 @@ import {
   Maximize2,
   CheckCircle2,
   Sparkles,
+  Wand2,
   Eye,
   Check,
   Save,
@@ -763,6 +765,7 @@ export const ThemeManager: React.FC = () => {
   const [mobileEditorView, setMobileEditorView] = useState<'editor' | 'preview'>('editor');
   const [canvasPreviewType, setCanvasPreviewType] = useState<'iframe' | 'canvas'>('iframe');
   const [isHomepageStudioOpen, setIsHomepageStudioOpen] = useState(false);
+  const [isAiBuilderOpen, setIsAiBuilderOpen] = useState(false);
 
   const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -1909,24 +1912,23 @@ export const ThemeManager: React.FC = () => {
           <span className="text-xs font-bold">{toastMessage.text}</span>
         </div>
       )}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm relative overflow-hidden space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/30">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-200/80 dark:border-indigo-800/60">
                 Multi-Template Architecture
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200/80 dark:border-emerald-800/60 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Active Theme: {activeTemplate?.name || 'Nova Tech'}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <Palette className="w-8 h-8 text-indigo-400" />
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground flex items-center gap-3">
+              <Palette className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
               <span>Theme Studio & Template Publisher</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
               Preview all storefront layout templates, test responsive viewports (Desktop, Tablet,
               Mobile), and customize color palettes, typography, and header/footer configurations in
               real-time.
@@ -1935,17 +1937,25 @@ export const ThemeManager: React.FC = () => {
           <div className="flex items-center gap-3 shrink-0 flex-wrap">
             <button
               type="button"
-              onClick={() => setIsHomepageStudioOpen(true)}
-              className="px-5 py-2.5 rounded-2xl bg-[#ffd100] hover:bg-[#ffc400] text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer transform active:scale-95"
+              onClick={() => setIsAiBuilderOpen(true)}
+              className="px-5 py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 text-xs font-black border border-indigo-200/80 dark:border-indigo-800/60 flex items-center gap-2 transition-all cursor-pointer transform active:scale-95 shadow-xs"
             >
-              <Sparkles className="w-4 h-4 text-slate-950" />
+              <Wand2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+              <span>AI Store Builder 🪄</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsHomepageStudioOpen(true)}
+              className="px-5 py-2.5 rounded-2xl bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200/80 dark:border-border flex items-center gap-2 transition-all cursor-pointer transform active:scale-95 shadow-xs"
+            >
+              <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span>Customize Homepage (Studio) ↗</span>
             </button>
             {isDirty && initialConfig && (
               <button
                 type="button"
                 onClick={() => setThemeConfig({ ...initialConfig })}
-                className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition-all"
+                className="px-4 py-2.5 rounded-2xl bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-accent text-slate-600 dark:text-slate-300 text-xs font-bold border border-slate-200/80 dark:border-border transition-all cursor-pointer"
               >
                 Discard
               </button>
@@ -1954,23 +1964,23 @@ export const ThemeManager: React.FC = () => {
               type="button"
               onClick={handleSaveTheme}
               disabled={isSaving}
-              className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all disabled:opacity-50"
+              className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer transform active:scale-95"
             >
               {isSaving ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <RefreshCw className="w-4 h-4 animate-spin text-white" />
                   <span>Saving...</span>
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4" />
+                  <Save className="w-4 h-4 text-white" />
                   <span>Save Theme Config</span>
                 </>
               )}
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-2 pt-6 mt-6 border-t border-slate-700/60 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100/80 dark:bg-accent/40 rounded-2xl border border-slate-200/80 dark:border-border/60 overflow-x-auto no-scrollbar">
           {[
             {
               id: 'templates',
@@ -1997,14 +2007,14 @@ export const ThemeManager: React.FC = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-white text-slate-900 shadow-md scale-105'
-                    : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                    ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/80 dark:border-border'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground hover:bg-white/60 dark:hover:bg-accent/60 border border-transparent'
                 }`}
               >
                 <Icon
-                  className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}
+                  className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`}
                 />
                 <span>{tab.label}</span>
               </button>
@@ -2919,6 +2929,23 @@ export const ThemeManager: React.FC = () => {
           onResetToDefault={handleResetSectionsToDefault}
           onSave={handleSaveTheme}
           isSaving={isSaving}
+        />
+      )}
+
+      {/* ── AI STORE BUILDER MODAL ── */}
+      {isAiBuilderOpen && (
+        <AiStoreBuilderModal
+          isOpen={isAiBuilderOpen}
+          onClose={() => setIsAiBuilderOpen(false)}
+          onBlueprintApplied={async () => {
+            await loadData();
+            setIsAiBuilderOpen(false);
+            setToastMessage({
+              text: '✨ AI Store Blueprint applied! Your storefront has been upgraded.',
+              type: 'success',
+            });
+            setTimeout(() => setToastMessage(null), 4000);
+          }}
         />
       )}
     </div>

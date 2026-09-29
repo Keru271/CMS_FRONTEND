@@ -25,7 +25,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
   return (
     <div className="space-y-4 font-sans">
       {/* Search & Filter Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-lg">
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-[#5e5a5a] absolute left-3 top-3" />
           <input
@@ -33,7 +33,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
             placeholder="Search orders, customer names, emails..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans text-[#191a1b] placeholder:text-[#beb9b3] outline-none focus:border-[#cbc2ea]"
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#121212] border border-[#cbd5e0] text-xs font-sans text-[#191a1b] placeholder:text-[#beb9b3] outline-none focus:border-[#cbc2ea]"
           />
         </div>
 
@@ -41,7 +41,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full sm:w-auto bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
+            className="w-full sm:w-auto bg-[#121212] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
           >
             <option value="all">All Order Statuses</option>
             <option value="processing">Processing</option>
@@ -53,10 +53,10 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
       </div>
 
       {/* Orders Data Table */}
-      <div className="rounded-2xl bg-[#ffffff] border border-[#cbd5e0] overflow-hidden shadow-statamic">
+      <div className="rounded-2xl bg-[#ffffff] border border-[#cbd5e0] overflow-hidden shadow-lg">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-sans min-w-[650px]">
-            <thead className="border-b border-[#cbd5e0] bg-[#fdf1ef] text-[#5e5a5a] uppercase font-medium text-[10px] tracking-wider">
+            <thead className="border-b border-[#cbd5e0] bg-[#121212] text-[#5e5a5a] uppercase font-medium text-[10px] tracking-wider">
               <tr>
                 <th className="py-3.5 px-4 sm:px-5">Order Code</th>
                 <th className="py-3.5 px-4">Customer Details</th>
@@ -73,7 +73,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
                   <td colSpan={7} className="py-16 text-center text-[#5e5a5a]">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <ShoppingBag className="w-10 h-10 text-[#beb9b3]" />
-                      <span className="font-serif text-lg text-[#191a1b]">
+                      <span className="font-sans text-lg text-[#191a1b]">
                         No Customer Orders Found
                       </span>
                     </div>
@@ -81,7 +81,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
                 </tr>
               ) : (
                 filteredOrders.map((o) => (
-                  <tr key={o.id} className="hover:bg-[#fdf1ef]/60 transition-colors">
+                  <tr key={o.id} className="hover:bg-[#121212]/60 transition-colors">
                     <td className="py-3.5 px-4 sm:px-5 font-mono font-bold text-[#191a1b]">
                       {o.orderNumber}
                     </td>
@@ -107,7 +107,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
                       <span
                         className={`px-2.5 py-1 rounded-full text-[10px] font-sans font-medium ${
                           o.paymentStatus === 'paid'
-                            ? 'bg-[#d4ff4c]/40 text-[#191a1b] border border-[#191a1b]'
+                            ? 'bg-[#00E5FF]/40 text-[#191a1b] border border-[#191a1b]'
                             : o.paymentStatus === 'pending'
                               ? 'bg-[#d7e5fe] text-[#191a1b] border border-[#cbd5e0]'
                               : 'bg-rose-50 text-rose-700 border border-rose-200'
@@ -125,7 +125,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
                       <select
                         value={o.orderStatus}
                         onChange={(e) => onStatusChange(o.id, e.target.value as OrderStatus)}
-                        className="bg-[#fdf1ef] border border-[#cbd5e0] text-[11px] font-sans font-medium text-[#191a1b] rounded-lg px-2.5 py-1 focus:outline-none focus:border-[#cbc2ea] cursor-pointer"
+                        className="bg-[#121212] border border-[#cbd5e0] text-[11px] font-sans font-medium text-[#191a1b] rounded-lg px-2.5 py-1 focus:outline-none focus:border-[#cbc2ea] cursor-pointer"
                       >
                         <option value="processing">Processing</option>
                         <option value="shipped">Shipped</option>

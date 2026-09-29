@@ -93,13 +93,14 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [seoPreviewDevice, setSeoPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [isGeneratingSeoAi, setIsGeneratingSeoAi] = useState(false);
 
-  // AI Copywriter Modal State
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-  const [aiTone, setAiTone] = useState<'LUXURY' | 'HIGH_CONVERTING' | 'CASUAL' | 'TECHNICAL'>(
-    'HIGH_CONVERTING',
-  );
+  // AI Product Generator State
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState(true);
   const [aiKeywords, setAiKeywords] = useState('');
-  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [aiTone, setAiTone] = useState('premium');
+  const [isGeneratingAll, setIsGeneratingAll] = useState(false);
+  const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
+  const [generatedFeatures, setGeneratedFeatures] = useState<string[]>([]);
+  const [aiSuccessToast, setAiSuccessToast] = useState<string | null>(null);
 
   const initialUrlSlug =
     initialProduct?.urlSlug ||
@@ -187,73 +188,69 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     },
   });
 
-  const handleGenerateAi = async () => {
-    if (!formik.values.name || formik.values.name.trim().length === 0) {
-      alert('Please enter a product title first so the AI knows what to write!');
-      return;
-    }
-    setIsGeneratingAi(true);
+  // Master AI Product Generator Function
+  const handleGenerateEverything = async (mode: 'all' | 'description' | 'seo' = 'all') => {
+    if (mode === 'all') setIsGeneratingAll(true);
+    if (mode === 'description') setIsGeneratingDesc(true);
+    if (mode === 'seo') setIsGeneratingSeoAi(true);
+
     try {
-      const res = await cmsService.generateAiProductContent({
+      const generated = await cmsService.generateProductContent({
         productName: formik.values.name,
         category: formik.values.category,
+        keywords: aiKeywords || formik.values.tags,
+        brandName: storeName,
         tone: aiTone,
-        keywords: aiKeywords,
+        generateMode: mode,
       });
 
-      if (res.description) {
-        let fullDesc = res.description;
-        if (res.keyFeatures && res.keyFeatures.length > 0) {
-          fullDesc += '\n\nKey Highlights:\n' + res.keyFeatures.map((f) => `• ${f}`).join('\n');
+      if (mode === 'all' || !formik.values.name) {
+        formik.setFieldValue('name', generated.name);
+      }
+
+      if (mode === 'all' || mode === 'description') {
+        formik.setFieldValue('description', generated.description);
+        setGeneratedFeatures(generated.features || []);
+      }
+
+      if (mode === 'all' || mode === 'seo') {
+        formik.setFieldValue('seoTitle', generated.seoTitle);
+        formik.setFieldValue('metaTitle', generated.seoTitle);
+        formik.setFieldValue('seoDescription', generated.metaDescription);
+        formik.setFieldValue('metaDescription', generated.metaDescription);
+        formik.setFieldValue('urlSlug', generated.urlSlug);
+        formik.setFieldValue('canonicalUrl', `https://${storeDomain}/products/${generated.urlSlug}`);
+      }
+
+      if (mode === 'all') {
+        if (generated.tags && generated.tags.length > 0) {
+          formik.setFieldValue('tags', generated.tags.join(', '));
         }
-        formik.setFieldValue('description', fullDesc);
+        if (!formik.values.price && generated.suggestedPrice) {
+          formik.setFieldValue('price', generated.suggestedPrice);
+        }
       }
-      if (res.suggestedTags && res.suggestedTags.length > 0) {
-        formik.setFieldValue('tags', res.suggestedTags.join(', '));
-      }
-      if (res.refinedTitle && res.refinedTitle !== formik.values.name) {
-        formik.setFieldValue('name', res.refinedTitle);
-      }
-      setIsAiModalOpen(false);
+
+      setAiSuccessToast(
+        mode === 'all'
+          ? '✨ Generated entire product suite: Name, Description, Features, SEO, Tags & Slug!'
+          : mode === 'description'
+          ? '✨ Generated rich product description & key features!'
+          : '✨ Generated SEO metadata & search ranking attributes!'
+      );
+      setTimeout(() => setAiSuccessToast(null), 4000);
     } catch (err) {
-      console.error('AI generation error:', err);
-      alert('Failed to generate AI content. Please try again.');
+      console.error('Failed to generate product content:', err);
     } finally {
-      setIsGeneratingAi(false);
+      setIsGeneratingAll(false);
+      setIsGeneratingDesc(false);
+      setIsGeneratingSeoAi(false);
     }
   };
 
   // AI Generate Product SEO Title & Description
   const handleAutoGenerateSeo = () => {
-    const title = formik.values.name.trim();
-    if (!title) {
-      alert('Please enter a Product Title first.');
-      return;
-    }
-    setIsGeneratingSeoAi(true);
-    setTimeout(() => {
-      const cleanSlug = title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
-      const category = formik.values.category || 'Quality';
-      const autoTitle = `${title} | Buy Online at ${storeName}`;
-      const plainDesc = formik.values.description
-        ? formik.values.description.replace(/<[^>]*>?/gm, '').slice(0, 140)
-        : `Shop ${title} online with fast delivery, authentic quality warranty, and premium customer service at ${storeName}.`;
-      const autoDesc = `${plainDesc} Order today with express shipping!`.slice(0, 160);
-
-      formik.setFieldValue('seoTitle', autoTitle);
-      formik.setFieldValue('metaTitle', autoTitle);
-      formik.setFieldValue('seoDescription', autoDesc);
-      formik.setFieldValue('metaDescription', autoDesc);
-      formik.setFieldValue('urlSlug', cleanSlug);
-      formik.setFieldValue('canonicalUrl', `https://${storeDomain}/products/${cleanSlug}`);
-      if (!formik.values.ogImage && formik.values.image) {
-        formik.setFieldValue('ogImage', formik.values.image);
-      }
-      setIsGeneratingSeoAi(false);
-    }, 400);
+    handleGenerateEverything('seo');
   };
 
   const effectiveSeoTitle =
@@ -279,33 +276,210 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#191a1b]/40 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-[#ffffff] border border-[#cbd5e0] rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-statamic relative max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#cbd5e0]/60 pb-4 mb-5">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
+      <div className="bg-[#ffffff] dark:bg-card border border-slate-200/90 dark:border-border rounded-3xl w-[90vw] max-w-[90vw] h-[90vh] max-h-[90vh] shadow-2xl relative flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        {/* Fixed Header */}
+        <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-border px-6 py-4 sm:px-8 sm:py-4.5 bg-white/95 dark:bg-card/95 backdrop-blur-md shrink-0 z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#fdf1ef] text-[#191a1b] flex items-center justify-center font-bold border border-[#cbd5e0]">
-              <Package className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shadow-xs">
+              <Package className="w-5 h-5 text-[#00E5FF]" />
             </div>
             <div>
-              <h3 className="font-serif font-normal text-xl text-[#191a1b] leading-tight">
-                {isEditing ? 'Edit Item Specification' : 'Create New Catalog Item'}
-              </h3>
-              <p className="text-xs font-sans text-[#5e5a5a]">
-                Manage product details, pricing, and stock limits
+              <div className="flex items-center gap-2">
+                <h3 className="font-sans font-bold text-lg text-slate-900 dark:text-white leading-tight">
+                  {isEditing ? 'Edit Item Specification' : 'Create New Catalog Item'}
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-border">
+                  {isEditing ? 'ID: ' + initialProduct?.id?.slice(0, 8) : 'Catalog Studio'}
+                </span>
+              </div>
+              <p className="text-xs font-sans text-slate-500 dark:text-slate-400">
+                Manage product details, pricing, AI copywriting, 3D viewport, and SEO attributes
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-[#5e5a5a] hover:text-[#191a1b] p-1.5 rounded-lg hover:bg-[#fdf1ef] transition-colors"
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-accent transition-all cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Formik Form */}
-        <form onSubmit={formik.handleSubmit} className="space-y-4 font-sans">
+        {/* Form Container */}
+        <form onSubmit={formik.handleSubmit} className="flex-1 flex flex-col overflow-hidden font-sans">
+          {/* Scrollable Form Body */}
+          <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-5">
+            {/* AI Success Toast Notification */}
+            {aiSuccessToast && (
+              <div className="p-3.5 rounded-2xl bg-indigo-50/90 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 text-indigo-900 dark:text-indigo-200 text-xs font-bold flex items-center justify-between shadow-xs animate-in fade-in duration-200">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <span>{aiSuccessToast}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAiSuccessToast(null)}
+                  className="text-indigo-400 hover:text-indigo-700 p-0.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          {/* ─── AI PRODUCT GENERATOR STUDIO ────────────────── */}
+          <div className="rounded-2xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-white p-4 sm:p-5 shadow-xs transition-all">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-bold shadow-xs">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+                      AI Product Generator
+                    </h4>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200/60">
+                      Auto-Copilot
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Provide a name, category, or keywords — AI will automatically generate the description, features, SEO title, meta description, and tags.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+                className="text-xs text-indigo-600 font-bold hover:underline cursor-pointer shrink-0"
+              >
+                {isAiPanelOpen ? 'Hide' : '✨ AI Studio'}
+              </button>
+            </div>
+
+            {isAiPanelOpen && (
+              <div className="space-y-3 pt-3 border-t border-indigo-100/80">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Product Name Input */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Product Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Premium Leather Wallet"
+                      value={formik.values.name}
+                      onChange={(e) => formik.setFieldValue('name', e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {/* Category Selector */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={formik.values.category}
+                      onChange={(e) => {
+                        formik.setFieldValue('category', e.target.value);
+                      }}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                    >
+                      {categories.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Keywords */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Keywords / Specs
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. leather, premium, handmade"
+                      value={aiKeywords}
+                      onChange={(e) => setAiKeywords(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+                  {/* Tone Selector */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-slate-600">Tone:</span>
+                    <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-[10px]">
+                      {['premium', 'luxury', 'minimal', 'energetic', 'technical'].map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setAiTone(t)}
+                          className={`px-2 py-0.5 rounded capitalize font-bold transition cursor-pointer ${
+                            aiTone === t
+                              ? 'bg-indigo-600 text-white shadow-xs'
+                              : 'text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Master Action Button */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={isGeneratingAll}
+                      onClick={() => handleGenerateEverything('all')}
+                      className="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-xs font-extrabold shadow-md flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
+                    >
+                      {isGeneratingAll ? (
+                        <>
+                          <Wand2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Generating Everything with AI...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>✨ Generate Everything</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Generated Features Checklist Preview */}
+                {generatedFeatures.length > 0 && (
+                  <div className="p-3 rounded-xl bg-white border border-indigo-100 space-y-1.5 mt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold text-indigo-900 uppercase tracking-wider">
+                        ✨ Generated Highlights & Selling Points
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Synced to Form
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-slate-700">
+                      {generatedFeatures.map((feat, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-1.5 text-[11px] font-medium bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100"
+                        >
+                          <span>{feat}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           {/* Row 1: Title & SKU */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="md:col-span-2">
@@ -514,7 +688,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             />
           </div>
 
-          {/* Row 5: Description Textarea with AI Copywriter */}
+          {/* Row 5: Description Textarea */}
           <div className="flex flex-col gap-1.5 w-full">
             <div className="flex items-center justify-between">
               <label className="text-xs font-sans font-medium text-[#191a1b]">
@@ -522,11 +696,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               </label>
               <button
                 type="button"
-                onClick={() => setIsAiModalOpen(true)}
-                className="px-2.5 py-1 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold transition flex items-center gap-1.5 border border-indigo-200"
+                onClick={() => handleGenerateEverything('description')}
+                disabled={isGeneratingDesc}
+                className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg transition border border-indigo-200/60 cursor-pointer disabled:opacity-50"
               >
-                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                <span>✨ AI Magic Copywriter</span>
+                {isGeneratingDesc ? (
+                  <>
+                    <Wand2 className="w-3 h-3 animate-spin text-indigo-600" />
+                    <span>Generating…</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3 h-3 text-indigo-600" />
+                    <span>✨ Generate with AI</span>
+                  </>
+                )}
               </button>
             </div>
             <textarea
@@ -1008,107 +1192,39 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             )}
           </div>
 
-          {/* AI Magic Copywriter Dialog Modal */}
-          {isAiModalOpen && (
-            <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-indigo-600" />
-                    <h3 className="font-bold text-sm text-slate-900">AI Product Copywriter</h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsAiModalOpen(false)}
-                    className="text-slate-400 hover:text-slate-700 text-xs"
-                  >
-                    ✕
-                  </button>
-                </div>
+          </div>
 
-                <div className="space-y-3 text-xs">
-                  <div>
-                    <label className="block font-bold text-slate-700 mb-1">
-                      Target Tone of Voice:
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { id: 'HIGH_CONVERTING', label: '🔥 High-Conversion' },
-                        { id: 'LUXURY', label: '✨ Luxury & Premium' },
-                        { id: 'CASUAL', label: '👟 Casual & Lifestyle' },
-                        { id: 'TECHNICAL', label: '⚙️ Technical Specs' },
-                      ].map((t) => (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => setAiTone(t.id as any)}
-                          className={`p-2 rounded-xl text-[11px] font-bold border text-left transition ${
-                            aiTone === t.id
-                              ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                          }`}
-                        >
-                          {t.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-slate-700 mb-1">
-                      Key Feature Keywords (Optional):
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. noise-cancelling, 40h battery, fast charge"
-                      value={aiKeywords}
-                      onChange={(e) => setAiKeywords(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                    />
-                  </div>
-
-                  <div className="pt-2 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsAiModalOpen(false)}
-                      className="flex-1 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isGeneratingAi}
-                      onClick={handleGenerateAi}
-                      className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-sm flex items-center justify-center gap-1.5"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>{isGeneratingAi ? 'Generating…' : 'Generate Copy'}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+          {/* Fixed Footer CTA Buttons */}
+          <div className="flex items-center justify-between border-t border-slate-200/80 dark:border-border px-6 py-4 sm:px-8 bg-slate-50/90 dark:bg-card/95 backdrop-blur-md shrink-0 z-10">
+            <div className="text-xs font-bold text-slate-500">
+              {formik.values.name ? (
+                <span className="truncate max-w-xs block font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                  Drafting: {formik.values.name}
+                </span>
+              ) : (
+                <span>* Required fields must be completed</span>
+              )}
             </div>
-          )}
 
-          {/* Footer CTA Buttons */}
-          <div className="flex justify-end gap-3 border-t border-[#cbd5e0]/60 pt-4 mt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg text-xs font-sans font-medium text-[#191a1b] border border-[#cbc2ea] hover:bg-[#fdf1ef] transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={formik.isSubmitting}
-              className="px-5 py-2 rounded-lg bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] font-sans font-medium text-xs shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50"
-            >
-              <Save className="w-4 h-4 text-[#d4ff4c]" />
-              <span>
-                {formik.isSubmitting ? 'Saving...' : isEditing ? 'Update Item' : 'Create Item'}
-              </span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-accent border border-slate-200 dark:border-border hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={formik.isSubmitting}
+                className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <Save className="w-4 h-4 text-[#00E5FF]" />
+                <span>
+                  {formik.isSubmitting ? 'Saving...' : isEditing ? 'Update Item' : 'Create Item'}
+                </span>
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -143,11 +143,11 @@ export const CreateStoreModal: React.FC = () => {
         {/* Header */}
         <div className="p-6 bg-[#191a1b] text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-[#d4ff4c]/20 border border-[#d4ff4c]/40 flex items-center justify-center text-[#d4ff4c]">
+            <div className="w-11 h-11 rounded-2xl bg-[#00E5FF]/20 border border-[#00E5FF]/40 flex items-center justify-center text-[#00E5FF]">
               <Store className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-lg text-white">
+              <h3 className="font-sans font-bold text-lg text-white">
                 Add New Store to Portfolio
               </h3>
               <p className="text-xs text-gray-300 font-sans">
@@ -184,7 +184,7 @@ export const CreateStoreModal: React.FC = () => {
                 value={name}
                 onChange={(e) => handleNameChange(e.target.value)}
                 placeholder="e.g. Aura Artisan Atelier"
-                className="w-full px-4 py-2.5 text-xs font-sans rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                className="w-full px-4 py-2.5 text-xs font-sans rounded-xl bg-[#121212] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
               />
             </div>
 
@@ -193,7 +193,7 @@ export const CreateStoreModal: React.FC = () => {
                 <label className="text-xs font-bold text-[#191a1b]">Store URL Handle (Slug)</label>
                 <span className="text-[11px] text-[#5e5a5a]">Unique Web Storefront Address</span>
               </div>
-              <div className="flex items-center rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] px-3 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#191a1b]">
+              <div className="flex items-center rounded-xl bg-[#121212] border border-[#cbd5e0] px-3 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#191a1b]">
                 <Globe className="w-4 h-4 text-gray-400 shrink-0" />
                 <span className="text-xs text-[#5e5a5a] pl-2 font-mono">onlinestore.io/</span>
                 <input
@@ -231,14 +231,14 @@ export const CreateStoreModal: React.FC = () => {
                     className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                       isSelected
                         ? 'border-[#191a1b] bg-[#191a1b] text-white shadow-xs'
-                        : 'border-[#cbd5e0] bg-[#fdf1ef] hover:border-gray-400 text-[#191a1b]'
+                        : 'border-[#cbd5e0] bg-[#121212] hover:border-gray-400 text-[#191a1b]'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-base">{curr.flag}</span>
                       <span
                         className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                          isSelected ? 'bg-white/20 text-[#d4ff4c]' : 'bg-gray-200 text-[#191a1b]'
+                          isSelected ? 'bg-white/20 text-[#00E5FF]' : 'bg-gray-200 text-[#191a1b]'
                         }`}
                       >
                         {curr.symbol}
@@ -275,8 +275,8 @@ export const CreateStoreModal: React.FC = () => {
                     onClick={() => setCategoryName(cat.label)}
                     className={`px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
                       isSelected
-                        ? 'bg-[#191a1b] text-[#d4ff4c] border-[#191a1b]'
-                        : 'bg-[#fdf1ef] text-[#191a1b] border-[#cbd5e0] hover:bg-white'
+                        ? 'bg-[#191a1b] text-[#00E5FF] border-[#191a1b]'
+                        : 'bg-[#121212] text-[#191a1b] border-[#cbd5e0] hover:bg-white'
                     }`}
                   >
                     <span>{cat.icon}</span>
@@ -304,7 +304,7 @@ export const CreateStoreModal: React.FC = () => {
                     className={`p-3 rounded-2xl border text-left transition cursor-pointer flex items-start gap-3 ${
                       isSelected
                         ? 'border-[#191a1b] bg-[#191a1b]/5 ring-2 ring-[#191a1b]'
-                        : 'border-[#cbd5e0] bg-[#fdf1ef] hover:bg-white'
+                        : 'border-[#cbd5e0] bg-[#121212] hover:bg-white'
                     }`}
                   >
                     <div
@@ -349,12 +349,12 @@ export const CreateStoreModal: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting || !name.trim()}
-              className="px-6 py-2.5 bg-[#191a1b] hover:bg-black text-[#d4ff4c] text-xs font-bold rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="px-6 py-2.5 bg-[#191a1b] hover:bg-black text-[#00E5FF] text-xs font-bold rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? (
-                <RefreshCw className="w-4 h-4 animate-spin text-[#d4ff4c]" />
+                <RefreshCw className="w-4 h-4 animate-spin text-[#00E5FF]" />
               ) : (
-                <Sparkles className="w-4 h-4 text-[#d4ff4c]" />
+                <Sparkles className="w-4 h-4 text-[#00E5FF]" />
               )}
               <span>{isSubmitting ? 'Creating Store...' : 'Launch & Switch to Store'}</span>
             </button>

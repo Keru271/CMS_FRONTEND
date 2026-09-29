@@ -699,7 +699,7 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
       <div className="bg-[#075e54] text-white px-4 py-3 sm:px-6 flex items-center justify-between shadow-md z-20 shrink-0">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-11 h-11 rounded-full bg-[#128c7e] border-2 border-white/40 flex items-center justify-center text-white shadow-inner font-serif font-bold text-lg">
+            <div className="w-11 h-11 rounded-full bg-[#128c7e] border-2 border-white/40 flex items-center justify-center text-white shadow-inner font-sans font-bold text-lg">
               🏪
             </div>
             <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#25d366] border-2 border-[#075e54] rounded-full" />
@@ -993,7 +993,7 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
                             />
                             <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
                               {tmpl.badge && (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#191a1b]/80 backdrop-blur-xs text-[#d4ff4c]">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#191a1b]/80 backdrop-blur-xs text-[#00E5FF]">
                                   {tmpl.badge}
                                 </span>
                               )}
@@ -1012,7 +1012,7 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
                           <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
                             <div>
                               <div className="flex items-center justify-between gap-2">
-                                <h4 className="font-serif font-bold text-sm text-[#191a1b]">
+                                <h4 className="font-sans font-bold text-sm text-[#191a1b]">
                                   {tmpl.name}
                                 </h4>
                                 <div className="flex items-center gap-1.5">
@@ -1094,7 +1094,7 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
                         🚀
                       </div>
                       <div>
-                        <h4 className="font-serif font-bold text-sm text-[#191a1b]">
+                        <h4 className="font-sans font-bold text-sm text-[#191a1b]">
                           Store Configuration Passport
                         </h4>
                         <p className="text-[10px] text-[#5e5a5a]">
@@ -1110,7 +1110,7 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center py-1 border-b border-[#f0f2f5]">
                       <span className="text-[#5e5a5a] font-medium">Store Brand:</span>
-                      <strong className="text-[#191a1b] font-bold font-serif text-sm">
+                      <strong className="text-[#191a1b] font-bold font-sans text-sm">
                         {storeName || 'My Store'}
                       </strong>
                     </div>
@@ -1189,7 +1189,7 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
                       🎉
                     </div>
                     <div>
-                      <h4 className="font-serif font-bold text-base text-[#191a1b]">
+                      <h4 className="font-sans font-bold text-base text-[#191a1b]">
                         Store Setup Complete!
                       </h4>
                       <p className="text-xs text-[#5e5a5a]">

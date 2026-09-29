@@ -263,15 +263,16 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setMerchantData(updatedSession);
         return updatedSession;
       }
-    } catch (err) {
-      console.warn('Failed to sync store status (stale token or reset DB):', err);
-      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-      const onboardingPaths = ['/onboarding', '/store-setup', '/verify-email', '/register', '/setup'];
-      const isOnboarding = onboardingPaths.some((p) => currentPath.startsWith(p));
-      if (!isOnboarding) {
-        // Only clear credentials and redirect on non-onboarding pages
-        cmsService.clearMerchantSession();
-        router.push('/login');
+    } catch (err: any) {
+      console.warn('Failed to sync store status:', err);
+      if (err?.response?.status === 401 || err?.response?.status === 404) {
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        const onboardingPaths = ['/onboarding', '/store-setup', '/verify-email', '/register', '/setup'];
+        const isOnboarding = onboardingPaths.some((p) => currentPath.startsWith(p));
+        if (!isOnboarding) {
+          cmsService.clearMerchantSession();
+          router.push('/login');
+        }
       }
     }
   }, [router]);

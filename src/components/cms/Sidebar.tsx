@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -11,6 +11,7 @@ import {
   Store,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   X,
   Truck,
   Database,
@@ -36,7 +37,13 @@ import {
   Mail,
   CheckSquare,
   Sparkles,
-  Box,
+  Layers,
+  Wand2,
+  TrendingUp,
+  ShieldAlert,
+  CircleDollarSign,
+  Target,
+  LayoutTemplate,
 } from 'lucide-react';
 import { MerchantOnboardingData } from '@/src/types';
 import { usePlanAccess } from '@/src/hooks/usePlanAccess';
@@ -44,9 +51,17 @@ import { useTranslation } from '@/src/context/LanguageContext';
 
 export type CMSView =
   | 'dashboard'
-  | 'ai'
+  | 'commerce-engine'
+  | 'ai-page-builder'
+  | 'ai-analytics'
+  | 'forecasting'
+  | 'inventory-prediction'
+  | 'pricing-insights'
+  | 'customer-segmentation'
+  | 'campaign-optimization'
   | 'products'
   | '3d'
+  | 'image-studio'
   | 'categories'
   | 'orders'
   | 'customers'
@@ -69,6 +84,7 @@ export type CMSView =
   | 'marketing'
   | 'email-templates'
   | 'notifications'
+  | 'product-notifications'
   | 'seo'
   | 'loyalty'
   | 'developer'
@@ -101,12 +117,119 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const router = useRouter();
   const { t } = useTranslation();
 
+  const aiNavItems = [
+    {
+      id: 'commerce-engine' as CMSView,
+      path: '/commerce-engine',
+      label: 'AI Commerce Hub',
+      sublabel: '5-Pillar Orchestrator',
+      icon: Zap,
+      badge: 'Hub',
+    },
+    {
+      id: 'forecasting' as CMSView,
+      path: '/forecasting',
+      label: 'Sales Forecasting',
+      sublabel: 'Predictive demand models',
+      icon: TrendingUp,
+    },
+    {
+      id: 'inventory-prediction' as CMSView,
+      path: '/inventory-prediction',
+      label: 'Stockout Radar',
+      sublabel: 'Inventory velocity & reorders',
+      icon: ShieldAlert,
+    },
+    {
+      id: 'customer-segmentation' as CMSView,
+      path: '/customer-segmentation',
+      label: 'Customer Segments',
+      sublabel: 'RFM cohort personas',
+      icon: Users,
+    },
+    {
+      id: 'campaign-optimization' as CMSView,
+      path: '/campaign-optimization',
+      label: 'Campaign Optimizer',
+      sublabel: 'Multi-channel WhatsApp/Email',
+      icon: Target,
+    },
+    {
+      id: 'pricing-insights' as CMSView,
+      path: '/pricing-insights',
+      label: 'Pricing Insights',
+      sublabel: 'Elasticity & margin scenarios',
+      icon: CircleDollarSign,
+    },
+    {
+      id: 'ai-analytics' as CMSView,
+      path: '/analytics',
+      label: 'AI Analytics & QA',
+      sublabel: 'Natural language store QA',
+      icon: Sparkles,
+    },
+    {
+      id: 'image-studio' as CMSView,
+      path: '/image-studio',
+      label: 'AI Image Studio',
+      sublabel: 'Generative product visuals',
+      icon: Wand2,
+    },
+    {
+      id: 'ai-page-builder' as CMSView,
+      path: '/ai-page-builder',
+      label: 'AI Page Builder',
+      sublabel: 'Prompt-to-page generator',
+      icon: LayoutTemplate,
+      badge: 'New',
+    },
+  ];
+
+  const isAnyAiActive = aiNavItems.some(
+    (ai) => pathname === ai.path || (ai.path !== '/dashboard' && pathname?.startsWith(ai.path))
+  );
+
+  const [aiAccordionOpen, setAiAccordionOpen] = useState<boolean>(true);
+
+  // Auto-expand accordion if user lands directly on an AI route
+  useEffect(() => {
+    if (isAnyAiActive) {
+      setAiAccordionOpen(true);
+    }
+  }, [isAnyAiActive]);
+
   const primaryNavItems = [
     {
       id: 'dashboard' as CMSView,
       path: '/dashboard',
       label: t('nav.dashboard', 'Dashboard'),
       icon: LayoutDashboard,
+    },
+    {
+      id: 'products' as CMSView,
+      path: '/products',
+      label: t('nav.products', 'Products'),
+      icon: Package,
+      badge: productsCount,
+    },
+    {
+      id: 'orders' as CMSView,
+      path: '/orders',
+      label: t('nav.orders', 'Orders'),
+      icon: ShoppingBag,
+      badge: ordersCount || undefined,
+    },
+    {
+      id: 'categories' as CMSView,
+      path: '/categories',
+      label: t('nav.categories', 'Categories'),
+      icon: FolderTree,
+    },
+    {
+      id: 'customers' as CMSView,
+      path: '/customers',
+      label: t('nav.customers', 'Customers'),
+      icon: Users,
     },
     {
       id: 'store-setup' as CMSView,
@@ -117,14 +240,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       id: 'themes' as CMSView,
       path: '/themes',
-      label: t('nav.themes', 'Theme Studio'),
+      label: t('nav.themes', 'Themes'),
       icon: Palette,
-    },
-    {
-      id: 'domains' as CMSView,
-      path: '/domains',
-      label: t('nav.domains', 'Domains & DNS'),
-      icon: Globe,
     },
     {
       id: 'pages' as CMSView,
@@ -145,84 +262,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: BookOpen,
     },
     {
-      id: 'navigation' as CMSView,
-      path: '/navigation',
-      label: t('nav.navigation', 'Navigation'),
-      icon: Compass,
-    },
-    {
-      id: 'products' as CMSView,
-      path: '/products',
-      label: t('nav.products', 'Products Studio'),
-      icon: Package,
-      badge: productsCount,
-    },
-    {
-      id: '3d' as CMSView,
-      path: '/3d',
-      label: t('nav.three_d', '3D AI Studio'),
-      icon: Sparkles,
-    },
-    {
-      id: 'notifications' as CMSView,
-      path: '/products/notifications',
-      label: t('nav.back_in_stock', 'Back-in-Stock Alerts'),
-      icon: BellRing,
-    },
-    {
-      id: 'categories' as CMSView,
-      path: '/categories',
-      label: t('nav.categories', 'Store Categories'),
-      icon: FolderTree,
-    },
-    {
       id: 'seo' as CMSView,
       path: '/seo',
       label: t('nav.seo', 'SEO Governance'),
       icon: Search,
     },
     {
-      id: 'ai' as CMSView,
-      path: '/ai',
-      label: t('nav.ai_studio', 'AI Commerce Studio'),
-      icon: Sparkles,
-    },
-    {
-      id: 'orders' as CMSView,
-      path: '/orders',
-      label: t('nav.orders', 'Orders'),
-      icon: ShoppingBag,
-      badge: 6,
-    },
-    {
-      id: 'customers' as CMSView,
-      path: '/customers',
-      label: t('nav.customers', 'Customers'),
-      icon: Users,
-    },
-    {
-      id: 'reviews' as CMSView,
-      path: '/reviews',
-      label: t('nav.reviews', 'Product Reviews'),
-      icon: Star,
-    },
-    {
-      id: 'billing' as CMSView,
-      path: '/billing',
-      label: t('nav.billing', 'Pricing & Billing'),
-      icon: Zap,
-    },
-    {
-      id: 'payments' as CMSView,
-      path: '/payments',
-      label: t('nav.payments', 'Payments'),
-      icon: CreditCard,
-    },
-    {
-      id: 'team' as CMSView,
-      path: '/team',
-      label: t('nav.team', 'Team & Roles'),
-      icon: UserCheck,
+      id: '3d' as CMSView,
+      path: '/3d',
+      label: t('nav.three_d', '3D Visuals'),
+      icon: Layers,
     },
     {
       id: 'discounts' as CMSView,
@@ -237,22 +286,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Gift,
     },
     {
+      id: 'payments' as CMSView,
+      path: '/payments',
+      label: t('nav.payments', 'Payments'),
+      icon: CreditCard,
+    },
+    {
+      id: 'shipping' as CMSView,
+      path: '/shipping',
+      label: t('nav.shipping', 'Shipping & Logistics'),
+      icon: Truck,
+    },
+    {
       id: 'tax' as CMSView,
       path: '/tax',
       label: t('nav.tax', 'Taxation'),
       icon: Receipt,
     },
     {
-      id: 'shipping' as CMSView,
-      path: '/shipping',
-      label: t('nav.shipping', 'Logistics'),
-      icon: Truck,
+      id: 'reviews' as CMSView,
+      path: '/reviews',
+      label: t('nav.reviews', 'Product Reviews'),
+      icon: Star,
     },
     {
       id: 'marketing' as CMSView,
       path: '/marketing',
-      label: t('nav.marketing', 'Marketing & Pixels'),
+      label: t('nav.marketing', 'Marketing'),
       icon: Megaphone,
+    },
+    {
+      id: 'notifications' as CMSView,
+      path: '/notifications',
+      label: t('nav.notifications', 'Notifications & Alerts'),
+      icon: Bell,
+    },
+    {
+      id: 'product-notifications' as CMSView,
+      path: '/products/notifications',
+      label: t('nav.back_in_stock', 'Stock Alerts'),
+      icon: BellRing,
     },
     {
       id: 'email-templates' as CMSView,
@@ -261,16 +334,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Mail,
     },
     {
-      id: 'notifications' as CMSView,
-      path: '/notifications',
-      label: t('nav.notifications', 'Notifications'),
-      icon: Bell,
+      id: 'domains' as CMSView,
+      path: '/domains',
+      label: t('nav.domains', 'Domains & DNS'),
+      icon: Globe,
     },
     {
       id: 'loyalty' as CMSView,
       path: '/loyalty',
-      label: t('nav.loyalty', 'Loyalty & Rewards'),
+      label: t('nav.loyalty', 'Loyalty Rewards'),
       icon: Crown,
+    },
+    {
+      id: 'team' as CMSView,
+      path: '/team',
+      label: t('nav.team', 'Team & Access'),
+      icon: UserCheck,
+    },
+    {
+      id: 'billing' as CMSView,
+      path: '/billing',
+      label: t('nav.billing', 'Subscription & Billing'),
+      icon: Zap,
     },
     {
       id: 'developer' as CMSView,
@@ -281,7 +366,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       id: 'docs' as CMSView,
       path: '/docs',
-      label: t('nav.docs', 'API Documentation'),
+      label: t('nav.docs', 'API Docs'),
       icon: BookOpen,
     },
   ];
@@ -295,59 +380,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
-  const storeName = merchantData?.store?.storeName || 'Wendr';
-
+  const storeName = merchantData?.store?.storeName || 'OmniStore';
   const userRole = (merchantData?.merchant?.role || 'OWNER').toUpperCase();
   const userPermissions = merchantData?.merchant?.permissions || null;
-
-  const { isStarter, isEnterprise, canUseCustomDomain, canUseLoyalty, canUseDeveloperApi } =
-    usePlanAccess();
   const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN' || userRole === 'MERCHANT';
 
-  // Plan and Role-based authorization checker
-  const isNavAuthorized = (navId: CMSView) => {
-    // Universal access
-    if (navId === 'docs') return true;
-    if (navId === 'settings') return true;
-
-    // Hide plan-locked features from sidebar
-    if (navId === 'domains' && !canUseCustomDomain) return false;
-    if (navId === 'loyalty' && !canUseLoyalty) return false;
-    if (navId === 'developer' && !canUseDeveloperApi) return false;
-
-    // True Owner and Store Admin have full access across all modules
+  const isNavAuthorized = (navId: CMSView): boolean => {
     if (isOwnerOrAdmin) return true;
+    if (
+      navId === 'dashboard' ||
+      navId === 'settings' ||
+      navId === 'store-setup' ||
+      navId === 'docs' ||
+      navId === 'ai-analytics' ||
+      navId === 'forecasting' ||
+      navId === 'inventory-prediction' ||
+      navId === 'pricing-insights' ||
+      navId === 'customer-segmentation' ||
+      navId === 'campaign-optimization'
+    ) return true;
 
-    // Role preset shortcuts for specific job functions:
     if (userRole === 'STOCK_CHECKER') {
-      return navId === 'products' || navId === '3d' || navId === 'categories' || navId === 'dashboard';
+      return navId === 'products' || navId === '3d' || navId === 'categories' || navId === 'product-notifications';
     }
-
     if (userRole === 'FULFILLMENT') {
-      return navId === 'orders' || navId === 'shipping' || navId === 'dashboard';
+      return navId === 'orders' || navId === 'shipping';
     }
-
     if (userRole === 'SUPPORT') {
-      return (
-        navId === 'customers' || navId === 'orders' || navId === 'reviews' || navId === 'dashboard'
-      );
+      return navId === 'customers' || navId === 'orders' || navId === 'reviews' || navId === 'notifications';
     }
-
     if (userRole === 'EDITOR') {
       return (
         navId === 'themes' ||
         navId === '3d' ||
         navId === 'pages' ||
+        navId === 'forms' ||
         navId === 'blog' ||
         navId === 'navigation' ||
-        navId === 'seo' ||
-        navId === 'dashboard'
+        navId === 'seo'
       );
     }
-
     if (userRole === 'MANAGER') {
       return (
-        navId === 'dashboard' ||
         navId === 'products' ||
         navId === '3d' ||
         navId === 'categories' ||
@@ -356,37 +430,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
         navId === 'discounts' ||
         navId === 'shipping' ||
         navId === 'marketing' ||
+        navId === 'notifications' ||
+        navId === 'product-notifications' ||
+        navId === 'email-templates' ||
         navId === 'blog' ||
         navId === 'reviews'
       );
     }
 
-    // Dynamic Permission Checks for CUSTOM / STAFF roles or granularly defined permissions:
     if (userPermissions) {
-      if (navId === 'dashboard') return true;
-      if (navId === 'products') return !!userPermissions.canManageProducts;
+      if (navId === 'products' || navId === 'product-notifications') return !!userPermissions.canManageProducts;
       if (navId === '3d') return userPermissions.canManage3DModels !== false;
-      if (navId === 'categories')
-        return !!userPermissions.canManageProducts || !!userPermissions.canManageInventory;
+      if (navId === 'categories') return !!userPermissions.canManageProducts;
       if (navId === 'orders') return !!userPermissions.canManageOrders;
       if (navId === 'customers') return !!userPermissions.canManageCustomers;
-      if (navId === 'reviews')
-        return !!userPermissions.canManageCustomers || !!userPermissions.canManageProducts;
-      if (navId === 'themes' || navId === 'pages' || navId === 'blog' || navId === 'navigation') {
-        return !!userPermissions.canManageThemes;
-      }
-      if (navId === 'seo')
-        return !!userPermissions.canManageThemes || !!userPermissions.canManageSettings;
+      if (navId === 'reviews') return !!userPermissions.canManageCustomers;
+      if (navId === 'themes' || navId === 'pages' || navId === 'blog') return !!userPermissions.canManageThemes;
+      if (navId === 'seo') return !!userPermissions.canManageThemes;
       if (navId === 'shipping') return !!userPermissions.canManageLogistics;
-      if (navId === 'discounts' || navId === 'marketing')
-        return !!userPermissions.canManageAnalytics || !!userPermissions.canManageProducts;
-      if (navId === 'store-setup') return !!userPermissions.canManageSettings;
-      if (navId === 'tax' || navId === 'payments' || (navId as string) === 'payment')
-        return !!userPermissions.canManagePayments;
-      if (navId === 'loyalty') return !!userPermissions.canManageCustomers && canUseLoyalty;
-      // Sensitive owner-only sections:
-      if (navId === 'team' || navId === 'billing' || navId === 'domains' || navId === 'developer')
-        return false;
+      if (navId === 'discounts' || navId === 'marketing' || navId === 'notifications' || navId === 'email-templates') return !!userPermissions.canManageAnalytics;
+      if (navId === 'tax' || navId === 'payments') return !!userPermissions.canManagePayments;
+      if (navId === 'team' || navId === 'billing' || navId === 'domains' || navId === 'developer') return false;
     }
 
     return false;
@@ -422,7 +486,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return false;
   };
 
-  // Prevent background scrolling on mobile when drawer is open
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = 'hidden';
@@ -440,39 +503,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {mobileOpen && (
         <div
           onClick={onCloseMobile}
-          className="fixed inset-0 bg-[#191a1b]/50 backdrop-blur-xs z-40 md:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
         />
       )}
 
       <aside
-        className={`bg-[#fdf1ef] border-r border-[#cbd5e0]/70 h-screen max-h-screen flex flex-col transition-all duration-300 p-3 sm:p-4 pb-safe pb-4 ${
-          mobileOpen
-            ? 'fixed inset-y-0 left-0 w-72 sm:w-80 max-w-[85vw] shadow-2xl bg-[#ffffff] z-50 animate-in slide-in-from-left duration-200'
+        className={`bg-white dark:bg-[#121212] border-r border-slate-200 dark:border-[#2C2C2E] h-screen max-h-screen flex flex-col transition-all duration-300 p-3 sm:p-4 pb-safe ${mobileOpen
+            ? 'fixed inset-y-0 left-0 w-72 sm:w-80 max-w-[85vw] shadow-2xl bg-white dark:bg-[#121212] z-50 animate-in slide-in-from-left duration-200'
             : 'hidden md:flex sticky top-0 z-20'
-        } ${collapsed ? 'md:w-20' : 'md:w-60'}`}
+          } ${collapsed ? 'md:w-20' : 'md:w-60'}`}
       >
-        {/* Top Brand Header (Pinned) */}
+        {/* Top Brand Header */}
         <div className="flex items-center justify-between px-2 pt-1 h-10 shrink-0 mb-3">
           <div className="flex items-center gap-2.5 overflow-hidden">
-            {/* Statamic S-Mark Logo Pill */}
-            <div className="w-7 h-7 rounded-lg bg-[#191a1b] text-[#d4ff4c] flex items-center justify-center font-serif font-black text-sm shrink-0 shadow-xs">
-              S
+            {/* Logo Badge */}
+            <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#1E1E1E] border border-sky-500/30 dark:border-[#00E5FF]/40 text-sky-600 dark:text-[#00E5FF] flex items-center justify-center font-mono font-black text-sm shrink-0 shadow-sm">
+              ⚡
             </div>
             {(!collapsed || mobileOpen) && (
               <div className="flex flex-col min-w-0">
-                <span className="font-serif font-bold text-base tracking-tight text-[#191a1b] truncate leading-tight">
+                <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white truncate leading-tight">
                   {storeName}
                 </span>
-                <span className="text-[10px] font-sans text-[#5e5a5a] font-medium tracking-wide">
-                  {userRole === 'STOCK_CHECKER'
-                    ? 'Stock & Inventory Clerk'
-                    : userRole === 'FULFILLMENT'
-                      ? 'Logistics Specialist'
-                      : userRole === 'SUPPORT'
-                        ? 'Customer Support'
-                        : userRole === 'EDITOR'
-                          ? 'Theme Designer'
-                          : 'Editorial CMS'}
+                <span className="text-[10px] text-slate-500 dark:text-[#98989D] font-mono tracking-wide">
+                  {userRole}
                 </span>
               </div>
             )}
@@ -481,7 +535,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Desktop Collapse Toggle */}
           <button
             onClick={onToggleCollapse}
-            className="text-[#5e5a5a] hover:text-[#191a1b] p-1.5 rounded-lg hover:bg-[#cbc2ea]/30 transition-colors hidden md:block"
+            className="text-slate-500 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-[#1E1E1E] border border-transparent hover:border-slate-200 dark:hover:border-[#2C2C2E] transition-colors hidden md:block cursor-pointer"
             aria-label="Toggle Sidebar"
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -491,7 +545,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {mobileOpen && (
             <button
               onClick={onCloseMobile}
-              className="text-[#5e5a5a] hover:text-[#191a1b] p-1 rounded-lg hover:bg-[#cbc2ea]/30 transition-colors md:hidden"
+              className="text-slate-500 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-[#1E1E1E] border border-slate-200 dark:border-[#2C2C2E] transition-colors md:hidden cursor-pointer"
               aria-label="Close Sidebar Drawer"
             >
               <X className="w-5 h-5" />
@@ -499,51 +553,173 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* Scrollable Navigation Body */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1 space-y-1 scrollbar-thin scrollbar-thumb-slate-300/80 hover:scrollbar-thumb-slate-400">
+        {/* Scrollable Navigation Items */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1 space-y-1 scrollbar-thin">
           <nav className="space-y-1">
-            {visiblePrimaryNavItems.map((item, idx) => {
-              const Icon = item.icon;
-              const isActive = isItemActive(item.path, item.id);
+            {/* 1. Dashboard (Top Anchor) */}
+            {visiblePrimaryNavItems
+              .filter((item) => item.id === 'dashboard')
+              .map((item, idx) => {
+                const Icon = item.icon;
+                const isActive = isItemActive(item.path, item.id);
 
-              return (
-                <button
-                  key={idx}
-                  onClick={() => handleNavClick(item.id, item.path)}
-                  title={collapsed && !mobileOpen ? item.label : undefined}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-sans transition-all min-h-[40px] ${
-                    isActive
-                      ? 'bg-[#191a1b] text-[#ffffff] font-medium shadow-xs'
-                      : 'text-[#5e5a5a] hover:bg-[#ffffff] hover:text-[#191a1b] font-normal'
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleNavClick(item.id, item.path)}
+                    title={collapsed && !mobileOpen ? item.label : undefined}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all min-h-[40px] cursor-pointer ${isActive
+                        ? 'bg-slate-100 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-900 dark:text-white font-semibold shadow-xs'
+                        : 'text-slate-600 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 hover:text-slate-900 dark:hover:text-white border border-transparent font-normal'
+                      } ${collapsed && !mobileOpen ? 'justify-center' : 'justify-between'}`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Icon
+                        className={`w-4 h-4 shrink-0 transition-colors ${isActive
+                            ? 'text-sky-600 dark:text-[#00E5FF]'
+                            : 'text-slate-400 dark:text-[#98989D]'
+                          }`}
+                      />
+                      {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
+                    </div>
+                  </button>
+                );
+              })}
+
+            {/* 2. ✨ AI INTELLIGENCE ACCORDION (Standard Menu Style + Active Class) */}
+            <div className="space-y-1">
+              <button
+                onClick={() => {
+                  if (collapsed && !mobileOpen) {
+                    handleNavClick('commerce-engine', '/commerce-engine');
+                  } else {
+                    setAiAccordionOpen((prev) => !prev);
+                  }
+                }}
+                title={collapsed && !mobileOpen ? 'AI Intelligence' : undefined}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all min-h-[40px] cursor-pointer ${aiAccordionOpen || isAnyAiActive
+                    ? 'bg-slate-100 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-900 dark:text-white font-semibold shadow-xs'
+                    : 'text-slate-600 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 hover:text-slate-900 dark:hover:text-white border border-transparent font-normal'
                   } ${collapsed && !mobileOpen ? 'justify-center' : 'justify-between'}`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon
-                      className={`w-4 h-4 shrink-0 ${
-                        isActive ? 'text-[#d4ff4c]' : 'text-[#5e5a5a]'
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Sparkles
+                    className={`w-4 h-4 shrink-0 transition-colors ${aiAccordionOpen || isAnyAiActive
+                        ? 'text-sky-600 dark:text-[#00E5FF]'
+                        : 'text-slate-400 dark:text-[#98989D]'
                       }`}
-                    />
-                    {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
-                  </div>
+                  />
+                  {(!collapsed || mobileOpen) && <span className="truncate">AI Intelligence</span>}
+                </div>
 
-                  {(!collapsed || mobileOpen) && item.badge !== undefined && item.badge > 0 && (
+                {(!collapsed || mobileOpen) && (
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <span
-                      className={`w-5 h-5 rounded-full font-bold text-[10px] flex items-center justify-center shrink-0 ${
-                        isActive ? 'bg-[#d4ff4c] text-[#191a1b]' : 'bg-[#191a1b] text-[#d4ff4c]'
-                      }`}
+                      className={`px-2 py-0.5 rounded-full font-mono font-bold text-[10px] flex items-center justify-center shrink-0 ${aiAccordionOpen || isAnyAiActive
+                          ? 'bg-sky-600 dark:bg-[#00E5FF] text-white dark:text-[#121212]'
+                          : 'bg-slate-100 dark:bg-[#1E1E1E] text-sky-600 dark:text-[#00E5FF] border border-slate-200 dark:border-[#2C2C2E]'
+                        }`}
                     >
-                      {item.badge}
+                      8
                     </span>
-                  )}
-                </button>
-              );
-            })}
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${aiAccordionOpen
+                          ? 'rotate-180 text-slate-600 dark:text-slate-300'
+                          : 'text-slate-400 dark:text-[#98989D]'
+                        }`}
+                    />
+                  </div>
+                )}
+              </button>
+
+              {/* Accordion Child Links */}
+              {(!collapsed || mobileOpen) && aiAccordionOpen && (
+                <div className="pl-3 ml-3.5 border-l border-slate-200 dark:border-[#2C2C2E] space-y-0.5 pt-1 pb-1 animate-in slide-in-from-top-1 duration-150">
+                  {aiNavItems.map((aiItem, aIdx) => {
+                    const AiIcon = aiItem.icon;
+                    const isAiItemActive = isItemActive(aiItem.path, aiItem.id);
+
+                    return (
+                      <button
+                        key={aIdx}
+                        onClick={() => handleNavClick(aiItem.id, aiItem.path)}
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs transition-all cursor-pointer ${isAiItemActive
+                            ? 'bg-slate-100 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-900 dark:text-white font-semibold shadow-xs'
+                            : 'text-slate-600 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 hover:text-slate-900 dark:hover:text-white border border-transparent font-normal'
+                          }`}
+                      >
+                        <div className="flex items-center gap-2 truncate min-w-0">
+                          <AiIcon
+                            className={`w-4 h-4 shrink-0 transition-colors ${isAiItemActive
+                                ? 'text-sky-600 dark:text-[#00E5FF]'
+                                : 'text-slate-400 dark:text-[#98989D]'
+                              }`}
+                          />
+                          <span className="truncate">{aiItem.label}</span>
+                        </div>
+                        {aiItem.badge && (
+                          <span
+                            className={`px-1.5 py-0.2 rounded font-mono font-bold text-[9px] uppercase shrink-0 ${isAiItemActive
+                                ? 'bg-sky-600 dark:bg-[#00E5FF] text-white dark:text-[#121212]'
+                                : 'bg-slate-100 dark:bg-[#1E1E1E] text-sky-600 dark:text-[#00E5FF] border border-slate-200 dark:border-[#2C2C2E]'
+                              }`}
+                          >
+                            {aiItem.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 3. Remaining Primary Navigation Items */}
+            {visiblePrimaryNavItems
+              .filter((item) => item.id !== 'dashboard')
+              .map((item, idx) => {
+                const Icon = item.icon;
+                const isActive = isItemActive(item.path, item.id);
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleNavClick(item.id, item.path)}
+                    title={collapsed && !mobileOpen ? item.label : undefined}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all min-h-[40px] cursor-pointer ${isActive
+                        ? 'bg-slate-100 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-900 dark:text-white font-semibold shadow-xs'
+                        : 'text-slate-600 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 hover:text-slate-900 dark:hover:text-white border border-transparent font-normal'
+                      } ${collapsed && !mobileOpen ? 'justify-center' : 'justify-between'}`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Icon
+                        className={`w-4 h-4 shrink-0 transition-colors ${isActive
+                            ? 'text-sky-600 dark:text-[#00E5FF]'
+                            : 'text-slate-400 dark:text-[#98989D]'
+                          }`}
+                      />
+                      {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
+                    </div>
+
+                    {(!collapsed || mobileOpen) && item.badge !== undefined && item.badge > 0 && (
+                      <span
+                        className={`px-2 py-0.5 rounded-full font-mono font-bold text-[10px] flex items-center justify-center shrink-0 ${isActive
+                            ? 'bg-sky-600 dark:bg-[#00E5FF] text-white dark:text-[#121212]'
+                            : 'bg-slate-100 dark:bg-[#1E1E1E] text-sky-600 dark:text-[#00E5FF] border border-slate-200 dark:border-[#2C2C2E]'
+                          }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
           </nav>
         </div>
 
-        {/* Footer Navigation Section (Pinned at Bottom) */}
+        {/* Footer Navigation (Settings) */}
         {visibleSecondaryNavItems.length > 0 && (
-          <div className="space-y-1 pt-3 border-t border-[#cbd5e0]/70 shrink-0 mt-2">
+          <div className="space-y-1 pt-3 border-t border-slate-200 dark:border-[#2C2C2E] shrink-0 mt-2">
             {visibleSecondaryNavItems.map((item, idx) => {
               const Icon = item.icon;
               const isActive = isItemActive(item.path, item.id);
@@ -553,15 +729,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={idx}
                   onClick={() => handleNavClick(item.id, item.path)}
                   title={collapsed && !mobileOpen ? item.label : undefined}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-sans transition-all min-h-[40px] ${
-                    isActive
-                      ? 'bg-[#191a1b] text-[#ffffff] font-medium shadow-xs'
-                      : 'text-[#5e5a5a] hover:bg-[#ffffff] hover:text-[#191a1b] font-normal'
-                  } ${collapsed && !mobileOpen ? 'justify-center' : 'justify-between'}`}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all min-h-[40px] cursor-pointer ${isActive
+                      ? 'bg-slate-100 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-900 dark:text-white font-semibold shadow-xs'
+                      : 'text-slate-600 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 hover:text-slate-900 dark:hover:text-white border border-transparent font-normal'
+                    } ${collapsed && !mobileOpen ? 'justify-center' : 'justify-between'}`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Icon
-                      className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#d4ff4c]' : 'text-[#5e5a5a]'}`}
+                      className={`w-4 h-4 shrink-0 ${isActive ? 'text-sky-600 dark:text-[#00E5FF]' : 'text-slate-400 dark:text-[#98989D]'
+                        }`}
                     />
                     {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
                   </div>

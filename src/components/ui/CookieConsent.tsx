@@ -95,10 +95,10 @@ export function CookieConsent() {
           onClick={() => setShowPreferences(true)}
           title="Cookie & Privacy Preferences"
           aria-label="Cookie & Privacy Preferences"
-          className="fixed bottom-4 left-4 z-40 p-2.5 rounded-full bg-[#191a1b] text-[#fdf1ef] border border-[#333] shadow-lg hover:border-[#d4ff4c] hover:scale-105 transition-all flex items-center gap-2 text-xs group cursor-pointer"
+          className="fixed bottom-4 left-4 z-40 px-3.5 py-2 rounded-full bg-slate-900 dark:bg-[#1E1E1E] text-slate-100 dark:text-white border border-slate-700 dark:border-[#333] shadow-xl hover:border-[#00E5FF] hover:scale-105 transition-all flex items-center gap-2 text-xs group cursor-pointer"
         >
-          <Cookie className="w-4 h-4 text-[#d4ff4c] group-hover:rotate-12 transition-transform" />
-          <span className="hidden sm:inline font-medium text-[11px] opacity-80 group-hover:opacity-100">
+          <Cookie className="w-4 h-4 text-[#00E5FF] group-hover:rotate-12 transition-transform shrink-0" />
+          <span className="font-semibold text-xs text-slate-200 dark:text-slate-100 group-hover:text-[#00E5FF] transition-colors">
             Cookies
           </span>
         </button>
@@ -107,19 +107,19 @@ export function CookieConsent() {
       {/* ─── Main Consent Banner ─── */}
       {isOpen && !showPreferences && (
         <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 max-w-md w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-bottom-5 duration-300">
-          <div className="p-5 sm:p-6 rounded-2xl bg-[#191a1b] text-[#fdf1ef] border border-[#333] shadow-2xl space-y-4">
+          <div className="p-5 sm:p-6 rounded-2xl bg-slate-900 dark:bg-[#191a1b] text-white border border-slate-700 dark:border-[#333] shadow-2xl space-y-4">
             <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#2a2b2c] border border-[#444] text-[#d4ff4c] flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-slate-800 dark:bg-[#2a2b2c] border border-slate-700 dark:border-[#444] text-[#00E5FF] flex items-center justify-center shrink-0">
                 <Cookie className="w-5 h-5" />
               </div>
               <div className="space-y-1">
                 <h3 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
                   <span>Cookie & Privacy Consent</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#2a2b2c] text-[#d4ff4c] font-mono">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 dark:bg-[#2a2b2c] text-[#00E5FF] font-mono">
                     CMS
                   </span>
                 </h3>
-                <p className="text-xs text-[#b8b8b8] leading-relaxed">
+                <p className="text-xs text-slate-300 dark:text-[#b8b8b8] leading-relaxed">
                   We use cookies and local state to keep your session securely authenticated,
                   maintain custom dashboard layouts, and optimize platform latency.
                 </p>
@@ -131,7 +131,7 @@ export function CookieConsent() {
               <button
                 type="button"
                 onClick={() => setShowPreferences(true)}
-                className="text-xs font-semibold text-[#a0a0a0] hover:text-[#d4ff4c] underline flex items-center justify-center gap-1.5 py-1.5 transition cursor-pointer"
+                className="text-xs font-semibold text-slate-400 hover:text-[#00E5FF] underline flex items-center justify-center gap-1.5 py-1.5 transition cursor-pointer"
               >
                 <Settings className="w-3.5 h-3.5" />
                 <span>Customize</span>
@@ -141,14 +141,14 @@ export function CookieConsent() {
                 <button
                   type="button"
                   onClick={handleRejectNonEssential}
-                  className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl text-xs font-semibold text-[#e0e0e0] bg-[#2a2b2c] hover:bg-[#353637] border border-[#444] transition active:scale-[0.98] cursor-pointer"
+                  className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 dark:bg-[#2a2b2c] dark:hover:bg-[#353637] border border-slate-700 dark:border-[#444] transition active:scale-[0.98] cursor-pointer"
                 >
                   Essential Only
                 </button>
                 <button
                   type="button"
                   onClick={handleAcceptAll}
-                  className="flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold text-[#191a1b] bg-[#d4ff4c] hover:bg-[#c2f038] shadow-md transition active:scale-[0.98] cursor-pointer"
+                  className="flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-bold text-slate-900 bg-[#00E5FF] hover:bg-[#38e1ff] shadow-md transition active:scale-[0.98] cursor-pointer"
                 >
                   Accept All
                 </button>
@@ -161,11 +161,11 @@ export function CookieConsent() {
       {/* ─── Preferences Modal ─── */}
       {showPreferences && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-3xl bg-[#191a1b] text-[#fdf1ef] border border-[#333] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-lg rounded-3xl bg-slate-900 dark:bg-[#191a1b] text-white border border-slate-700 dark:border-[#333] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header */}
             <div className="p-6 border-b border-[#2d2e30] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#2a2b2c] border border-[#444] text-[#d4ff4c] flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-[#2a2b2c] border border-[#444] text-[#00E5FF] flex items-center justify-center">
                   <Sliders className="w-5 h-5" />
                 </div>
                 <div>
@@ -205,7 +205,7 @@ export function CookieConsent() {
               <div className="p-4 rounded-2xl bg-[#222324] border border-[#333] space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 font-bold text-white">
-                    <BarChart3 className="w-4 h-4 text-[#d4ff4c]" />
+                    <BarChart3 className="w-4 h-4 text-[#00E5FF]" />
                     <span>Analytics & Performance</span>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -217,7 +217,7 @@ export function CookieConsent() {
                       }
                       className="sr-only peer"
                     />
-                    <div className="w-10 h-5 bg-[#3a3b3d] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#d4ff4c] peer-checked:after:bg-[#191a1b]" />
+                    <div className="w-10 h-5 bg-[#3a3b3d] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#00E5FF] peer-checked:after:bg-[#191a1b]" />
                   </label>
                 </div>
                 <p className="text-xs text-[#a0a0a0] leading-relaxed">
@@ -242,7 +242,7 @@ export function CookieConsent() {
                       }
                       className="sr-only peer"
                     />
-                    <div className="w-10 h-5 bg-[#3a3b3d] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#d4ff4c] peer-checked:after:bg-[#191a1b]" />
+                    <div className="w-10 h-5 bg-[#3a3b3d] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#00E5FF] peer-checked:after:bg-[#191a1b]" />
                   </label>
                 </div>
                 <p className="text-xs text-[#a0a0a0] leading-relaxed">
@@ -272,7 +272,7 @@ export function CookieConsent() {
                 <button
                   type="button"
                   onClick={handleAcceptAll}
-                  className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-bold text-[#191a1b] bg-[#d4ff4c] hover:bg-[#c2f038] shadow-md transition cursor-pointer"
+                  className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-bold text-[#191a1b] bg-[#00E5FF] hover:bg-[#c2f038] shadow-md transition cursor-pointer"
                 >
                   Accept All
                 </button>

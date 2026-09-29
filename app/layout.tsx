@@ -1,51 +1,45 @@
 import type { Metadata, Viewport } from 'next';
-import { Lexend, Fraunces, JetBrains_Mono } from 'next/font/google';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/src/components/providers/HeroUIProvider';
 import { ProtectedRoute } from '@/src/components/auth/ProtectedRoute';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { CookieConsent } from '@/src/components/ui/CookieConsent';
 
-const lexend = Lexend({
-  variable: '--font-lexend',
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
-});
-
-const fraunces = Fraunces({
-  variable: '--font-fraunces',
-  subsets: ['latin'],
-  weight: ['300', '400', '600', '700'],
-  style: ['normal', 'italic'],
+  display: 'swap',
 });
 
 const jetbrainsMono = JetBrains_Mono({
-  variable: '--font-code-saver',
+  variable: '--font-jetbrains-mono',
   subsets: ['latin'],
-  weight: ['300', '400', '700'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'Wendr CMS — Warm Editorial Platform',
+  title: 'OmniStore CMS — Master Control Dashboard',
   description:
-    'Wendr-styled E-Commerce CMS Platform built with Next.js, Tailwind CSS, HeroUI, Formik, and Axios.',
+    'High-performance multi-tenant E-Commerce Management Platform built with Next.js, Fastify, and Tailwind CSS.',
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#fdf1ef',
+  themeColor: '#121212',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  console.log({ clientId: process.env.NEXT_PUBLIC_CLIENT_ID });
   return (
     <html
       lang="en"
-      className={`${lexend.variable} ${fraunces.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full flex flex-col bg-[#fdf1ef] text-[#191a1b] font-sans selection:bg-[#191a1b] selection:text-[#d4ff4c]">
+      <body className="min-h-full flex flex-col bg-[#121212] text-[#FFFFFF] font-sans selection:bg-[#00E5FF] selection:text-[#121212]">
         <Providers>
           <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_CLIENT_ID || ''}>
             <ProtectedRoute>{children}</ProtectedRoute>

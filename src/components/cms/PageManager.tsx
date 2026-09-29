@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { CMSPageData, PageFormData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import { PageBuilderStudio } from '@/src/components/cms/PageBuilderStudio';
+import { AiPageBuilderModal } from '@/src/components/cms/AiPageBuilderModal';
 import {
   FileText,
   Plus,
@@ -46,6 +47,28 @@ export const PageManager: React.FC = () => {
   // Page Builder States
   const [isPageBuilderOpen, setIsPageBuilderOpen] = useState(false);
   const [builderEditingPage, setBuilderEditingPage] = useState<CMSPageData | null>(null);
+  const [isAiPageBuilderOpen, setIsAiPageBuilderOpen] = useState(false);
+
+  const handleApplyFromAi = (
+    blocks: any[],
+    meta?: { title: string; slug: string; metaTitle: string; metaDescription: string }
+  ) => {
+    const newPage: CMSPageData = {
+      id: `ai_${Date.now()}`,
+      title: meta?.title || 'AI Generated Page',
+      slug: meta?.slug || `/pages/ai-${Date.now()}`,
+      content: JSON.stringify(blocks),
+      pageType: 'CUSTOM',
+      metaTitle: meta?.metaTitle || '',
+      metaDescription: meta?.metaDescription || '',
+      status: 'PUBLISHED',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setBuilderEditingPage(newPage);
+    setIsPageBuilderOpen(true);
+    showToast(`AI generated page created! Opening in Visual Builder Studio...`, 'success');
+  };
 
   // Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -232,24 +255,23 @@ export const PageManager: React.FC = () => {
       )}
 
       {/* Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm relative overflow-hidden space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/30">
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-200/80 dark:border-indigo-800/60">
                 Storefront Architecture
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200/80 dark:border-emerald-800/60 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 {pages.length} Pages Configured
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <FileText className="w-8 h-8 text-indigo-400" />
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground flex items-center gap-3">
+              <FileText className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
               <span>Pages & Custom Page Studio</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
               Manage system routes (Home, Catalog, Cart, Checkout, 404), policy pages (Privacy,
               Terms, Shipping, Refund), brand pages (About, Contact, FAQ), and create custom
               merchant landing pages.
@@ -259,20 +281,29 @@ export const PageManager: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
               type="button"
+              onClick={() => setIsAiPageBuilderOpen(true)}
+              className="px-5 py-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 text-xs font-black border border-indigo-200/80 dark:border-indigo-800/60 flex items-center gap-2 transition-all cursor-pointer transform active:scale-95 shadow-xs"
+            >
+              <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+              <span>AI Page Builder</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => {
                 setBuilderEditingPage(null);
                 setIsPageBuilderOpen(true);
               }}
-              className="px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-extrabold border border-white/20 shadow-lg backdrop-blur-sm flex items-center gap-2 transition-all cursor-pointer"
+              className="px-5 py-3 rounded-2xl bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-accent text-slate-700 dark:text-slate-200 text-xs font-extrabold border border-slate-200/80 dark:border-border shadow-xs flex items-center gap-2 transition-all cursor-pointer transform active:scale-95"
             >
-              <LayoutTemplate className="w-4 h-4 text-indigo-300" />
+              <LayoutTemplate className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span>Visual Page Builder</span>
             </button>
 
             <button
               type="button"
               onClick={handleOpenCreateModal}
-              className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all cursor-pointer"
+              className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow flex items-center gap-2 transition-all cursor-pointer transform active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>Create Custom Page</span>
@@ -281,30 +312,30 @@ export const PageManager: React.FC = () => {
         </div>
 
         {/* Overview Stats Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-700/60">
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-slate-100 dark:border-border/60">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/60 dark:border-border/60 space-y-1">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
               System Pages
             </span>
-            <span className="text-xl font-black text-white">{systemCount}</span>
+            <span className="text-xl font-black text-slate-900 dark:text-foreground">{systemCount}</span>
           </div>
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/60 dark:border-border/60 space-y-1">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
               Brand Pages
             </span>
-            <span className="text-xl font-black text-indigo-300">{brandCount}</span>
+            <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">{brandCount}</span>
           </div>
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/60 dark:border-border/60 space-y-1">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
               Legal & Policies
             </span>
-            <span className="text-xl font-black text-amber-300">{policyCount}</span>
+            <span className="text-xl font-black text-amber-600 dark:text-amber-400">{policyCount}</span>
           </div>
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/60 dark:border-border/60 space-y-1">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
               Custom Merchant
             </span>
-            <span className="text-xl font-black text-emerald-300">{customCount}</span>
+            <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{customCount}</span>
           </div>
         </div>
       </div>
@@ -1273,6 +1304,13 @@ export const PageManager: React.FC = () => {
           }}
         />
       )}
+
+      {/* AI Page Builder Modal */}
+      <AiPageBuilderModal
+        isOpen={isAiPageBuilderOpen}
+        onClose={() => setIsAiPageBuilderOpen(false)}
+        onApplyBlocks={handleApplyFromAi}
+      />
     </div>
   );
 };

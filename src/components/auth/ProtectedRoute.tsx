@@ -38,7 +38,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     setAuthStatus({ loaded: true, hasToken });
 
     if (hasToken && isPublic) {
-      router.replace('/');
+      router.replace('/dashboard');
     } else if (!hasToken && !isPublic) {
       router.replace('/login');
     }

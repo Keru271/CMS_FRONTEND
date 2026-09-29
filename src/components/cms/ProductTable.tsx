@@ -65,7 +65,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   return (
     <div className="space-y-4">
       {/* Table Header & Controls Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-lg">
         {/* Search Input */}
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-[#5e5a5a] absolute left-3 top-3" />
@@ -74,7 +74,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             placeholder="Search products by title, SKU..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans text-[#191a1b] placeholder:text-[#beb9b3] outline-none focus:border-[#cbc2ea] focus:ring-2 focus:ring-[#cbc2ea]/40 transition-all"
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#121212] border border-[#cbd5e0] text-xs font-sans text-[#191a1b] placeholder:text-[#beb9b3] outline-none focus:border-[#cbc2ea] focus:ring-2 focus:ring-[#cbc2ea]/40 transition-all"
           />
         </div>
 
@@ -84,7 +84,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="flex-1 sm:flex-none min-w-[130px] bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
+            className="flex-1 sm:flex-none min-w-[130px] bg-[#121212] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
           >
             <option value="all">All Categories</option>
             {categories.map((cat) => (
@@ -98,7 +98,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="flex-1 sm:flex-none min-w-[130px] bg-[#fdf1ef] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
+            className="flex-1 sm:flex-none min-w-[130px] bg-[#121212] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
           >
             <option value="all">All Statuses</option>
             <option value="active">Active (Live)</option>
@@ -111,7 +111,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             <button
               type="button"
               onClick={() => setIsImportModalOpen(true)}
-              className="flex-1 sm:flex-none justify-center bg-[#fdf1ef] hover:bg-[#fae1dc] border border-[#cbd5e0] text-[#191a1b] font-sans font-medium text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="flex-1 sm:flex-none justify-center bg-[#121212] hover:bg-[#fae1dc] border border-[#cbd5e0] text-[#191a1b] font-sans font-medium text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <FileSpreadsheet className="w-4 h-4 text-[#10b981]" />
               <span>Import</span>
@@ -120,7 +120,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             <button
               type="button"
               onClick={() => setIsExportModalOpen(true)}
-              className="flex-1 sm:flex-none justify-center bg-[#fdf1ef] hover:bg-[#fae1dc] border border-[#cbd5e0] text-[#191a1b] font-sans font-medium text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="flex-1 sm:flex-none justify-center bg-[#121212] hover:bg-[#fae1dc] border border-[#cbd5e0] text-[#191a1b] font-sans font-medium text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Download className="w-4 h-4 text-[#6366f1]" />
               <span>Export</span>
@@ -128,9 +128,9 @@ export const ProductTable: React.FC<ProductTableProps> = ({
 
             <button
               onClick={onAddProduct}
-              className="flex-1 sm:flex-none justify-center bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] font-sans font-medium text-xs px-4 py-2 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="flex-1 sm:flex-none justify-center bg-[#191a1b] hover:bg-[#000000] text-[#00E5FF] font-sans font-medium text-xs px-4 py-2 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Plus className="w-4 h-4 text-[#d4ff4c]" />
+              <Plus className="w-4 h-4 text-[#00E5FF]" />
               <span>Add Product</span>
             </button>
           </div>
@@ -138,10 +138,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
       </div>
 
       {/* Products Data Table */}
-      <div className="rounded-2xl bg-[#ffffff] border border-[#cbd5e0] overflow-hidden shadow-statamic">
+      <div className="rounded-2xl bg-[#ffffff] border border-[#cbd5e0] overflow-hidden shadow-lg">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-sans min-w-[680px]">
-            <thead className="border-b border-[#cbd5e0] bg-[#fdf1ef] text-[#5e5a5a] uppercase font-medium text-[10px] tracking-wider">
+            <thead className="border-b border-[#cbd5e0] bg-[#121212] text-[#5e5a5a] uppercase font-medium text-[10px] tracking-wider">
               <tr>
                 <th className="py-3.5 px-4 sm:px-5">Product Details</th>
                 <th className="py-3.5 px-4">SKU Code</th>
@@ -158,7 +158,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   <td colSpan={7} className="py-16 text-center text-[#5e5a5a]">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Package className="w-10 h-10 text-[#beb9b3]" />
-                      <span className="font-serif text-lg text-[#191a1b]">No Products Found</span>
+                      <span className="font-sans text-lg text-[#191a1b]">No Products Found</span>
                       <span className="text-xs font-sans text-[#5e5a5a]">
                         Try clearing search filters or add a new product.
                       </span>
@@ -167,14 +167,14 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                 </tr>
               ) : (
                 filteredProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-[#fdf1ef]/60 transition-colors group">
+                  <tr key={p.id} className="hover:bg-[#121212]/60 transition-colors group">
                     {/* Product info */}
                     <td className="py-3.5 px-4 sm:px-5">
                       <div className="flex items-center gap-3">
                         <img
                           src={p.image}
                           alt={p.name}
-                          className="w-10 h-10 object-cover rounded-lg border border-[#cbd5e0] bg-[#fdf1ef] shrink-0"
+                          className="w-10 h-10 object-cover rounded-lg border border-[#cbd5e0] bg-[#121212] shrink-0"
                         />
                         <div className="min-w-0">
                           <h4 className="font-sans font-medium text-[#191a1b] text-xs line-clamp-1 group-hover:text-[#4c305a] transition-colors">
@@ -234,10 +234,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                       <span
                         className={`px-2.5 py-1 rounded-full text-[10px] font-sans font-medium uppercase tracking-wider ${
                           p.status === 'active'
-                            ? 'bg-[#d4ff4c]/40 text-[#191a1b] border border-[#191a1b]'
+                            ? 'bg-[#00E5FF]/40 text-[#191a1b] border border-[#191a1b]'
                             : p.status === 'draft'
                               ? 'bg-[#d7e5fe] text-[#191a1b] border border-[#cbd5e0]'
-                              : 'bg-[#fdf1ef] text-[#5e5a5a] border border-[#cbd5e0]'
+                              : 'bg-[#121212] text-[#5e5a5a] border border-[#cbd5e0]'
                         }`}
                       >
                         {p.status}
@@ -249,7 +249,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => onEditProduct(p)}
-                          className="p-1.5 rounded-lg text-[#5e5a5a] hover:text-[#191a1b] hover:bg-[#fdf1ef] transition-colors"
+                          className="p-1.5 rounded-lg text-[#5e5a5a] hover:text-[#191a1b] hover:bg-[#121212] transition-colors"
                           aria-label="Edit product"
                         >
                           <Edit2 className="w-4 h-4" />

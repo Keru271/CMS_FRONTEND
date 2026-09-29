@@ -6,7 +6,6 @@ import {
   ShieldCheck,
   Zap,
   Globe,
-  DollarSign,
   Lock,
   Eye,
   EyeOff,
@@ -18,11 +17,8 @@ import {
   CheckCircle2,
   TrendingUp,
   Percent,
-  ArrowUpRight,
-  HelpCircle,
   Sliders,
   Sparkles,
-  Smartphone,
   Building2,
   Wallet,
   Mail,
@@ -36,7 +32,6 @@ import {
   CMSPaymentSettings,
   UpdatePaymentSettingsPayload,
   RazorpayConnectStatus,
-  StripeConnectStatus,
   PaymentTransactionData,
   PaymentTestResponse,
   PaymentTransactionsSummary,
@@ -45,7 +40,6 @@ import {
 export const PaymentStudio: React.FC = () => {
   const [settings, setSettings] = useState<CMSPaymentSettings | null>(null);
   const [rzpConnect, setRzpConnect] = useState<RazorpayConnectStatus | null>(null);
-  const [stripeConnect, setStripeConnect] = useState<StripeConnectStatus | null>(null);
   const [formData, setFormData] = useState<UpdatePaymentSettingsPayload>({});
   const [transactions, setTransactions] = useState<PaymentTransactionData[]>([]);
   const [summary, setSummary] = useState<PaymentTransactionsSummary | null>(null);
@@ -75,23 +69,9 @@ export const PaymentStudio: React.FC = () => {
   const [partnerAutoCapture, setPartnerAutoCapture] = useState(true);
   const [partnerTestMode, setPartnerTestMode] = useState(true);
 
-  // Stripe Connect Flow States
-  const [showStripeConnectModal, setShowStripeConnectModal] = useState(false);
-  const [stripeConnectStep, setStripeConnectStep] = useState<1 | 2 | 3>(1);
-  const [stripeConnectMode, setStripeConnectMode] = useState<'OAUTH' | 'MANUAL'>('OAUTH');
-  const [stripeConnectSubmitting, setStripeConnectSubmitting] = useState(false);
-  const [disconnectingStripe, setDisconnectingStripe] = useState(false);
-  const [stripePartnerMerchantName, setStripePartnerMerchantName] =
-    useState('OmniStore Global Direct');
-  const [stripePartnerPk, setStripePartnerPk] = useState('');
-  const [stripePartnerSk, setStripePartnerSk] = useState('');
-  const [stripePartnerCountry, setStripePartnerCountry] = useState('US');
-  const [stripePartnerTestMode, setStripePartnerTestMode] = useState(true);
-
   // Key visibility toggles
   const [showRzpSecret, setShowRzpSecret] = useState(false);
   const [showPaypalSecret, setShowPaypalSecret] = useState(false);
-  const [showStripeSecret, setShowStripeSecret] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Gateway Connection Test states
@@ -99,13 +79,9 @@ export const PaymentStudio: React.FC = () => {
   const [rzpTestResult, setRzpTestResult] = useState<PaymentTestResponse | null>(null);
   const [testingPaypal, setTestingPaypal] = useState(false);
   const [paypalTestResult, setPaypalTestResult] = useState<PaymentTestResponse | null>(null);
-  const [testingStripe, setTestingStripe] = useState(false);
-  const [stripeTestResult, setStripeTestResult] = useState<PaymentTestResponse | null>(null);
 
   // Active Tab: 'gateways' | 'transactions' | 'calculator'
-  const [activeTab, setActiveTab] = useState<'gateways' | 'transactions' | 'calculator'>(
-    'gateways',
-  );
+  const [activeTab, setActiveTab] = useState<'gateways' | 'transactions' | 'calculator'>('gateways');
   const [filterGateway, setFilterGateway] = useState<string>('ALL');
 
   // Fee Calculator State
@@ -119,19 +95,16 @@ export const PaymentStudio: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [settingsData, txData, rzpConnectData, stripeConnectData] = await Promise.all([
+      const [settingsData, txData, rzpConnectData] = await Promise.all([
         cmsService.getPaymentSettings().catch(() => null),
         cmsService.getPaymentTransactions().catch(() => null),
         cmsService.getRazorpayConnectStatus().catch(() => null),
-        cmsService.getStripeConnectStatus().catch(() => null),
       ]);
       setSettings(settingsData);
       setRzpConnect(rzpConnectData);
-      setStripeConnect(stripeConnectData);
       setFormData({
         paymentRazorpayActive: settingsData?.paymentRazorpayActive ?? false,
         paymentPaypalActive: settingsData?.paymentPaypalActive ?? false,
-        paymentStripeActive: settingsData?.paymentStripeActive ?? false,
         paymentCodActive: settingsData?.paymentCodActive ?? true,
         paymentTestMode: settingsData?.paymentTestMode ?? true,
         razorpayKeyId: settingsData?.razorpayKeyId || '',
@@ -142,9 +115,6 @@ export const PaymentStudio: React.FC = () => {
         paypalClientSecret: '',
         paypalWebhookId: '',
         paypalMode: (settingsData?.paypalMode as any) || 'sandbox',
-        stripePublishableKey: settingsData?.stripePublishableKey || '',
-        stripeSecretKey: '',
-        stripeWebhookSecret: '',
         codFee: settingsData?.codFee ?? 0,
         codMinLimit: settingsData?.codMinLimit ?? 0,
         codMaxLimit: settingsData?.codMaxLimit ?? 50000,
@@ -158,65 +128,6 @@ export const PaymentStudio: React.FC = () => {
       showToast('Failed to load payment configuration', 'error');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleOpenStripeConnectModal = () => {
-    setStripeConnectStep(1);
-    setStripePartnerPk(formData.stripePublishableKey || '');
-    setStripePartnerSk('');
-    setStripePartnerCountry(stripeConnect?.country || 'US');
-    setStripePartnerTestMode(formData.paymentTestMode ?? true);
-    setShowStripeConnectModal(true);
-  };
-
-  const handleStartStripeOAuthHandshake = async () => {
-    setStripeConnectSubmitting(true);
-    try {
-      setStripeConnectStep(2);
-      await new Promise((r) => setTimeout(r, 1200));
-
-      const res = await cmsService.authorizeStripeConnect({
-        merchantName: stripePartnerMerchantName,
-        country: stripePartnerCountry,
-        testMode: stripePartnerTestMode,
-        publishableKey:
-          stripePartnerPk ||
-          (stripePartnerTestMode ? 'pk_test_standardDemoStripe2026' : `pk_live_${Date.now()}`),
-        secretKey:
-          stripePartnerSk ||
-          (stripePartnerTestMode
-            ? 'sk_test_standardSecretStripe2026'
-            : `sk_live_sec_${Date.now()}`),
-      });
-
-      setStripeConnectStep(3);
-      showToast(res.message, 'success');
-      await loadData();
-    } catch (err: any) {
-      showToast('Stripe Connect authorization failed', 'error');
-      setStripeConnectStep(1);
-    } finally {
-      setStripeConnectSubmitting(false);
-    }
-  };
-
-  const handleDisconnectStripe = async () => {
-    if (
-      !confirm(
-        'Are you sure you want to disconnect your linked Stripe Connect account? International checkout will be paused.',
-      )
-    )
-      return;
-    setDisconnectingStripe(true);
-    try {
-      await cmsService.disconnectStripeConnect('Merchant disconnected from CMS');
-      showToast('Stripe Connect account unlinked successfully', 'success');
-      await loadData();
-    } catch (err) {
-      showToast('Failed to disconnect Stripe account', 'error');
-    } finally {
-      setDisconnectingStripe(false);
     }
   };
 
@@ -440,36 +351,6 @@ export const PaymentStudio: React.FC = () => {
     }
   };
 
-  const handleTestStripe = async () => {
-    setTestingStripe(true);
-    setStripeTestResult(null);
-    try {
-      const res = await cmsService.testPaymentGateway({
-        gateway: 'STRIPE',
-        publishableKey:
-          formData.stripePublishableKey ||
-          settings?.stripePublishableKey ||
-          'pk_test_standardDemoStripe2026',
-        secretKey: formData.stripeSecretKey || 'sk_test_secret_demo',
-        testMode: formData.paymentTestMode,
-      });
-      setStripeTestResult(res);
-      showToast(res.message, 'success');
-    } catch (err: any) {
-      setStripeTestResult({
-        success: false,
-        gateway: 'STRIPE',
-        mode: 'TEST',
-        message: err?.response?.data?.message || 'Stripe connection test failed',
-        supportedCurrencies: [],
-        features: [],
-      });
-      showToast('Stripe verification failed', 'error');
-    } finally {
-      setTestingStripe(false);
-    }
-  };
-
   const handleRefund = async (txId: string, amount: number) => {
     if (!confirm(`Are you sure you want to refund this transaction of ₹/${amount}?`)) return;
     try {
@@ -490,12 +371,17 @@ export const PaymentStudio: React.FC = () => {
     return (t?.gateway || '').toUpperCase() === filterGateway;
   });
 
+  const activeGatewaysCount =
+    (formData.paymentRazorpayActive ? 1 : 0) +
+    (formData.paymentPaypalActive ? 1 : 0) +
+    (formData.paymentCodActive ? 1 : 0);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[450px]">
         <div className="flex flex-col items-center gap-3">
-          <RefreshCw className="w-8 h-8 animate-spin text-[#191a1b]" />
-          <p className="text-sm font-sans text-[#5e5a5a]">
+          <RefreshCw className="w-8 h-8 animate-spin text-indigo-600" />
+          <p className="text-xs font-bold text-slate-500 animate-pulse">
             Loading Payment Studio configuration...
           </p>
         </div>
@@ -504,83 +390,84 @@ export const PaymentStudio: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 font-sans pb-16">
+    <div className="space-y-6 font-sans pb-16 max-w-7xl mx-auto">
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 text-sm font-medium animate-in fade-in slide-in-from-bottom-3 ${
-            toast.type === 'success' ? 'bg-[#191a1b] text-[#d4ff4c]' : 'bg-rose-600 text-white'
+          className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 text-xs font-bold backdrop-blur-md border transition-all animate-in slide-in-from-bottom-5 ${
+            toast.type === 'success'
+              ? 'bg-emerald-900/90 text-white border-emerald-700'
+              : 'bg-rose-900/90 text-white border-rose-700'
           }`}
         >
           {toast.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-[#d4ff4c]" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           ) : (
-            <AlertCircle className="w-5 h-5" />
+            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
           )}
           <span>{toast.message}</span>
         </div>
       )}
 
       {/* Top Header Card */}
-      <div className="p-6 sm:p-8 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-statamic space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#191a1b] text-[#d4ff4c] flex items-center justify-center shadow-xs">
-                <CreditCard className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="font-serif font-normal text-2xl text-[#191a1b] flex items-center gap-2">
-                  <span>Payment Gateway Studio</span>
-                  <span className="text-xs font-sans px-2.5 py-0.5 rounded-full bg-[#fdf1ef] border border-[#cbd5e0] text-[#191a1b] font-semibold">
-                    Dual-Route Architecture
-                  </span>
-                </h2>
-                <p className="text-xs font-sans text-[#5e5a5a] mt-0.5">
-                  Configure Indian domestic checkout with{' '}
-                  <strong className="text-[#191a1b]">Razorpay</strong> (UPI & NetBanking) and
-                  international cross-border processing with{' '}
-                  <strong className="text-[#191a1b]">Stripe</strong>.
-                </p>
-              </div>
+      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6 relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-200/80 dark:border-indigo-800/60">
+                Payment Infrastructure
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200/80 dark:border-emerald-800/60 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Dual-Route Architecture
+              </span>
             </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground flex items-center gap-3">
+              <CreditCard className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+              <span>Payment Gateway Studio</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
+              Configure Indian domestic checkout with <strong className="text-slate-800 dark:text-slate-200">Razorpay</strong> (UPI & NetBanking) and international cross-border processing with <strong className="text-slate-800 dark:text-slate-200">PayPal</strong> (PayPal Wallet, Global Cards & BNPL).
+            </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
             {/* Live vs Sandbox Switch */}
-            <div className="flex items-center gap-2 bg-[#fdf1ef] px-3 py-1.5 rounded-xl border border-[#cbd5e0]">
-              <span className="text-xs font-medium text-[#5e5a5a]">Sandbox Mode:</span>
+            <div className="flex items-center gap-2.5 bg-slate-100/80 dark:bg-accent/40 px-3.5 py-2 rounded-2xl border border-slate-200/80 dark:border-border/60">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Environment:</span>
               <button
                 type="button"
                 onClick={() =>
                   setFormData({ ...formData, paymentTestMode: !formData.paymentTestMode })
                 }
-                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
-                  formData.paymentTestMode ? 'bg-[#191a1b]' : 'bg-emerald-600'
+                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
+                  formData.paymentTestMode ? 'bg-amber-500' : 'bg-emerald-600'
                 }`}
               >
                 <div
                   className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                    formData.paymentTestMode ? 'translate-x-5' : 'translate-x-0'
+                    formData.paymentTestMode ? 'translate-x-0' : 'translate-x-5'
                   }`}
                 />
               </button>
               <span
-                className={`text-[10px] font-bold uppercase tracking-wider ${formData.paymentTestMode ? 'text-amber-700' : 'text-emerald-700'}`}
+                className={`text-[10px] font-extrabold uppercase tracking-wider ${
+                  formData.paymentTestMode ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400'
+                }`}
               >
-                {formData.paymentTestMode ? 'TEST' : 'LIVE'}
+                {formData.paymentTestMode ? 'SANDBOX' : 'LIVE'}
               </span>
             </div>
 
             <button
               onClick={() => handleSaveSettings()}
               disabled={isSaving}
-              className="px-4 py-2 bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] text-xs font-sans font-semibold rounded-xl shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50"
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-2xl shadow-sm hover:shadow flex items-center gap-2 transition-all cursor-pointer transform active:scale-95 disabled:opacity-50"
             >
               {isSaving ? (
-                <RefreshCw className="w-4 h-4 animate-spin text-[#d4ff4c]" />
+                <RefreshCw className="w-4 h-4 animate-spin text-white" />
               ) : (
-                <Save className="w-4 h-4 text-[#d4ff4c]" />
+                <Save className="w-4 h-4 text-white" />
               )}
               <span>Save Configuration</span>
             </button>
@@ -588,58 +475,58 @@ export const PaymentStudio: React.FC = () => {
         </div>
 
         {/* Studio Navigation Tabs */}
-        <div className="flex items-center gap-2 border-b border-[#cbd5e0]/60 pt-2">
+        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100/80 dark:bg-accent/40 rounded-2xl border border-slate-200/80 dark:border-border/60 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('gateways')}
-            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 transition-all border-b-2 ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
               activeTab === 'gateways'
-                ? 'border-[#191a1b] text-[#191a1b]'
-                : 'border-transparent text-[#5e5a5a] hover:text-[#191a1b]'
+                ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/80 dark:border-border'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground hover:bg-white/60 dark:hover:bg-accent/60 border border-transparent'
             }`}
           >
-            <Sliders className="w-4 h-4" />
-            <span>Gateway Providers (2 Active)</span>
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Gateway Providers ({activeGatewaysCount} Active)</span>
           </button>
 
           <button
             onClick={() => setActiveTab('transactions')}
-            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 transition-all border-b-2 ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
               activeTab === 'transactions'
-                ? 'border-[#191a1b] text-[#191a1b]'
-                : 'border-transparent text-[#5e5a5a] hover:text-[#191a1b]'
+                ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/80 dark:border-border'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground hover:bg-white/60 dark:hover:bg-accent/60 border border-transparent'
             }`}
           >
-            <TrendingUp className="w-4 h-4" />
+            <TrendingUp className="w-3.5 h-3.5" />
             <span>Transactions & Settlement Audit ({transactions.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('calculator')}
-            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 transition-all border-b-2 ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
               activeTab === 'calculator'
-                ? 'border-[#191a1b] text-[#191a1b]'
-                : 'border-transparent text-[#5e5a5a] hover:text-[#191a1b]'
+                ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/80 dark:border-border'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground hover:bg-white/60 dark:hover:bg-accent/60 border border-transparent'
             }`}
           >
-            <Percent className="w-4 h-4" />
+            <Percent className="w-3.5 h-3.5" />
             <span>MDR Fee Savings Calculator</span>
           </button>
         </div>
 
         {/* High-level Metrics Row */}
         {summary && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/80 dark:border-border/60 space-y-1.5 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   India (Razorpay)
                 </span>
-                <span className="text-xs">🇮🇳</span>
+                <span className="text-sm">🇮🇳</span>
               </div>
-              <p className="text-xl font-serif font-bold text-[#191a1b]">
+              <p className="text-2xl font-black text-slate-900 dark:text-foreground font-mono tracking-tight">
                 ₹{(summary.inrVolume ?? (summary as any).totalVolume ?? 0).toLocaleString('en-IN')}
               </p>
-              <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>
                   ₹
@@ -651,37 +538,41 @@ export const PaymentStudio: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
+            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/80 dark:border-border/60 space-y-1.5 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider">
-                  International (Stripe)
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  International (PayPal)
                 </span>
-                <span className="text-xs">🌍</span>
+                <span className="text-sm">🌍</span>
               </div>
-              <p className="text-xl font-serif font-bold text-[#191a1b]">
+              <p className="text-2xl font-black text-slate-900 dark:text-foreground font-mono tracking-tight">
                 ${(summary.usdVolume ?? 0).toLocaleString('en-US')}
               </p>
-              <p className="text-[11px] text-[#5e5a5a]">Global Cards, Apple Pay & 135+ FX</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                PayPal Wallet, 200+ Countries & 25+ FX
+              </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
-              <span className="text-[11px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider block">
+            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/80 dark:border-border/60 space-y-1.5 shadow-xs">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                 Total Orders Processed
               </span>
-              <p className="text-xl font-serif font-bold text-[#191a1b]">
+              <p className="text-2xl font-black text-slate-900 dark:text-foreground font-mono tracking-tight">
                 {summary.totalOrdersCount ?? (summary as any).settledCount ?? 0}
               </p>
-              <p className="text-[11px] text-[#5e5a5a]">Seamless instant checkout</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                Seamless instant checkout
+              </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-1">
-              <span className="text-[11px] font-sans font-medium text-[#5e5a5a] uppercase tracking-wider block">
+            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/80 dark:border-border/60 space-y-1.5 shadow-xs">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                 Payment Success Rate
               </span>
-              <p className="text-xl font-serif font-bold text-emerald-700">
+              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">
                 {summary.successRatePercentage ?? 99.2}%
               </p>
-              <p className="text-[11px] text-emerald-700 font-semibold">
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
                 Industry leading conversion
               </p>
             </div>
@@ -692,68 +583,67 @@ export const PaymentStudio: React.FC = () => {
       {/* ─── TAB 1: GATEWAYS CONFIGURATION ────────────────────────────────────── */}
       {activeTab === 'gateways' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 🇮🇳 RAZORPAY GATEWAY CARD WITH RAZORPAY CONNECT */}
-          <div className="p-6 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-sm space-y-5 flex flex-col justify-between relative overflow-hidden">
-            {/* Top Connect Status Ribbon */}
-            <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-[#0c2340] to-[#0d3460] text-white shadow-xs">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#00bafe]/20 text-[#00bafe] flex items-center justify-center font-bold text-sm">
-                  ⚡
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-white tracking-wide">
-                      Razorpay Partner Connect
-                    </span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-[#00bafe] text-[#0c2340]">
-                      {rzpConnect?.isConnected ? 'ACTIVE' : 'READY'}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-300">
-                    {rzpConnect?.isConnected
-                      ? `Account: ${rzpConnect.accountId || 'acc_connected'} • KYC: ${rzpConnect.kycStatus || 'VERIFIED'}`
-                      : '1-Click Onboarding for UPI 0% MDR & Instant Settlements'}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleOpenConnectModal}
-                className="px-3 py-1.5 rounded-lg bg-[#00bafe] hover:bg-[#38cdff] text-[#0c2340] font-bold text-xs shadow-xs transition flex items-center gap-1 cursor-pointer"
-              >
-                <Zap className="w-3.5 h-3.5 fill-[#0c2340]" />
-                <span>{rzpConnect?.isConnected ? 'Manage Connect' : 'Connect Razorpay'}</span>
-              </button>
-            </div>
-
+          {/* 🇮🇳 RAZORPAY GATEWAY CARD */}
+          <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5 flex flex-col justify-between relative overflow-hidden">
             <div className="space-y-5">
-              <div className="flex items-start justify-between pb-4 border-b border-[#cbd5e0]/60">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-[#0c2340] text-[#00bafe] flex items-center justify-center font-bold text-lg shadow-sm">
-                    R
+              {/* Top Connect Status Ribbon */}
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-sky-900 to-indigo-950 text-white shadow-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-sky-400/20 text-sky-300 flex items-center justify-center font-bold text-sm">
+                    ⚡
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-serif font-bold text-lg text-[#191a1b]">Razorpay</h3>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#00bafe]/10 text-[#006f9c]">
-                        INDIA DOMESTIC
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-white tracking-wide">
+                        Razorpay Partner Connect
                       </span>
-                      {rzpConnect?.isConnected && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          <span>Linked Account</span>
-                        </span>
-                      )}
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-sky-400 text-slate-950">
+                        {rzpConnect?.isConnected ? 'ACTIVE' : 'READY'}
+                      </span>
                     </div>
-                    <p className="text-xs text-[#5e5a5a]">
-                      UPI (Google Pay, PhonePe, Paytm), NetBanking (50+ Banks), Debit/Credit Cards &
-                      EMI.
+                    <p className="text-[10px] text-slate-300">
+                      {rzpConnect?.isConnected
+                        ? `Account: ${rzpConnect.accountId || 'acc_connected'} • KYC: ${rzpConnect.kycStatus || 'VERIFIED'}`
+                        : '1-Click Onboarding for UPI 0% MDR & Instant Settlements'}
                     </p>
                   </div>
                 </div>
 
-                <label className="relative inline-flex items-center cursor-pointer">
+                <button
+                  type="button"
+                  onClick={handleOpenConnectModal}
+                  className="px-3 py-1.5 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-black text-xs shadow-xs transition flex items-center gap-1 cursor-pointer transform active:scale-95"
+                >
+                  <Zap className="w-3.5 h-3.5 fill-slate-950" />
+                  <span>{rzpConnect?.isConnected ? 'Manage' : 'Connect'}</span>
+                </button>
+              </div>
+
+              <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-border/60">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-xl shadow-xs">
+                    R
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-sans font-bold text-lg text-slate-900 dark:text-foreground">Razorpay</h3>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60">
+                        INDIA DOMESTIC
+                      </span>
+                      {rzpConnect?.isConnected && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Linked</span>
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      UPI (Google Pay, PhonePe, Paytm), NetBanking (50+ Banks), Debit/Credit Cards & EMI.
+                    </p>
+                  </div>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
                   <input
                     type="checkbox"
                     checked={formData.paymentRazorpayActive}
@@ -762,31 +652,27 @@ export const PaymentStudio: React.FC = () => {
                     }
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0c2340]"></div>
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
 
               {/* Supported Badges */}
               <div className="flex flex-wrap gap-2">
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center gap-1.5">
                   <Zap className="w-3 h-3 text-emerald-600" />
                   <span>UPI @ 0% MDR</span>
                 </span>
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-blue-50 text-blue-800 border border-blue-200 flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60 flex items-center gap-1.5">
                   <Building2 className="w-3 h-3 text-blue-600" />
                   <span>NetBanking (58 Banks)</span>
                 </span>
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-purple-50 text-purple-800 border border-purple-200 flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/60 flex items-center gap-1.5">
                   <CreditCard className="w-3 h-3 text-purple-600" />
                   <span>RuPay & Cards (2%)</span>
                 </span>
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>AES-256 Encrypted in DB</span>
-                </span>
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-50 text-amber-900 border border-amber-300 flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Email OTP Protected</span>
+                  <span>AES-256 Encrypted</span>
                 </span>
               </div>
 
@@ -794,9 +680,9 @@ export const PaymentStudio: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-[#191a1b]">Razorpay Key ID</label>
+                    <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Razorpay Key ID</label>
                     {rzpConnect?.keyId && (
-                      <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
+                      <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
                         <Check className="w-3 h-3" /> Auto-Configured via Connect
                       </span>
                     )}
@@ -806,23 +692,22 @@ export const PaymentStudio: React.FC = () => {
                     value={formData.razorpayKeyId || ''}
                     onChange={(e) => setFormData({ ...formData, razorpayKeyId: e.target.value })}
                     placeholder="rzp_test_..."
-                    className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                    className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-900 dark:text-foreground focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
-                  <p className="text-[10px] text-[#5e5a5a] mt-1">
-                    Managed automatically via Razorpay Connect or entered manually from Razorpay
-                    Dashboard.
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                    Managed automatically via Razorpay Connect or entered manually from Razorpay Dashboard.
                   </p>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-[#191a1b]">
+                    <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
                       Razorpay Key Secret
                     </label>
                     <button
                       type="button"
                       onClick={() => setShowRzpSecret(!showRzpSecret)}
-                      className="text-[10px] text-[#5e5a5a] hover:text-[#191a1b] flex items-center gap-1"
+                      className="text-[10px] text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1 cursor-pointer font-medium"
                     >
                       {showRzpSecret ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                       <span>{showRzpSecret ? 'Hide' : 'Show/Edit'}</span>
@@ -835,12 +720,12 @@ export const PaymentStudio: React.FC = () => {
                       setFormData({ ...formData, razorpayKeySecret: e.target.value })
                     }
                     placeholder={settings?.razorpayKeySecretMasked || 'Enter key secret...'}
-                    className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                    className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-900 dark:text-foreground focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#191a1b] mb-1">
+                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
                     Webhook Endpoint URL
                   </label>
                   <div className="flex items-center gap-2">
@@ -851,29 +736,29 @@ export const PaymentStudio: React.FC = () => {
                         settings?.webhookUrls?.razorpay ||
                         'http://localhost:5001/api/storefront/checkout/razorpay/webhook'
                       }
-                      className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-gray-50 border border-[#cbd5e0] text-[#5e5a5a]"
+                      className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-600 dark:text-slate-300"
                     />
                     <button
                       type="button"
                       onClick={() =>
                         handleCopy(settings?.webhookUrls?.razorpay || '', 'rzp_webhook')
                       }
-                      className="p-2 bg-[#fdf1ef] hover:bg-[#cbd5e0]/40 rounded-xl border border-[#cbd5e0] transition text-xs cursor-pointer"
+                      className="p-2.5 bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-accent rounded-xl border border-slate-200 dark:border-border transition text-xs cursor-pointer shadow-xs"
                       title="Copy webhook URL"
                     >
                       {copiedField === 'rzp_webhook' ? (
                         <Check className="w-4 h-4 text-emerald-600" />
                       ) : (
-                        <Copy className="w-4 h-4 text-[#5e5a5a]" />
+                        <Copy className="w-4 h-4 text-slate-500" />
                       )}
                     </button>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/80 dark:border-border/60">
                   <div>
-                    <p className="text-xs font-semibold text-[#191a1b]">Auto-Capture Payments</p>
-                    <p className="text-[10px] text-[#5e5a5a]">
+                    <p className="text-xs font-bold text-slate-900 dark:text-foreground">Auto-Capture Payments</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
                       Automatically capture authorized payments immediately upon order
                     </p>
                   </div>
@@ -883,16 +768,16 @@ export const PaymentStudio: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, razorpayAutoCapture: e.target.checked })
                     }
-                    className="w-4 h-4 rounded text-[#191a1b] focus:ring-[#191a1b] cursor-pointer"
+                    className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                   />
                 </div>
 
                 {rzpTestResult && (
                   <div
-                    className={`p-3 rounded-xl text-xs flex items-start gap-2 border ${
+                    className={`p-3.5 rounded-2xl text-xs flex items-start gap-2 border ${
                       rzpTestResult.success
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                        : 'bg-rose-50 text-rose-800 border-rose-200'
+                        ? 'bg-emerald-50 text-emerald-900 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-200'
+                        : 'bg-rose-50 text-rose-900 border-rose-200 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-200'
                     }`}
                   >
                     {rzpTestResult.success ? (
@@ -901,9 +786,9 @@ export const PaymentStudio: React.FC = () => {
                       <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                     )}
                     <div>
-                      <p className="font-semibold">{rzpTestResult.message}</p>
+                      <p className="font-bold">{rzpTestResult.message}</p>
                       {rzpTestResult.success && (
-                        <p className="text-[10px] text-emerald-700 mt-0.5 font-mono">
+                        <p className="text-[10px] text-emerald-700 dark:text-emerald-300 mt-0.5 font-mono">
                           Status: {rzpTestResult.mode}
                         </p>
                       )}
@@ -913,8 +798,8 @@ export const PaymentStudio: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-[#cbd5e0]/60 flex items-center justify-between gap-2">
-              <span className="text-[11px] text-[#5e5a5a]">
+            <div className="pt-4 border-t border-slate-100 dark:border-border/60 flex items-center justify-between gap-2">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                 Settlements: {rzpConnect?.settlementCycle || 'T+1 Instant'}
               </span>
               <div className="flex items-center gap-2">
@@ -923,7 +808,7 @@ export const PaymentStudio: React.FC = () => {
                     type="button"
                     onClick={handleDisconnectRzp}
                     disabled={disconnectingRzp}
-                    className="px-2.5 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 transition disabled:opacity-50 cursor-pointer"
+                    className="px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800 transition disabled:opacity-50 cursor-pointer"
                   >
                     {disconnectingRzp ? 'Unlinking...' : 'Disconnect'}
                   </button>
@@ -932,7 +817,7 @@ export const PaymentStudio: React.FC = () => {
                   type="button"
                   onClick={handleTestRazorpay}
                   disabled={testingRzp}
-                  className="px-3.5 py-1.5 bg-[#0c2340] hover:bg-[#000000] text-[#00bafe] text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+                  className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 text-xs font-bold rounded-xl border border-indigo-200/80 dark:border-indigo-800/60 flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                 >
                   {testingRzp ? (
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -946,30 +831,30 @@ export const PaymentStudio: React.FC = () => {
           </div>
 
           {/* 💙 PAYPAL GATEWAY CARD */}
-          <div className="p-6 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-sm space-y-5 flex flex-col justify-between">
+          <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5 flex flex-col justify-between">
             <div className="space-y-5">
-              <div className="flex items-start justify-between pb-4 border-b border-[#cbd5e0]/60">
+              <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-border/60">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-[#003087] text-[#0079C1] flex items-center justify-center font-bold text-lg shadow-sm">
-                    <span className="text-white font-serif italic text-xl">P</span>
+                  <div className="w-12 h-12 rounded-2xl bg-[#003087] text-white flex items-center justify-center font-black text-xl shadow-xs">
+                    <span className="font-sans italic">P</span>
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-serif font-bold text-lg text-[#191a1b]">PayPal</h3>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#003087]/10 text-[#003087]">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-sans font-bold text-lg text-slate-900 dark:text-foreground">PayPal</h3>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#003087]/10 text-[#003087] dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800/60">
                         GLOBAL CHECKOUT & BNPL
                       </span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300 border border-sky-200">
                         {(formData.paypalMode || 'sandbox').toUpperCase()}
                       </span>
                     </div>
-                    <p className="text-xs text-[#5e5a5a]">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       PayPal Wallet, 1-Click Checkout, Pay in 4 (Buy Now, Pay Later), and international debit/credit cards in 200+ countries.
                     </p>
                   </div>
                 </div>
 
-                <label className="relative inline-flex items-center cursor-pointer">
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
                   <input
                     type="checkbox"
                     checked={formData.paymentPaypalActive}
@@ -978,46 +863,46 @@ export const PaymentStudio: React.FC = () => {
                     }
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#003087]"></div>
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#003087]"></div>
                 </label>
               </div>
 
               {/* Supported Badges */}
               <div className="flex flex-wrap gap-2">
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-blue-50 text-blue-800 border border-blue-200 flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60 flex items-center gap-1.5">
                   <Wallet className="w-3 h-3 text-blue-600" />
                   <span>PayPal Wallet & Smart Buttons</span>
                 </span>
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center gap-1.5">
                   <Zap className="w-3 h-3 text-emerald-600" />
                   <span>Pay in 4 (BNPL)</span>
                 </span>
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-indigo-50 text-indigo-800 border border-indigo-200 flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60 flex items-center gap-1.5">
                   <Globe className="w-3 h-3 text-indigo-600" />
                   <span>200+ Countries / 25+ FX</span>
                 </span>
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   <span>AES-256 Encrypted</span>
                 </span>
               </div>
 
               {/* Environment / Mode Selector */}
-              <div className="p-3.5 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] flex items-center justify-between">
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/80 dark:border-border/60 flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-[#191a1b] block">PayPal Gateway Environment</span>
-                  <span className="text-[10px] text-[#5e5a5a]">
-                    Switch between Sandbox (Testing with mock accounts) and Live (Production buyer payments)
+                  <span className="text-xs font-bold text-slate-900 dark:text-foreground block">PayPal Gateway Environment</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                    Switch between Sandbox (Testing) and Live (Production)
                   </span>
                 </div>
-                <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-[#cbd5e0]">
+                <div className="flex items-center gap-1 bg-white dark:bg-card p-1 rounded-xl border border-slate-200 dark:border-border shadow-xs">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, paypalMode: 'sandbox' })}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-md transition ${
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
                       (formData.paypalMode || 'sandbox') === 'sandbox'
                         ? 'bg-[#003087] text-white'
-                        : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                     }`}
                   >
                     Sandbox
@@ -1025,10 +910,10 @@ export const PaymentStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, paypalMode: 'live' })}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-md transition ${
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
                       formData.paypalMode === 'live'
-                        ? 'bg-emerald-700 text-white'
-                        : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                     }`}
                   >
                     Live
@@ -1039,7 +924,7 @@ export const PaymentStudio: React.FC = () => {
               {/* Inputs */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#191a1b] mb-1">
+                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
                     PayPal Client ID
                   </label>
                   <input
@@ -1049,22 +934,22 @@ export const PaymentStudio: React.FC = () => {
                       setFormData({ ...formData, paypalClientId: e.target.value })
                     }
                     placeholder={formData.paypalMode === 'live' ? 'AY... (Live Client ID)' : 'sb or Sandbox Client ID'}
-                    className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                    className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-900 dark:text-foreground focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003087]"
                   />
-                  <p className="text-[10px] text-[#5e5a5a] mt-1">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
                     Found under PayPal Developer Dashboard → Apps & Credentials.
                   </p>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-[#191a1b]">
+                    <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
                       PayPal Client Secret
                     </label>
                     <button
                       type="button"
                       onClick={() => setShowPaypalSecret(!showPaypalSecret)}
-                      className="text-[10px] text-[#5e5a5a] hover:text-[#191a1b] flex items-center gap-1"
+                      className="text-[10px] text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1 cursor-pointer font-medium"
                     >
                       {showPaypalSecret ? (
                         <EyeOff className="w-3 h-3" />
@@ -1083,12 +968,12 @@ export const PaymentStudio: React.FC = () => {
                     placeholder={
                       settings?.paypalClientSecretMasked || 'Enter PayPal client secret (EL...)'
                     }
-                    className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                    className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-900 dark:text-foreground focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003087]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#191a1b] mb-1">
+                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
                     PayPal Webhook Endpoint URL
                   </label>
                   <div className="flex items-center gap-2">
@@ -1099,7 +984,7 @@ export const PaymentStudio: React.FC = () => {
                         settings?.webhookUrls?.paypal ||
                         'http://localhost:5001/api/storefront/checkout/paypal/webhook'
                       }
-                      className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-gray-50 border border-[#cbd5e0] text-[#5e5a5a]"
+                      className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-600 dark:text-slate-300"
                     />
                     <button
                       type="button"
@@ -1110,27 +995,27 @@ export const PaymentStudio: React.FC = () => {
                           'paypal_webhook',
                         )
                       }
-                      className="p-2 bg-[#fdf1ef] hover:bg-[#cbd5e0]/40 rounded-xl border border-[#cbd5e0] transition text-xs cursor-pointer"
+                      className="p-2.5 bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-accent rounded-xl border border-slate-200 dark:border-border transition text-xs cursor-pointer shadow-xs"
                       title="Copy webhook URL"
                     >
                       {copiedField === 'paypal_webhook' ? (
                         <Check className="w-4 h-4 text-emerald-600" />
                       ) : (
-                        <Copy className="w-4 h-4 text-[#5e5a5a]" />
+                        <Copy className="w-4 h-4 text-slate-500" />
                       )}
                     </button>
                   </div>
-                  <p className="text-[10px] text-[#5e5a5a] mt-1">
-                    Subscribe to <code className="font-mono text-neutral-800">CHECKOUT.ORDER.APPROVED</code> and <code className="font-mono text-neutral-800">PAYMENT.CAPTURE.COMPLETED</code> events.
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                    Subscribe to <code className="font-mono text-slate-700 dark:text-slate-300">CHECKOUT.ORDER.APPROVED</code> and <code className="font-mono text-slate-700 dark:text-slate-300">PAYMENT.CAPTURE.COMPLETED</code> events.
                   </p>
                 </div>
 
                 {paypalTestResult && (
                   <div
-                    className={`p-3 rounded-xl text-xs flex items-start gap-2 border ${
+                    className={`p-3.5 rounded-2xl text-xs flex items-start gap-2 border ${
                       paypalTestResult.success
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                        : 'bg-rose-50 text-rose-800 border-rose-200'
+                        ? 'bg-emerald-50 text-emerald-900 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-200'
+                        : 'bg-rose-50 text-rose-900 border-rose-200 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-200'
                     }`}
                   >
                     {paypalTestResult.success ? (
@@ -1139,9 +1024,9 @@ export const PaymentStudio: React.FC = () => {
                       <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                     )}
                     <div>
-                      <p className="font-semibold">{paypalTestResult.message}</p>
+                      <p className="font-bold">{paypalTestResult.message}</p>
                       {paypalTestResult.success && (
-                        <p className="text-[10px] text-emerald-700 mt-0.5 font-mono">
+                        <p className="text-[10px] text-emerald-700 dark:text-emerald-300 mt-0.5 font-mono">
                           Mode: {paypalTestResult.mode} • Currencies: {paypalTestResult.supportedCurrencies?.join(', ')}
                         </p>
                       )}
@@ -1151,15 +1036,15 @@ export const PaymentStudio: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-[#cbd5e0]/60 flex items-center justify-between gap-2">
-              <span className="text-[11px] text-[#5e5a5a]">
+            <div className="pt-4 border-t border-slate-100 dark:border-border/60 flex items-center justify-between gap-2">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                 Settlements: Direct to PayPal Account Balance
               </span>
               <button
                 type="button"
                 onClick={handleTestPaypal}
                 disabled={testingPaypal}
-                className="px-3.5 py-1.5 bg-[#003087] hover:bg-[#002266] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+                className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 text-xs font-bold rounded-xl border border-indigo-200/80 dark:border-indigo-800/60 flex items-center gap-1.5 transition cursor-pointer shadow-xs"
               >
                 {testingPaypal ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -1171,292 +1056,37 @@ export const PaymentStudio: React.FC = () => {
             </div>
           </div>
 
-          {/* 🌍 STRIPE GATEWAY CARD */}
-          <div className="p-6 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-sm space-y-5 flex flex-col justify-between">
-            <div className="space-y-5">
-              <div className="flex items-start justify-between pb-4 border-b border-[#cbd5e0]/60">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-[#635bff] text-white flex items-center justify-center font-bold text-lg shadow-sm">
-                    S
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-serif font-bold text-lg text-[#191a1b]">Stripe</h3>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#635bff]/10 text-[#635bff]">
-                        INTERNATIONAL & MULTI-CURRENCY
-                      </span>
-                    </div>
-                    <p className="text-xs text-[#5e5a5a]">
-                      Global Visa, Mastercard, Amex, Apple Pay, Google Pay & 135+ native currencies
-                      with lowest cross-border overheads.
-                    </p>
-                  </div>
-                </div>
-
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.paymentStripeActive}
-                    onChange={(e) =>
-                      setFormData({ ...formData, paymentStripeActive: e.target.checked })
-                    }
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#635bff]"></div>
-                </label>
-              </div>
-
-              {/* Stripe Connect 1-Click Banner */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-[#635bff]/10 via-[#00d4ff]/10 to-[#635bff]/5 border border-[#635bff]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#635bff] text-white flex items-center justify-center font-bold text-sm shrink-0">
-                    <Zap className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-[#191a1b]">
-                        Stripe Connect Direct Flow
-                      </span>
-                      {stripeConnect?.isConnected ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
-                          <Check className="w-2.5 h-2.5" /> Active & Verified
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                          Recommended
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-[#5e5a5a] mt-0.5">
-                      {stripeConnect?.isConnected
-                        ? `Linked Account: ${stripeConnect.accountId || 'acct_1N9xStandardStripe'} • Rolling 2-day payouts`
-                        : '1-Click Connect onboarding for instant international card processing and automated settlements'}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleOpenStripeConnectModal}
-                  className="px-3.5 py-1.5 bg-[#635bff] hover:bg-[#5349e0] text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 shrink-0 cursor-pointer"
-                >
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>
-                    {stripeConnect?.isConnected ? 'Manage Connect' : '1-Click Stripe Connect'}
-                  </span>
-                </button>
-              </div>
-
-              {/* Supported Badges */}
-              <div className="flex flex-wrap gap-2">
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-indigo-50 text-indigo-800 border border-indigo-200 flex items-center gap-1.5">
-                  <Globe className="w-3 h-3 text-indigo-600" />
-                  <span>135+ Currencies (USD, EUR, GBP)</span>
-                </span>
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
-                  <Smartphone className="w-3 h-3 text-emerald-600" />
-                  <span>Apple Pay & Google Pay</span>
-                </span>
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gray-100 text-gray-800 border border-gray-200 flex items-center gap-1.5">
-                  <ShieldCheck className="w-3 h-3 text-gray-600" />
-                  <span>3D-Secure 2.0 Auth</span>
-                </span>
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>AES-256 Encrypted in DB</span>
-                </span>
-                <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-50 text-amber-900 border border-amber-300 flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Email OTP Protected</span>
-                </span>
-              </div>
-
-              {/* Inputs */}
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-[#191a1b]">
-                      Stripe Publishable Key
-                    </label>
-                    {stripeConnect?.publishableKey && (
-                      <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Auto-Configured via Stripe Connect
-                      </span>
-                    )}
-                  </div>
-                  <input
-                    type="text"
-                    value={formData.stripePublishableKey || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, stripePublishableKey: e.target.value })
-                    }
-                    placeholder="pk_test_..."
-                    className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
-                  />
-                  <p className="text-[10px] text-[#5e5a5a] mt-1">
-                    Managed automatically via Stripe Connect or entered manually from Stripe
-                    Dashboard.
-                  </p>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-[#191a1b]">
-                      Stripe Secret Key
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowStripeSecret(!showStripeSecret)}
-                      className="text-[10px] text-[#5e5a5a] hover:text-[#191a1b] flex items-center gap-1"
-                    >
-                      {showStripeSecret ? (
-                        <EyeOff className="w-3 h-3" />
-                      ) : (
-                        <Eye className="w-3 h-3" />
-                      )}
-                      <span>{showStripeSecret ? 'Hide' : 'Show/Edit'}</span>
-                    </button>
-                  </div>
-                  <input
-                    type={showStripeSecret ? 'text' : 'password'}
-                    value={formData.stripeSecretKey ?? ''}
-                    onChange={(e) => setFormData({ ...formData, stripeSecretKey: e.target.value })}
-                    placeholder={
-                      settings?.stripeSecretKeyMasked || 'Enter stripe secret key (sk_test_...)'
-                    }
-                    className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[#191a1b] mb-1">
-                    Stripe Webhook Endpoint URL
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={
-                        settings?.webhookUrls?.stripe ||
-                        'http://localhost:5001/api/storefront/checkout/stripe/webhook'
-                      }
-                      className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-gray-50 border border-[#cbd5e0] text-[#5e5a5a]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleCopy(settings?.webhookUrls?.stripe || '', 'stripe_webhook')
-                      }
-                      className="p-2 bg-[#fdf1ef] hover:bg-[#cbd5e0]/40 rounded-xl border border-[#cbd5e0] transition text-xs cursor-pointer"
-                      title="Copy webhook URL"
-                    >
-                      {copiedField === 'stripe_webhook' ? (
-                        <Check className="w-4 h-4 text-emerald-600" />
-                      ) : (
-                        <Copy className="w-4 h-4 text-[#5e5a5a]" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
-                  <p className="text-xs font-semibold text-[#191a1b]">Smart Cross-Border Routing</p>
-                  <p className="text-[10px] text-[#5e5a5a]">
-                    Non-INR currency checkouts (USD, EUR, GBP, AUD, CAD) are automatically routed
-                    through Stripe for maximum international authorization rates and lower currency
-                    conversion charges.
-                  </p>
-                </div>
-
-                {stripeTestResult && (
-                  <div
-                    className={`p-3 rounded-xl text-xs flex items-start gap-2 border ${
-                      stripeTestResult.success
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                        : 'bg-rose-50 text-rose-800 border-rose-200'
-                    }`}
-                  >
-                    {stripeTestResult.success ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                    )}
-                    <div>
-                      <p className="font-semibold">{stripeTestResult.message}</p>
-                      {stripeTestResult.success && (
-                        <p className="text-[10px] text-emerald-700 mt-0.5 font-mono">
-                          Mode: {stripeTestResult.mode}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-[#cbd5e0]/60 flex items-center justify-between gap-2">
-              <span className="text-[11px] text-[#5e5a5a]">
-                Settlements: {stripeConnect?.settlementCycle || 'Rolling 2-day'}
-              </span>
-              <div className="flex items-center gap-2">
-                {stripeConnect?.isConnected && (
-                  <button
-                    type="button"
-                    onClick={handleDisconnectStripe}
-                    disabled={disconnectingStripe}
-                    className="px-2.5 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 transition disabled:opacity-50 cursor-pointer"
-                  >
-                    {disconnectingStripe ? 'Unlinking...' : 'Disconnect'}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={handleTestStripe}
-                  disabled={testingStripe}
-                  className="px-3.5 py-1.5 bg-[#635bff] hover:bg-[#5349e0] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-                >
-                  {testingStripe ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                  )}
-                  <span>Test Gateway</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* 💵 CASH ON DELIVERY CARD */}
-          <div className="p-6 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-sm space-y-4 lg:col-span-2">
-            <div className="flex items-center justify-between pb-3 border-b border-[#cbd5e0]/60">
+          <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4 lg:col-span-2">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-border/60">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-lg">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-800 border border-amber-200/80 flex items-center justify-center font-bold text-xl">
                   💵
                 </div>
                 <div>
-                  <h3 className="font-serif font-bold text-base text-[#191a1b]">
+                  <h3 className="font-sans font-bold text-base text-slate-900 dark:text-foreground">
                     Cash on Delivery (COD)
                   </h3>
-                  <p className="text-xs text-[#5e5a5a]">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Allow customers in India to pay in cash upon package delivery.
                   </p>
                 </div>
               </div>
 
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
                 <input
                   type="checkbox"
                   checked={formData.paymentCodActive}
                   onChange={(e) => setFormData({ ...formData, paymentCodActive: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
               </label>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
               <div>
-                <label className="block text-xs font-semibold text-[#191a1b] mb-1">
+                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
                   COD Convenience Fee (₹)
                 </label>
                 <input
@@ -1466,15 +1096,15 @@ export const PaymentStudio: React.FC = () => {
                     setFormData({ ...formData, codFee: parseFloat(e.target.value) || 0 })
                   }
                   placeholder="0.00"
-                  className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-900 dark:text-foreground focus:bg-white focus:outline-none"
                 />
-                <p className="text-[10px] text-[#5e5a5a] mt-1">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
                   Extra handling charge added at checkout.
                 </p>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#191a1b] mb-1">
+                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
                   Minimum Order Value for COD (₹)
                 </label>
                 <input
@@ -1484,12 +1114,12 @@ export const PaymentStudio: React.FC = () => {
                     setFormData({ ...formData, codMinLimit: parseFloat(e.target.value) || 0 })
                   }
                   placeholder="0"
-                  className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-900 dark:text-foreground focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#191a1b] mb-1">
+                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
                   Maximum COD Limit (₹)
                 </label>
                 <input
@@ -1499,7 +1129,7 @@ export const PaymentStudio: React.FC = () => {
                     setFormData({ ...formData, codMaxLimit: parseFloat(e.target.value) || 50000 })
                   }
                   placeholder="50000"
-                  className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-900 dark:text-foreground focus:bg-white focus:outline-none"
                 />
               </div>
             </div>
@@ -1509,28 +1139,27 @@ export const PaymentStudio: React.FC = () => {
 
       {/* ─── TAB 2: TRANSACTIONS & SETTLEMENT AUDIT ───────────────────────────── */}
       {activeTab === 'transactions' && (
-        <div className="p-6 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#cbd5e0]/60">
+        <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-100 dark:border-border/60">
             <div>
-              <h3 className="font-serif font-bold text-lg text-[#191a1b]">
+              <h3 className="font-sans font-bold text-lg text-slate-900 dark:text-foreground">
                 Gateway Payment Transactions
               </h3>
-              <p className="text-xs text-[#5e5a5a]">
-                Live record of orders processed through Razorpay and Stripe with MDR fee
-                calculations and settlement status.
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Live record of orders processed through Razorpay, PayPal, and Cash on Delivery with MDR fee calculations and settlement status.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs text-[#5e5a5a]">Filter Gateway:</span>
+              <span className="text-xs font-bold text-slate-500">Filter:</span>
               <select
                 value={filterGateway}
                 onChange={(e) => setFilterGateway(e.target.value)}
-                className="text-xs px-3 py-1.5 rounded-lg bg-[#fdf1ef] border border-[#cbd5e0] font-semibold text-[#191a1b] focus:outline-none"
+                className="text-xs px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border font-bold text-slate-800 dark:text-slate-200 focus:outline-none shadow-xs"
               >
                 <option value="ALL">All Gateways</option>
                 <option value="RAZORPAY">Razorpay (India)</option>
-                <option value="STRIPE">Stripe (International)</option>
+                <option value="PAYPAL">PayPal (International)</option>
                 <option value="COD">Cash on Delivery</option>
               </select>
             </div>
@@ -1538,7 +1167,7 @@ export const PaymentStudio: React.FC = () => {
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#fdf1ef] text-[#5e5a5a] font-semibold uppercase text-[10px] tracking-wider border-b border-[#cbd5e0]">
+              <thead className="bg-slate-50 dark:bg-accent/40 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200/80 dark:border-border/60">
                 <tr>
                   <th className="py-3 px-4">Transaction / Order</th>
                   <th className="py-3 px-4">Customer</th>
@@ -1550,66 +1179,66 @@ export const PaymentStudio: React.FC = () => {
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 font-sans">
+              <tbody className="divide-y divide-slate-100 dark:divide-border/40 font-sans">
                 {filteredTransactions.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-gray-400">
+                    <td colSpan={8} className="py-8 text-center text-slate-400">
                       No payment transactions recorded yet.
                     </td>
                   </tr>
                 ) : (
                   filteredTransactions.map((t) => (
-                    <tr key={t.id} className="hover:bg-gray-50/80 transition">
-                      <td className="py-3.5 px-4 font-mono font-bold text-[#191a1b]">
+                    <tr key={t.id} className="hover:bg-slate-50/60 dark:hover:bg-accent/20 transition">
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-foreground">
                         <div>{t.transactionNumber}</div>
                         {t.orderId && (
-                          <div className="text-[10px] text-gray-400 font-sans">
+                          <div className="text-[10px] text-slate-400 font-sans">
                             Ref: {t.orderId}
                           </div>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="font-semibold text-gray-900">
+                        <div className="font-bold text-slate-900 dark:text-foreground">
                           {t.customerName || 'Anonymous Customer'}
                         </div>
-                        <div className="text-gray-400 text-[10px]">{t.customerEmail}</div>
+                        <div className="text-slate-400 text-[10px]">{t.customerEmail}</div>
                       </td>
                       <td className="py-3.5 px-4">
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
                             t.gateway === 'RAZORPAY'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                              : t.gateway === 'STRIPE'
-                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/80'
+                              : t.gateway === 'PAYPAL'
+                                ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200/80'
+                                : 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80'
                           }`}
                         >
                           {t.gateway} • {t.paymentMethod}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-gray-900">
+                      <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-foreground">
                         {t.currency === 'INR' ? '₹' : '$'}
                         {t.amount.toFixed(2)}
                       </td>
-                      <td className="py-3.5 px-4 text-gray-500 font-mono">
+                      <td className="py-3.5 px-4 text-slate-500 font-mono">
                         {t.gatewayFee === 0 ? (
                           <span className="text-emerald-600 font-bold">0.00 (0% UPI)</span>
                         ) : (
                           `${t.currency === 'INR' ? '₹' : '$'}${t.gatewayFee.toFixed(2)}`
                         )}
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-emerald-700">
+                      <td className="py-3.5 px-4 font-bold text-emerald-600 dark:text-emerald-400">
                         {t.currency === 'INR' ? '₹' : '$'}
                         {t.netAmount.toFixed(2)}
                       </td>
                       <td className="py-3.5 px-4">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
                             t.status === 'SUCCESS'
-                              ? 'bg-emerald-100 text-emerald-800'
+                              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80'
                               : t.status === 'REFUNDED'
-                                ? 'bg-purple-100 text-purple-800'
-                                : 'bg-amber-100 text-amber-800'
+                                ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200/80'
+                                : 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80'
                           }`}
                         >
                           {t.status}
@@ -1619,7 +1248,7 @@ export const PaymentStudio: React.FC = () => {
                         {t.status === 'SUCCESS' && (
                           <button
                             onClick={() => handleRefund(t.id, t.amount)}
-                            className="px-2.5 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                            className="px-3 py-1 text-[11px] font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg border border-rose-200 dark:border-rose-800 transition cursor-pointer"
                           >
                             Refund
                           </button>
@@ -1636,20 +1265,19 @@ export const PaymentStudio: React.FC = () => {
 
       {/* ─── TAB 3: MDR FEE SAVINGS CALCULATOR ─────────────────────────────────── */}
       {activeTab === 'calculator' && (
-        <div className="p-6 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] shadow-sm space-y-6">
+        <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
           <div className="max-w-xl space-y-2">
-            <h3 className="font-serif font-bold text-xl text-[#191a1b]">
+            <h3 className="font-sans font-bold text-xl text-slate-900 dark:text-foreground">
               MDR Transaction Fee Comparison
             </h3>
-            <p className="text-xs text-[#5e5a5a]">
-              See how our automatic multi-gateway routing minimizes your payment processing costs
-              for domestic India sales vs international orders.
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              See how automatic multi-gateway routing minimizes your payment processing costs for domestic India sales vs international orders.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-3">
-              <label className="block text-xs font-semibold text-[#191a1b]">
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/80 dark:border-border/60 space-y-3">
+              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                 Simulate Order Value
               </label>
               <div className="flex items-center gap-2">
@@ -1660,52 +1288,52 @@ export const PaymentStudio: React.FC = () => {
                     setCalcCurrency(c);
                     setCalcAmount(c === 'INR' ? 5000 : 100);
                   }}
-                  className="px-3 py-2 text-xs rounded-xl bg-white border border-[#cbd5e0] font-bold"
+                  className="px-3 py-2 text-xs rounded-xl bg-white dark:bg-card border border-slate-200 dark:border-border font-bold text-slate-800 dark:text-slate-200 shadow-xs"
                 >
                   <option value="INR">₹ INR (India)</option>
-                  <option value="USD">$ USD (International)</option>
+                  <option value="USD">$ USD (Global)</option>
                 </select>
                 <input
                   type="number"
                   value={calcAmount}
                   onChange={(e) => setCalcAmount(parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2 text-sm font-bold rounded-xl bg-white border border-[#cbd5e0]"
+                  className="w-full px-3 py-2 text-sm font-bold rounded-xl bg-white dark:bg-card border border-slate-200 dark:border-border text-slate-900 dark:text-foreground shadow-xs"
                 />
               </div>
             </div>
 
             {/* India Razorpay UPI Card */}
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2">
+            <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-900">Razorpay UPI (India)</span>
+                <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300">Razorpay UPI (India)</span>
                 <span className="text-[10px] font-extrabold bg-emerald-600 text-white px-2 py-0.5 rounded-full">
                   0% MDR
                 </span>
               </div>
-              <p className="text-2xl font-black text-emerald-800">
+              <p className="text-2xl font-black text-emerald-800 dark:text-emerald-300">
                 {calcCurrency === 'INR' ? '₹0.00' : '$0.00'}
               </p>
-              <p className="text-[11px] text-emerald-700">
+              <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
                 Zero processing fee on UPI P2M payments. You receive 100% of order value (
                 {calcCurrency === 'INR' ? `₹${calcAmount}` : `$${calcAmount}`}).
               </p>
             </div>
 
-            {/* International Stripe Card */}
-            <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200 space-y-2">
+            {/* International PayPal Card */}
+            <div className="p-5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/60 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-indigo-900">Stripe Global Card</span>
-                <span className="text-[10px] font-extrabold bg-indigo-600 text-white px-2 py-0.5 rounded-full">
-                  2.9% + $0.30
+                <span className="text-xs font-bold text-sky-900 dark:text-sky-300">PayPal Global & Cards</span>
+                <span className="text-[10px] font-extrabold bg-[#003087] text-white px-2 py-0.5 rounded-full">
+                  3.4% + $0.30
                 </span>
               </div>
-              <p className="text-2xl font-black text-indigo-800">
+              <p className="text-2xl font-black text-sky-800 dark:text-sky-300">
                 {calcCurrency === 'USD'
-                  ? `$${(calcAmount * 0.029 + 0.3).toFixed(2)}`
-                  : `₹${(calcAmount * 0.029 + 25).toFixed(2)}`}
+                  ? `$${(calcAmount * 0.034 + 0.3).toFixed(2)}`
+                  : `₹${(calcAmount * 0.034 + 25).toFixed(2)}`}
               </p>
-              <p className="text-[11px] text-indigo-700">
-                Lowest international cross-border card rate with 3D Secure 2.0 fraud protection.
+              <p className="text-[11px] text-sky-700 dark:text-sky-400">
+                Global wallet & card processing in 200+ countries with seller protection.
               </p>
             </div>
           </div>
@@ -1715,19 +1343,19 @@ export const PaymentStudio: React.FC = () => {
       {/* ─── RAZORPAY CONNECT PARTNER MODAL ────────────────────────────────────── */}
       {showConnectModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#ffffff] border border-[#cbd5e0] rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             {/* Modal Header */}
-            <div className="p-6 bg-gradient-to-r from-[#0c2340] via-[#0f2e54] to-[#0c2340] text-white flex items-center justify-between">
+            <div className="p-6 bg-gradient-to-r from-sky-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#00bafe]/20 border border-[#00bafe]/30 flex items-center justify-center text-[#00bafe] font-black text-xl shadow-sm">
+                <div className="w-10 h-10 rounded-2xl bg-sky-400/20 border border-sky-400/30 flex items-center justify-center text-sky-300 font-black text-xl shadow-sm">
                   ⚡
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-serif font-bold text-lg text-white">
+                    <h3 className="font-sans font-bold text-lg text-white">
                       Razorpay Partner Connect
                     </h3>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-[#00bafe] text-[#0c2340]">
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-sky-400 text-slate-950">
                       OFFICIAL PARTNER
                     </span>
                   </div>
@@ -1747,31 +1375,31 @@ export const PaymentStudio: React.FC = () => {
             </div>
 
             {/* Stepper Progress */}
-            <div className="px-6 py-3 bg-[#fdf1ef] border-b border-[#cbd5e0] flex items-center justify-between text-xs">
+            <div className="px-6 py-3 bg-slate-50 dark:bg-accent/40 border-b border-slate-200 dark:border-border flex items-center justify-between text-xs">
               <div
-                className={`flex items-center gap-1.5 font-bold ${connectStep >= 1 ? 'text-[#0c2340]' : 'text-slate-400'}`}
+                className={`flex items-center gap-1.5 font-bold ${connectStep >= 1 ? 'text-indigo-600' : 'text-slate-400'}`}
               >
                 <span
-                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${connectStep >= 1 ? 'bg-[#0c2340] text-white' : 'bg-slate-200 text-slate-500'}`}
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${connectStep >= 1 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500'}`}
                 >
                   1
                 </span>
                 <span>Authorization</span>
               </div>
-              <div className="w-8 h-0.5 bg-[#cbd5e0]"></div>
+              <div className="w-8 h-0.5 bg-slate-200 dark:bg-border"></div>
               <div
-                className={`flex items-center gap-1.5 font-bold ${connectStep >= 2 ? 'text-[#0c2340]' : 'text-slate-400'}`}
+                className={`flex items-center gap-1.5 font-bold ${connectStep >= 2 ? 'text-indigo-600' : 'text-slate-400'}`}
               >
                 <span
-                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${connectStep >= 2 ? 'bg-[#0c2340] text-white' : 'bg-slate-200 text-slate-500'}`}
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${connectStep >= 2 ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500'}`}
                 >
                   2
                 </span>
                 <span>Handshake</span>
               </div>
-              <div className="w-8 h-0.5 bg-[#cbd5e0]"></div>
+              <div className="w-8 h-0.5 bg-slate-200 dark:bg-border"></div>
               <div
-                className={`flex items-center gap-1.5 font-bold ${connectStep >= 3 ? 'text-emerald-700' : 'text-slate-400'}`}
+                className={`flex items-center gap-1.5 font-bold ${connectStep >= 3 ? 'text-emerald-600' : 'text-slate-400'}`}
               >
                 <span
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${connectStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'}`}
@@ -1788,14 +1416,14 @@ export const PaymentStudio: React.FC = () => {
               {connectStep === 1 && (
                 <div className="space-y-5">
                   {/* Mode Selector Tabs */}
-                  <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
+                  <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-accent/40 border border-slate-200 dark:border-border">
                     <button
                       type="button"
                       onClick={() => setConnectMode('OAUTH')}
-                      className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                      className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                         connectMode === 'OAUTH'
-                          ? 'bg-[#0c2340] text-white shadow-xs'
-                          : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                          ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/80 dark:border-border'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                       }`}
                     >
                       <Zap className="w-3.5 h-3.5" />
@@ -1804,10 +1432,10 @@ export const PaymentStudio: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setConnectMode('MANUAL')}
-                      className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                      className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                         connectMode === 'MANUAL'
-                          ? 'bg-[#0c2340] text-white shadow-xs'
-                          : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                          ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/80 dark:border-border'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                       }`}
                     >
                       <Lock className="w-3.5 h-3.5" />
@@ -1830,24 +1458,24 @@ export const PaymentStudio: React.FC = () => {
                       </div>
 
                       {/* Scopes Overview Checklist */}
-                      <div className="p-4 rounded-2xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-2">
-                        <p className="text-xs font-bold text-[#191a1b]">
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border space-y-2">
+                        <p className="text-xs font-bold text-slate-900 dark:text-foreground">
                           Included Merchant Capabilities:
                         </p>
-                        <div className="grid grid-cols-2 gap-2 text-[11px] text-[#5e5a5a]">
-                          <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
+                        <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600">
+                          <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             <span>0% UPI MDR (GPay/PhonePe)</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
+                          <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             <span>58+ Banks NetBanking</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
+                          <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             <span>T+1 Instant Bank Payouts</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
+                          <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Automated Webhook Sync</span>
                           </div>
@@ -1856,32 +1484,30 @@ export const PaymentStudio: React.FC = () => {
 
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-xs font-semibold text-[#191a1b] mb-1">
-                            Merchant Business Display Name
+                          <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                            Merchant Display Name
                           </label>
                           <input
                             type="text"
                             value={partnerMerchantName}
                             onChange={(e) => setPartnerMerchantName(e.target.value)}
-                            placeholder="e.g. Apex Modern Apparel"
-                            className="w-full px-3.5 py-2 text-xs rounded-xl bg-white border border-[#cbd5e0] focus:ring-2 focus:ring-[#0c2340] focus:outline-none"
+                            placeholder="e.g. Apex Store Direct"
+                            className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-900 dark:text-foreground focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         </div>
 
-                        <div className="flex items-center justify-between p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
+                        <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border">
                           <div>
-                            <p className="text-xs font-semibold text-[#191a1b]">
-                              Sandbox Test Mode
-                            </p>
-                            <p className="text-[10px] text-[#5e5a5a]">
-                              Connect using Razorpay Sandbox for safe end-to-end test orders
+                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Sandbox Test Mode</p>
+                            <p className="text-[10px] text-slate-500">
+                              Simulate test payments without debiting real bank accounts
                             </p>
                           </div>
                           <input
                             type="checkbox"
                             checked={partnerTestMode}
                             onChange={(e) => setPartnerTestMode(e.target.checked)}
-                            className="w-4 h-4 rounded text-[#0c2340] focus:ring-[#0c2340] cursor-pointer"
+                            className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                           />
                         </div>
                       </div>
@@ -1889,7 +1515,7 @@ export const PaymentStudio: React.FC = () => {
                   ) : (
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-xs font-semibold text-[#191a1b] mb-1">
+                        <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
                           Razorpay Key ID
                         </label>
                         <input
@@ -1897,37 +1523,20 @@ export const PaymentStudio: React.FC = () => {
                           value={partnerKeyId}
                           onChange={(e) => setPartnerKeyId(e.target.value)}
                           placeholder="rzp_test_... or rzp_live_..."
-                          className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-white border border-[#cbd5e0] focus:ring-2 focus:ring-[#0c2340] focus:outline-none"
+                          className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-900 dark:text-foreground focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-[#191a1b] mb-1">
+                        <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
                           Razorpay Key Secret
                         </label>
                         <input
                           type="password"
                           value={partnerKeySecret}
                           onChange={(e) => setPartnerKeySecret(e.target.value)}
-                          placeholder="Enter your key secret..."
-                          className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-white border border-[#cbd5e0] focus:ring-2 focus:ring-[#0c2340] focus:outline-none"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between p-3 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
-                        <div>
-                          <p className="text-xs font-semibold text-[#191a1b]">
-                            Auto-Capture Order Payments
-                          </p>
-                          <p className="text-[10px] text-[#5e5a5a]">
-                            Immediate capture of authorized charges
-                          </p>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={partnerAutoCapture}
-                          onChange={(e) => setPartnerAutoCapture(e.target.checked)}
-                          className="w-4 h-4 rounded text-[#0c2340] focus:ring-[#0c2340] cursor-pointer"
+                          placeholder="Enter secret key..."
+                          className="w-full px-3.5 py-2.5 text-xs font-mono rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-900 dark:text-foreground focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       </div>
                     </div>
@@ -1935,91 +1544,49 @@ export const PaymentStudio: React.FC = () => {
                 </div>
               )}
 
-              {/* STEP 2: Handshake & Capability Verification */}
+              {/* STEP 2: Handshake */}
               {connectStep === 2 && (
                 <div className="py-8 flex flex-col items-center justify-center space-y-4 text-center">
-                  <div className="w-16 h-16 rounded-full bg-[#00bafe]/10 text-[#00bafe] border-4 border-[#00bafe]/30 flex items-center justify-center animate-pulse">
-                    <RefreshCw className="w-8 h-8 animate-spin text-[#00bafe]" />
+                  <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 border-4 border-indigo-200 flex items-center justify-center animate-pulse">
+                    <RefreshCw className="w-8 h-8 animate-spin text-indigo-600" />
                   </div>
                   <div>
-                    <h4 className="font-serif font-bold text-lg text-[#191a1b]">
-                      Authenticating with Razorpay Partner Hub...
+                    <h4 className="font-sans font-bold text-lg text-slate-900 dark:text-foreground">
+                      Authenticating with Razorpay Partner Network...
                     </h4>
-                    <p className="text-xs text-[#5e5a5a] max-w-sm mx-auto mt-1">
-                      Verifying merchant KYC status, generating webhook subscription secrets, and
-                      enabling instant UPI 0% MDR routing.
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                      Generating credentials, registering webhook routes, and syncing UPI handles.
                     </p>
-                  </div>
-
-                  <div className="w-full max-w-xs space-y-2 pt-4 text-left text-xs font-mono">
-                    <div className="flex items-center justify-between text-emerald-700">
-                      <span>✓ OAuth Handshake</span>
-                      <span>OK</span>
-                    </div>
-                    <div className="flex items-center justify-between text-emerald-700">
-                      <span>✓ UPI Intent & Dynamic QR</span>
-                      <span>0% MDR</span>
-                    </div>
-                    <div className="flex items-center justify-between text-emerald-700">
-                      <span>✓ Webhook Secret Auto-Sync</span>
-                      <span>CONFIGURED</span>
-                    </div>
                   </div>
                 </div>
               )}
 
-              {/* STEP 3: Connected & Active */}
+              {/* STEP 3: Live */}
               {connectStep === 3 && (
                 <div className="py-4 space-y-5 text-center">
                   <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 border-4 border-emerald-200 flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-9 h-9 text-emerald-600" />
                   </div>
                   <div>
-                    <h4 className="font-serif font-bold text-xl text-[#191a1b]">
+                    <h4 className="font-sans font-bold text-xl text-slate-900 dark:text-foreground">
                       Razorpay Connect Activated!
                     </h4>
-                    <p className="text-xs text-[#5e5a5a] max-w-md mx-auto mt-1">
-                      Your store is now authorized to accept all domestic Indian payments with
-                      real-time webhooks and instant settlements.
+                    <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
+                      Your store is now authorized to accept UPI @ 0% MDR, NetBanking, and RuPay cards.
                     </p>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-[#fdf1ef] border border-[#cbd5e0] text-left space-y-2 text-xs">
-                    <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e0]/60">
-                      <span className="text-[#5e5a5a]">Connected Merchant:</span>
-                      <span className="font-bold text-[#191a1b]">{partnerMerchantName}</span>
-                    </div>
-                    <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e0]/60">
-                      <span className="text-[#5e5a5a]">Razorpay Account ID:</span>
-                      <span className="font-mono font-bold text-[#0c2340]">
-                        {rzpConnect?.accountId || 'acc_M98K28D91'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e0]/60">
-                      <span className="text-[#5e5a5a]">KYC Status:</span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-                        VERIFIED / ACTIVE
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#5e5a5a]">Settlement Cycle:</span>
-                      <span className="font-semibold text-emerald-700">
-                        T+1 Instant Bank Payouts
-                      </span>
-                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 bg-[#fdf1ef] border-t border-[#cbd5e0] flex items-center justify-between">
+            <div className="p-6 bg-slate-50 dark:bg-accent/40 border-t border-slate-200 dark:border-border flex items-center justify-between">
               {connectStep === 1 && (
                 <>
                   <button
                     type="button"
                     onClick={() => setShowConnectModal(false)}
-                    className="px-4 py-2 text-xs font-semibold text-[#5e5a5a] hover:text-[#191a1b] transition cursor-pointer"
+                    className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2027,12 +1594,12 @@ export const PaymentStudio: React.FC = () => {
                     type="button"
                     onClick={handleStartOAuthHandshake}
                     disabled={connectSubmitting}
-                    className="px-5 py-2.5 bg-[#0c2340] hover:bg-[#000000] text-[#00bafe] text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl shadow-sm transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {connectSubmitting ? (
-                      <RefreshCw className="w-4 h-4 animate-spin text-[#00bafe]" />
+                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
                     ) : (
-                      <Zap className="w-4 h-4 text-[#00bafe]" />
+                      <Zap className="w-4 h-4 text-white" />
                     )}
                     <span>
                       {connectMode === 'OAUTH'
@@ -2047,346 +1614,7 @@ export const PaymentStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowConnectModal(false)}
-                  className="w-full py-2.5 bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
-                >
-                  Done & Return to Studio
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── STRIPE CONNECT 1-CLICK ONBOARDING MODAL ───────────────────────── */}
-      {showStripeConnectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-[#cbd5e0] flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
-            <div className="p-6 bg-[#635bff] text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 text-white flex items-center justify-center font-bold text-lg">
-                  S
-                </div>
-                <div>
-                  <h3 className="font-serif font-bold text-lg">Stripe Connect Direct Flow</h3>
-                  <p className="text-xs text-white/80">
-                    Global Merchant Account Setup & Multi-Currency Processing
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowStripeConnectModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Stepper Progress Bar */}
-            <div className="px-6 py-3 bg-[#fdf1ef] border-b border-[#cbd5e0] flex items-center justify-between text-xs">
-              <div
-                className={`flex items-center gap-1.5 font-bold ${stripeConnectStep >= 1 ? 'text-[#635bff]' : 'text-slate-400'}`}
-              >
-                <span
-                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${stripeConnectStep >= 1 ? 'bg-[#635bff] text-white' : 'bg-slate-200 text-slate-500'}`}
-                >
-                  1
-                </span>
-                <span>Config</span>
-              </div>
-              <div className="w-8 h-0.5 bg-[#cbd5e0]"></div>
-              <div
-                className={`flex items-center gap-1.5 font-bold ${stripeConnectStep >= 2 ? 'text-[#635bff]' : 'text-slate-400'}`}
-              >
-                <span
-                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${stripeConnectStep >= 2 ? 'bg-[#635bff] text-white' : 'bg-slate-200 text-slate-500'}`}
-                >
-                  2
-                </span>
-                <span>Handshake</span>
-              </div>
-              <div className="w-8 h-0.5 bg-[#cbd5e0]"></div>
-              <div
-                className={`flex items-center gap-1.5 font-bold ${stripeConnectStep >= 3 ? 'text-emerald-700' : 'text-slate-400'}`}
-              >
-                <span
-                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${stripeConnectStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'}`}
-                >
-                  3
-                </span>
-                <span>Live & Ready</span>
-              </div>
-            </div>
-
-            {/* Modal Body Content */}
-            <div className="p-6 overflow-y-auto space-y-6 flex-1">
-              {/* STEP 1: Connect Choice & Config */}
-              {stripeConnectStep === 1 && (
-                <div className="space-y-5">
-                  {/* Mode Selector Tabs */}
-                  <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
-                    <button
-                      type="button"
-                      onClick={() => setStripeConnectMode('OAUTH')}
-                      className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-                        stripeConnectMode === 'OAUTH'
-                          ? 'bg-[#635bff] text-white shadow-xs'
-                          : 'text-[#5e5a5a] hover:text-[#191a1b]'
-                      }`}
-                    >
-                      <Zap className="w-3.5 h-3.5" />
-                      <span>1-Click Stripe Connect</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setStripeConnectMode('MANUAL')}
-                      className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-                        stripeConnectMode === 'MANUAL'
-                          ? 'bg-[#635bff] text-white shadow-xs'
-                          : 'text-[#5e5a5a] hover:text-[#191a1b]'
-                      }`}
-                    >
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>Direct API Keys</span>
-                    </button>
-                  </div>
-
-                  {stripeConnectMode === 'OAUTH' ? (
-                    <div className="space-y-4">
-                      <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 space-y-3">
-                        <div className="flex items-center gap-2 text-indigo-900 font-bold text-sm">
-                          <ShieldCheck className="w-5 h-5 text-indigo-700" />
-                          <span>Standard Stripe Connect Onboarding</span>
-                        </div>
-                        <p className="text-xs text-indigo-800 leading-relaxed">
-                          Connect your Stripe account in one click. Automatically activates 135+
-                          global currencies, direct bank payouts, Apple Pay / Google Pay, and Stripe
-                          Radar AI fraud protection.
-                        </p>
-                      </div>
-
-                      {/* Capabilities Overview */}
-                      <div className="p-4 rounded-2xl bg-[#fdf1ef] border border-[#cbd5e0] space-y-2">
-                        <p className="text-xs font-bold text-[#191a1b]">
-                          Active Stripe Capabilities:
-                        </p>
-                        <div className="grid grid-cols-2 gap-2 text-[11px] text-[#5e5a5a]">
-                          <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>135+ Multi-Currency Presentment</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Apple Pay & Google Pay</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Stripe Radar Fraud Guard</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Rolling 2-day Bank Payouts</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xs font-semibold text-[#191a1b] mb-1">
-                            Merchant Legal / Store Display Name
-                          </label>
-                          <input
-                            type="text"
-                            value={stripePartnerMerchantName}
-                            onChange={(e) => setStripePartnerMerchantName(e.target.value)}
-                            placeholder="e.g. Apex Global Direct"
-                            className="w-full px-3.5 py-2 text-xs rounded-xl bg-white border border-[#cbd5e0] focus:ring-2 focus:ring-[#635bff] focus:outline-none"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-semibold text-[#191a1b] mb-1">
-                              Payout Country
-                            </label>
-                            <select
-                              value={stripePartnerCountry}
-                              onChange={(e) => setStripePartnerCountry(e.target.value)}
-                              className="w-full px-3 py-2 text-xs rounded-xl bg-white border border-[#cbd5e0] focus:ring-2 focus:ring-[#635bff] focus:outline-none"
-                            >
-                              <option value="US">United States (USD)</option>
-                              <option value="GB">United Kingdom (GBP)</option>
-                              <option value="EU">European Union (EUR)</option>
-                              <option value="CA">Canada (CAD)</option>
-                              <option value="AU">Australia (AUD)</option>
-                              <option value="SG">Singapore (SGD)</option>
-                            </select>
-                          </div>
-
-                          <div className="flex flex-col justify-end">
-                            <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#fdf1ef] border border-[#cbd5e0]">
-                              <div>
-                                <p className="text-[11px] font-semibold text-[#191a1b]">
-                                  Sandbox Test Mode
-                                </p>
-                              </div>
-                              <input
-                                type="checkbox"
-                                checked={stripePartnerTestMode}
-                                onChange={(e) => setStripePartnerTestMode(e.target.checked)}
-                                className="w-4 h-4 rounded text-[#635bff] focus:ring-[#635bff] cursor-pointer"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-[#191a1b] mb-1">
-                          Stripe Publishable Key
-                        </label>
-                        <input
-                          type="text"
-                          value={stripePartnerPk}
-                          onChange={(e) => setStripePartnerPk(e.target.value)}
-                          placeholder="pk_test_... or pk_live_..."
-                          className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-white border border-[#cbd5e0] focus:ring-2 focus:ring-[#635bff] focus:outline-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-[#191a1b] mb-1">
-                          Stripe Secret Key
-                        </label>
-                        <input
-                          type="password"
-                          value={stripePartnerSk}
-                          onChange={(e) => setStripePartnerSk(e.target.value)}
-                          placeholder="sk_test_... or sk_live_..."
-                          className="w-full px-3.5 py-2 text-xs font-mono rounded-xl bg-white border border-[#cbd5e0] focus:ring-2 focus:ring-[#635bff] focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* STEP 2: Handshake & Capability Verification */}
-              {stripeConnectStep === 2 && (
-                <div className="py-8 flex flex-col items-center justify-center space-y-4 text-center">
-                  <div className="w-16 h-16 rounded-full bg-[#635bff]/10 text-[#635bff] border-4 border-[#635bff]/30 flex items-center justify-center animate-pulse">
-                    <RefreshCw className="w-8 h-8 animate-spin text-[#635bff]" />
-                  </div>
-                  <div>
-                    <h4 className="font-serif font-bold text-lg text-[#191a1b]">
-                      Authenticating with Stripe Connect Network...
-                    </h4>
-                    <p className="text-xs text-[#5e5a5a] max-w-sm mx-auto mt-1">
-                      Enabling multi-currency presentment, syncing 3D-Secure 2.0 fraud endpoints,
-                      and configuring automatic rolling settlements.
-                    </p>
-                  </div>
-
-                  <div className="w-full max-w-xs space-y-2 pt-4 text-left text-xs font-mono">
-                    <div className="flex items-center justify-between text-emerald-700">
-                      <span>✓ OAuth Verification</span>
-                      <span>OK</span>
-                    </div>
-                    <div className="flex items-center justify-between text-emerald-700">
-                      <span>✓ 135+ Currencies Presentment</span>
-                      <span>ACTIVE</span>
-                    </div>
-                    <div className="flex items-center justify-between text-emerald-700">
-                      <span>✓ Stripe Radar Guard</span>
-                      <span>PROTECTED</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 3: Connected & Active */}
-              {stripeConnectStep === 3 && (
-                <div className="py-4 space-y-5 text-center">
-                  <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 border-4 border-emerald-200 flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-9 h-9 text-emerald-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-serif font-bold text-xl text-[#191a1b]">
-                      Stripe Connect Activated!
-                    </h4>
-                    <p className="text-xs text-[#5e5a5a] max-w-md mx-auto mt-1">
-                      Your store is fully equipped to accept international Visa, Mastercard,
-                      American Express, Apple Pay, and Google Pay worldwide.
-                    </p>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-[#fdf1ef] border border-[#cbd5e0] text-left space-y-2 text-xs">
-                    <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e0]/60">
-                      <span className="text-[#5e5a5a]">Connected Merchant:</span>
-                      <span className="font-bold text-[#191a1b]">{stripePartnerMerchantName}</span>
-                    </div>
-                    <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e0]/60">
-                      <span className="text-[#5e5a5a]">Stripe Account ID:</span>
-                      <span className="font-mono font-bold text-[#635bff]">
-                        {stripeConnect?.accountId || 'acct_1N9xStandardStripe'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e0]/60">
-                      <span className="text-[#5e5a5a]">Charges & Payouts:</span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-                        ENABLED / READY
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#5e5a5a]">Settlement Cycle:</span>
-                      <span className="font-semibold text-emerald-700">
-                        Rolling 2-day Automatic Bank Payouts
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-6 bg-[#fdf1ef] border-t border-[#cbd5e0] flex items-center justify-between">
-              {stripeConnectStep === 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setShowStripeConnectModal(false)}
-                    className="px-4 py-2 text-xs font-semibold text-[#5e5a5a] hover:text-[#191a1b] transition cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleStartStripeOAuthHandshake}
-                    disabled={stripeConnectSubmitting}
-                    className="px-5 py-2.5 bg-[#635bff] hover:bg-[#5349e0] text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {stripeConnectSubmitting ? (
-                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                    ) : (
-                      <Zap className="w-4 h-4 text-white" />
-                    )}
-                    <span>
-                      {stripeConnectMode === 'OAUTH'
-                        ? 'Authorize & Connect with Stripe'
-                        : 'Save & Verify Credentials'}
-                    </span>
-                  </button>
-                </>
-              )}
-
-              {stripeConnectStep === 3 && (
-                <button
-                  type="button"
-                  onClick={() => setShowStripeConnectModal(false)}
-                  className="w-full py-2.5 bg-[#191a1b] hover:bg-[#000000] text-[#d4ff4c] text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl shadow-sm transition cursor-pointer"
                 >
                   Done & Return to Studio
                 </button>
@@ -2399,18 +1627,18 @@ export const PaymentStudio: React.FC = () => {
       {/* ─── 2-FACTOR EMAIL AUTHORIZATION MODAL ───────────────────────── */}
       {showVerificationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl border border-[#cbd5e0] shadow-2xl max-w-md w-full overflow-hidden flex flex-col">
+          <div className="bg-white dark:bg-card rounded-3xl border border-slate-200/80 dark:border-border shadow-2xl max-w-md w-full overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="p-6 bg-[#191a1b] text-white flex items-center justify-between">
+            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
                   <ShieldAlert className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-serif font-bold text-base text-white">
+                  <h3 className="font-sans font-bold text-base text-white">
                     Security Authorization
                   </h3>
-                  <p className="text-xs text-gray-300 font-sans">Email Verification Required</p>
+                  <p className="text-xs text-slate-300 font-sans">Email Verification Required</p>
                 </div>
               </div>
 
@@ -2419,7 +1647,7 @@ export const PaymentStudio: React.FC = () => {
                   setShowVerificationModal(false);
                   setPendingPayload(null);
                 }}
-                className="p-1.5 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition"
+                className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2428,7 +1656,7 @@ export const PaymentStudio: React.FC = () => {
             {/* Modal Body */}
             <form onSubmit={handleConfirmVerification} className="p-6 space-y-5">
               <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
-                <div className="flex items-center gap-2 text-amber-900 font-semibold text-xs">
+                <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
                   <Mail className="w-4 h-4 text-amber-700 shrink-0" />
                   <span>Authorization Code Sent</span>
                 </div>
@@ -2449,11 +1677,11 @@ export const PaymentStudio: React.FC = () => {
               )}
 
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-[#191a1b]">
+                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                   Enter 6-Digit Authorization Code
                 </label>
                 <div className="relative">
-                  <KeyRound className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     maxLength={6}
@@ -2465,16 +1693,16 @@ export const PaymentStudio: React.FC = () => {
                       if (verificationError) setVerificationError(null);
                     }}
                     placeholder="••••••"
-                    className="w-full pl-10 pr-4 py-3 text-center tracking-[0.4em] font-mono font-extrabold text-lg rounded-2xl bg-[#fdf1ef] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                    className="w-full pl-10 pr-4 py-3 text-center tracking-[0.4em] font-mono font-extrabold text-lg rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border text-slate-900 dark:text-foreground focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                <div className="flex items-center justify-between pt-1 text-[11px] text-[#5e5a5a]">
+                <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500">
                   <span>Code valid for 10 minutes</span>
                   <button
                     type="button"
                     onClick={handleResendOtp}
                     disabled={verificationCountdown > 0 || isResendingOtp}
-                    className="font-semibold text-[#191a1b] hover:underline disabled:opacity-50 disabled:no-underline flex items-center gap-1 cursor-pointer"
+                    className="font-bold text-indigo-600 hover:underline disabled:opacity-50 disabled:no-underline flex items-center gap-1 cursor-pointer"
                   >
                     {isResendingOtp ? (
                       <RefreshCw className="w-3 h-3 animate-spin" />
@@ -2498,19 +1726,19 @@ export const PaymentStudio: React.FC = () => {
                     setShowVerificationModal(false);
                     setPendingPayload(null);
                   }}
-                  className="flex-1 py-2.5 bg-[#f0f2f5] hover:bg-[#e4e6eb] text-[#191a1b] text-xs font-semibold rounded-xl transition cursor-pointer"
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-2xl transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isVerifyingOtp || verificationOtp.length < 6}
-                  className="flex-1 py-2.5 bg-[#191a1b] hover:bg-black text-[#d4ff4c] text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isVerifyingOtp ? (
-                    <RefreshCw className="w-4 h-4 animate-spin text-[#d4ff4c]" />
+                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
                   ) : (
-                    <ShieldCheck className="w-4 h-4 text-[#d4ff4c]" />
+                    <ShieldCheck className="w-4 h-4 text-white" />
                   )}
                   <span>Verify & Update</span>
                 </button>

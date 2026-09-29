@@ -406,54 +406,44 @@ export const ThreeDStudio: React.FC = () => {
       )}
 
       {/* ─── TOP HERO HEADER CARD & CREDIT DASHBOARD ──────────────────────── */}
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-900/50 shadow-2xl p-6 sm:p-8 text-white">
-        {/* Background Grid Pattern */}
-        <div
-          className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.2) 1px, transparent 0)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-
+      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm relative overflow-hidden space-y-6">
         <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-indigo-500/30 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shadow-inner">
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-xs">
                 <Box className="w-4 h-4" />
               </div>
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase tracking-wider border border-indigo-500/30">
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 text-[10px] font-black uppercase tracking-wider border border-indigo-200/80 dark:border-indigo-800/60">
                 AI Photogrammetry Studio
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground">
               3D Product Modeling & AR Studio
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               Synthesize production-ready 3D WebGL assets (.GLB) and iOS Augmented Reality (.USDZ) by uploading 4-5 multi-angle product photos.
             </p>
           </div>
 
           {/* Real-time 3D Credits Metric Card */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 bg-black/40 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-white/10 shadow-inner">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 bg-slate-50 dark:bg-accent/40 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-border/60 shadow-xs">
             <div className="space-y-1">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
                   <span>3D AI Credits</span>
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-indigo-900/60 text-indigo-300 font-bold">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-200/60 dark:border-indigo-800/60">
                   {studioData?.credits.plan || planName} Plan
                 </span>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl sm:text-4xl font-black text-amber-400 font-mono tracking-tight">
+                <span className="text-3xl sm:text-4xl font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight">
                   {studioData?.credits.available ?? 10}
                 </span>
-                <span className="text-xs text-slate-400 font-medium">Credits Available</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Credits Available</span>
               </div>
-              <div className="text-[10px] text-slate-400 flex items-center gap-2">
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-2">
                 <span>{studioData?.credits.used ?? 0} Models Generated</span>
                 <span>•</span>
                 <span>+{studioData?.credits.monthlyAllowance ?? 5}/mo Included</span>
@@ -464,7 +454,7 @@ export const ThreeDStudio: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsBuyModalOpen(true)}
-                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-xs flex items-center justify-center gap-1.5 transition cursor-pointer transform active:scale-95"
               >
                 <Plus className="w-4 h-4" />
                 <span>Buy 3D Credits</span>
@@ -475,7 +465,7 @@ export const ThreeDStudio: React.FC = () => {
                 onClick={loadStudioData}
                 disabled={isLoading}
                 title="Refresh Credit Balance"
-                className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition flex items-center justify-center cursor-pointer"
+                className="p-2.5 rounded-xl bg-white dark:bg-card hover:bg-slate-100 dark:hover:bg-accent text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-border transition flex items-center justify-center cursor-pointer shadow-xs"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
@@ -484,7 +474,7 @@ export const ThreeDStudio: React.FC = () => {
         </div>
 
         {/* Navigation Sub-Tabs */}
-        <div className="relative mt-6 pt-4 border-t border-white/10 flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100/80 dark:bg-accent/40 rounded-2xl border border-slate-200/80 dark:border-border/60 overflow-x-auto no-scrollbar">
           {[
             { id: 'create', label: '✨ Create 3D Model', icon: Sparkles },
             {
@@ -502,13 +492,13 @@ export const ThreeDStudio: React.FC = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-white text-slate-900 shadow-md font-extrabold'
-                    : 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white'
+                    ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/80 dark:border-border'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground hover:bg-white/60 dark:hover:bg-accent/60 border border-transparent'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`} />
                 <span>{tab.label}</span>
               </button>
             );

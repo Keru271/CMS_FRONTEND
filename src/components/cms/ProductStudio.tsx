@@ -62,6 +62,7 @@ import {
   CheckSquare,
   Square,
   BellRing,
+  ExternalLink,
 } from 'lucide-react';
 
 export const ProductStudio: React.FC = () => {
@@ -140,6 +141,16 @@ export const ProductStudio: React.FC = () => {
     metaTitle: '',
     metaDescription: '',
   });
+
+  // AI Product Generator State
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState(true);
+  const [aiKeywords, setAiKeywords] = useState('');
+  const [aiTone, setAiTone] = useState('premium');
+  const [isGeneratingAll, setIsGeneratingAll] = useState(false);
+  const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
+  const [isGeneratingSeoAi, setIsGeneratingSeoAi] = useState(false);
+  const [generatedFeatures, setGeneratedFeatures] = useState<string[]>([]);
+  const [aiSuccessToast, setAiSuccessToast] = useState<string | null>(null);
 
   // Quick Add Taxonomy Modal States (Direct Privilege from Storefront Organization)
   const [isQuickCategoryModalOpen, setIsQuickCategoryModalOpen] = useState(false);
@@ -237,6 +248,75 @@ export const ProductStudio: React.FC = () => {
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // Master AI Product Generator Function
+  const handleGenerateEverything = async (mode: 'all' | 'description' | 'seo' = 'all') => {
+    if (mode === 'all') setIsGeneratingAll(true);
+    if (mode === 'description') setIsGeneratingDesc(true);
+    if (mode === 'seo') setIsGeneratingSeoAi(true);
+
+    try {
+      const selectedCategory =
+        formData.categoryName ||
+        (formData.categories && formData.categories[0]) ||
+        (categories[0]?.name || 'General');
+
+      const generated = await cmsService.generateProductContent({
+        productName: formData.name,
+        category: selectedCategory,
+        keywords: aiKeywords || (typeof formData.tags === 'string' ? formData.tags : ''),
+        brandName: formData.brandName || '',
+        tone: aiTone,
+        generateMode: mode,
+      });
+
+      setFormData((prev) => {
+        const updated = { ...prev };
+        if (mode === 'all' || !prev.name) {
+          updated.name = generated.name;
+        }
+        if (mode === 'all' || mode === 'description') {
+          updated.description = generated.description;
+        }
+        if (mode === 'all' || mode === 'seo') {
+          updated.metaTitle = generated.seoTitle;
+          updated.seoTitle = generated.seoTitle;
+          updated.metaDescription = generated.metaDescription;
+          updated.seoDescription = generated.metaDescription;
+          updated.urlSlug = generated.urlSlug;
+        }
+        if (mode === 'all') {
+          if (generated.tags && generated.tags.length > 0) {
+            updated.tags = generated.tags.join(', ');
+          }
+          if ((!prev.price || Number(prev.price) === 0) && generated.suggestedPrice) {
+            updated.price = generated.suggestedPrice;
+          }
+        }
+        return updated;
+      });
+
+      if (generated.features && generated.features.length > 0) {
+        setGeneratedFeatures(generated.features);
+      }
+
+      setAiSuccessToast(
+        mode === 'all'
+          ? '✨ Generated entire product suite: Name, Description, Features, SEO, Tags & Price!'
+          : mode === 'description'
+          ? '✨ Generated rich product description & key features!'
+          : '✨ Generated SEO metadata & search ranking attributes!'
+      );
+      setTimeout(() => setAiSuccessToast(null), 4000);
+    } catch (err) {
+      console.error('Failed to generate product content:', err);
+      showToast('AI product generation failed. Please try again.', 'error');
+    } finally {
+      setIsGeneratingAll(false);
+      setIsGeneratingDesc(false);
+      setIsGeneratingSeoAi(false);
+    }
   };
 
   const handleOpenAddProduct = () => {
@@ -884,25 +964,24 @@ export const ProductStudio: React.FC = () => {
       )}
 
       {/* Header Banner & Sub-Tabs Navigation */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm relative overflow-hidden space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/30">
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-200/80 dark:border-indigo-800/60">
                 Catalog & Inventory Engine
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200/80 dark:border-emerald-800/60 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 {products.length} / {maxProducts >= 999999 ? 'Unlimited' : maxProducts} Products (
                 {planName})
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <Package className="w-8 h-8 text-indigo-400" />
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground flex items-center gap-3">
+              <Package className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
               <span>Products Management Studio</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
               Complete catalog suite with 7 sub-modules: All Products, Add Product (23 Options),
               Categories, Collections, Brands, Inventory Control, and Reviews.
             </p>
@@ -918,33 +997,33 @@ export const ProductStudio: React.FC = () => {
                 }
                 setIsImportModalOpen(true);
               }}
-              className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 backdrop-blur-sm flex items-center gap-2 transition-all shadow-md"
+              className="px-4 py-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 dark:bg-accent dark:hover:bg-accent/80 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-border flex items-center gap-2 transition-all shadow-xs cursor-pointer"
             >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>Import Products</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsExportModalOpen(true)}
-              className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 backdrop-blur-sm flex items-center gap-2 transition-all shadow-md"
+              className="px-4 py-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 dark:bg-accent dark:hover:bg-accent/80 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-border flex items-center gap-2 transition-all shadow-xs cursor-pointer"
             >
-              <Download className="w-4 h-4 text-indigo-300" />
+              <Download className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span>Export Excel</span>
             </button>
 
             <a
               href="/products/notifications"
-              className="px-4 py-2.5 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-500/30 backdrop-blur-sm flex items-center gap-2 transition-all shadow-md"
+              className="px-4 py-2.5 rounded-2xl bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-bold border border-amber-200/80 dark:border-amber-800/60 flex items-center gap-2 transition-all shadow-xs"
             >
-              <BellRing className="w-4 h-4 text-amber-400" />
+              <BellRing className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <span>Back-in-Stock Alerts</span>
             </a>
 
             <button
               type="button"
               onClick={handleOpenAddProduct}
-              className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all"
+              className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md shadow-indigo-600/20 flex items-center gap-2 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Add New Product</span>
@@ -953,7 +1032,7 @@ export const ProductStudio: React.FC = () => {
         </div>
 
         {/* Sub-Navigation Tabs Bar */}
-        <div className="flex items-center gap-2 pt-6 mt-6 border-t border-slate-700/60 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100/80 dark:bg-accent/40 rounded-2xl border border-slate-200/80 dark:border-border/60 overflow-x-auto no-scrollbar">
           {[
             { id: 'all-products', label: 'All Products', icon: Package, badge: products.length },
             {
@@ -974,18 +1053,20 @@ export const ProductStudio: React.FC = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveSubTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-extrabold whitespace-nowrap transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-white text-slate-900 shadow-md scale-105'
-                    : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                    ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 font-extrabold shadow-xs border border-slate-200/80 dark:border-border'
+                    : 'text-slate-600 dark:text-slate-400 font-bold hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-accent'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
                 <span>{tab.label}</span>
                 {tab.badge !== undefined && (
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      isActive ? 'bg-indigo-100 text-indigo-700' : 'bg-white/10 text-slate-300'
+                      isActive
+                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                        : 'bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
                     }`}
                   >
                     {tab.badge}
@@ -1290,6 +1371,175 @@ export const ProductStudio: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* LEFT COLUMN: CORE OPTIONS & MEDIA (8 cols) */}
             <div className="lg:col-span-8 space-y-6">
+              {/* AI Product Generator Studio Card */}
+              <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white dark:from-indigo-950/20 dark:via-purple-950/10 dark:to-card border border-indigo-200/80 dark:border-indigo-800/40 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-black text-slate-900 dark:text-foreground">
+                          AI Product Generator
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[10px] font-black tracking-wide uppercase">
+                          Auto-Copilot
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Provide a name, category, or keywords — AI will automatically generate the description, features, SEO title, meta description, and tags.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+                    className="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline cursor-pointer shrink-0"
+                  >
+                    {isAiPanelOpen ? 'Hide' : '✨ AI Studio'}
+                  </button>
+                </div>
+
+                {isAiPanelOpen && (
+                  <div className="space-y-4 pt-3 border-t border-indigo-100/80 dark:border-indigo-900/40">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* Product Name Input */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Product Name
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Premium Leather Wallet"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+
+                      {/* Category Selector */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Category
+                        </label>
+                        <select
+                          value={formData.categoryName || (formData.categories && formData.categories[0]) || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setFormData({
+                              ...formData,
+                              categoryName: val,
+                              categories: [val],
+                            });
+                          }}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer text-slate-800 dark:text-foreground"
+                        >
+                          {categories.map((c) => (
+                            <option key={c.id || c.name} value={c.name}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Keywords */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Keywords / Specs
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. leather, premium, handmade"
+                          value={aiKeywords}
+                          onChange={(e) => setAiKeywords(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+                      {/* Tone Selector */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Tone:</span>
+                        <div className="flex items-center gap-1 bg-white dark:bg-card p-1 rounded-lg border border-slate-200 dark:border-border text-[10px]">
+                          {['premium', 'luxury', 'minimal', 'energetic', 'technical'].map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => setAiTone(t)}
+                              className={`px-2 py-0.5 rounded capitalize font-bold transition cursor-pointer ${
+                                aiTone === t
+                                  ? 'bg-indigo-600 text-white shadow-xs'
+                                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                              }`}
+                            >
+                              {t}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Master Action Button */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={isGeneratingAll}
+                          onClick={() => handleGenerateEverything('all')}
+                          className="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-xs font-extrabold shadow-md flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
+                        >
+                          {isGeneratingAll ? (
+                            <>
+                              <Wand2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Generating Everything with AI...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-3.5 h-3.5" />
+                              <span>✨ Generate Everything</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Generated Success Toast */}
+                    {aiSuccessToast && (
+                      <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{aiSuccessToast}</span>
+                      </div>
+                    )}
+
+                    {/* Generated Features Checklist Preview */}
+                    {generatedFeatures.length > 0 && (
+                      <div className="p-3.5 rounded-xl bg-white dark:bg-card border border-indigo-100 dark:border-indigo-900/40 space-y-2 mt-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-extrabold text-indigo-900 dark:text-indigo-300 uppercase tracking-wider">
+                            ✨ Generated Highlights & Selling Points
+                          </span>
+                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Synced to Form
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700 dark:text-slate-300">
+                          {generatedFeatures.map((feat, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center gap-2 text-[11px] font-medium bg-slate-50 dark:bg-slate-800/50 px-3 py-2 rounded-lg border border-slate-100 dark:border-slate-800"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+                              <span>{feat}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* 1. Basic Product Info */}
               <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5">
                 <h3 className="text-sm font-black text-slate-900 dark:text-foreground uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -1313,9 +1563,29 @@ export const ProductStudio: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Description (HTML / Markdown)
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                        Description (HTML / Markdown)
+                      </label>
+                      <button
+                        type="button"
+                        disabled={isGeneratingDesc}
+                        onClick={() => handleGenerateEverything('description')}
+                        className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        {isGeneratingDesc ? (
+                          <>
+                            <Wand2 className="w-3 h-3 animate-spin" />
+                            <span>Generating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3 h-3" />
+                            <span>✨ Generate with AI</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <textarea
                       rows={5}
                       value={formData.description}
@@ -1327,6 +1597,21 @@ export const ProductStudio: React.FC = () => {
 
                   {/* Product Image Upload */}
                   <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                        Product Cover Image
+                      </label>
+                      <a
+                        href="/image-studio"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1 cursor-pointer bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-1 rounded-lg border border-indigo-100 dark:border-indigo-900/50"
+                      >
+                        <Wand2 className="w-3 h-3 text-indigo-600" />
+                        <span>✨ AI Image Studio</span>
+                        <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                      </a>
+                    </div>
                     <DragDropUpload
                       folder="products"
                       fileType="PRODUCT_IMAGE"

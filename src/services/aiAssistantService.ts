@@ -5,12 +5,13 @@ import {
   DashboardStats,
   MerchantOnboardingData,
 } from '@/src/types';
+import { cmsService } from '@/src/services/cmsService';
 
 export interface ChatAction {
   id: string;
   label: string;
-  type: 'NAVIGATE' | 'OPEN_PRODUCT_MODAL' | 'COPY_TEXT' | 'PREFILL_PROMPT';
-  payload: string;
+  type: 'NAVIGATE' | 'OPEN_PRODUCT_MODAL' | 'COPY_TEXT' | 'PREFILL_PROMPT' | 'EXECUTE_PROMOTION' | string;
+  payload: any;
   icon?: string;
 }
 
@@ -42,8 +43,53 @@ class AIAssistantService {
     context: StoreContextData,
     history: ChatMessage[] = [],
   ): Promise<{ content: string; actions?: ChatAction[] }> {
+    // 1. Try calling the autonomous AI Agent endpoint with real-time tool orchestration
+    try {
+      const storeId = context.merchantData?.store?.id;
+      const historyPayload = history.slice(-6).map((h) => ({
+        role: h.sender === 'user' ? 'user' : 'assistant',
+        content: h.content,
+      }));
+
+      const agentRes = await cmsService.runAiAgent({
+        message: userMessage,
+        storeId,
+        history: historyPayload,
+      });
+
+      if (agentRes && agentRes.reply) {
+        return {
+          content: agentRes.reply,
+          actions: agentRes.actions,
+        };
+      }
+    } catch (agentErr) {
+      console.warn('Backend runAiAgent failed, attempting copilotChat fallback:', agentErr);
+      try {
+        const storeId = context.merchantData?.store?.id;
+        const historyPayload = history.slice(-6).map((h) => ({
+          sender: h.sender,
+          content: h.content,
+        }));
+        const backendRes = await cmsService.copilotChat({
+          message: userMessage,
+          storeId,
+          history: historyPayload,
+        });
+
+        if (backendRes && backendRes.content) {
+          return {
+            content: backendRes.content,
+            actions: backendRes.actions,
+          };
+        }
+      } catch (backendErr) {
+        console.warn('Backend copilotChat endpoint failed, using client heuristic engine:', backendErr);
+      }
+    }
+
     // Artificial small delay for natural conversational feel
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const msg = userMessage.toLowerCase().trim();
     const {
@@ -56,7 +102,89 @@ class AIAssistantService {
     } = context;
     const storeName = merchantData?.store?.storeName || 'Your Store';
 
-    // 1. GREETING & GENERAL WELCOME
+    // 1. ADD / CREATE PRODUCT
+    if (
+      (msg.includes('add') && (msg.includes('product') || msg.includes('item'))) ||
+      (msg.includes('create') && (msg.includes('product') || msg.includes('item'))) ||
+      msg.includes('new product') ||
+      msg.startsWith('add ')
+    ) {
+      let prodName = 'New Product';
+      const match = userMessage.match(/(?:called|named|title|name|for|add)\s+["“']?([^"”',\n.]+)/i);
+      if (match && match[1]) {
+        prodName = match[1].replace(/^(one\s+more\s+product|a\s+product|product|item)\s+/i, '').trim();
+      }
+
+      return {
+        content: `### 📦 Add New Product to Catalog: **${prodName}**\n\nReady to add **${prodName}** to your store inventory.\n\nClick below to open the Product Editor with full support for pricing, 3D AR models, variants, and instant publishing.`,
+        actions: [
+          {
+            id: 'open_prod',
+            label: `➕ Add '${prodName}'`,
+            type: 'OPEN_PRODUCT_MODAL',
+            payload: '',
+          },
+          {
+            id: 'view_prods',
+            label: '📦 View Products Studio',
+            type: 'NAVIGATE',
+            payload: '/products',
+          },
+        ],
+      };
+    }
+
+    // 2. WHY NO ORDERS / SALES DECREASE / IMPROVE SALES
+    if (
+      msg.includes('no order') ||
+      msg.includes('orders not placed') ||
+      msg.includes('why no') ||
+      msg.includes('improve sales') ||
+      msg.includes('improve the sales') ||
+      msg.includes('sales decrease') ||
+      msg.includes('sales down') ||
+      msg.includes('sales drop') ||
+      msg.includes('low sales') ||
+      msg.includes('zero orders')
+    ) {
+      const lowStockCount = products.filter((p) => (p.inventory ?? p.stockQuantity ?? 0) <= 5).length;
+      return {
+        content:
+          `### 📉 Store Sales & Traffic Diagnostic for **${storeName}**\n\n` +
+          `I analyzed your store's live data (**${products.length} products** in catalog, **${orders.length} orders recorded**):\n\n` +
+          `#### 🔍 Root-Cause Analysis:\n` +
+          `1. 🚦 **Storefront Discovery**: With ${products.length} catalog items, first-time visitors require direct traffic channels (Instagram, WhatsApp, Google Ads) to convert.\n` +
+          `2. 🏷️ **Welcome Incentive**: Introducing a **10% - 15% promotional discount code** significantly lowers friction for first-time buyers.\n` +
+          `3. 🚚 **Trust & Policies**: Ensure clear shipping and return policies are active on your storefront.\n` +
+          (lowStockCount > 0 ? `4. ⚠️ **Low Stock Alert**: ${lowStockCount} items have low stock depth.\n\n` : `\n`) +
+          `#### 🚀 Immediate Growth Recommendations:\n` +
+          `- **Launch a 15% Welcome Promo**: Attract new buyers with code \`WELCOME15\`\n` +
+          `- **Feature Top Sellers**: Group your best items into a featured homepage collection\n` +
+          `- **Share Direct Product Links**: Share on social media channels to drive intent-driven traffic`,
+        actions: [
+          {
+            id: '1',
+            label: '🎟️ Create 15% Welcome Promo',
+            type: 'PREFILL_PROMPT',
+            payload: 'Create a 10% discount for products in Shoes.',
+          },
+          {
+            id: '2',
+            label: '🏖️ Create Summer Collection',
+            type: 'PREFILL_PROMPT',
+            payload: 'Create a summer collection with my top-selling products.',
+          },
+          {
+            id: '3',
+            label: '📦 Review Products Catalog',
+            type: 'NAVIGATE',
+            payload: '/products',
+          },
+        ],
+      };
+    }
+
+    // 3. GREETING & GENERAL WELCOME
     if (
       msg === 'hi' ||
       msg === 'hello' ||
@@ -96,7 +224,7 @@ class AIAssistantService {
       };
     }
 
-    // 2. STORE OVERVIEW & METRICS
+    // 4. STORE OVERVIEW & METRICS
     if (
       msg.includes('overview') ||
       msg.includes('performance') ||
@@ -642,49 +770,44 @@ class AIAssistantService {
   public getContextualSuggestions(pathname: string): string[] {
     if (pathname.startsWith('/products') || pathname.startsWith('/categories')) {
       return [
+        'Create a product description for this product.',
+        'Show me my best-selling products.',
         'Which products are low on stock?',
-        'Write a compelling description for a new item',
-        'How many total products are published?',
-        'Help me structure product categories',
+        'Create a 10% discount for products in Shoes.',
       ];
     }
-    if (pathname.startsWith('/orders') || pathname.startsWith('/shipping')) {
+    if (pathname.startsWith('/orders') || pathname.startsWith('/shipping') || pathname.startsWith('/analytics')) {
       return [
+        'Why did my sales decrease this month?',
+        'Show me my best-selling products.',
+        'What should I improve today?',
         'Show unfulfilled orders',
-        'Total sales revenue summary',
-        'How do I add tracking numbers?',
-        'Configure shipping zones',
       ];
     }
     if (pathname.startsWith('/discounts') || pathname.startsWith('/marketing')) {
       return [
-        'Suggest high-converting promo code ideas',
-        'How to create a 20% flash sale coupon',
-        'Tips to increase Average Order Value',
+        'Create a 10% discount for products in Shoes.',
+        'Create an Instagram campaign for my new collection.',
+        'Create a summer collection with my top-selling products.',
       ];
     }
-    if (pathname.startsWith('/seo') || pathname.startsWith('/domains')) {
+    if (pathname.startsWith('/themes') || pathname.startsWith('/store-setup') || pathname.startsWith('/pages')) {
       return [
-        'Generate SEO meta title and description',
-        'How to configure DNS records for custom domain',
-        'Best practices for product image alt tags',
-      ];
-    }
-    if (pathname.startsWith('/themes') || pathname.startsWith('/pages')) {
-      return [
-        'How to customize storefront colors and fonts',
-        'Add a new landing page',
-        'Preview theme on mobile view',
+        'Change my homepage headline.',
+        'Create a summer collection with my top-selling products.',
+        'Update theme accent color to gold',
       ];
     }
 
     // Default general suggestions
     return [
-      'Give me a store overview',
-      'Which products are low on stock?',
-      'Show unfulfilled orders',
-      'Write a catchy product description',
-      'Suggest marketing promo campaign',
+      'What should I improve today?',
+      'Create a summer collection with my top-selling products.',
+      'Why did my sales decrease this month?',
+      'Create an Instagram campaign for my new collection.',
+      'Change my homepage headline.',
+      'Show me my best-selling products.',
+      'Create a 10% discount for products in Shoes.',
     ];
   }
 }
