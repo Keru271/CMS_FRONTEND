@@ -5,6 +5,7 @@ import { NotificationConfigData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import { VendorSmtpSettings } from './VendorSmtpSettings';
 import { VendorWhatsAppSettings } from './VendorWhatsAppSettings';
+import WhatsAppTemplateManager from './WhatsAppTemplateManager';
 import {
   Bell,
   Mail,
@@ -30,6 +31,7 @@ import {
   ExternalLink,
   Settings,
   X,
+  FileText,
 } from 'lucide-react';
 
 export const NotificationStudio: React.FC = () => {
@@ -50,6 +52,9 @@ export const NotificationStudio: React.FC = () => {
 
   // Meta WhatsApp Cloud API Settings Modal
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
+
+  // Top-level studio view: 'WORKFLOWS' or 'TEMPLATES'
+  const [studioView, setStudioView] = useState<'WORKFLOWS' | 'TEMPLATES'>('WORKFLOWS');
 
   // Test Dispatch Modal
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
@@ -313,7 +318,43 @@ export const NotificationStudio: React.FC = () => {
         )}
       </div>
 
+      {/* STUDIO VIEW SWITCHER */}
+      <div className="flex gap-1 p-1 bg-slate-100 dark:bg-accent rounded-2xl w-fit">
+        <button
+          type="button"
+          onClick={() => setStudioView('WORKFLOWS')}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer ${
+            studioView === 'WORKFLOWS'
+              ? 'bg-white dark:bg-card text-slate-900 dark:text-foreground shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+          }`}
+        >
+          <Zap className="w-3.5 h-3.5" />
+          Automation Workflows
+        </button>
+        <button
+          type="button"
+          onClick={() => setStudioView('TEMPLATES')}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer ${
+            studioView === 'TEMPLATES'
+              ? 'bg-white dark:bg-card text-slate-900 dark:text-foreground shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          WhatsApp Templates
+        </button>
+      </div>
+
+      {/* TEMPLATES PANEL */}
+      {studioView === 'TEMPLATES' && (
+        <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm">
+          <WhatsAppTemplateManager />
+        </div>
+      )}
+
       {/* TRIGGER WORKFLOW SELECTOR & CONFIGURATION STUDIO */}
+      {studioView === 'WORKFLOWS' && (
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Triggers List */}
         <div className="lg:col-span-4 space-y-3">
@@ -802,6 +843,7 @@ export const NotificationStudio: React.FC = () => {
           </div>
         )}
       </div>
+      )} {/* end studioView === 'WORKFLOWS' */}
 
       {/* SEND TEST MODAL */}
       {isTestModalOpen && currentConfig && (
