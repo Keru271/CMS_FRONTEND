@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import {
   CMSDiscount,
   DiscountType,
@@ -76,6 +78,10 @@ export const DiscountStudio: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState<CMSDiscount | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Pagination
+  const [discountPage, setDiscountPage] = useState(1);
+  const [discountPageSize, setDiscountPageSize] = useState(10);
 
   // Form State
   const [formData, setFormData] = useState<{
@@ -395,14 +401,17 @@ export const DiscountStudio: React.FC = () => {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleOpenCreateModal}
-            className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow flex items-center gap-2 transition-all shrink-0 cursor-pointer active:scale-95"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New Discount</span>
-          </button>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <TableRefreshButton onRefresh={loadData} isLoading={isLoading} size="sm" />
+            <button
+              type="button"
+              onClick={handleOpenCreateModal}
+              className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow flex items-center gap-2 transition-all shrink-0 cursor-pointer active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create New Discount</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -480,7 +489,9 @@ export const DiscountStudio: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredDiscounts.map((disc) => {
+              {filteredDiscounts
+                .slice((discountPage - 1) * discountPageSize, discountPage * discountPageSize)
+                .map((disc) => {
                 const isCoupon = disc.method === 'COUPON_CODE';
                 const isExpired = disc.status === 'EXPIRED';
 
@@ -575,6 +586,16 @@ export const DiscountStudio: React.FC = () => {
                 );
               })}
             </div>
+
+            {/* Pagination */}
+            <TablePagination
+              currentPage={discountPage}
+              totalItems={filteredDiscounts.length}
+              pageSize={discountPageSize}
+              onPageChange={(p) => setDiscountPage(p)}
+              onPageSizeChange={(s) => { setDiscountPageSize(s); setDiscountPage(1); }}
+              itemName="discounts"
+            />
           )}
         </div>
 

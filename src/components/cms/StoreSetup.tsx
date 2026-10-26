@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
-import { StoreSetupData } from '@/src/types';
+import { StoreSetupData, StoreTemplate } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import { VendorSmtpSettings } from './VendorSmtpSettings';
 import {
@@ -37,6 +37,10 @@ import {
   ShieldAlert,
   Power,
   Eye,
+  Palette,
+  Check,
+  ArrowRight,
+  Layers,
 } from 'lucide-react';
 
 interface StoreSetupProps {
@@ -48,8 +52,11 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
   const [initialData, setInitialData] = useState<StoreSetupData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [templates, setTemplates] = useState<StoreTemplate[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [applyingTemplateSlug, setApplyingTemplateSlug] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
-    'general' | 'branding' | 'contact' | 'domain' | 'regional' | 'delivery_taxes' | 'smtp' | 'maintenance'
+    'general' | 'branding' | 'contact' | 'domain' | 'regional' | 'delivery_taxes' | 'smtp' | 'template' | 'maintenance'
   >('general');
   const [toastMessage, setToastMessage] = useState<{
     text: string;
@@ -66,14 +73,39 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
 
   const loadStoreSetup = async () => {
     setIsLoading(true);
+    setIsLoadingTemplates(true);
     try {
-      const data = await cmsService.getStoreSetup();
+      const [data, tmpls] = await Promise.all([
+        cmsService.getStoreSetup(),
+        cmsService.getStoreTemplates().catch(() => []),
+      ]);
       setFormData(data);
       setInitialData(data);
+      setTemplates(tmpls);
     } catch (err) {
       console.error('Failed to load store setup:', err);
     } finally {
       setIsLoading(false);
+      setIsLoadingTemplates(false);
+    }
+  };
+
+  const handleApplyTemplate = async (templateSlug: string) => {
+    if (!formData) return;
+    setApplyingTemplateSlug(templateSlug);
+    try {
+      handleChange('activeTemplateSlug', templateSlug);
+      const nextData: StoreSetupData = { ...formData, activeTemplateSlug: templateSlug };
+      const saved = await cmsService.updateStoreSetup(nextData);
+      setFormData(saved);
+      setInitialData(saved);
+      showToast(`Activated template: ${templateSlug}`, 'success');
+      if (onSaved) onSaved(saved);
+    } catch (err: any) {
+      console.error('Failed to apply template:', err);
+      showToast(err?.message || 'Failed to apply template', 'error');
+    } finally {
+      setApplyingTemplateSlug(null);
     }
   };
 
@@ -238,7 +270,8 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
             { id: 'regional', label: '5. Currency & Region', icon: DollarSign },
             { id: 'delivery_taxes', label: '6. Delivery & Taxes', icon: Truck },
             { id: 'smtp', label: '7. Email & Custom SMTP', icon: Mail },
-            { id: 'maintenance', label: '8. Maintenance Mode', icon: Wrench },
+            { id: 'template', label: '8. Storefront Template', icon: Palette },
+            { id: 'maintenance', label: '9. Maintenance Mode', icon: Wrench },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1380,6 +1413,233 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
                 <strong>Template-Aware Screen:</strong> Each storefront template (Mincom, Nova/Minimal, Luxe, Funo, Pawzy, Demo, Pulse) features its own custom-tailored maintenance design matching its colors, typography, and theme styling.
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ─── TAB 8: STOREFRONT TEMPLATE ─── */}
+        {activeTab === 'template' && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/80 dark:border-border">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-extrabold text-[10px] uppercase tracking-wider border border-indigo-200/80 dark:border-indigo-800/60">
+                    Live API Templates
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-bold">
+                    {templates.length} Active in Catalog
+                  </span>
+                </div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-foreground flex items-center gap-2">
+                  <Palette className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  <span>Storefront Theme & Layout Selection</span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
+                  Choose the high-performance storefront template powered directly by the API. Any selection immediately adjusts your storefront design tokens, headers, checkout drawers, and responsiveness.
+                </p>
+              </div>
+
+              {formData?.activeTemplateSlug && (
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/80 dark:border-border shrink-0">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400">Current Active Slug</div>
+                    <div className="text-xs font-black text-slate-900 dark:text-foreground font-mono">
+                      {formData.activeTemplateSlug}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Template Cards Grid */}
+            {isLoadingTemplates ? (
+              <div className="py-16 text-center space-y-3">
+                <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+                <p className="text-xs font-bold text-slate-500">Loading templates directly from API...</p>
+              </div>
+            ) : templates.length === 0 ? (
+              <div className="py-16 px-6 text-center rounded-3xl border-2 border-dashed border-slate-200 dark:border-border/80 bg-slate-50/50 dark:bg-accent/20 space-y-4 max-w-xl mx-auto">
+                <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center shadow-xs">
+                  <Palette className="w-8 h-8" />
+                </div>
+                <div className="space-y-1.5">
+                  <h4 className="text-base font-black text-slate-900 dark:text-foreground">
+                    No Storefront Templates Available
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                    There are currently 0 templates in your database catalog. New templates created in the Master Admin portal will automatically appear here.
+                  </p>
+                </div>
+                <div className="pt-2 flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => loadStoreSetup()}
+                    className="px-4 py-2 rounded-xl bg-white dark:bg-card border border-slate-200 dark:border-border text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 flex items-center gap-2 transition cursor-pointer shadow-xs"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Check Again</span>
+                  </button>
+                  <a
+                    href="http://localhost:3002/templates"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold flex items-center gap-2 transition cursor-pointer shadow-xs"
+                  >
+                    <span>Manage in Master Admin</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {templates.map((tmpl) => {
+                  const tmplSlug = tmpl.slug || tmpl.id || '';
+                  const isActive =
+                    (formData?.activeTemplateSlug || '').toLowerCase() === tmplSlug.toLowerCase();
+                  const isApplying = applyingTemplateSlug === tmplSlug;
+
+                  return (
+                    <div
+                      key={tmpl.id || tmpl.slug}
+                      className={`group rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between bg-white dark:bg-card ${
+                        isActive
+                          ? 'border-indigo-600 ring-2 ring-indigo-600/30 shadow-xl bg-indigo-50/10'
+                          : 'border-slate-200/80 dark:border-border hover:border-indigo-300 hover:shadow-lg'
+                      }`}
+                    >
+                      <div className="space-y-4">
+                        {/* Thumbnail image with badges */}
+                        <div className="relative h-48 w-full overflow-hidden bg-slate-100 dark:bg-accent">
+                          <img
+                            src={tmpl.previewImage}
+                            alt={tmpl.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-70 group-hover:opacity-40 transition-opacity" />
+
+                          {/* Floating Top Badges */}
+                          <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {isActive ? (
+                                <span className="px-2.5 py-1 rounded-full bg-emerald-500 text-white font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-md">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>Active Layout</span>
+                                </span>
+                              ) : tmpl.badge ? (
+                                <span className="px-2.5 py-0.5 rounded-full bg-slate-900/90 text-white font-extrabold text-[10px] uppercase tracking-wider backdrop-blur-xs">
+                                  {tmpl.badge}
+                                </span>
+                              ) : null}
+
+                              {tmpl.requiredTier && tmpl.requiredTier !== 'ALL' && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/90 text-white shadow-xs">
+                                  {tmpl.requiredTier}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Accent color chip */}
+                            <div
+                              className="w-5 h-5 rounded-full border-2 border-white shadow-md shrink-0"
+                              style={{ backgroundColor: tmpl.accentColor || '#3B82F6' }}
+                              title={`Theme accent color: ${tmpl.accentColor}`}
+                            />
+                          </div>
+
+                          {/* Live Demo link overlay */}
+                          {tmpl.demoUrl && (
+                            <a
+                              href={tmpl.demoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="absolute bottom-3 right-3 px-2.5 py-1 rounded-xl bg-black/60 hover:bg-black/90 text-white text-[10px] font-bold backdrop-blur-xs flex items-center gap-1 transition"
+                            >
+                              <span>Demo</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Details */}
+                        <div className="p-5 pt-1 space-y-3">
+                          <div>
+                            <div className="flex items-center justify-between gap-2">
+                              <h4 className="text-base font-black text-slate-900 dark:text-foreground">
+                                {tmpl.name}
+                              </h4>
+                              <span className="font-mono text-[10px] text-slate-400 bg-slate-100 dark:bg-accent px-1.5 py-0.5 rounded">
+                                {tmpl.slug}
+                              </span>
+                            </div>
+                            {tmpl.tagline && (
+                              <p className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                                {tmpl.tagline}
+                              </p>
+                            )}
+                          </div>
+
+                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            {tmpl.description}
+                          </p>
+
+                          {/* Features Pills */}
+                          {tmpl.features && tmpl.features.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {tmpl.features.slice(0, 3).map((feat, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-accent/60 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                                >
+                                  {feat}
+                                </span>
+                              ))}
+                              {tmpl.features.length > 3 && (
+                                <span className="px-1.5 py-0.5 rounded-lg bg-slate-100 dark:bg-accent/60 text-slate-400 text-[10px]">
+                                  +{tmpl.features.length - 3}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Card Footer Actions */}
+                      <div className="p-5 pt-0 flex items-center gap-2">
+                        {isActive ? (
+                          <div className="w-full py-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs text-center flex items-center justify-center gap-1.5">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            <span>Current Storefront Template</span>
+                          </div>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleChange('activeTemplateSlug', tmplSlug)}
+                              className="flex-1 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-800 dark:text-slate-200 font-bold text-xs transition cursor-pointer"
+                            >
+                              Select Template
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isApplying}
+                              onClick={() => handleApplyTemplate(tmplSlug)}
+                              className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-xs hover:shadow transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shrink-0"
+                            >
+                              {isApplying ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Sparkles className="w-3.5 h-3.5" />
+                              )}
+                              <span>Activate Now</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

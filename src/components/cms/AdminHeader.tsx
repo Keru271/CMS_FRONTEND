@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   CreditCard,
   Sparkles,
+  Rocket,
   Sun,
   Moon,
 } from 'lucide-react';
@@ -43,7 +44,14 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 }) => {
   const router = useRouter();
   const { isDark, toggleTheme } = useTheme();
-  const { stores, activeStore, switchActiveStore, setIsCreateStoreModalOpen } = useCMS();
+  const {
+    stores,
+    activeStore,
+    switchActiveStore,
+    setIsCreateStoreModalOpen,
+    storeStatus,
+    setIsGoLiveModalOpen,
+  } = useCMS();
   const { t, language, setLanguage, languages, currentLanguageOption } = useTranslation();
 
   const [isStoreMenuOpen, setIsStoreMenuOpen] = useState(false);
@@ -59,6 +67,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   const currentStoreName = activeStore?.name || merchantData?.store?.storeName || 'My Store';
   const currentCurrency = activeStore?.currency || merchantData?.store?.currency || 'USD';
   const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
+
+  const currentStage = (activeStore?.status || storeStatus || 'PENDING').toUpperCase();
+  const isStoreLive = currentStage === 'ACTIVE' || currentStage === 'LIVE';
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -116,7 +127,13 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             onClick={() => setIsStoreMenuOpen(!isStoreMenuOpen)}
             className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-800 dark:text-white hover:border-sky-500 dark:hover:border-[#00E5FF]/60 transition-all text-xs font-semibold max-w-[180px] sm:max-w-xs truncate cursor-pointer shadow-xs"
           >
-            <div className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-[#32D74B] animate-pulse shrink-0" />
+            <div
+              className={`w-2 h-2 rounded-full shrink-0 animate-pulse ${
+                isStoreLive
+                  ? 'bg-emerald-500 dark:bg-[#32D74B]'
+                  : 'bg-amber-500'
+              }`}
+            />
             <span className="truncate">{currentStoreName}</span>
             <ChevronDown
               className={`w-3.5 h-3.5 text-slate-400 dark:text-[#98989D] shrink-0 transition-transform ${
@@ -162,6 +179,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 {filteredStores.map((st) => {
                   const isSelected = activeStore?.id === st.id;
                   const isSwitching = switchingStoreId === st.id;
+                  const isPending = (st.status || 'PENDING').toUpperCase() === 'PENDING';
                   return (
                     <button
                       key={st.id}
@@ -173,11 +191,22 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                           : 'text-slate-700 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#252525] hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
-                      <div className="truncate">
+                      <div className="truncate mr-2">
                         <div className="font-medium text-slate-900 dark:text-white truncate">{st.name}</div>
                         <div className="text-[10px] text-slate-400 dark:text-[#98989D] font-mono">/{st.slug}</div>
                       </div>
-                      {isSelected && <Check className="w-4 h-4 text-sky-600 dark:text-[#00E5FF] shrink-0" />}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span
+                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
+                            isPending
+                              ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                              : 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                          }`}
+                        >
+                          {isPending ? 'Pending' : 'Live'}
+                        </span>
+                        {isSelected && <Check className="w-4 h-4 text-sky-600 dark:text-[#00E5FF] shrink-0" />}
+                      </div>
                     </button>
                   );
                 })}
@@ -186,7 +215,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               {/* Storefront Link */}
               <div className="p-2 pt-2 border-t border-slate-200 dark:border-[#2C2C2E]">
                 <a
-                  href={STOREFRONT_URL}
+                  href={`${STOREFRONT_URL}?storeSlug=${activeStore?.slug || ''}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-[#2C2C2E] text-xs text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white hover:border-sky-500 dark:hover:border-[#00E5FF] transition-all"
@@ -198,6 +227,35 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             </div>
           )}
         </div>
+
+        {/* Store Lifecycle Stage Indicator & Action */}
+        {!isStoreLive ? (
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              Pending
+            </span>
+            <button
+              onClick={() => setIsGoLiveModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer"
+              title="Inspect Launch Readiness Checklist & Go Live"
+            >
+              <Rocket className="w-3.5 h-3.5" />
+              <span>Go Live</span>
+            </button>
+          </div>
+        ) : (
+          <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => setIsGoLiveModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 text-[11px] font-bold transition-colors cursor-pointer"
+              title="Store is LIVE. Click to inspect readiness checklist or pause."
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Stage: Live</span>
+            </button>
+          </div>
+        )}
 
         {/* Maintenance Mode Status Indicator */}
         {(activeStore as any)?.maintenanceMode && (

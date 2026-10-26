@@ -2041,11 +2041,42 @@ export const ThemeManager: React.FC = () => {
               </span>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templates?.length === 0 ? (
-              <div>No Templates Found</div>
-            ) : (
-              templates.map((tmpl) => {
+          {templates?.length === 0 ? (
+            <div className="py-20 px-6 text-center rounded-3xl border-2 border-dashed border-slate-200 dark:border-border/80 bg-white dark:bg-card space-y-4 max-w-xl mx-auto shadow-sm">
+              <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mx-auto flex items-center justify-center shadow-xs">
+                <Palette className="w-8 h-8" />
+              </div>
+              <div className="space-y-1.5">
+                <h4 className="text-lg font-black text-slate-900 dark:text-foreground">
+                  No Storefront Templates Available
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                  There are currently 0 templates in your database catalog. New templates created in Master Admin or submitted via API will automatically appear here.
+                </p>
+              </div>
+              <div className="pt-2 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => loadData()}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent text-slate-800 dark:text-slate-200 text-xs font-bold transition flex items-center gap-2 cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Check Catalog</span>
+                </button>
+                <a
+                  href="http://localhost:3002/templates"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold flex items-center gap-2 transition cursor-pointer shadow-xs"
+                >
+                  <span>Open Master Admin</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {templates.map((tmpl) => {
                 const isPublished =
                   themeConfig.activeTemplateSlug === tmpl.slug ||
                   themeConfig.activeTemplateSlug === tmpl.id;
@@ -2209,9 +2240,9 @@ export const ThemeManager: React.FC = () => {
                     </div>
                   </div>
                 );
-              })
-            )}
-          </div>
+              })}
+            </div>
+          )}
         </div>
       )}
       {activeTab !== 'templates' && (

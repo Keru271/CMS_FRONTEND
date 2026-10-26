@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCMSContext } from '@/src/context/CMSContext';
-import { cmsService, STORE_TEMPLATES } from '@/src/services/cmsService';
+import { cmsService } from '@/src/services/cmsService';
 import { StoreSetupData, StoreTemplate, MerchantOnboardingData } from '@/src/types';
 import {
   Send,
@@ -148,13 +148,41 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
   const [address, setAddress] = useState(
     '100 Innovation Way, Indiranagar, Bengaluru, Karnataka 560038, India',
   );
+  const [templates, setTemplates] = useState<StoreTemplate[]>([]);
   const [selectedTheme, setSelectedTheme] = useState<StoreTemplate>(
-    merchantData?.selectedTemplate || STORE_TEMPLATES[0],
+    merchantData?.selectedTemplate || {
+      id: 'nova-tech',
+      slug: 'nova-tech',
+      name: 'Nova Tech',
+      tagline: 'High-tech minimal layout',
+      previewImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
+      accentColor: '#3B82F6',
+      badge: 'Bestseller',
+      requiredTier: 'ALL',
+      description: 'High-tech minimal layout',
+      features: [],
+    },
   );
   const [currency, setCurrency] = useState(merchantData?.store?.currency || 'INR');
   const [isSaving, setIsSaving] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+
+  useEffect(() => {
+    cmsService
+      .getStoreTemplates()
+      .then((data) => {
+        if (data && data.length > 0) {
+          setTemplates(data);
+          if (!merchantData?.selectedTemplate) {
+            setSelectedTheme(data[0]);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not load templates in WhatsAppStoreSetup:', err);
+      });
+  }, []);
 
   useEffect(() => {
     if (countdown === null) return;
@@ -973,9 +1001,21 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
               {/* ─── INTERACTIVE WIDGET: THEME CARDS ─── */}
               {msg.type === 'theme-cards' && currentStage === 'theme' && (
                 <div className="w-full max-w-2xl space-y-3 mt-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {STORE_TEMPLATES.map((tmpl) => {
-                      const isSelected = selectedTheme.id === tmpl.id;
+                  {templates.length === 0 ? (
+                    <div className="p-6 rounded-2xl border-2 border-dashed border-[#cbd5e0] bg-white text-center space-y-2">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#075e54] mx-auto flex items-center justify-center">
+                        <Palette className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-bold text-[#191a1b]">No Templates Configured in Catalog</p>
+                      <p className="text-[11px] text-[#5e5a5a]">
+                        We'll set up your store using the standard clean layout so you can get started right away!
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {templates.map((tmpl) => {
+                      const isSelected =
+                        selectedTheme?.id === tmpl.id || selectedTheme?.slug === tmpl.slug;
                       return (
                         <div
                           key={tmpl.id}
@@ -1053,7 +1093,8 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
                         </div>
                       );
                     })}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 

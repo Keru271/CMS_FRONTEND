@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import { CMSCustomer, CustomerGroup, CMSOrder } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import { useCMSContext } from '@/src/context/CMSContext';
@@ -81,6 +83,10 @@ export const CustomerStudio: React.FC = () => {
 
   const [noteInput, setNoteInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Pagination
+  const [customerPage, setCustomerPage] = useState(1);
+  const [customerPageSize, setCustomerPageSize] = useState(10);
 
   useEffect(() => {
     loadData();
@@ -392,6 +398,7 @@ export const CustomerStudio: React.FC = () => {
           <span className="text-xs font-bold text-slate-500 hidden sm:inline">
             Showing {filteredCustomers.length} of {customers.length} Customers
           </span>
+          <TableRefreshButton onRefresh={loadData} isLoading={isLoading} size="sm" />
         </div>
       </div>
 
@@ -418,7 +425,9 @@ export const CustomerStudio: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredCustomers.map((cust) => {
+                filteredCustomers
+                  .slice((customerPage - 1) * customerPageSize, customerPage * customerPageSize)
+                  .map((cust) => {
                   const grpUpper = cust.group.toUpperCase();
 
                   return (
@@ -532,6 +541,16 @@ export const CustomerStudio: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        <TablePagination
+          currentPage={customerPage}
+          totalItems={filteredCustomers.length}
+          pageSize={customerPageSize}
+          onPageChange={(p) => setCustomerPage(p)}
+          onPageSizeChange={(s) => { setCustomerPageSize(s); setCustomerPage(1); }}
+          itemName="customers"
+        />
       </div>
 
       {/* CUSTOMER PROFILE DRAWER / MODAL */}

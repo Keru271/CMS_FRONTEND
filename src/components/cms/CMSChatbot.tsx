@@ -70,11 +70,12 @@ export const CMSChatbot: React.FC = () => {
       {
         id: 'welcome-1',
         sender: 'assistant',
-        content: `👋 **Welcome to your AI Store Assistant!**\n\nI have live visibility into your catalog (**${products?.length || 0} items**) and orders (**${orders?.length || 0} orders**).\n\nI can autonomously analyze your store and execute actions with secure platform tools.\n\n### 💡 What would you like to do today?`,
+        content: `👋 **Welcome to your AI Store Assistant!**\n\nI have live visibility into your catalog (**${products?.length || 0} items**) and orders (**${orders?.length || 0} orders**).\n\nI can help you add products, create marketing campaigns, analyze sales performance, and optimize your store.\n\n### 💡 What would you like to do today?`,
         timestamp: new Date().toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
         }),
+        model: 'Default Text',
         actions: [
           {
             id: 'a1',
@@ -258,6 +259,7 @@ export const CMSChatbot: React.FC = () => {
           minute: '2-digit',
         }),
         actions: response.actions,
+        model: response.model || 'Default Text',
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -274,6 +276,7 @@ export const CMSChatbot: React.FC = () => {
             hour: '2-digit',
             minute: '2-digit',
           }),
+          model: 'Default Text',
         },
       ]);
     } finally {
@@ -311,7 +314,7 @@ export const CMSChatbot: React.FC = () => {
           {
             id: `promo-success-${Date.now()}`,
             sender: 'assistant',
-            content: `🎉 **Promotion Successfully Activated in Database!**\n\n${promoRes.message}\n\n- 🏷️ **Coupon Code:** \`${action.payload.code}\`\n- 📦 **Collection:** \`${action.payload.collectionName}\`\n- 🚀 **Storefront Announcement:** Active\n\nYour customers can now redeem this discount at checkout!`,
+            content: `🎉 **Promotion Successfully Created & Live!**\n\n${promoRes.message}\n\n- 🏷️ **Coupon Code:** \`${action.payload.code}\`\n- 📦 **Collection:** \`${action.payload.collectionName}\`\n- 🚀 **Storefront Announcement:** Active\n\nYour customers can now redeem this discount at checkout!`,
             timestamp: new Date().toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit',
@@ -395,9 +398,25 @@ export const CMSChatbot: React.FC = () => {
 
   const contextualSuggestions = aiAssistantService.getContextualSuggestions(pathname);
 
+  // Helper to sanitize message content: removes robotic tool traces and debug blocks
+  const cleanHumanMessage = (rawText: string): string => {
+    if (!rawText) return '';
+    // Strip code blocks that contain tool execution traces
+    let cleaned = rawText.replace(
+      /```[\s\S]*?(?:\[(?:create_\w+|get_\w+|update_\w+|execute_tool|\w+)\]|platform tool execution trace|tool execution trace)[\s\S]*?```/gi,
+      '',
+    );
+    // Strip standalone lines mentioning tool execution trace or [tool_name] -> ...
+    cleaned = cleaned.replace(/^\s*(?:\[\w+\]|\d+\.\s*\[\w+\])\s*->.*$/gim, '');
+    cleaned = cleaned.replace(/^.*platform tool execution trace.*$/gim, '');
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+    return cleaned.trim();
+  };
+
   // Markdown renderer helper with Code Block and Table support
   const renderFormattedContent = (content: string) => {
-    const lines = content.split('\n');
+    const sanitized = cleanHumanMessage(content);
+    const lines = sanitized.split('\n');
     let inTable = false;
     let tableRows: string[][] = [];
     let inCodeBlock = false;
@@ -445,17 +464,20 @@ export const CMSChatbot: React.FC = () => {
 
     const flushCodeBlock = (key: number) => {
       if (codeBlockLines.length > 0) {
-        elements.push(
-          <div
-            key={`code-${key}`}
-            className="my-3 p-3.5 rounded-xl bg-slate-950 text-cyan-300 font-mono text-xs border border-slate-800 shadow-inner overflow-x-auto leading-relaxed"
-          >
-            <div className="flex items-center gap-1.5 pb-2 mb-2 border-b border-slate-800 text-[10px] text-slate-400 font-sans uppercase tracking-wider font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" /> Platform Tool Execution Trace
-            </div>
-            <pre className="whitespace-pre-wrap font-mono text-cyan-300">{codeBlockLines.join('\n')}</pre>
-          </div>,
+        // Discard any code block that contains internal tool execution traces
+        const isToolTrace = codeBlockLines.some((l) =>
+          /\[\w+\]\s*->|tool execution trace|\[create_|\[get_|\[update_/i.test(l),
         );
+        if (!isToolTrace) {
+          elements.push(
+            <div
+              key={`code-${key}`}
+              className="my-3 p-3.5 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs border border-slate-800 shadow-sm overflow-x-auto leading-relaxed"
+            >
+              <pre className="whitespace-pre-wrap font-mono text-cyan-300">{codeBlockLines.join('\n')}</pre>
+            </div>,
+          );
+        }
         codeBlockLines = [];
       }
       inCodeBlock = false;
@@ -666,8 +688,8 @@ export const CMSChatbot: React.FC = () => {
                     >
                       <Sparkles className="w-4 h-4 text-cyan-600" /> AI Store Assistant
                     </h2>
-                    <span className="px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 text-[10px] font-mono uppercase tracking-wider font-semibold">
-                      Tools Active
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-sans font-medium flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Online
                     </span>
                     {creditsInfo && (
                       <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-mono font-bold flex items-center gap-1">
@@ -677,7 +699,7 @@ export const CMSChatbot: React.FC = () => {
                     )}
                   </div>
                   <p className="text-xs text-slate-500 font-sans truncate">
-                    {merchantData?.store?.storeName || 'Merchant Store'} · Autonomous Tool Calling & Analytics
+                    {merchantData?.store?.storeName || 'Merchant Store'} · AI E-Commerce Assistant
                   </p>
                 </div>
               </div>
@@ -816,26 +838,26 @@ export const CMSChatbot: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Enabled Platform Tools Badge Strip */}
+                {/* Store Capabilities Tag Strip */}
                 <div className="pt-2">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Connected Tools
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Store Capabilities
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {[
-                      'get_store',
-                      'get_products',
-                      'get_orders',
-                      'get_sales_analytics',
-                      'create_discount',
-                      'create_collection',
-                      'update_theme',
-                    ].map((tool) => (
+                      'Catalog & Products',
+                      'Orders & Tracking',
+                      'Sales Analytics',
+                      'Discounts & Promos',
+                      'Curated Collections',
+                      'Theme Customizer',
+                      'Store Settings',
+                    ].map((cap) => (
                       <span
-                        key={tool}
-                        className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-mono text-slate-600"
+                        key={cap}
+                        className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-sans font-medium text-slate-600 shadow-2xs"
                       >
-                        {tool}()
+                        {cap}
                       </span>
                     ))}
                   </div>
@@ -881,6 +903,35 @@ export const CMSChatbot: React.FC = () => {
                               : 'bg-white border border-slate-200/90 text-slate-900 rounded-bl-xs'
                           }`}
                         >
+                          {/* Testing model indicator badge */}
+                          {msg.sender === 'assistant' && msg.model && (
+                            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100 text-[10px] text-slate-400 font-sans">
+                              <span className="flex items-center gap-1 font-semibold text-slate-500 uppercase tracking-wider text-[9px]">
+                                <Sparkles className="w-3 h-3 text-cyan-600" /> Response Source
+                              </span>
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border ${
+                                  msg.model.toLowerCase().includes('gemini')
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                    : msg.model.toLowerCase().includes('chatgpt') || msg.model.toLowerCase().includes('openai')
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                                }`}
+                              >
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full ${
+                                    msg.model.toLowerCase().includes('gemini')
+                                      ? 'bg-blue-500 animate-pulse'
+                                      : msg.model.toLowerCase().includes('chatgpt') || msg.model.toLowerCase().includes('openai')
+                                      ? 'bg-emerald-500 animate-pulse'
+                                      : 'bg-amber-500'
+                                  }`}
+                                />
+                                <span>{msg.model}</span>
+                              </span>
+                            </div>
+                          )}
+
                           {/* Message content */}
                           <div className="space-y-1 text-slate-900 font-sans">{renderFormattedContent(msg.content)}</div>
 
@@ -920,6 +971,11 @@ export const CMSChatbot: React.FC = () => {
                       {/* Metadata & Copy action */}
                       <div className="flex items-center gap-2.5 mt-1 px-1 text-[11px] text-slate-400 font-sans">
                         <span>{msg.timestamp}</span>
+                        {msg.sender === 'assistant' && msg.model && (
+                          <span className="text-[10px] font-mono font-medium text-slate-400">
+                            • {msg.model}
+                          </span>
+                        )}
                         <button
                           onClick={() => handleCopyMessage(msg.id, msg.content)}
                           className="opacity-0 group-hover:opacity-100 hover:text-slate-900 transition-all cursor-pointer"
@@ -996,7 +1052,7 @@ export const CMSChatbot: React.FC = () => {
 
                   <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400 px-1 font-sans font-medium">
                     <span className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> AI Assistant Active • Tool Calling Enabled
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> AI Assistant Active • Ready to help you grow
                     </span>
                     <span className="hidden sm:inline">Press Enter ↵ to send · Esc to close</span>
                   </div>

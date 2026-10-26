@@ -58,15 +58,15 @@ export const AiCampaignOptimization: React.FC = () => {
     if (!camp) return;
     try {
       await cmsService.createTargetedCampaign({
-        title: `${camp.title} (${channel})`,
-        targetSegment: camp.targetSegment,
+        title: `${camp.title || 'VIP Campaign'} (${channel})`,
+        targetSegment: camp.targetSegment || 'VIP Champions',
         channel: channel === 'WhatsApp' ? 'WHATSAPP' : channel === 'SMS' ? 'SMS' : 'EMAIL',
-        subject: camp.email.subjectLine,
-        body: channel === 'WhatsApp' ? camp.whatsapp.messageText : camp.email.bodyMarkdown,
-        discountCode: camp.coupon.code,
-        discountValue: camp.coupon.discountValue,
+        subject: camp.email?.subjectLine || 'Exclusive VIP Update',
+        body: channel === 'WhatsApp' ? (camp.whatsapp?.messageText || '') : (camp.email?.bodyMarkdown || ''),
+        discountCode: camp.coupon?.code || 'VIP15',
+        discountValue: camp.coupon?.discountValue || 15,
       });
-      setDeploySuccess(`Successfully scheduled ${channel} campaign with promo code ${camp.coupon.code}!`);
+      setDeploySuccess(`Successfully scheduled ${channel} campaign with promo code ${camp.coupon?.code || 'VIP15'}!`);
       setTimeout(() => setDeploySuccess(null), 4000);
     } catch (err) {
       console.error('Error deploying campaign:', err);
@@ -175,9 +175,9 @@ export const AiCampaignOptimization: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
-                Generated Asset Studio • {campaign.targetSegment}
+                Generated Asset Studio • {campaign.targetSegment || 'VIP Champions'}
               </span>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">{campaign.title}</h2>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">{campaign.title || 'VIP Targeted Campaign'}</h2>
             </div>
 
             {/* Studio Tabs */}
@@ -196,7 +196,7 @@ export const AiCampaignOptimization: React.FC = () => {
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key as any)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                       isActive
                         ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
@@ -216,29 +216,31 @@ export const AiCampaignOptimization: React.FC = () => {
               <div className="space-y-3">
                 <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl border border-emerald-200 dark:border-emerald-800/50 space-y-2">
                   <div className="flex justify-between items-center text-[10px] text-emerald-800 dark:text-emerald-300 font-bold uppercase">
-                    <span>{campaign.whatsapp.emojiHeader}</span>
+                    <span>{campaign.whatsapp?.emojiHeader || '👟 VIP Exclusive Broadcast'}</span>
                     <button
-                      onClick={() => handleCopy(campaign.whatsapp.messageText, 'wa')}
-                      className="text-slate-600 hover:text-slate-900 flex items-center gap-1"
+                      onClick={() => handleCopy(campaign.whatsapp?.messageText || '', 'wa')}
+                      className="text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
                     >
                       {copiedKey === 'wa' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                       {copiedKey === 'wa' ? 'Copied' : 'Copy'}
                     </button>
                   </div>
                   <p className="text-slate-800 dark:text-slate-200 whitespace-pre-line text-xs leading-relaxed">
-                    {campaign.whatsapp.messageText}
+                    {campaign.whatsapp?.messageText || 'Special VIP Offer available!'}
                   </p>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {campaign.whatsapp.quickReplyButtons.map((btn, i) => (
-                      <span key={i} className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-emerald-200 text-emerald-700 dark:text-emerald-300 font-semibold text-[11px]">
-                        {btn}
-                      </span>
-                    ))}
-                  </div>
+                  {campaign.whatsapp?.quickReplyButtons && campaign.whatsapp.quickReplyButtons.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {campaign.whatsapp.quickReplyButtons.map((btn, i) => (
+                        <span key={i} className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-emerald-200 text-emerald-700 dark:text-emerald-300 font-semibold text-[11px]">
+                          {btn}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => handleDeploy('WhatsApp')}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-colors flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   Send WhatsApp Broadcast <ArrowRight className="w-3.5 h-3.5" />
                 </button>
@@ -249,23 +251,25 @@ export const AiCampaignOptimization: React.FC = () => {
               <div className="space-y-3">
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-2">
                   <div className="flex justify-between items-center text-[11px]">
-                    <span className="font-bold text-slate-900 dark:text-white">Subject: {campaign.email.subjectLine}</span>
+                    <span className="font-bold text-slate-900 dark:text-white">Subject: {campaign.email?.subjectLine || 'Exclusive VIP Access'}</span>
                     <button
-                      onClick={() => handleCopy(campaign.email.bodyMarkdown, 'em')}
-                      className="text-slate-600 hover:text-slate-900 flex items-center gap-1"
+                      onClick={() => handleCopy(campaign.email?.bodyMarkdown || '', 'em')}
+                      className="text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
                     >
                       {copiedKey === 'em' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                       {copiedKey === 'em' ? 'Copied' : 'Copy'}
                     </button>
                   </div>
-                  <p className="text-slate-500 italic text-[11px]">Preheader: {campaign.email.preheaderText}</p>
+                  {campaign.email?.preheaderText && (
+                    <p className="text-slate-500 italic text-[11px]">Preheader: {campaign.email.preheaderText}</p>
+                  )}
                   <div className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 whitespace-pre-line text-slate-700 dark:text-slate-300 max-h-40 overflow-y-auto font-mono text-[11px]">
-                    {campaign.email.bodyMarkdown}
+                    {campaign.email?.bodyMarkdown || 'Exclusive VIP drop details.'}
                   </div>
                 </div>
                 <button
                   onClick={() => handleDeploy('Email')}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   Schedule Email Campaign <ArrowRight className="w-3.5 h-3.5" />
                 </button>
@@ -276,15 +280,17 @@ export const AiCampaignOptimization: React.FC = () => {
               <div className="space-y-3">
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1.5">
                   <div className="flex justify-between items-center">
-                    <span className="font-bold text-slate-900 dark:text-white">{campaign.push.title}</span>
-                    <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">{campaign.push.urgencyTag}</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{campaign.push?.title || '🔥 VIP Drop'}</span>
+                    <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">{campaign.push?.urgencyTag || 'VIP'}</span>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-400">{campaign.push.body}</p>
-                  <span className="text-[11px] font-mono text-purple-600 dark:text-purple-400 block pt-1">Deep link: {campaign.push.deepLink}</span>
+                  <p className="text-slate-600 dark:text-slate-400">{campaign.push?.body || ''}</p>
+                  {campaign.push?.deepLink && (
+                    <span className="text-[11px] font-mono text-purple-600 dark:text-purple-400 block pt-1">Deep link: {campaign.push.deepLink}</span>
+                  )}
                 </div>
                 <button
                   onClick={() => handleDeploy('Push')}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition-colors flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   Schedule Push Notification <ArrowRight className="w-3.5 h-3.5" />
                 </button>
@@ -294,13 +300,13 @@ export const AiCampaignOptimization: React.FC = () => {
             {activeTab === 'coupon' && (
               <div className="p-4 bg-amber-50/60 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800/60 space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-amber-900 dark:text-amber-200">PROMO CODE: {campaign.coupon.code}</span>
-                  <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded">{campaign.coupon.discountValue}% OFF</span>
+                  <span className="font-bold text-amber-900 dark:text-amber-200">PROMO CODE: {campaign.coupon?.code || 'VIP15'}</span>
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded">{campaign.coupon?.discountValue || 15}% OFF</span>
                 </div>
-                <p className="text-slate-600 dark:text-slate-400 text-[11px]">{campaign.coupon.marginImpactExplanation}</p>
+                <p className="text-slate-600 dark:text-slate-400 text-[11px]">{campaign.coupon?.marginImpactExplanation || ''}</p>
                 <div className="text-[11px] text-slate-500 flex gap-4 pt-1">
-                  <span>Min Order: <strong>₹{campaign.coupon.minOrderAmount.toLocaleString()}</strong></span>
-                  <span>Expiry: <strong>{campaign.coupon.expiryHours} Hours</strong></span>
+                  <span>Min Order: <strong>₹{(campaign.coupon?.minOrderAmount || 0).toLocaleString()}</strong></span>
+                  <span>Expiry: <strong>{campaign.coupon?.expiryHours || 48} Hours</strong></span>
                 </div>
               </div>
             )}
@@ -308,13 +314,13 @@ export const AiCampaignOptimization: React.FC = () => {
             {activeTab === 'bundle' && (
               <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-slate-900 dark:text-white">{campaign.bundle.bundleName}</span>
-                  <span className="text-xs font-bold text-emerald-600">Bundle Price: ₹{campaign.bundle.bundleOfferPrice.toLocaleString()}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{campaign.bundle?.bundleName || 'Curated VIP Bundle'}</span>
+                  <span className="text-xs font-bold text-emerald-600">Bundle Price: ₹{(campaign.bundle?.bundleOfferPrice || 0).toLocaleString()}</span>
                 </div>
-                <p className="text-slate-600 dark:text-slate-400 text-[11px]">{campaign.bundle.crossSellRationale}</p>
+                <p className="text-slate-600 dark:text-slate-400 text-[11px]">{campaign.bundle?.crossSellRationale || ''}</p>
                 <div className="text-[11px] text-slate-500 flex gap-4 pt-1">
-                  <span>Pairing: <strong>{campaign.bundle.primaryProduct} + {campaign.bundle.pairedProduct}</strong></span>
-                  <span>Margin: <strong>{campaign.bundle.merchantMarginPercent}%</strong></span>
+                  <span>Pairing: <strong>{campaign.bundle?.primaryProduct || ''} + {campaign.bundle?.pairedProduct || ''}</strong></span>
+                  <span>Margin: <strong>{campaign.bundle?.merchantMarginPercent || 0}%</strong></span>
                 </div>
               </div>
             )}
@@ -322,12 +328,14 @@ export const AiCampaignOptimization: React.FC = () => {
             {activeTab === 'social' && (
               <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-2">
                 <span className="font-bold text-slate-900 dark:text-white block">Instagram Caption</span>
-                <p className="text-slate-700 dark:text-slate-300 whitespace-pre-line text-xs">{campaign.social.postCaption}</p>
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {campaign.social.hashtags.map((h, i) => (
-                    <span key={i} className="text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">{h}</span>
-                  ))}
-                </div>
+                <p className="text-slate-700 dark:text-slate-300 whitespace-pre-line text-xs">{campaign.social?.postCaption || ''}</p>
+                {campaign.social?.hashtags && campaign.social.hashtags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {campaign.social.hashtags.map((h, i) => (
+                      <span key={i} className="text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">{h}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

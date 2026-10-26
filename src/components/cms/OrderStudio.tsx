@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import { CMSOrder, OrderStatus, PaymentStatus, OrderNote } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import {
@@ -67,6 +69,10 @@ export const OrderStudio: React.FC = () => {
   const [noteInput, setNoteInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [storeCurrency, setStoreCurrency] = useState<string>('INR');
+
+  // Pagination
+  const [orderPage, setOrderPage] = useState(1);
+  const [orderPageSize, setOrderPageSize] = useState(10);
 
   const getCurrencySymbol = (currency?: string): string => {
     const c = (currency || storeCurrency || 'INR').toUpperCase();
@@ -414,9 +420,12 @@ export const OrderStudio: React.FC = () => {
             />
           </div>
 
-          <span className="text-xs font-bold text-slate-500 hidden sm:inline">
-            Showing {filteredOrders.length} of {orders.length} Orders
-          </span>
+          <div className="flex items-center gap-3">
+            <TableRefreshButton onRefresh={loadOrders} isLoading={isLoading} size="sm" />
+            <span className="text-xs font-bold text-slate-500 hidden sm:inline">
+              Showing {filteredOrders.length} of {orders.length} Orders
+            </span>
+          </div>
         </div>
       </div>
 
@@ -444,7 +453,9 @@ export const OrderStudio: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((o) => {
+                filteredOrders
+                  .slice((orderPage - 1) * orderPageSize, orderPage * orderPageSize)
+                  .map((o) => {
                   const statusUpper = o.orderStatus.toUpperCase();
                   const payUpper = o.paymentStatus.toUpperCase();
 
@@ -527,6 +538,16 @@ export const OrderStudio: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        <TablePagination
+          currentPage={orderPage}
+          totalItems={filteredOrders.length}
+          pageSize={orderPageSize}
+          onPageChange={(p) => setOrderPage(p)}
+          onPageSizeChange={(s) => { setOrderPageSize(s); setOrderPage(1); }}
+          itemName="orders"
+        />
       </div>
 
       {/* ORDER DETAILS DRAWER / MODAL */}

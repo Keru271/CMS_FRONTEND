@@ -310,6 +310,7 @@ export interface CMSCategory {
   name: string;
   slug: string;
   icon?: string;
+  image?: string | null;
   productCount: number;
   description?: string;
   createdAt?: string;
@@ -441,6 +442,7 @@ export interface CategoryFormData {
   name: string;
   slug: string;
   icon?: string;
+  image?: string;
   description?: string;
   createdAt?: string;
 }
@@ -543,6 +545,7 @@ export interface StoreSetupData {
   maintenanceTitle?: string | null;
   maintenanceMessage?: string | null;
   maintenanceExpectedReturn?: string | null;
+  activeTemplateSlug?: string | null;
 }
 
 export interface ThemeConfigData {
@@ -724,6 +727,35 @@ export interface CMSStore {
     slug: string;
   } | null;
   createdAt?: string;
+}
+
+export interface StoreLaunchChecklistItem {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  isComplete: boolean;
+  isMandatory: boolean;
+  currentCount?: number;
+  requiredCount?: number;
+  value?: string;
+  actionUrl: string;
+  actionLabel: string;
+}
+
+export interface StoreLaunchReadiness {
+  storeId: string;
+  storeName: string;
+  storeSlug: string;
+  status: 'PENDING' | 'LIVE' | 'ACTIVE' | string;
+  isLive: boolean;
+  isReady: boolean;
+  progressPercent: number;
+  completedCount: number;
+  totalCount: number;
+  missingMandatory: string[];
+  checklist: StoreLaunchChecklistItem[];
+  primaryDomain: string;
 }
 
 export interface CreateStorePayload {

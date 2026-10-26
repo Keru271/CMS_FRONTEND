@@ -22,6 +22,8 @@ import {
   StoreSetupData,
   CMSStore,
   CreateStorePayload,
+  StoreLaunchReadiness,
+  StoreLaunchChecklistItem,
   ThemeConfigData,
   CMSPageData,
   PageFormData,
@@ -329,443 +331,16 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
 ];
 
 
-// Mock CMS Data catalog
-export const INITIAL_PRODUCTS: CMSProduct[] = [
-  {
-    id: 'prod-101',
-    name: 'AeroPulse Wireless Headphones',
-    sku: 'AUDIO-AERO-01',
-    description: 'Active noise cancellation headphones with 40-hour battery life.',
-    price: 199.99,
-    originalPrice: 249.99,
-    compareAtPrice: 249.99,
-    costPrice: 85.0,
-    inventory: 45,
-    stockQuantity: 45,
-    category: 'Electronics',
-    categoryName: 'Tech & Electronics',
-    brandName: 'AeroTech Lab',
-    status: 'ACTIVE',
-    image:
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
-    ],
-    tags: ['Audio', 'Wireless'],
-    createdAt: '2026-07-20',
-  },
-  {
-    id: 'prod-102',
-    name: 'Lumix Horizon Smart Fitness Watch',
-    sku: 'WEAR-LUMIX-02',
-    description: 'AMOLED screen fitness tracking smartwatch with heart rate & SPO2 sensors.',
-    price: 149.5,
-    originalPrice: 179.99,
-    compareAtPrice: 179.99,
-    costPrice: 60.0,
-    inventory: 8,
-    stockQuantity: 8,
-    category: 'Electronics',
-    categoryName: 'Tech & Electronics',
-    brandName: 'Lumix Crafted',
-    status: 'ACTIVE',
-    image:
-      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
-    ],
-    tags: ['Fitness', 'Smartwatch'],
-    createdAt: '2026-07-22',
-  },
-  {
-    id: 'prod-103',
-    name: 'UrbanCraft Minimalist Canvas Backpack',
-    sku: 'BAG-URBAN-03',
-    description: 'Water-resistant eco canvas backpack with padded 15.6" laptop compartment.',
-    price: 68.0,
-    originalPrice: 85.0,
-    compareAtPrice: 85.0,
-    costPrice: 28.0,
-    inventory: 120,
-    stockQuantity: 120,
-    category: 'Fashion',
-    categoryName: 'Fashion & Apparel',
-    brandName: 'Velvet Atelier',
-    status: 'ACTIVE',
-    image:
-      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80',
-    ],
-    tags: ['Travel', 'Eco'],
-    createdAt: '2026-07-25',
-  },
-  {
-    id: 'prod-104',
-    name: 'Nordic Mechanical Walnut Keyboard',
-    sku: 'KEY-NORDIC-04',
-    description: 'Custom hot-swappable mechanical keyboard with solid walnut chassis.',
-    price: 175.0,
-    originalPrice: 210.0,
-    compareAtPrice: 210.0,
-    costPrice: 75.0,
-    inventory: 3,
-    stockQuantity: 3,
-    category: 'Electronics',
-    categoryName: 'Tech & Electronics',
-    brandName: 'AeroTech Lab',
-    status: 'ACTIVE',
-    image:
-      'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80',
-    ],
-    tags: ['Mechanical', 'Workspace'],
-    createdAt: '2026-07-28',
-  },
-  {
-    id: 'prod-105',
-    name: 'Minimalist Ceramic Coffee Dripper',
-    sku: 'HOME-CERAMIC-05',
-    description: 'Handcrafted stoneware pour-over dripper with thermal carafe.',
-    price: 42.0,
-    inventory: 0,
-    stockQuantity: 0,
-    category: 'Home & Living',
-    categoryName: 'Home Decor & Living',
-    brandName: 'Botanica Elements',
-    status: 'ARCHIVED',
-    image:
-      'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
-    ],
-    tags: ['Coffee', 'Kitchen'],
-    createdAt: '2026-08-01',
-  },
-];
+// Initial Catalog (Empty for fresh store accounts)
+export const INITIAL_PRODUCTS: CMSProduct[] = [];
 
-export const INITIAL_CATEGORIES: CMSCategory[] = [
-  {
-    id: 'cat-1',
-    name: 'Electronics',
-    slug: 'electronics',
-    productCount: 14,
-    description: 'Gadgets, audio, and personal hardware',
-  },
-  {
-    id: 'cat-2',
-    name: 'Fashion',
-    slug: 'fashion',
-    productCount: 8,
-    description: 'Apparel, bags, and accessories',
-  },
-  {
-    id: 'cat-3',
-    name: 'Home & Living',
-    slug: 'home-living',
-    productCount: 11,
-    description: 'Kitchenware, lighting, and decor',
-  },
-];
+export const INITIAL_CATEGORIES: CMSCategory[] = [];
 
-export const INITIAL_ORDERS: CMSOrder[] = [
-  {
-    id: 'ord-1001',
-    orderNumber: 'ORD-98421',
-    customerName: 'Sarah Jenkins',
-    customerEmail: 'sarah.j@example.com',
-    customerPhone: '+1 (555) 234-5678',
-    totalAmount: 349.49,
-    subtotalAmount: 299.99,
-    taxAmount: 24.5,
-    shippingAmount: 25.0,
-    currency: 'USD',
-    paymentStatus: 'PAID',
-    orderStatus: 'SHIPPED',
-    fulfillmentStatus: 'SHIPPED',
-    itemsCount: 2,
-    carrier: 'FedEx Express',
-    trackingNumber: 'TRK-88912344-FEDEX',
-    createdAt: '2026-08-05 14:22',
-    shippingAddress: {
-      name: 'Sarah Jenkins',
-      street: '742 Evergreen Terrace',
-      city: 'Springfield',
-      state: 'IL',
-      zip: '62704',
-      country: 'United States',
-    },
-    items: [
-      {
-        productId: 'prod-101',
-        productName: 'AeroPulse Wireless Headphones',
-        sku: 'AUDIO-AERO-01',
-        variant: 'Matte Black',
-        quantity: 1,
-        unitPrice: 199.99,
-        subtotal: 199.99,
-      },
-      {
-        productId: 'prod-103',
-        productName: 'UrbanCraft Minimalist Backpack',
-        sku: 'BAG-URBAN-03',
-        variant: 'Navy Blue',
-        quantity: 1,
-        unitPrice: 99.99,
-        subtotal: 99.99,
-      },
-    ],
-    notes: [
-      {
-        id: 'n-1',
-        author: 'Store Admin',
-        text: 'Customer requested signature on delivery via FedEx.',
-        createdAt: '2026-08-05 15:00',
-      },
-    ],
-  },
-  {
-    id: 'ord-1002',
-    orderNumber: 'ORD-98422',
-    customerName: 'Michael Chen',
-    customerEmail: 'mchen@example.com',
-    customerPhone: '+1 (555) 876-5432',
-    totalAmount: 149.5,
-    subtotalAmount: 135.0,
-    taxAmount: 14.5,
-    shippingAmount: 0.0,
-    currency: 'USD',
-    paymentStatus: 'PAID',
-    orderStatus: 'DELIVERED',
-    fulfillmentStatus: 'DELIVERED',
-    itemsCount: 1,
-    carrier: 'DHL Express',
-    trackingNumber: 'DHL-449102-US',
-    createdAt: '2026-08-05 11:15',
-    shippingAddress: {
-      name: 'Michael Chen',
-      street: '120 Market Street, Suite 400',
-      city: 'San Francisco',
-      state: 'CA',
-      zip: '94105',
-      country: 'United States',
-    },
-    items: [
-      {
-        productId: 'prod-102',
-        productName: 'Lumix Horizon Smart Fitness Watch',
-        sku: 'WEAR-LUMIX-02',
-        variant: 'Space Gray',
-        quantity: 1,
-        unitPrice: 149.5,
-        subtotal: 149.5,
-      },
-    ],
-    notes: [
-      {
-        id: 'n-2',
-        author: 'Support Agent',
-        text: 'Package left at front desk reception.',
-        createdAt: '2026-08-07 10:30',
-      },
-    ],
-  },
-  {
-    id: 'ord-1003',
-    orderNumber: 'ORD-98423',
-    customerName: 'Emma Watson',
-    customerEmail: 'emma.w@example.com',
-    customerPhone: '+44 20 7946 0912',
-    totalAmount: 175.0,
-    subtotalAmount: 155.0,
-    taxAmount: 20.0,
-    shippingAmount: 0.0,
-    currency: 'USD',
-    paymentStatus: 'PAID',
-    orderStatus: 'CONFIRMED',
-    fulfillmentStatus: 'CONFIRMED',
-    itemsCount: 1,
-    createdAt: '2026-08-06 09:40',
-    shippingAddress: {
-      name: 'Emma Watson',
-      street: '10 Downing Street',
-      city: 'London',
-      state: 'Greater London',
-      zip: 'SW1A 2AA',
-      country: 'United Kingdom',
-    },
-    items: [
-      {
-        productId: 'prod-104',
-        productName: 'Nordic Mechanical Walnut Keyboard',
-        sku: 'KEY-NORDIC-04',
-        variant: 'Brown Switches',
-        quantity: 1,
-        unitPrice: 175.0,
-        subtotal: 175.0,
-      },
-    ],
-    notes: [],
-  },
-  {
-    id: 'ord-1004',
-    orderNumber: 'ORD-98424',
-    customerName: 'David Miller',
-    customerEmail: 'david.m@example.com',
-    customerPhone: '+1 (555) 432-1098',
-    totalAmount: 212.0,
-    subtotalAmount: 195.0,
-    taxAmount: 17.0,
-    shippingAmount: 0.0,
-    currency: 'USD',
-    paymentStatus: 'PAID',
-    orderStatus: 'PROCESSING',
-    fulfillmentStatus: 'PROCESSING',
-    itemsCount: 2,
-    createdAt: '2026-08-07 08:12',
-    shippingAddress: {
-      name: 'David Miller',
-      street: '55 Ocean Drive',
-      city: 'Miami',
-      state: 'FL',
-      zip: '33139',
-      country: 'United States',
-    },
-    items: [
-      {
-        productId: 'prod-101',
-        productName: 'AeroPulse Wireless Headphones',
-        sku: 'AUDIO-AERO-01',
-        variant: 'White',
-        quantity: 1,
-        unitPrice: 170.0,
-        subtotal: 170.0,
-      },
-      {
-        productId: 'prod-105',
-        productName: 'Ceramic Coffee Dripper',
-        sku: 'HOME-CERAMIC-05',
-        variant: 'Stoneware Gray',
-        quantity: 1,
-        unitPrice: 42.0,
-        subtotal: 42.0,
-      },
-    ],
-    notes: [],
-  },
-  {
-    id: 'ord-1005',
-    orderNumber: 'ORD-98425',
-    customerName: 'Sophia Loren',
-    customerEmail: 'sophia.l@example.com',
-    totalAmount: 85.0,
-    subtotalAmount: 75.0,
-    taxAmount: 10.0,
-    shippingAmount: 0.0,
-    currency: 'USD',
-    paymentStatus: 'PENDING',
-    orderStatus: 'PENDING',
-    fulfillmentStatus: 'UNFULFILLED',
-    itemsCount: 1,
-    createdAt: '2026-08-08 16:05',
-    shippingAddress: {
-      name: 'Sophia Loren',
-      street: '42 Via Roma',
-      city: 'Rome',
-      state: 'RM',
-      zip: '00184',
-      country: 'Italy',
-    },
-    items: [
-      {
-        productId: 'prod-103',
-        productName: 'UrbanCraft Minimalist Canvas Backpack',
-        sku: 'BAG-URBAN-03',
-        variant: 'Forest Green',
-        quantity: 1,
-        unitPrice: 85.0,
-        subtotal: 85.0,
-      },
-    ],
-    notes: [],
-  },
-  {
-    id: 'ord-1006',
-    orderNumber: 'ORD-98426',
-    customerName: 'Robert Johnson',
-    customerEmail: 'robert.j@example.com',
-    totalAmount: 199.99,
-    subtotalAmount: 199.99,
-    taxAmount: 0.0,
-    shippingAmount: 0.0,
-    currency: 'USD',
-    paymentStatus: 'FAILED',
-    orderStatus: 'CANCELLED',
-    fulfillmentStatus: 'CANCELLED',
-    cancellationReason: 'Payment authorization declined by card issuing bank.',
-    itemsCount: 1,
-    createdAt: '2026-08-04 18:30',
-    items: [
-      {
-        productId: 'prod-101',
-        productName: 'AeroPulse Wireless Headphones',
-        sku: 'AUDIO-AERO-01',
-        quantity: 1,
-        unitPrice: 199.99,
-        subtotal: 199.99,
-      },
-    ],
-    notes: [
-      {
-        id: 'n-3',
-        author: 'System Bot',
-        text: 'Automated cancellation due to failed payment check.',
-        createdAt: '2026-08-04 18:35',
-      },
-    ],
-  },
-  {
-    id: 'ord-1007',
-    orderNumber: 'ORD-98427',
-    customerName: 'Elena Rostova',
-    customerEmail: 'elena.r@example.com',
-    totalAmount: 149.5,
-    subtotalAmount: 149.5,
-    taxAmount: 0.0,
-    shippingAmount: 0.0,
-    currency: 'USD',
-    paymentStatus: 'REFUNDED',
-    orderStatus: 'REFUNDED',
-    fulfillmentStatus: 'CANCELLED',
-    refundAmount: 149.5,
-    refundReason: 'Customer requested size exchange / order return.',
-    itemsCount: 1,
-    createdAt: '2026-08-02 11:20',
-    items: [
-      {
-        productId: 'prod-102',
-        productName: 'Lumix Horizon Smart Fitness Watch',
-        sku: 'WEAR-LUMIX-02',
-        quantity: 1,
-        unitPrice: 149.5,
-        subtotal: 149.5,
-      },
-    ],
-    notes: [
-      {
-        id: 'n-4',
-        author: 'Store Manager',
-        text: 'Full refund $149.50 issued to original credit card.',
-        createdAt: '2026-08-03 09:10',
-      },
-    ],
-  },
-];
+export const INITIAL_ORDERS: CMSOrder[] = [];
 
-let productsMemoryState = [...INITIAL_PRODUCTS];
-let categoriesMemoryState = [...INITIAL_CATEGORIES];
-let ordersMemoryState = [...INITIAL_ORDERS];
+let productsMemoryState: CMSProduct[] = [];
+let categoriesMemoryState: CMSCategory[] = [];
+let ordersMemoryState: CMSOrder[] = [];
 
 export const cmsService = {
   // Get Aggregated Dashboard Details (1 Single API Call for stats, products, categories, orders)
@@ -3528,7 +3103,7 @@ export const cmsService = {
             name: tmpl.name,
             tagline: tmpl.tagline || '',
             description: tmpl.description || '',
-            previewImage: tmpl.previewImage || STORE_TEMPLATES[0].previewImage,
+            previewImage: tmpl.previewImage || '',
             demoUrl: tmpl.demoUrl || tmpl.urlLink || null,
             requiredTier: tmpl.requiredTier || 'ALL',
             accentColor: tmpl.accentColor || '#3B82F6',
@@ -3537,10 +3112,11 @@ export const cmsService = {
           };
         });
       }
+      return [];
     } catch (err) {
-      console.warn('Backend templates API notice, using fallback templates:', err);
+      console.warn('Backend templates API notice (zero or unavailable templates):', err);
+      return [];
     }
-    return STORE_TEMPLATES;
   },
 
 
@@ -3592,6 +3168,48 @@ export const cmsService = {
     } catch {
       return [];
     }
+  },
+
+  /**
+   * Retrieves the pre-flight readiness checklist for launching the store live.
+   */
+  async getStoreLaunchReadiness(storeIdOrSlug?: string): Promise<StoreLaunchReadiness> {
+    const url = storeIdOrSlug ? `/stores/${storeIdOrSlug}/launch-readiness` : '/stores/launch-readiness';
+    const response = await apiClient.get<StoreLaunchReadiness>(url);
+    return response.data;
+  },
+
+  /**
+   * Verifies prerequisites and transitions store to LIVE (ACTIVE) stage.
+   */
+  async goLiveStore(
+    storeIdOrSlug?: string,
+    allowForce = false
+  ): Promise<{ success: boolean; message: string; store: CMSStore; readiness: StoreLaunchReadiness }> {
+    const url = storeIdOrSlug ? `/stores/${storeIdOrSlug}/go-live` : '/stores/go-live';
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      store: CMSStore;
+      readiness: StoreLaunchReadiness;
+    }>(url, { allowForce });
+    return response.data;
+  },
+
+  /**
+   * Pauses the store / sets stage to PENDING for remodeling or maintenance.
+   */
+  async pauseStore(
+    storeIdOrSlug?: string
+  ): Promise<{ success: boolean; message: string; store: CMSStore; readiness: StoreLaunchReadiness }> {
+    const url = storeIdOrSlug ? `/stores/${storeIdOrSlug}/pause` : '/stores/pause';
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      store: CMSStore;
+      readiness: StoreLaunchReadiness;
+    }>(url);
+    return response.data;
   },
 
   async completeOnboarding(
@@ -5237,32 +4855,26 @@ export const cmsService = {
       console.warn('Failed to fetch payment settings from API, using fallback defaults', err);
       return {
         id: 'store-1',
-        paymentStripeActive: true,
-        paymentRazorpayActive: true,
+        paymentStripeActive: false,
+        paymentRazorpayActive: false,
         paymentPaypalActive: false,
-        paymentCodActive: true,
+        paymentCodActive: false,
         paymentTestMode: true,
-        razorpayKeyId: 'rzp_test_standardDemo2026',
-        razorpayKeySecretMasked: 'rzp_test_••••••••secret',
-        razorpayWebhookSecretMasked: 'whsec_••••••••1234',
+        razorpayKeyId: '',
+        razorpayKeySecretMasked: '',
+        razorpayWebhookSecretMasked: '',
         razorpayAutoCapture: true,
-        paypalClientId: 'sb',
-        paypalClientSecretMasked: 'sb_••••••••secret',
-        paypalWebhookIdMasked: 'wh_••••••••9012',
+        paypalClientId: '',
+        paypalClientSecretMasked: '',
+        paypalWebhookIdMasked: '',
         paypalMode: 'sandbox',
-        stripePublishableKey: 'pk_test_standardDemoStripe2026',
-        stripeSecretKeyMasked: 'sk_test_••••••••secret',
-        stripeWebhookSecretMasked: 'whsec_••••••••5678',
+        stripePublishableKey: '',
+        stripeSecretKeyMasked: '',
+        stripeWebhookSecretMasked: '',
         codFee: 0,
         codMinLimit: 0,
         codMaxLimit: 50000,
-        currencyRoutingRulesJson: JSON.stringify({
-          indiaDomesticGateway: 'RAZORPAY',
-          internationalGateway: 'PAYPAL',
-          domesticCurrency: 'INR',
-          internationalCurrencies: ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'SGD', 'AED'],
-          autoRouteByGeo: true,
-        }),
+        currencyRoutingRulesJson: '',
         webhookUrls: {
           razorpay: 'http://localhost:5001/api/storefront/checkout/razorpay/webhook',
           stripe: 'http://localhost:5001/api/storefront/checkout/stripe/webhook',
@@ -5347,49 +4959,15 @@ export const cmsService = {
         err,
       );
       return {
-        transactions: [
-          {
-            id: 'txn-1',
-            transactionNumber: 'TXN-1723801923-8812',
-            orderId: 'ord-101',
-            customerName: 'Aarav Sharma',
-            customerEmail: 'aarav@example.in',
-            gateway: 'RAZORPAY',
-            paymentMethod: 'UPI',
-            status: 'SUCCESS',
-            amount: 2499.0,
-            currency: 'INR',
-            gatewayFee: 0.0,
-            netAmount: 2499.0,
-            gatewayPaymentId: 'pay_upi_Qz981249aa',
-            gatewayOrderId: 'order_Nx81726a',
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: 'txn-2',
-            transactionNumber: 'TXN-1723801452-9931',
-            orderId: 'ord-102',
-            customerName: 'Sarah Jenkins',
-            customerEmail: 'sarah.j@example.com',
-            gateway: 'STRIPE',
-            paymentMethod: 'CARD',
-            status: 'SUCCESS',
-            amount: 145.0,
-            currency: 'USD',
-            gatewayFee: 4.51,
-            netAmount: 140.49,
-            gatewayPaymentId: 'pi_3MtwBwLkdIwHu7ix28qBg1DF',
-            createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-          },
-        ],
-        pagination: { total: 2, page: 1, limit: 20, totalPages: 1 },
+        transactions: [],
+        pagination: { total: 0, page: 1, limit: 20, totalPages: 0 },
         summary: {
-          totalOrdersCount: 24,
-          inrVolume: 184500,
-          usdVolume: 3420,
-          razorpayEstimatedSavings: 2767.5,
-          stripeInternationalVolume: 3420,
-          successRatePercentage: 99.2,
+          totalOrdersCount: 0,
+          inrVolume: 0,
+          usdVolume: 0,
+          razorpayEstimatedSavings: 0,
+          stripeInternationalVolume: 0,
+          successRatePercentage: 0,
         },
       };
     }
@@ -7494,16 +7072,18 @@ export const cmsService = {
     history?: any[];
   }): Promise<{
     content: string;
+    model?: string;
     actions?: any[];
     promotionData?: any;
     productRecommendations?: any[];
   }> {
     const response = await apiClient.post<{
       content: string;
+      model?: string;
       actions?: any[];
       promotionData?: any;
       productRecommendations?: any[];
-    }>('/ai/copilot-chat', payload);
+    }>('/ai/copilot-chat', payload, { timeout: 45000 });
     return response.data;
   },
 
@@ -7513,16 +7093,18 @@ export const cmsService = {
     history?: any[];
   }): Promise<{
     reply: string;
+    model?: string;
     toolCalls: Array<{ tool: string; args: any; result: any; executionTimeMs: number }>;
     actions?: any[];
     structuredData?: any;
   }> {
     const response = await apiClient.post<{
       reply: string;
+      model?: string;
       toolCalls: Array<{ tool: string; args: any; result: any; executionTimeMs: number }>;
       actions?: any[];
       structuredData?: any;
-    }>('/ai/agent', payload);
+    }>('/ai/agent', payload, { timeout: 45000 });
     return response.data;
   },
 
@@ -9007,7 +8589,73 @@ export const cmsService = {
         storeId: payload?.storeId,
       });
       if (response.data && response.data.channelComparisonMatrix) {
-        return response.data;
+        const raw = response.data;
+        const rawCamp = (raw.generatedCampaign || {}) as any;
+        const normalizedCampaign: GeneratedMultiChannelCampaign = {
+          ...rawCamp,
+          id: rawCamp.id || `camp_opt_${Date.now()}`,
+          title: rawCamp.title || rawCamp.campaignName || 'VIP Targeted Campaign',
+          theme: rawCamp.theme || 'Curated VIP Campaign',
+          targetSegment: rawCamp.targetSegment || rawCamp.targetAudience?.segmentName || 'Target Customers',
+          targetProducts: rawCamp.targetProducts || [],
+          whatsapp: rawCamp.whatsapp || {
+            emojiHeader: rawCamp.whatsAppAsset?.emojiHeader || '👟 VIP Exclusive Broadcast',
+            messageText: rawCamp.whatsAppAsset?.messageText || 'Special VIP Offer available!',
+            quickReplyButtons: rawCamp.whatsAppAsset?.quickReplyButtons || ['Claim Offer 🎁', 'View Details 📦'],
+            broadcastListRecommendation: rawCamp.whatsAppAsset?.broadcastListRecommendation || '',
+            mediaAssetSuggestion: rawCamp.whatsAppAsset?.mediaAssetSuggestion || '',
+          },
+          email: rawCamp.email || {
+            subjectLine: rawCamp.emailAsset?.subjectLine || 'VIP Special Drop Inside',
+            preheaderText: rawCamp.emailAsset?.previewText || '',
+            headerBadge: rawCamp.emailAsset?.headline || 'VIP EXCLUSIVE',
+            headline: rawCamp.emailAsset?.headline || '',
+            bodyMarkdown: rawCamp.emailAsset?.bodyMarkdown || '',
+            callToActionText: rawCamp.emailAsset?.ctaButtonText || 'Shop Now →',
+            callToActionUrl: rawCamp.emailAsset?.ctaTargetUrl || '/products',
+            personalizedMergeTags: ['{{first_name}}'],
+          },
+          push: rawCamp.push || {
+            title: rawCamp.pushNotificationAsset?.title || 'Exclusive VIP Drop',
+            body: rawCamp.pushNotificationAsset?.bodyText || '',
+            deepLink: rawCamp.pushNotificationAsset?.deepLink || '/products',
+            bannerImageUrl: '',
+            icon: 'bell-ring',
+            urgencyTag: rawCamp.pushNotificationAsset?.badgeText || '⚡ Limited Time',
+          },
+          coupon: rawCamp.coupon || {
+            code: rawCamp.couponOffer?.code || 'VIP15',
+            discountType: rawCamp.couponOffer?.discountType || 'PERCENTAGE',
+            discountValue: rawCamp.couponOffer?.discountValue || 15,
+            minOrderAmount: rawCamp.couponOffer?.minOrderAmount || 1000,
+            marginImpactExplanation: rawCamp.couponOffer?.marginPreservationNote || '',
+            expiryHours: (rawCamp.couponOffer?.expiryDays || 3) * 24,
+            oncePerCustomer: true,
+          },
+          bundle: rawCamp.bundle || {
+            bundleName: rawCamp.productBundle?.bundleTitle || 'Curated VIP Bundle',
+            primaryProduct: rawCamp.productBundle?.primaryProduct || 'Primary Product',
+            pairedProduct: rawCamp.productBundle?.secondaryProduct || 'Paired Accessory',
+            bundleRegularPrice: rawCamp.productBundle?.combinedRegularPrice || 2500,
+            bundleOfferPrice: rawCamp.productBundle?.bundlePrice || 2200,
+            customerSavingsAmount: (rawCamp.productBundle?.combinedRegularPrice || 2500) - (rawCamp.productBundle?.bundlePrice || 2200),
+            merchantMarginPercent: rawCamp.productBundle?.bundleMarginPercent || 50,
+            crossSellRationale: 'High synergy pairing with positive gross margin.',
+          },
+          social: rawCamp.social || {
+            platform: 'INSTAGRAM',
+            postCaption: rawCamp.socialContent?.postCaption || '',
+            storyText: rawCamp.socialContent?.storyCopy || '',
+            hashtags: rawCamp.socialContent?.hashtags || [],
+            suggestedCreativeType: 'Carousel Post',
+            carouselSlideDescriptions: rawCamp.socialContent?.carouselSlides || [],
+          },
+        };
+
+        return {
+          ...raw,
+          generatedCampaign: normalizedCampaign,
+        };
       }
     } catch (err) {
       console.warn('Backend campaign optimization API notice, falling back to local multi-channel simulator:', err);

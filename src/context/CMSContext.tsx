@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { cmsService, STORE_TEMPLATES } from '@/src/services/cmsService';
+import { cmsService } from '@/src/services/cmsService';
 import { getCurrencySymbol, formatPrice } from '@/src/lib/currency';
 import {
   CMSProduct,
@@ -39,11 +39,16 @@ interface CMSContextType {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   fetchDashboardDetails: () => Promise<void>;
 
-  // Store Suspension State
+  // Store Suspension & Lifecycle State
   isSuspended: boolean;
   storeStatus: string;
+  setStoreStatus: React.Dispatch<React.SetStateAction<string>>;
+  setActiveStore: React.Dispatch<React.SetStateAction<CMSStore | null>>;
+  updateActiveStoreStatus: (newStatus: string) => void;
   isCheckingStatus: boolean;
   refreshStoreStatus: () => Promise<void>;
+  isGoLiveModalOpen: boolean;
+  setIsGoLiveModalOpen: (open: boolean) => void;
 
   // Product Modal State
   isProductModalOpen: boolean;
@@ -88,6 +93,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [storeStatus, setStoreStatus] = useState<string>('ACTIVE');
   const [isSuspended, setIsSuspended] = useState<boolean>(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
+  const [isGoLiveModalOpen, setIsGoLiveModalOpen] = useState<boolean>(false);
 
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<CMSProduct | null>(null);
@@ -133,7 +139,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const user = {
         firstName,
         lastName,
-        mobileNumber: '+1 555-0199',
+        mobileNumber: (backendUser as any).phone || (backendUser as any).mobileNumber || '',
         email: backendUser.email,
         role: backendUser.role,
       };
@@ -219,6 +225,17 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 };
 
         const session = cmsService.getMerchantSession();
+        const apiTemplates = await cmsService.getStoreTemplates().catch(() => []);
+        const activeTmpl =
+          apiTemplates.find(
+            (t) =>
+              t.slug === currentActiveStore.activeTemplateSlug ||
+              t.id === currentActiveStore.activeTemplateSlug,
+          ) ||
+          session?.selectedTemplate ||
+          apiTemplates[0] ||
+          null;
+
         const updatedSession: MerchantOnboardingData = {
           merchant: {
             ...user,
@@ -237,7 +254,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             supportEmail: user.email,
             supportPhone: user.mobileNumber,
           },
-          selectedTemplate: session?.selectedTemplate || STORE_TEMPLATES[0],
+          selectedTemplate: (activeTmpl || session?.selectedTemplate) as any,
         };
 
         cmsService.saveMerchantSession(updatedSession);
@@ -250,6 +267,9 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setStores([]);
 
         const session = cmsService.getMerchantSession();
+        const apiTemplates = await cmsService.getStoreTemplates().catch(() => []);
+        const fallbackTemplate = session?.selectedTemplate || apiTemplates[0] || null;
+
         const updatedSession: MerchantOnboardingData = {
           merchant: {
             ...user,
@@ -257,7 +277,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             role: backendUser.role,
           },
           store: null,
-          selectedTemplate: session?.selectedTemplate || STORE_TEMPLATES[0],
+          selectedTemplate: fallbackTemplate as any,
         };
         cmsService.saveMerchantSession(updatedSession);
         setMerchantData(updatedSession);
@@ -326,11 +346,45 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const updateActiveStoreStatus = useCallback((newStatus: string) => {
+    const normalized = newStatus.toUpperCase();
+    setStoreStatus(normalized);
+    setIsSuspended(normalized === 'SUSPENDED');
+    setActiveStore((prev) => (prev ? { ...prev, status: normalized } : null));
+    setStores((prevStores) =>
+      prevStores.map((st) =>
+        st.id === cmsService.getActiveStoreId() ? { ...st, status: normalized } : st
+      )
+    );
+    setMerchantData((prev) => {
+      if (!prev) return null;
+      const updated = {
+        ...prev,
+        store: {
+          ...prev.store,
+          status: normalized,
+        },
+      };
+      cmsService.saveMerchantSession(updated);
+      return updated;
+    });
+  }, []);
+
   const refreshStores = async (): Promise<CMSStore[]> => {
     try {
       const fetchedStores = await cmsService.getMerchantStores();
       if (fetchedStores && fetchedStores.length > 0) {
         setStores(fetchedStores);
+        const currentActiveId = cmsService.getActiveStoreId();
+        const currentInFetched =
+          fetchedStores.find((s) => s.id === currentActiveId) ||
+          (activeStore?.id ? fetchedStores.find((s) => s.id === activeStore.id) : null);
+        if (currentInFetched) {
+          setActiveStore(currentInFetched);
+          const currentStatus = (currentInFetched.status || 'PENDING').toUpperCase();
+          setStoreStatus(currentStatus);
+          setIsSuspended(currentStatus === 'SUSPENDED');
+        }
       }
       return fetchedStores;
     } catch {
@@ -439,8 +493,13 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetchDashboardDetails,
         isSuspended,
         storeStatus,
+        setStoreStatus,
+        setActiveStore,
+        updateActiveStoreStatus,
         isCheckingStatus,
         refreshStoreStatus,
+        isGoLiveModalOpen,
+        setIsGoLiveModalOpen,
         isProductModalOpen,
         setIsProductModalOpen,
         editingProduct,

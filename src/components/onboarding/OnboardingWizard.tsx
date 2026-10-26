@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { cmsService } from '@/src/services/cmsService';
-import { StoreSetupData, CMSProduct } from '@/src/types';
+import { StoreSetupData, CMSProduct, StoreTemplate } from '@/src/types';
 import { getCurrencySymbol } from '@/src/lib/currency';
 import { AiStoreBuilderModal } from '@/src/components/ai/AiStoreBuilderModal';
 import {
@@ -71,42 +71,6 @@ const COUNTRIES = [
   { code: 'JP', name: 'Japan', flag: '🇯🇵', currency: 'JPY', timezone: 'Asia/Tokyo' },
 ];
 
-// Storefront Templates
-const THEMES = [
-  {
-    id: 'nova-tech',
-    name: 'Nova High-Tech',
-    desc: 'Cutting-edge headless layout with dark accents, high conversions, and dynamic grids.',
-    accent: '#4f46e5',
-    tag: 'Popular',
-    previewBg: 'from-slate-900 via-indigo-950 to-slate-900',
-  },
-  {
-    id: 'modern-minimal',
-    name: 'Modern Minimalist',
-    desc: 'Clean scandinavian design emphasizing high-resolution photography and typography.',
-    accent: '#0f172a',
-    tag: 'Clean',
-    previewBg: 'from-zinc-100 via-stone-50 to-zinc-200',
-  },
-  {
-    id: 'luxe-atelier',
-    name: 'Luxe Atelier',
-    desc: 'Editorial luxury aesthetic with dark obsidian tones, serif accents, and gold finishes.',
-    accent: '#d97706',
-    tag: 'Premium',
-    previewBg: 'from-stone-950 via-amber-950 to-stone-900',
-  },
-  {
-    id: 'bold-streetwear',
-    name: 'Streetwear Brutalist',
-    desc: 'High-energy layout with bold borders, sticker badges, and high-impact typography.',
-    accent: '#e11d48',
-    tag: 'Trendy',
-    previewBg: 'from-rose-950 via-zinc-900 to-black',
-  },
-];
-
 export const OnboardingWizard: React.FC = () => {
   const router = useRouter();
 
@@ -126,6 +90,29 @@ export const OnboardingWizard: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [templates, setTemplates] = useState<StoreTemplate[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    cmsService
+      .getStoreTemplates()
+      .then((data) => {
+        if (!isMounted) return;
+        setTemplates(data);
+        if (data && data.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            theme: prev.theme || data[0].slug || 'nova-tech',
+          }));
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not load templates in OnboardingWizard:', err);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -804,39 +791,78 @@ export const OnboardingWizard: React.FC = () => {
               </div>
 
               <div className="space-y-5">
-                {/* Theme Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {THEMES.map((th) => {
-                    const isSelected = formData.theme === th.id;
-                    return (
-                      <button
-                        key={th.id}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, theme: th.id })}
-                        className={`p-4 rounded-xl border text-left flex flex-col justify-between gap-3 transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-zinc-50 border-2 border-black text-zinc-950 shadow-md ring-1 ring-black'
-                            : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: th.accent }} />
-                            <span className={`text-sm font-bold ${isSelected ? 'text-black' : 'text-zinc-900'}`}>{th.name}</span>
+                {/* Theme Grid or Empty UI State */}
+                {templates.length === 0 ? (
+                  <div className="p-8 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-center space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-zinc-200 dark:bg-zinc-800 text-zinc-500 mx-auto flex items-center justify-center">
+                      <Palette className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                        No Storefront Templates Available
+                      </h4>
+                      <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto leading-relaxed">
+                        There are currently no templates in your database catalog. Standard default storefront configuration will be assigned, and you can customize themes anytime in Theme Studio.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {templates.map((th) => {
+                      const thSlug = th.slug || th.id || 'nova-tech';
+                      const isSelected = formData.theme === thSlug;
+                      return (
+                        <button
+                          key={thSlug}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, theme: thSlug })}
+                          className={`p-4 rounded-xl border text-left flex flex-col justify-between gap-3 transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-zinc-50 border-2 border-black text-zinc-950 shadow-md ring-1 ring-black'
+                              : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3.5 h-3.5 rounded-full shrink-0"
+                                style={{ backgroundColor: th.accentColor || '#3B82F6' }}
+                              />
+                              <span
+                                className={`text-sm font-bold truncate ${
+                                  isSelected ? 'text-black' : 'text-zinc-900'
+                                }`}
+                              >
+                                {th.name}
+                              </span>
+                            </div>
+                            {th.badge ? (
+                              <span
+                                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
+                                  isSelected ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-600'
+                                }`}
+                              >
+                                {th.badge}
+                              </span>
+                            ) : null}
                           </div>
-                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${isSelected ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-600'}`}>
-                            {th.tag}
-                          </span>
-                        </div>
-                        <p className={`text-xs ${isSelected ? 'text-zinc-600' : 'text-zinc-500'}`}>{th.desc}</p>
-                        <div className={`h-10 w-full rounded-lg bg-gradient-to-r ${th.previewBg} border border-zinc-200 flex items-center px-3 justify-between text-white text-[10px] font-mono font-bold shadow-xs`}>
-                          <span>LIVE TEMPLATE</span>
-                          <span className="bg-white/20 px-2 py-0.5 rounded">PREVIEW</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                          <p className={`text-xs line-clamp-2 ${isSelected ? 'text-zinc-600' : 'text-zinc-500'}`}>
+                            {th.tagline || th.description}
+                          </p>
+                          <div className="h-10 w-full rounded-lg bg-slate-900 border border-zinc-700 flex items-center px-3 justify-between text-white text-[10px] font-mono font-bold shadow-xs overflow-hidden relative">
+                            <img
+                              src={th.previewImage}
+                              alt={th.name}
+                              className="absolute inset-0 w-full h-full object-cover opacity-35"
+                            />
+                            <span className="relative z-10">{thSlug.toUpperCase()}</span>
+                            <span className="relative z-10 bg-white/20 px-2 py-0.5 rounded">API TEMPLATE</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {/* Seed Demo Products */}
                 <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-200 flex items-start gap-3">

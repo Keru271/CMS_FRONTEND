@@ -105,7 +105,7 @@ export const PaymentStudio: React.FC = () => {
       setFormData({
         paymentRazorpayActive: settingsData?.paymentRazorpayActive ?? false,
         paymentPaypalActive: settingsData?.paymentPaypalActive ?? false,
-        paymentCodActive: settingsData?.paymentCodActive ?? true,
+        paymentCodActive: settingsData?.paymentCodActive ?? false,
         paymentTestMode: settingsData?.paymentTestMode ?? true,
         razorpayKeyId: settingsData?.razorpayKeyId || '',
         razorpayKeySecret: '',
@@ -371,10 +371,19 @@ export const PaymentStudio: React.FC = () => {
     return (t?.gateway || '').toUpperCase() === filterGateway;
   });
 
+  const isRzpActive = Boolean(
+    formData.paymentRazorpayActive &&
+      (Boolean(formData.razorpayKeyId && formData.razorpayKeyId.trim() !== '') ||
+        rzpConnect?.isConnected),
+  );
+  const isPaypalActive = Boolean(
+    formData.paymentPaypalActive &&
+      Boolean(formData.paypalClientId && formData.paypalClientId.trim() !== ''),
+  );
+  const isCodActive = Boolean(formData.paymentCodActive);
+
   const activeGatewaysCount =
-    (formData.paymentRazorpayActive ? 1 : 0) +
-    (formData.paymentPaypalActive ? 1 : 0) +
-    (formData.paymentCodActive ? 1 : 0);
+    (isRzpActive ? 1 : 0) + (isPaypalActive ? 1 : 0) + (isCodActive ? 1 : 0);
 
   if (isLoading) {
     return (
@@ -530,8 +539,9 @@ export const PaymentStudio: React.FC = () => {
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>
                   ₹
-                  {(
-                    summary.razorpayEstimatedSavings ?? Math.round((summary.inrVolume ?? 0) * 0.015)
+                  {(summary.totalOrdersCount && summary.totalOrdersCount > 0
+                    ? (summary.razorpayEstimatedSavings ?? Math.round((summary.inrVolume ?? 0) * 0.015))
+                    : 0
                   ).toLocaleString('en-IN')}{' '}
                   saved via 0% UPI
                 </span>
@@ -570,7 +580,9 @@ export const PaymentStudio: React.FC = () => {
                 Payment Success Rate
               </span>
               <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">
-                {summary.successRatePercentage ?? 99.2}%
+                {summary.totalOrdersCount && summary.totalOrdersCount > 0
+                  ? summary.successRatePercentage ?? 0
+                  : 0}%
               </p>
               <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
                 Industry leading conversion

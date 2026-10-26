@@ -8,6 +8,8 @@ import { AdminHeader } from '@/src/components/cms/AdminHeader';
 import { ProductFormModal } from '@/src/components/cms/ProductFormModal';
 import { StoreSuspendedModal } from '@/src/components/cms/StoreSuspendedModal';
 import { CreateStoreModal } from '@/src/components/cms/CreateStoreModal';
+import { GoLiveModal } from '@/src/components/cms/GoLiveModal';
+import { StorePendingBanner } from '@/src/components/cms/StorePendingBanner';
 import { CMSChatbot } from '@/src/components/cms/CMSChatbot';
 import { SpotlightSearchModal } from '@/src/components/cms/SpotlightSearchModal';
 import { cmsService } from '@/src/services/cmsService';
@@ -39,6 +41,8 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     setSidebarCollapsed,
     mobileSidebarOpen,
     setMobileSidebarOpen,
+    isGoLiveModalOpen,
+    setIsGoLiveModalOpen,
     isProductModalOpen,
     setIsProductModalOpen,
     editingProduct,
@@ -258,6 +262,10 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
 
         {/* Dynamic Section Page Content */}
         <main className="flex-1 p-3 sm:p-5 lg:p-6 min-w-0 overflow-x-hidden">
+          {!isLoading && !isSuspended && (
+            <StorePendingBanner onOpenGoLiveModal={() => setIsGoLiveModalOpen(true)} />
+          )}
+
           {isLoading ? (
             <div className="h-64 flex flex-col items-center justify-center gap-3">
               <div className="w-8 h-8 border-3 border-sky-600 dark:border-[#00E5FF] border-t-transparent rounded-full animate-spin" />
@@ -358,6 +366,10 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
         initialProduct={editingProduct || undefined}
       />
       <CreateStoreModal />
+      <GoLiveModal
+        isOpen={isGoLiveModalOpen}
+        onClose={() => setIsGoLiveModalOpen(false)}
+      />
       <CMSChatbot />
       <SpotlightSearchModal
         isOpen={isSpotlightOpen}

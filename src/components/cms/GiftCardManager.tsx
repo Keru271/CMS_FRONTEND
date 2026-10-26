@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import {
   Gift,
   Plus,
@@ -85,6 +87,10 @@ export const GiftCardManager: React.FC = () => {
     text: string;
     type: 'success' | 'error';
   } | null>(null);
+
+  // Pagination
+  const [giftCardPage, setGiftCardPage] = useState(1);
+  const [giftCardPageSize, setGiftCardPageSize] = useState(10);
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
@@ -481,7 +487,9 @@ export const GiftCardManager: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-border">
-                {cards.map((card) => {
+                {cards
+                  .slice((giftCardPage - 1) * giftCardPageSize, giftCardPage * giftCardPageSize)
+                  .map((card) => {
                   const percentLeft =
                     card.initialValue > 0 ? (card.currentBalance / card.initialValue) * 100 : 0;
                   const isDepleted = card.currentBalance <= 0;
@@ -658,6 +666,16 @@ export const GiftCardManager: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          <TablePagination
+            currentPage={giftCardPage}
+            totalItems={cards.length}
+            pageSize={giftCardPageSize}
+            onPageChange={(p) => setGiftCardPage(p)}
+            onPageSizeChange={(s) => { setGiftCardPageSize(s); setGiftCardPage(1); }}
+            itemName="gift cards"
+          />
         )}
       </div>
 

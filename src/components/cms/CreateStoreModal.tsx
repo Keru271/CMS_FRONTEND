@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Store,
   X,
@@ -16,6 +16,8 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useCMS } from '@/src/context/CMSContext';
+import { cmsService } from '@/src/services/cmsService';
+import { StoreTemplate } from '@/src/types';
 
 const CURRENCIES = [
   { code: 'INR', symbol: '₹', name: 'Indian Rupee', flag: '🇮🇳', gateway: 'Razorpay / UPI' },
@@ -39,33 +41,6 @@ const CATEGORIES = [
   { id: 'art', label: 'Art & Collectibles', icon: '🎨' },
 ];
 
-const THEMES = [
-  {
-    slug: 'nova-tech',
-    name: 'Nova Tech',
-    accent: '#3b82f6',
-    desc: 'High-conversion cyber dark tech aesthetic',
-  },
-  {
-    slug: 'aura-luxe',
-    name: 'Aura Luxe',
-    accent: '#d97706',
-    desc: 'Editorial luxury boutique with serif elegance',
-  },
-  {
-    slug: 'pulse-minimal',
-    name: 'Pulse Minimal',
-    accent: '#10b981',
-    desc: 'Clean Scandinavian monochrome grid layout',
-  },
-  {
-    slug: 'zenith-bold',
-    name: 'Zenith Bold',
-    accent: '#8b5cf6',
-    desc: 'Vibrant punchy street style with neon badges',
-  },
-];
-
 export const CreateStoreModal: React.FC = () => {
   const { isCreateStoreModalOpen, setIsCreateStoreModalOpen, createNewStore } = useCMS();
 
@@ -76,8 +51,34 @@ export const CreateStoreModal: React.FC = () => {
   const [currency, setCurrency] = useState('INR');
   const [categoryName, setCategoryName] = useState('Fashion & Apparel');
   const [templateSlug, setTemplateSlug] = useState('nova-tech');
+  const [templates, setTemplates] = useState<StoreTemplate[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isCreateStoreModalOpen) return;
+    let isMounted = true;
+    setIsLoadingTemplates(true);
+    cmsService
+      .getStoreTemplates()
+      .then((data) => {
+        if (!isMounted) return;
+        setTemplates(data);
+        if (data && data.length > 0 && data[0].slug) {
+          setTemplateSlug(data[0].slug);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load store templates in modal:', err);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingTemplates(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [isCreateStoreModalOpen]);
 
   if (!isCreateStoreModalOpen) return null;
 
@@ -289,43 +290,64 @@ export const CreateStoreModal: React.FC = () => {
 
           {/* Theme Picker */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-[#191a1b] flex items-center gap-1.5">
-              <Palette className="w-4 h-4 text-purple-600" />
-              <span>Initial Designer Theme</span>
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {THEMES.map((th) => {
-                const isSelected = templateSlug === th.slug;
-                return (
-                  <button
-                    type="button"
-                    key={th.slug}
-                    onClick={() => setTemplateSlug(th.slug)}
-                    className={`p-3 rounded-2xl border text-left transition cursor-pointer flex items-start gap-3 ${
-                      isSelected
-                        ? 'border-[#191a1b] bg-[#191a1b]/5 ring-2 ring-[#191a1b]'
-                        : 'border-[#cbd5e0] bg-[#121212] hover:bg-white'
-                    }`}
-                  >
-                    <div
-                      className="w-8 h-8 rounded-xl shrink-0 flex items-center justify-center text-white text-xs font-bold"
-                      style={{ backgroundColor: th.accent }}
-                    >
-                      {th.name.charAt(0)}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#191a1b]">{th.name}</span>
-                        {isSelected && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        )}
-                      </div>
-                      <p className="text-[11px] text-[#5e5a5a] line-clamp-1">{th.desc}</p>
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-[#191a1b] flex items-center gap-1.5">
+                <Palette className="w-4 h-4 text-purple-600" />
+                <span>Initial Storefront Template</span>
+              </label>
+              <span className="text-[10px] font-bold text-slate-400">
+                {templates.length} from API
+              </span>
             </div>
+
+            {isLoadingTemplates ? (
+              <div className="py-6 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Loading templates from API...</span>
+              </div>
+            ) : templates.length === 0 ? (
+              <div className="p-4 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 text-center space-y-1">
+                <p className="text-xs font-bold text-slate-700">No Store Templates Configured</p>
+                <p className="text-[11px] text-slate-500">
+                  Your store will be created with default settings. You can assign templates later once added.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                {templates.map((th) => {
+                  const thSlug = th.slug || th.id || '';
+                  const isSelected = templateSlug === thSlug;
+                  return (
+                    <button
+                      type="button"
+                      key={thSlug}
+                      onClick={() => thSlug && setTemplateSlug(thSlug)}
+                      className={`p-3 rounded-2xl border text-left transition cursor-pointer flex items-start gap-3 ${
+                        isSelected
+                          ? 'border-[#191a1b] bg-[#191a1b]/5 ring-2 ring-[#191a1b]'
+                          : 'border-[#cbd5e0] bg-[#121212] hover:bg-white'
+                      }`}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-xl shrink-0 flex items-center justify-center text-white text-xs font-bold shadow-xs"
+                        style={{ backgroundColor: th.accentColor || '#3B82F6' }}
+                      >
+                        {th.name.charAt(0)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-[#191a1b] truncate">{th.name}</span>
+                          {isSelected && (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 ml-auto" />
+                          )}
+                        </div>
+                        <p className="text-[11px] text-[#5e5a5a] line-clamp-1">{th.tagline || th.description}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Security & Multi-Tenant Notice */}

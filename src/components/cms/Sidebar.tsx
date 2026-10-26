@@ -117,257 +117,312 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const router = useRouter();
   const { t } = useTranslation();
 
-  const aiNavItems = [
-    {
-      id: 'commerce-engine' as CMSView,
-      path: '/commerce-engine',
-      label: 'AI Commerce Hub',
-      sublabel: '5-Pillar Orchestrator',
-      icon: Zap,
-      badge: 'Hub',
-    },
-    {
-      id: 'forecasting' as CMSView,
-      path: '/forecasting',
-      label: 'Sales Forecasting',
-      sublabel: 'Predictive demand models',
-      icon: TrendingUp,
-    },
-    {
-      id: 'inventory-prediction' as CMSView,
-      path: '/inventory-prediction',
-      label: 'Stockout Radar',
-      sublabel: 'Inventory velocity & reorders',
-      icon: ShieldAlert,
-    },
-    {
-      id: 'customer-segmentation' as CMSView,
-      path: '/customer-segmentation',
-      label: 'Customer Segments',
-      sublabel: 'RFM cohort personas',
-      icon: Users,
-    },
-    {
-      id: 'campaign-optimization' as CMSView,
-      path: '/campaign-optimization',
-      label: 'Campaign Optimizer',
-      sublabel: 'Multi-channel WhatsApp/Email',
-      icon: Target,
-    },
-    {
-      id: 'pricing-insights' as CMSView,
-      path: '/pricing-insights',
-      label: 'Pricing Insights',
-      sublabel: 'Elasticity & margin scenarios',
-      icon: CircleDollarSign,
-    },
-    {
-      id: 'ai-analytics' as CMSView,
-      path: '/analytics',
-      label: 'AI Analytics & QA',
-      sublabel: 'Natural language store QA',
-      icon: Sparkles,
-    },
-    {
-      id: 'image-studio' as CMSView,
-      path: '/image-studio',
-      label: 'AI Image Studio',
-      sublabel: 'Generative product visuals',
-      icon: Wand2,
-    },
-    {
-      id: 'ai-page-builder' as CMSView,
-      path: '/ai-page-builder',
-      label: 'AI Page Builder',
-      sublabel: 'Prompt-to-page generator',
-      icon: LayoutTemplate,
-      badge: 'New',
-    },
-  ];
+  interface NavItem {
+    id: CMSView;
+    path: string;
+    label: string;
+    sublabel?: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badge?: string | number;
+  }
 
-  const isAnyAiActive = aiNavItems.some(
-    (ai) => pathname === ai.path || (ai.path !== '/dashboard' && pathname?.startsWith(ai.path))
-  );
+  interface NavGroup {
+    id: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badge?: string;
+    items: NavItem[];
+  }
 
-  const [aiAccordionOpen, setAiAccordionOpen] = useState<boolean>(true);
-
-  // Auto-expand accordion if user lands directly on an AI route
-  useEffect(() => {
-    if (isAnyAiActive) {
-      setAiAccordionOpen(true);
-    }
-  }, [isAnyAiActive]);
-
-  const primaryNavItems = [
+  // Necessary top-level menus for customer
+  const directNavItems: NavItem[] = [
     {
-      id: 'dashboard' as CMSView,
+      id: 'dashboard',
       path: '/dashboard',
       label: t('nav.dashboard', 'Dashboard'),
       icon: LayoutDashboard,
     },
     {
-      id: 'products' as CMSView,
+      id: 'products',
       path: '/products',
       label: t('nav.products', 'Products'),
       icon: Package,
-      badge: productsCount,
+      badge: productsCount || undefined,
     },
     {
-      id: 'orders' as CMSView,
+      id: 'orders',
       path: '/orders',
       label: t('nav.orders', 'Orders'),
       icon: ShoppingBag,
       badge: ordersCount || undefined,
     },
     {
-      id: 'categories' as CMSView,
-      path: '/categories',
-      label: t('nav.categories', 'Categories'),
-      icon: FolderTree,
-    },
-    {
-      id: 'customers' as CMSView,
+      id: 'customers',
       path: '/customers',
       label: t('nav.customers', 'Customers'),
       icon: Users,
     },
+  ];
+
+  // All other menus organized into contextual parent modules
+  const navGroups: NavGroup[] = [
     {
-      id: 'store-setup' as CMSView,
-      path: '/store-setup',
-      label: t('nav.store_setup', 'Store Setup'),
-      icon: Store,
+      id: 'ai',
+      label: 'AI Intelligence',
+      icon: Sparkles,
+      badge: 'Hub',
+      items: [
+        {
+          id: 'commerce-engine',
+          path: '/commerce-engine',
+          label: 'AI Commerce Hub',
+          sublabel: '5-Pillar Orchestrator',
+          icon: Zap,
+          badge: 'Hub',
+        },
+        {
+          id: 'forecasting',
+          path: '/forecasting',
+          label: 'Sales Forecasting',
+          sublabel: 'Predictive demand models',
+          icon: TrendingUp,
+        },
+        {
+          id: 'inventory-prediction',
+          path: '/inventory-prediction',
+          label: 'Stockout Radar',
+          sublabel: 'Inventory velocity & reorders',
+          icon: ShieldAlert,
+        },
+        {
+          id: 'customer-segmentation',
+          path: '/customer-segmentation',
+          label: 'Customer Segments',
+          sublabel: 'RFM cohort personas',
+          icon: Users,
+        },
+        {
+          id: 'campaign-optimization',
+          path: '/campaign-optimization',
+          label: 'Campaign Optimizer',
+          sublabel: 'Multi-channel WhatsApp/Email',
+          icon: Target,
+        },
+        {
+          id: 'pricing-insights',
+          path: '/pricing-insights',
+          label: 'Pricing Insights',
+          sublabel: 'Elasticity & margin scenarios',
+          icon: CircleDollarSign,
+        },
+        {
+          id: 'ai-analytics',
+          path: '/analytics',
+          label: 'AI Analytics & QA',
+          sublabel: 'Natural language store QA',
+          icon: Sparkles,
+        },
+        {
+          id: 'image-studio',
+          path: '/image-studio',
+          label: 'AI Image Studio',
+          sublabel: 'Generative product visuals',
+          icon: Wand2,
+        },
+        {
+          id: 'ai-page-builder',
+          path: '/ai-page-builder',
+          label: 'AI Page Builder',
+          sublabel: 'Prompt-to-page generator',
+          icon: LayoutTemplate,
+          badge: 'New',
+        },
+      ],
     },
     {
-      id: 'themes' as CMSView,
-      path: '/themes',
-      label: t('nav.themes', 'Themes'),
+      id: 'catalog',
+      label: 'Catalog & Inventory',
+      icon: FolderTree,
+      items: [
+        {
+          id: 'categories',
+          path: '/categories',
+          label: t('nav.categories', 'Categories'),
+          icon: FolderTree,
+        },
+        {
+          id: 'product-notifications',
+          path: '/products/notifications',
+          label: t('nav.back_in_stock', 'Stock Alerts'),
+          icon: BellRing,
+        },
+        {
+          id: '3d',
+          path: '/3d',
+          label: t('nav.three_d', '3D Visuals'),
+          icon: Layers,
+        },
+      ],
+    },
+    {
+      id: 'storefront',
+      label: 'Storefront & Content',
       icon: Palette,
+      items: [
+        {
+          id: 'themes',
+          path: '/themes',
+          label: t('nav.themes', 'Themes'),
+          icon: Palette,
+        },
+        {
+          id: 'pages',
+          path: '/pages',
+          label: t('nav.pages', 'Pages'),
+          icon: FileText,
+        },
+        {
+          id: 'navigation',
+          path: '/navigation',
+          label: t('nav.navigation', 'Navigation'),
+          icon: Compass,
+        },
+        {
+          id: 'blog',
+          path: '/blog',
+          label: t('nav.blog', 'Blog & Editorial'),
+          icon: BookOpen,
+        },
+        {
+          id: 'forms',
+          path: '/forms',
+          label: t('nav.forms', 'Forms & Surveys'),
+          icon: CheckSquare,
+        },
+        {
+          id: 'seo',
+          path: '/seo',
+          label: t('nav.seo', 'SEO Governance'),
+          icon: Search,
+        },
+      ],
     },
     {
-      id: 'pages' as CMSView,
-      path: '/pages',
-      label: t('nav.pages', 'Pages'),
-      icon: FileText,
-    },
-    {
-      id: 'forms' as CMSView,
-      path: '/forms',
-      label: t('nav.forms', 'Forms & Surveys'),
-      icon: CheckSquare,
-    },
-    {
-      id: 'blog' as CMSView,
-      path: '/blog',
-      label: t('nav.blog', 'Blog & Editorial'),
-      icon: BookOpen,
-    },
-    {
-      id: 'seo' as CMSView,
-      path: '/seo',
-      label: t('nav.seo', 'SEO Governance'),
-      icon: Search,
-    },
-    {
-      id: '3d' as CMSView,
-      path: '/3d',
-      label: t('nav.three_d', '3D Visuals'),
-      icon: Layers,
-    },
-    {
-      id: 'discounts' as CMSView,
-      path: '/discounts',
-      label: t('nav.discounts', 'Discounts'),
-      icon: Tag,
-    },
-    {
-      id: 'gift-cards' as CMSView,
-      path: '/gift-cards',
-      label: t('nav.gift_cards', 'Gift Cards'),
-      icon: Gift,
-    },
-    {
-      id: 'payments' as CMSView,
-      path: '/payments',
-      label: t('nav.payments', 'Payments'),
-      icon: CreditCard,
-    },
-    {
-      id: 'shipping' as CMSView,
-      path: '/shipping',
-      label: t('nav.shipping', 'Shipping & Logistics'),
-      icon: Truck,
-    },
-    {
-      id: 'tax' as CMSView,
-      path: '/tax',
-      label: t('nav.tax', 'Taxation'),
-      icon: Receipt,
-    },
-    {
-      id: 'reviews' as CMSView,
-      path: '/reviews',
-      label: t('nav.reviews', 'Product Reviews'),
-      icon: Star,
-    },
-    {
-      id: 'marketing' as CMSView,
-      path: '/marketing',
-      label: t('nav.marketing', 'Marketing'),
+      id: 'marketing',
+      label: 'Marketing & Sales',
       icon: Megaphone,
+      items: [
+        {
+          id: 'marketing',
+          path: '/marketing',
+          label: t('nav.marketing', 'Marketing'),
+          icon: Megaphone,
+        },
+        {
+          id: 'discounts',
+          path: '/discounts',
+          label: t('nav.discounts', 'Discounts'),
+          icon: Tag,
+        },
+        {
+          id: 'gift-cards',
+          path: '/gift-cards',
+          label: t('nav.gift_cards', 'Gift Cards'),
+          icon: Gift,
+        },
+        {
+          id: 'email-templates',
+          path: '/email-templates',
+          label: t('nav.email_templates', 'Email Templates'),
+          icon: Mail,
+        },
+        {
+          id: 'loyalty',
+          path: '/loyalty',
+          label: t('nav.loyalty', 'Loyalty Rewards'),
+          icon: Crown,
+        },
+        {
+          id: 'reviews',
+          path: '/reviews',
+          label: t('nav.reviews', 'Product Reviews'),
+          icon: Star,
+        },
+        {
+          id: 'notifications',
+          path: '/notifications',
+          label: t('nav.notifications', 'Notifications & Alerts'),
+          icon: Bell,
+        },
+      ],
     },
     {
-      id: 'notifications' as CMSView,
-      path: '/notifications',
-      label: t('nav.notifications', 'Notifications & Alerts'),
-      icon: Bell,
+      id: 'operations',
+      label: 'Operations & Logistics',
+      icon: Truck,
+      items: [
+        {
+          id: 'shipping',
+          path: '/shipping',
+          label: t('nav.shipping', 'Shipping & Logistics'),
+          icon: Truck,
+        },
+        {
+          id: 'payments',
+          path: '/payments',
+          label: t('nav.payments', 'Payments'),
+          icon: CreditCard,
+        },
+        {
+          id: 'tax',
+          path: '/tax',
+          label: t('nav.tax', 'Taxation'),
+          icon: Receipt,
+        },
+      ],
     },
     {
-      id: 'product-notifications' as CMSView,
-      path: '/products/notifications',
-      label: t('nav.back_in_stock', 'Stock Alerts'),
-      icon: BellRing,
-    },
-    {
-      id: 'email-templates' as CMSView,
-      path: '/email-templates',
-      label: t('nav.email_templates', 'Email Templates'),
-      icon: Mail,
-    },
-    {
-      id: 'domains' as CMSView,
-      path: '/domains',
-      label: t('nav.domains', 'Domains & DNS'),
-      icon: Globe,
-    },
-    {
-      id: 'loyalty' as CMSView,
-      path: '/loyalty',
-      label: t('nav.loyalty', 'Loyalty Rewards'),
-      icon: Crown,
-    },
-    {
-      id: 'team' as CMSView,
-      path: '/team',
-      label: t('nav.team', 'Team & Access'),
-      icon: UserCheck,
-    },
-    {
-      id: 'billing' as CMSView,
-      path: '/billing',
-      label: t('nav.billing', 'Subscription & Billing'),
-      icon: Zap,
-    },
-    {
-      id: 'developer' as CMSView,
-      path: '/developer',
-      label: t('nav.developer', 'Developer Studio'),
-      icon: Code2,
-    },
-    {
-      id: 'docs' as CMSView,
-      path: '/docs',
-      label: t('nav.docs', 'API Docs'),
-      icon: BookOpen,
+      id: 'management',
+      label: 'Store Management',
+      icon: Store,
+      items: [
+        {
+          id: 'store-setup',
+          path: '/store-setup',
+          label: t('nav.store_setup', 'Store Setup'),
+          icon: Store,
+        },
+        {
+          id: 'domains',
+          path: '/domains',
+          label: t('nav.domains', 'Domains & DNS'),
+          icon: Globe,
+        },
+        {
+          id: 'team',
+          path: '/team',
+          label: t('nav.team', 'Team & Access'),
+          icon: UserCheck,
+        },
+        {
+          id: 'billing',
+          path: '/billing',
+          label: t('nav.billing', 'Subscription & Billing'),
+          icon: Zap,
+        },
+        {
+          id: 'developer',
+          path: '/developer',
+          label: t('nav.developer', 'Developer Studio'),
+          icon: Code2,
+        },
+        {
+          id: 'docs',
+          path: '/docs',
+          label: t('nav.docs', 'API Docs'),
+          icon: BookOpen,
+        },
+      ],
     },
   ];
 
@@ -379,6 +434,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Settings,
     },
   ];
+
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    ai: false,
+    catalog: false,
+    storefront: false,
+    marketing: false,
+    operations: false,
+    management: false,
+  });
+
+  const isItemActive = (itemPath?: string, itemId?: CMSView) => {
+    if (itemPath) {
+      if (itemPath === '/dashboard') {
+        return pathname === '/dashboard' || pathname === '/';
+      }
+      if (itemPath === '/payments') {
+        return pathname === '/payment' || pathname.startsWith('/payments');
+      }
+      return pathname.startsWith(itemPath);
+    }
+    if (currentView && itemId) {
+      return currentView === itemId;
+    }
+    return false;
+  };
+
+  // Auto-expand accordion if user lands directly on a route inside that parent menu
+  useEffect(() => {
+    navGroups.forEach((group) => {
+      const hasActiveChild = group.items.some((item) => isItemActive(item.path, item.id));
+      if (hasActiveChild) {
+        setOpenSections((prev) => (prev[group.id] ? prev : { ...prev, [group.id]: true }));
+      }
+    });
+  }, [pathname]);
 
   const storeName = merchantData?.store?.storeName || 'OmniStore';
   const userRole = (merchantData?.merchant?.role || 'OWNER').toUpperCase();
@@ -434,7 +524,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         navId === 'product-notifications' ||
         navId === 'email-templates' ||
         navId === 'blog' ||
-        navId === 'reviews'
+        navId === 'reviews' ||
+        navId === 'pages' ||
+        navId === 'themes' ||
+        navId === 'navigation' ||
+        navId === 'forms' ||
+        navId === 'seo'
       );
     }
 
@@ -445,7 +540,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       if (navId === 'orders') return !!userPermissions.canManageOrders;
       if (navId === 'customers') return !!userPermissions.canManageCustomers;
       if (navId === 'reviews') return !!userPermissions.canManageCustomers;
-      if (navId === 'themes' || navId === 'pages' || navId === 'blog') return !!userPermissions.canManageThemes;
+      if (navId === 'themes' || navId === 'pages' || navId === 'blog' || navId === 'navigation') return !!userPermissions.canManageThemes;
       if (navId === 'seo') return !!userPermissions.canManageThemes;
       if (navId === 'shipping') return !!userPermissions.canManageLogistics;
       if (navId === 'discounts' || navId === 'marketing' || navId === 'notifications' || navId === 'email-templates') return !!userPermissions.canManageAnalytics;
@@ -456,7 +551,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return false;
   };
 
-  const visiblePrimaryNavItems = primaryNavItems.filter((item) => isNavAuthorized(item.id));
+  const visibleDirectNavItems = directNavItems.filter((item) => isNavAuthorized(item.id));
   const visibleSecondaryNavItems = secondaryNavItems.filter((item) => isNavAuthorized(item.id));
 
   const handleNavClick = (viewId?: CMSView, path?: string) => {
@@ -468,22 +563,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (onCloseMobile) {
       onCloseMobile();
     }
-  };
-
-  const isItemActive = (itemPath?: string, itemId?: CMSView) => {
-    if (itemPath) {
-      if (itemPath === '/dashboard') {
-        return pathname === '/dashboard' || pathname === '/';
-      }
-      if (itemPath === '/payments') {
-        return pathname === '/payment' || pathname.startsWith('/payments');
-      }
-      return pathname.startsWith(itemPath);
-    }
-    if (currentView && itemId) {
-      return currentView === itemId;
-    }
-    return false;
   };
 
   useEffect(() => {
@@ -556,164 +635,162 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Scrollable Navigation Items */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1 space-y-1 scrollbar-thin">
           <nav className="space-y-1">
-            {/* 1. Dashboard (Top Anchor) */}
-            {visiblePrimaryNavItems
-              .filter((item) => item.id === 'dashboard')
-              .map((item, idx) => {
-                const Icon = item.icon;
-                const isActive = isItemActive(item.path, item.id);
+            {/* 1. Necessary Direct Menu Items for Customer */}
+            {visibleDirectNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = isItemActive(item.path, item.id);
 
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => handleNavClick(item.id, item.path)}
-                    title={collapsed && !mobileOpen ? item.label : undefined}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all min-h-[40px] cursor-pointer ${isActive
-                        ? 'bg-slate-100 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-900 dark:text-white font-semibold shadow-xs'
-                        : 'text-slate-600 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 hover:text-slate-900 dark:hover:text-white border border-transparent font-normal'
-                      } ${collapsed && !mobileOpen ? 'justify-center' : 'justify-between'}`}
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Icon
-                        className={`w-4 h-4 shrink-0 transition-colors ${isActive
-                            ? 'text-sky-600 dark:text-[#00E5FF]'
-                            : 'text-slate-400 dark:text-[#98989D]'
-                          }`}
-                      />
-                      {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
-                    </div>
-                  </button>
-                );
-              })}
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id, item.path)}
+                  title={collapsed && !mobileOpen ? item.label : undefined}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all min-h-[40px] cursor-pointer ${isActive
+                      ? 'bg-slate-100 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-900 dark:text-white font-semibold shadow-xs'
+                      : 'text-slate-600 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 hover:text-slate-900 dark:hover:text-white border border-transparent font-normal'
+                    } ${collapsed && !mobileOpen ? 'justify-center' : 'justify-between'}`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Icon
+                      className={`w-4 h-4 shrink-0 transition-colors ${isActive
+                          ? 'text-sky-600 dark:text-[#00E5FF]'
+                          : 'text-slate-400 dark:text-[#98989D]'
+                        }`}
+                    />
+                    {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
+                  </div>
 
-            {/* 2. ✨ AI INTELLIGENCE ACCORDION (Standard Menu Style + Active Class) */}
-            <div className="space-y-1">
-              <button
-                onClick={() => {
-                  if (collapsed && !mobileOpen) {
-                    handleNavClick('commerce-engine', '/commerce-engine');
-                  } else {
-                    setAiAccordionOpen((prev) => !prev);
-                  }
-                }}
-                title={collapsed && !mobileOpen ? 'AI Intelligence' : undefined}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all min-h-[40px] cursor-pointer ${aiAccordionOpen || isAnyAiActive
-                    ? 'bg-slate-100 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-900 dark:text-white font-semibold shadow-xs'
-                    : 'text-slate-600 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 hover:text-slate-900 dark:hover:text-white border border-transparent font-normal'
-                  } ${collapsed && !mobileOpen ? 'justify-center' : 'justify-between'}`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <Sparkles
-                    className={`w-4 h-4 shrink-0 transition-colors ${aiAccordionOpen || isAnyAiActive
-                        ? 'text-sky-600 dark:text-[#00E5FF]'
-                        : 'text-slate-400 dark:text-[#98989D]'
-                      }`}
-                  />
-                  {(!collapsed || mobileOpen) && <span className="truncate">AI Intelligence</span>}
-                </div>
-
-                {(!collapsed || mobileOpen) && (
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  {(!collapsed || mobileOpen) && item.badge !== undefined && Number(item.badge) > 0 && (
                     <span
-                      className={`px-2 py-0.5 rounded-full font-mono font-bold text-[10px] flex items-center justify-center shrink-0 ${aiAccordionOpen || isAnyAiActive
+                      className={`px-2 py-0.5 rounded-full font-mono font-bold text-[10px] flex items-center justify-center shrink-0 ${isActive
                           ? 'bg-sky-600 dark:bg-[#00E5FF] text-white dark:text-[#121212]'
                           : 'bg-slate-100 dark:bg-[#1E1E1E] text-sky-600 dark:text-[#00E5FF] border border-slate-200 dark:border-[#2C2C2E]'
                         }`}
                     >
-                      8
+                      {item.badge}
                     </span>
-                    <ChevronDown
-                      className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${aiAccordionOpen
-                          ? 'rotate-180 text-slate-600 dark:text-slate-300'
-                          : 'text-slate-400 dark:text-[#98989D]'
-                        }`}
-                    />
-                  </div>
-                )}
-              </button>
+                  )}
+                </button>
+              );
+            })}
 
-              {/* Accordion Child Links */}
-              {(!collapsed || mobileOpen) && aiAccordionOpen && (
-                <div className="pl-3 ml-3.5 border-l border-slate-200 dark:border-[#2C2C2E] space-y-0.5 pt-1 pb-1 animate-in slide-in-from-top-1 duration-150">
-                  {aiNavItems.map((aiItem, aIdx) => {
-                    const AiIcon = aiItem.icon;
-                    const isAiItemActive = isItemActive(aiItem.path, aiItem.id);
-
-                    return (
-                      <button
-                        key={aIdx}
-                        onClick={() => handleNavClick(aiItem.id, aiItem.path)}
-                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs transition-all cursor-pointer ${isAiItemActive
-                            ? 'bg-slate-100 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-900 dark:text-white font-semibold shadow-xs'
-                            : 'text-slate-600 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 hover:text-slate-900 dark:hover:text-white border border-transparent font-normal'
-                          }`}
-                      >
-                        <div className="flex items-center gap-2 truncate min-w-0">
-                          <AiIcon
-                            className={`w-4 h-4 shrink-0 transition-colors ${isAiItemActive
-                                ? 'text-sky-600 dark:text-[#00E5FF]'
-                                : 'text-slate-400 dark:text-[#98989D]'
-                              }`}
-                          />
-                          <span className="truncate">{aiItem.label}</span>
-                        </div>
-                        {aiItem.badge && (
-                          <span
-                            className={`px-1.5 py-0.2 rounded font-mono font-bold text-[9px] uppercase shrink-0 ${isAiItemActive
-                                ? 'bg-sky-600 dark:bg-[#00E5FF] text-white dark:text-[#121212]'
-                                : 'bg-slate-100 dark:bg-[#1E1E1E] text-sky-600 dark:text-[#00E5FF] border border-slate-200 dark:border-[#2C2C2E]'
-                              }`}
-                          >
-                            {aiItem.badge}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
+            {/* Separator / Modules Title */}
+            {(!collapsed || mobileOpen) ? (
+              <div className="pt-3 pb-1 px-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-[#636366]">
+                    Store Modules
+                  </span>
+                  <div className="flex-1 h-[1px] bg-slate-200 dark:bg-[#2C2C2E]" />
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="my-2 border-t border-slate-200 dark:border-[#2C2C2E]" />
+            )}
 
-            {/* 3. Remaining Primary Navigation Items */}
-            {visiblePrimaryNavItems
-              .filter((item) => item.id !== 'dashboard')
-              .map((item, idx) => {
-                const Icon = item.icon;
-                const isActive = isItemActive(item.path, item.id);
+            {/* 2. Grouped Parent Menus for All Other Features */}
+            {navGroups.map((group) => {
+              const GroupIcon = group.icon;
+              const visibleItems = group.items.filter((item) => isNavAuthorized(item.id));
+              if (visibleItems.length === 0) return null;
 
-                return (
+              const isGroupActive = visibleItems.some((item) => isItemActive(item.path, item.id));
+              const isOpen = !!openSections[group.id];
+
+              return (
+                <div key={group.id} className="space-y-1">
                   <button
-                    key={idx}
-                    onClick={() => handleNavClick(item.id, item.path)}
-                    title={collapsed && !mobileOpen ? item.label : undefined}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all min-h-[40px] cursor-pointer ${isActive
+                    onClick={() => {
+                      if (collapsed && !mobileOpen) {
+                        handleNavClick(visibleItems[0].id, visibleItems[0].path);
+                      } else {
+                        setOpenSections((prev) => ({
+                          ...prev,
+                          [group.id]: !prev[group.id],
+                        }));
+                      }
+                    }}
+                    title={collapsed && !mobileOpen ? group.label : undefined}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all min-h-[40px] cursor-pointer ${isGroupActive
                         ? 'bg-slate-100 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-900 dark:text-white font-semibold shadow-xs'
+                        : isOpen
+                        ? 'text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 border border-transparent font-medium'
                         : 'text-slate-600 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 hover:text-slate-900 dark:hover:text-white border border-transparent font-normal'
                       } ${collapsed && !mobileOpen ? 'justify-center' : 'justify-between'}`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <Icon
-                        className={`w-4 h-4 shrink-0 transition-colors ${isActive
+                      <GroupIcon
+                        className={`w-4 h-4 shrink-0 transition-colors ${isGroupActive
                             ? 'text-sky-600 dark:text-[#00E5FF]'
                             : 'text-slate-400 dark:text-[#98989D]'
                           }`}
                       />
-                      {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
+                      {(!collapsed || mobileOpen) && <span className="truncate">{group.label}</span>}
                     </div>
 
-                    {(!collapsed || mobileOpen) && item.badge !== undefined && item.badge > 0 && (
-                      <span
-                        className={`px-2 py-0.5 rounded-full font-mono font-bold text-[10px] flex items-center justify-center shrink-0 ${isActive
-                            ? 'bg-sky-600 dark:bg-[#00E5FF] text-white dark:text-[#121212]'
-                            : 'bg-slate-100 dark:bg-[#1E1E1E] text-sky-600 dark:text-[#00E5FF] border border-slate-200 dark:border-[#2C2C2E]'
-                          }`}
-                      >
-                        {item.badge}
-                      </span>
+                    {(!collapsed || mobileOpen) && (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span
+                          className={`px-2 py-0.5 rounded-full font-mono font-bold text-[10px] flex items-center justify-center shrink-0 ${isGroupActive
+                              ? 'bg-sky-600 dark:bg-[#00E5FF] text-white dark:text-[#121212]'
+                              : 'bg-slate-100 dark:bg-[#1E1E1E] text-sky-600 dark:text-[#00E5FF] border border-slate-200 dark:border-[#2C2C2E]'
+                            }`}
+                        >
+                          {group.badge || visibleItems.length}
+                        </span>
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isOpen
+                              ? 'rotate-180 text-slate-600 dark:text-slate-300'
+                              : 'text-slate-400 dark:text-[#98989D]'
+                            }`}
+                        />
+                      </div>
                     )}
                   </button>
-                );
-              })}
+
+                  {/* Accordion Child Links */}
+                  {(!collapsed || mobileOpen) && isOpen && (
+                    <div className="pl-3 ml-3.5 border-l border-slate-200 dark:border-[#2C2C2E] space-y-0.5 pt-1 pb-1 animate-in slide-in-from-top-1 duration-150">
+                      {visibleItems.map((childItem) => {
+                        const ChildIcon = childItem.icon;
+                        const isChildActive = isItemActive(childItem.path, childItem.id);
+
+                        return (
+                          <button
+                            key={childItem.id}
+                            onClick={() => handleNavClick(childItem.id, childItem.path)}
+                            className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs transition-all cursor-pointer ${isChildActive
+                                ? 'bg-slate-100 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-900 dark:text-white font-semibold shadow-xs'
+                                : 'text-slate-600 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 hover:text-slate-900 dark:hover:text-white border border-transparent font-normal'
+                              }`}
+                          >
+                            <div className="flex items-center gap-2 truncate min-w-0">
+                              <ChildIcon
+                                className={`w-4 h-4 shrink-0 transition-colors ${isChildActive
+                                    ? 'text-sky-600 dark:text-[#00E5FF]'
+                                    : 'text-slate-400 dark:text-[#98989D]'
+                                  }`}
+                              />
+                              <span className="truncate">{childItem.label}</span>
+                            </div>
+                            {childItem.badge !== undefined && childItem.badge !== '' && (
+                              <span
+                                className={`px-1.5 py-0.2 rounded font-mono font-bold text-[9px] uppercase shrink-0 ${isChildActive
+                                    ? 'bg-sky-600 dark:bg-[#00E5FF] text-white dark:text-[#121212]'
+                                    : 'bg-slate-100 dark:bg-[#1E1E1E] text-sky-600 dark:text-[#00E5FF] border border-slate-200 dark:border-[#2C2C2E]'
+                                  }`}
+                              >
+                                {childItem.badge}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
         </div>
 

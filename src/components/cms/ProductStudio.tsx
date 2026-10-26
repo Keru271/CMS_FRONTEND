@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import { CollectionManager } from '@/src/components/cms/CollectionManager';
 import { CategoryManager } from '@/src/components/cms/CategoryManager';
 import { ProductImportModal } from '@/src/components/cms/ProductImportModal';
@@ -104,6 +106,10 @@ export const ProductStudio: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+
+  // Pagination
+  const [productPage, setProductPage] = useState(1);
+  const [productPageSize, setProductPageSize] = useState(10);
 
   // Form State for Add / Edit Product (All 23 options)
   const [editingProduct, setEditingProduct] = useState<CMSProduct | null>(null);
@@ -1116,6 +1122,7 @@ export const ProductStudio: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 w-full md:w-auto">
+              <TableRefreshButton onRefresh={loadData} isLoading={isLoading} size="sm" iconOnly />
               {/* Category Dropdown Filter */}
               <select
                 value={categoryFilter}
@@ -1160,7 +1167,9 @@ export const ProductStudio: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-border text-xs">
-                  {filteredProducts.map((prod) => {
+                  {filteredProducts
+                    .slice((productPage - 1) * productPageSize, productPage * productPageSize)
+                    .map((prod) => {
                     const stock = prod.inventory ?? prod.stockQuantity ?? 0;
                     const imgUrl =
                       prod.images && prod.images.length > 0
@@ -1320,6 +1329,16 @@ export const ProductStudio: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination */}
+            <TablePagination
+              currentPage={productPage}
+              totalItems={filteredProducts.length}
+              pageSize={productPageSize}
+              onPageChange={(p) => setProductPage(p)}
+              onPageSizeChange={(s) => { setProductPageSize(s); setProductPage(1); }}
+              itemName="products"
+            />
           </div>
         </div>
       )}

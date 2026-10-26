@@ -56,6 +56,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
     name: '',
     slug: '',
     icon: '📦',
+    image: '',
     description: '',
   });
 
@@ -118,7 +119,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
   const handleOpenCreateCategory = () => {
     setEditingCategory(null);
     setCategoryModalError(null);
-    setCategoryFormData({ name: '', slug: '', icon: '📦', description: '' });
+    setCategoryFormData({ name: '', slug: '', icon: '📦', image: '', description: '' });
     setIsCategoryModalOpen(true);
   };
 
@@ -129,6 +130,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
       name: cat.name,
       slug: cat.slug,
       icon: cat.icon || '📦',
+      image: cat.image || '',
       description: cat.description || '',
     });
     setIsCategoryModalOpen(true);
@@ -149,6 +151,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
             .replace(/[^a-z0-9]/g, '-')
         ).toLowerCase(),
         icon: categoryFormData.icon || '📦',
+        image: categoryFormData.image || undefined,
         description: categoryFormData.description,
       };
 
@@ -564,9 +567,19 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 flex items-center justify-center text-xl">
-                        {cat.icon || '📦'}
-                      </span>
+                      {cat.image ? (
+                        <div className="w-10 h-10 rounded-2xl overflow-hidden border border-slate-200 dark:border-border shrink-0 shadow-xs bg-slate-50 dark:bg-accent">
+                          <img
+                            src={cat.image}
+                            alt={cat.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <span className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 flex items-center justify-center text-xl shrink-0">
+                          {cat.icon || '📦'}
+                        </span>
+                      )}
                       <div>
                         <h3 className="font-black text-base text-slate-900 dark:text-foreground">
                           {cat.name}
@@ -860,6 +873,36 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                     }
                     placeholder="👟"
                     className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold text-center"
+                  />
+                </div>
+              </div>
+
+              {/* Category Image — Drag & Drop */}
+              <div className="space-y-2">
+                <DragDropUpload
+                  folder="categories"
+                  fileType="CATEGORY_IMAGE"
+                  label="Category Image"
+                  currentUrl={categoryFormData.image || undefined}
+                  onUploadComplete={(url) =>
+                    setCategoryFormData((prev) => ({ ...prev, image: url }))
+                  }
+                  hint="High-resolution image (JPG, PNG, or WebP max 5MB)"
+                  previewShape="square"
+                  maxSizeMB={5}
+                />
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-slate-500">
+                    Or paste image URL
+                  </label>
+                  <input
+                    type="url"
+                    value={categoryFormData.image || ''}
+                    onChange={(e) =>
+                      setCategoryFormData((prev) => ({ ...prev, image: e.target.value }))
+                    }
+                    placeholder="https://images.unsplash.com/..."
+                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>

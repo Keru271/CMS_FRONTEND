@@ -22,6 +22,7 @@ export interface ChatMessage {
   timestamp: string;
   actions?: ChatAction[];
   isThinking?: boolean;
+  model?: 'Gemini' | 'ChatGPT' | 'Default Text' | string;
 }
 
 export interface StoreContextData {
@@ -42,7 +43,7 @@ class AIAssistantService {
     userMessage: string,
     context: StoreContextData,
     history: ChatMessage[] = [],
-  ): Promise<{ content: string; actions?: ChatAction[] }> {
+  ): Promise<{ content: string; actions?: ChatAction[]; model?: string }> {
     // 1. Try calling the autonomous AI Agent endpoint with real-time tool orchestration
     try {
       const storeId = context.merchantData?.store?.id;
@@ -61,6 +62,7 @@ class AIAssistantService {
         return {
           content: agentRes.reply,
           actions: agentRes.actions,
+          model: agentRes.model || 'Default Text',
         };
       }
     } catch (agentErr) {
@@ -81,6 +83,7 @@ class AIAssistantService {
           return {
             content: backendRes.content,
             actions: backendRes.actions,
+            model: backendRes.model || 'Default Text',
           };
         }
       } catch (backendErr) {
@@ -88,6 +91,17 @@ class AIAssistantService {
       }
     }
 
+    const fallbackRes = await this.generateClientFallbackResponse(userMessage, context);
+    return {
+      ...fallbackRes,
+      model: 'Default Text',
+    };
+  }
+
+  private async generateClientFallbackResponse(
+    userMessage: string,
+    context: StoreContextData,
+  ): Promise<{ content: string; actions?: ChatAction[] }> {
     // Artificial small delay for natural conversational feel
     await new Promise((resolve) => setTimeout(resolve, 300));
 
@@ -101,6 +115,75 @@ class AIAssistantService {
       currentPath,
     } = context;
     const storeName = merchantData?.store?.storeName || 'Your Store';
+
+    // 0. CATEGORY MANAGEMENT (DELETE ALL, DELETE, CREATE, LIST)
+    if (
+      msg.includes('delete all categories') ||
+      msg.includes('remove all categories') ||
+      msg.includes('clear all categories') ||
+      msg.includes('delete categories') ||
+      msg.includes('clear categories') ||
+      msg.includes('empty categories')
+    ) {
+      try {
+        if (categories && categories.length > 0) {
+          await Promise.allSettled(categories.map((c) => cmsService.deleteCategory(c.id)));
+        }
+      } catch (err) {
+        console.warn('Client fallback failed to delete categories:', err);
+      }
+      return {
+        content: `🧹 **All categories have been permanently deleted.**\n\n- **Categories Cleared:** ${categories.length}\n- **Current Categories:** 0\n\nYour store categories catalog has been cleared. You can start fresh by adding new categories in **Taxonomy Studio** or asking me to create one anytime!`,
+        actions: [
+          {
+            id: 'goto-categories',
+            label: '📁 View Categories Studio',
+            type: 'NAVIGATE',
+            payload: '/categories',
+          },
+          {
+            id: 'create-cat',
+            label: '➕ Create New Category',
+            type: 'PREFILL_PROMPT',
+            payload: 'Create category Footwear & Sneakers',
+          },
+        ],
+      };
+    }
+
+    if (
+      (msg.startsWith('delete category') || msg.startsWith('remove category')) &&
+      !msg.includes('all')
+    ) {
+      const targetName = userMessage.replace(/^(?:delete|remove)\s+category\s+/i, '').replace(/["']/g, '').trim();
+      const matched = categories.find((c) => c.name.toLowerCase() === targetName.toLowerCase() || c.slug.toLowerCase() === targetName.toLowerCase());
+      if (matched) {
+        await cmsService.deleteCategory(matched.id).catch(() => {});
+        return {
+          content: `🗑️ **Category '${matched.name}' has been successfully deleted.**`,
+          actions: [
+            {
+              id: 'goto-categories',
+              label: '📁 View Categories Studio',
+              type: 'NAVIGATE',
+              payload: '/categories',
+            },
+          ],
+        };
+      } else {
+        return {
+          content: `⚠️ I couldn't find a category named **'${targetName}'** in your catalog.`,
+          actions: [
+            {
+              id: 'goto-categories',
+              label: '📁 View Categories Studio',
+              type: 'NAVIGATE',
+              payload: '/categories',
+            },
+          ],
+        };
+      }
+    }
 
     // 1. ADD / CREATE PRODUCT
     if (
