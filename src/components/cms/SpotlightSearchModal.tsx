@@ -297,7 +297,7 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
       {
         id: 'nav-billing',
         title: 'Store Pricing Tiers & Billing',
-        subtitle: 'SaaS subscription plans, API tier add-ons & payment receipts',
+        subtitle: 'SaaS subscription plans & payment receipts',
         path: '/billing',
         icon: Crown,
         keywords: ['subscription', 'upgrade', 'plan', 'starter', 'pro', 'enterprise', 'invoice'],

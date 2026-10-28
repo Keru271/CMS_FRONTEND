@@ -31,6 +31,7 @@ import {
 import { DashboardStats, CMSOrder, CMSProduct, OrderStatus } from '@/src/types';
 import { usePlanAccess } from '@/src/hooks/usePlanAccess';
 import { useTranslation } from '@/src/context/LanguageContext';
+import { TablePagination } from '@/src/components/ui/TablePagination';
 
 interface DashboardOverviewProps {
   stats: DashboardStats;
@@ -60,6 +61,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     'revenue',
   );
   const [currencySymbol, setCurrencySymbol] = useState('₹');
+
+  // Pagination states
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [ordersPageSize, setOrdersPageSize] = useState(5);
+  const [topProductsPage, setTopProductsPage] = useState(1);
+  const [topProductsPageSize, setTopProductsPageSize] = useState(5);
 
   // Format currency Helper
   const fmtCurrency = (num: number) => {
@@ -802,7 +809,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-[#2C2C2E]/60">
-                {recentOrders.map((ord) => (
+                {recentOrders
+                  .slice((ordersPage - 1) * ordersPageSize, ordersPage * ordersPageSize)
+                  .map((ord) => (
                   <tr key={ord.id} className="hover:bg-slate-50 dark:hover:bg-[#121212]/60 transition-colors">
                     <td className="py-3.5 px-3 font-mono font-bold text-slate-900 dark:text-white">
                       {ord.orderNumber}
@@ -864,6 +873,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 ))}
               </tbody>
             </table>
+            <TablePagination
+              currentPage={ordersPage}
+              totalItems={recentOrders.length}
+              pageSize={ordersPageSize}
+              onPageChange={setOrdersPage}
+              onPageSizeChange={(newSize) => {
+                setOrdersPageSize(newSize);
+                setOrdersPage(1);
+              }}
+            />
           </div>
         )}
       </div>
@@ -1121,22 +1140,37 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-[#2C2C2E]/60">
-                  {topProductsFromRealData.map((tp, index) => (
-                    <tr key={index} className="hover:bg-slate-50 dark:hover:bg-[#121212]/60 transition-colors">
-                      <td className="py-3 px-3 font-sans font-bold text-slate-900 dark:text-white">{index + 1}</td>
-                      <td className="py-3 px-3">
-                        <span className="font-semibold text-slate-900 dark:text-white block">{tp.name}</span>
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
-                        {tp.units}
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
-                        {fmtCurrency(tp.revenue)}
-                      </td>
-                    </tr>
-                  ))}
+                  {topProductsFromRealData
+                    .slice((topProductsPage - 1) * topProductsPageSize, topProductsPage * topProductsPageSize)
+                    .map((tp, index) => {
+                      const rank = (topProductsPage - 1) * topProductsPageSize + index + 1;
+                      return (
+                        <tr key={index} className="hover:bg-slate-50 dark:hover:bg-[#121212]/60 transition-colors">
+                          <td className="py-3 px-3 font-sans font-bold text-slate-900 dark:text-white">{rank}</td>
+                          <td className="py-3 px-3">
+                            <span className="font-semibold text-slate-900 dark:text-white block">{tp.name}</span>
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
+                            {tp.units}
+                          </td>
+                          <td className="py-3.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
+                            {fmtCurrency(tp.revenue)}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
+              <TablePagination
+                currentPage={topProductsPage}
+                totalItems={topProductsFromRealData.length}
+                pageSize={topProductsPageSize}
+                onPageChange={setTopProductsPage}
+                onPageSizeChange={(newSize) => {
+                  setTopProductsPageSize(newSize);
+                  setTopProductsPage(1);
+                }}
+              />
             </div>
           )}
         </div>

@@ -46,6 +46,8 @@ import { cmsService } from '@/src/services/cmsService';
 import { ThreeDViewer } from '@/src/components/ui/ThreeDViewer';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { usePlanAccess } from '@/src/hooks/usePlanAccess';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 
 // Sample multi-angle image presets for one-click testing
 const SAMPLE_PRESET_IMAGES = [
@@ -96,6 +98,9 @@ export const ThreeDStudio: React.FC = () => {
 
   const [studioData, setStudioData] = useState<ThreeDStudioData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPageSize, setHistoryPageSize] = useState(10);
   const [selectedModel, setSelectedModel] = useState<ThreeDModelData | null>(null);
 
   // Active Tab
@@ -155,7 +160,7 @@ export const ThreeDStudio: React.FC = () => {
   };
 
   const loadStudioData = async () => {
-    setIsLoading(true);
+    setIsRefreshing(true);
     try {
       const data = await cmsService.getThreeDStudioData();
       setStudioData(data);
@@ -169,6 +174,7 @@ export const ThreeDStudio: React.FC = () => {
       console.error('Failed to load 3D studio data:', err);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -1184,64 +1190,84 @@ export const ThreeDStudio: React.FC = () => {
                 Detailed audit log of credit allocations, synthesis deductions, and top-up receipts.
               </p>
             </div>
+            <TableRefreshButton onRefresh={loadStudioData} isRefreshing={isRefreshing} />
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-accent/40 text-[10px] uppercase font-mono text-slate-500">
-                <tr>
-                  <th className="py-3 px-4 rounded-l-xl">Date & Time</th>
-                  <th className="py-3 px-4">Transaction Type</th>
-                  <th className="py-3 px-4">Description</th>
-                  <th className="py-3 px-4 text-right">Amount</th>
-                  <th className="py-3 px-4 text-right rounded-r-xl">Balance After</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-border/60">
-                {studioData?.transactions && studioData.transactions.length > 0 ? (
-                  studioData.transactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-slate-50/60 dark:hover:bg-accent/20">
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-600 dark:text-slate-400">
-                        {new Date(tx.createdAt).toLocaleString()}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                            tx.type === 'PURCHASE'
-                              ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700'
-                              : tx.type === 'PLAN_GRANT'
-                                ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700'
-                                : 'bg-amber-100 dark:bg-amber-950 text-amber-700'
-                          }`}
-                        >
-                          {tx.type}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200">
-                        {tx.description}
-                      </td>
-                      <td
-                        className={`py-3.5 px-4 text-right font-mono font-bold ${
-                          tx.amount > 0 ? 'text-emerald-600' : 'text-amber-600'
-                        }`}
-                      >
-                        {tx.amount > 0 ? `+${tx.amount}` : tx.amount} Credits
-                      </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-foreground">
-                        {tx.balanceAfter} Credits
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-400">
-                      No credit transactions recorded yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          {(() => {
+            const allTx = studioData?.transactions || [];
+            const paginatedTx = allTx.slice((historyPage - 1) * historyPageSize, historyPage * historyPageSize);
+            return (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 dark:bg-accent/40 text-[10px] uppercase font-mono text-slate-500">
+                      <tr>
+                        <th className="py-3 px-4 rounded-l-xl">Date & Time</th>
+                        <th className="py-3 px-4">Transaction Type</th>
+                        <th className="py-3 px-4">Description</th>
+                        <th className="py-3 px-4 text-right">Amount</th>
+                        <th className="py-3 px-4 text-right rounded-r-xl">Balance After</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-border/60">
+                      {paginatedTx.length > 0 ? (
+                        paginatedTx.map((tx) => (
+                          <tr key={tx.id} className="hover:bg-slate-50/60 dark:hover:bg-accent/20">
+                            <td className="py-3.5 px-4 font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                              {new Date(tx.createdAt).toLocaleString()}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span
+                                className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                                  tx.type === 'PURCHASE'
+                                    ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700'
+                                    : tx.type === 'PLAN_GRANT'
+                                      ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700'
+                                      : 'bg-amber-100 dark:bg-amber-950 text-amber-700'
+                                }`}
+                              >
+                                {tx.type}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200">
+                              {tx.description}
+                            </td>
+                            <td
+                              className={`py-3.5 px-4 text-right font-mono font-bold ${
+                                tx.amount > 0 ? 'text-emerald-600' : 'text-amber-600'
+                              }`}
+                            >
+                              {tx.amount > 0 ? `+${tx.amount}` : tx.amount} Credits
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-foreground">
+                              {tx.balanceAfter} Credits
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-slate-400">
+                            No credit transactions recorded yet.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <TablePagination
+                  currentPage={historyPage}
+                  totalItems={allTx.length}
+                  pageSize={historyPageSize}
+                  onPageChange={setHistoryPage}
+                  onPageSizeChange={(newSize) => {
+                    setHistoryPageSize(newSize);
+                    setHistoryPage(1);
+                  }}
+                />
+              </>
+            );
+          })()}
         </div>
       )}
 

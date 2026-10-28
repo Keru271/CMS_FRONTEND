@@ -33,6 +33,8 @@ import {
 import { CMSForm, FormCategory, FormStatus } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import { EmbedShareModal } from './EmbedShareModal';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -46,13 +48,18 @@ export const FormsManager: React.FC<Props> = ({ onOpenBuilder, onOpenSubmissions
   const [forms, setForms] = useState<CMSForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [activeShareForm, setActiveShareForm] = useState<CMSForm | null>(null);
 
+  const paginatedForms = forms.slice((page - 1) * pageSize, page * pageSize);
+
   const loadForms = async () => {
+    setRefreshing(true);
     try {
       const data = await cmsService.getForms({
         category: selectedCategory,
@@ -222,7 +229,10 @@ export const FormsManager: React.FC<Props> = ({ onOpenBuilder, onOpenSubmissions
           ].map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
+              onClick={() => {
+                setSelectedCategory(cat.id);
+                setPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap ${
                 selectedCategory === cat.id
                   ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
@@ -242,10 +252,15 @@ export const FormsManager: React.FC<Props> = ({ onOpenBuilder, onOpenSubmissions
               type="text"
               placeholder="Search forms..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
               className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </form>
+
+          <TableRefreshButton onRefresh={loadForms} isRefreshing={refreshing} />
 
           <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
             <button
@@ -299,7 +314,7 @@ export const FormsManager: React.FC<Props> = ({ onOpenBuilder, onOpenSubmissions
       ) : viewMode === 'grid' ? (
         /* Grid Cards View */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {forms.map((form) => {
+          {paginatedForms.map((form) => {
             const fieldsCount =
               form.fields?.length || (form.fieldsJson ? JSON.parse(form.fieldsJson).length : 0);
             const isPublished = form.status === 'PUBLISHED';
@@ -422,7 +437,7 @@ export const FormsManager: React.FC<Props> = ({ onOpenBuilder, onOpenSubmissions
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {forms.map((form) => {
+              {paginatedForms.map((form) => {
                 const fieldsCount =
                   form.fields?.length || (form.fieldsJson ? JSON.parse(form.fieldsJson).length : 0);
                 return (
@@ -504,6 +519,19 @@ export const FormsManager: React.FC<Props> = ({ onOpenBuilder, onOpenSubmissions
             </tbody>
           </table>
         </div>
+      )}
+
+      {forms.length > 0 && (
+        <TablePagination
+          currentPage={page}
+          totalItems={forms.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
+        />
       )}
 
       {/* "Create New Form" Modal */}

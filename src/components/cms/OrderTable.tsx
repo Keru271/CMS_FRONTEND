@@ -3,15 +3,31 @@
 import React, { useState } from 'react';
 import { ShoppingBag, Search } from 'lucide-react';
 import { CMSOrder, OrderStatus } from '@/src/types';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 
 interface OrderTableProps {
   orders: CMSOrder[];
   onStatusChange: (id: string, status: OrderStatus) => Promise<void>;
+  onRefresh?: () => void;
 }
 
-export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }) => {
+export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange, onRefresh }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    if (!onRefresh) return;
+    setIsRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const filteredOrders = orders.filter((o) => {
     const matchesSearch =
@@ -21,6 +37,8 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
     const matchesStatus = statusFilter === 'all' || o.orderStatus === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const paginatedOrders = filteredOrders.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="space-y-4 font-sans">
@@ -32,7 +50,10 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
             type="text"
             placeholder="Search orders, customer names, emails..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#121212] border border-[#cbd5e0] text-xs font-sans text-[#191a1b] placeholder:text-[#beb9b3] outline-none focus:border-[#cbc2ea]"
           />
         </div>
@@ -40,7 +61,10 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
         <div className="flex items-center gap-3 w-full md:w-auto">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
             className="w-full sm:w-auto bg-[#121212] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
           >
             <option value="all">All Order Statuses</option>
@@ -49,6 +73,9 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
             <option value="delivered">Delivered</option>
             <option value="cancelled">Cancelled</option>
           </select>
+          {onRefresh && (
+            <TableRefreshButton onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+          )}
         </div>
       </div>
 
@@ -80,7 +107,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((o) => (
+                paginatedOrders.map((o) => (
                   <tr key={o.id} className="hover:bg-[#121212]/60 transition-colors">
                     <td className="py-3.5 px-4 sm:px-5 font-mono font-bold text-[#191a1b]">
                       {o.orderNumber}
@@ -139,6 +166,17 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onStatusChange }
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={page}
+          totalItems={filteredOrders.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
+        />
       </div>
     </div>
   );

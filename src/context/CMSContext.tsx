@@ -357,8 +357,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
     );
     setMerchantData((prev) => {
-      if (!prev) return null;
-      const updated = {
+      if (!prev || !prev.store) return prev;
+      const updated: MerchantOnboardingData = {
         ...prev,
         store: {
           ...prev.store,

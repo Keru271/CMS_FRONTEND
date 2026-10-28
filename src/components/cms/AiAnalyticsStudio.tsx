@@ -31,6 +31,8 @@ import {
 } from 'lucide-react';
 import { cmsService } from '@/src/services/cmsService';
 import { AiAnalyticsResult, CalculatedStoreAnalytics } from '@/src/types';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 
 const SAMPLE_PROMPTS = [
   'Why are my sales down?',
@@ -45,11 +47,15 @@ export const AiAnalyticsStudio: React.FC = () => {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [queryInput, setQueryInput] = useState<string>('Why are my sales down?');
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [categoryPage, setCategoryPage] = useState<number>(1);
+  const [categoryPageSize, setCategoryPageSize] = useState<number>(5);
   const [isQuerying, setIsQuerying] = useState<boolean>(false);
   const [analyticsResult, setAnalyticsResult] = useState<AiAnalyticsResult | null>(null);
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
+    setCategoryPage(1);
     loadAnalytics();
   }, [timeRange]);
 
@@ -59,7 +65,7 @@ export const AiAnalyticsStudio: React.FC = () => {
   };
 
   const loadAnalytics = async () => {
-    setIsLoading(true);
+    setIsRefreshing(true);
     try {
       const result = await cmsService.queryAiAnalytics({
         question: queryInput,
@@ -71,6 +77,7 @@ export const AiAnalyticsStudio: React.FC = () => {
       showToast('Failed to compute analytics.', 'error');
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -459,74 +466,102 @@ export const AiAnalyticsStudio: React.FC = () => {
                 Period-over-period comparison across categories
               </p>
             </div>
+            <TableRefreshButton onRefresh={loadAnalytics} isRefreshing={isRefreshing} />
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-200/80 dark:border-border text-slate-400 text-[11px] font-black uppercase tracking-wider">
-                  <th className="pb-3 font-black">Category</th>
-                  <th className="pb-3 font-black">Revenue ({sym})</th>
-                  <th className="pb-3 font-black">Revenue Δ%</th>
-                  <th className="pb-3 font-black">Orders Δ%</th>
-                  <th className="pb-3 font-black">Traffic Δ%</th>
-                  <th className="pb-3 font-black">Conversion Rate</th>
-                  <th className="pb-3 font-black">Conversion Δ%</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-border">
-                {m.categories.map((c) => {
-                  const isNegative = c.revenueChangePercent < 0;
-                  return (
-                    <tr
-                      key={c.category}
-                      className="hover:bg-slate-50/80 dark:hover:bg-accent/40 transition"
-                    >
-                      <td className="py-3.5 font-bold text-slate-900 dark:text-foreground">
-                        {c.category}
-                      </td>
-                      <td className="py-3.5 font-black text-slate-900 dark:text-foreground">
-                        {sym}{c.currentRevenue.toLocaleString()}
-                      </td>
-                      <td className="py-3.5">
-                        <span
-                          className={`font-black px-2 py-0.5 rounded-md text-[11px] ${
-                            isNegative
-                              ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
-                              : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
-                          }`}
-                        >
-                          {c.revenueChangePercent > 0 ? '+' : ''}
-                          {c.revenueChangePercent}%
-                        </span>
-                      </td>
-                      <td className="py-3.5 font-bold text-slate-700 dark:text-slate-300">
-                        {c.ordersChangePercent > 0 ? '+' : ''}
-                        {c.ordersChangePercent}%
-                      </td>
-                      <td className="py-3.5 font-bold text-slate-700 dark:text-slate-300">
-                        {c.trafficChangePercent > 0 ? '+' : ''}
-                        {c.trafficChangePercent}%
-                      </td>
-                      <td className="py-3.5 font-bold text-slate-900 dark:text-foreground">
-                        {c.currentConversionRate}%
-                      </td>
-                      <td className="py-3.5">
-                        <span
-                          className={`font-black ${
-                            c.conversionChangePercent < 0 ? 'text-rose-600' : 'text-emerald-600'
-                          }`}
-                        >
-                          {c.conversionChangePercent > 0 ? '+' : ''}
-                          {c.conversionChangePercent}%
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          {(() => {
+            const allCats = m.categories || [];
+            const paginatedCats = allCats.slice((categoryPage - 1) * categoryPageSize, categoryPage * categoryPageSize);
+            return (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200/80 dark:border-border text-slate-400 text-[11px] font-black uppercase tracking-wider">
+                        <th className="pb-3 font-black">Category</th>
+                        <th className="pb-3 font-black">Revenue ({sym})</th>
+                        <th className="pb-3 font-black">Revenue Δ%</th>
+                        <th className="pb-3 font-black">Orders Δ%</th>
+                        <th className="pb-3 font-black">Traffic Δ%</th>
+                        <th className="pb-3 font-black">Conversion Rate</th>
+                        <th className="pb-3 font-black">Conversion Δ%</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-border">
+                      {paginatedCats.length > 0 ? (
+                        paginatedCats.map((c) => {
+                          const isNegative = c.revenueChangePercent < 0;
+                          return (
+                            <tr
+                              key={c.category}
+                              className="hover:bg-slate-50/80 dark:hover:bg-accent/40 transition"
+                            >
+                              <td className="py-3.5 font-bold text-slate-900 dark:text-foreground">
+                                {c.category}
+                              </td>
+                              <td className="py-3.5 font-black text-slate-900 dark:text-foreground">
+                                {sym}{c.currentRevenue.toLocaleString()}
+                              </td>
+                              <td className="py-3.5">
+                                <span
+                                  className={`font-black px-2 py-0.5 rounded-md text-[11px] ${
+                                    isNegative
+                                      ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
+                                      : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                  }`}
+                                >
+                                  {c.revenueChangePercent > 0 ? '+' : ''}
+                                  {c.revenueChangePercent}%
+                                </span>
+                              </td>
+                              <td className="py-3.5 font-bold text-slate-700 dark:text-slate-300">
+                                {c.ordersChangePercent > 0 ? '+' : ''}
+                                {c.ordersChangePercent}%
+                              </td>
+                              <td className="py-3.5 font-bold text-slate-700 dark:text-slate-300">
+                                {c.trafficChangePercent > 0 ? '+' : ''}
+                                {c.trafficChangePercent}%
+                              </td>
+                              <td className="py-3.5 font-bold text-slate-900 dark:text-foreground">
+                                {c.currentConversionRate}%
+                              </td>
+                              <td className="py-3.5">
+                                <span
+                                  className={`font-black ${
+                                    c.conversionChangePercent < 0 ? 'text-rose-600' : 'text-emerald-600'
+                                  }`}
+                                >
+                                  {c.conversionChangePercent > 0 ? '+' : ''}
+                                  {c.conversionChangePercent}%
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="py-8 text-center text-slate-400">
+                            No categories found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <TablePagination
+                  currentPage={categoryPage}
+                  totalItems={allCats.length}
+                  pageSize={categoryPageSize}
+                  onPageChange={setCategoryPage}
+                  onPageSizeChange={(newSize) => {
+                    setCategoryPageSize(newSize);
+                    setCategoryPage(1);
+                  }}
+                />
+              </>
+            );
+          })()}
         </div>
       )}
 

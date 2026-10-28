@@ -6,6 +6,7 @@ import { RotateCw } from 'lucide-react';
 export interface TableRefreshButtonProps {
   onRefresh: () => void | Promise<any>;
   isLoading?: boolean;
+  isRefreshing?: boolean;
   label?: string;
   iconOnly?: boolean;
   className?: string;
@@ -15,6 +16,7 @@ export interface TableRefreshButtonProps {
 export const TableRefreshButton: React.FC<TableRefreshButtonProps> = ({
   onRefresh,
   isLoading = false,
+  isRefreshing = false,
   label = 'Refresh',
   iconOnly = false,
   className = '',
@@ -22,7 +24,7 @@ export const TableRefreshButton: React.FC<TableRefreshButtonProps> = ({
 }) => {
   const [internalLoading, setInternalLoading] = useState(false);
 
-  const activeLoading = isLoading || internalLoading;
+  const activeLoading = isLoading || isRefreshing || internalLoading;
 
   const handleClick = async () => {
     if (activeLoading) return;

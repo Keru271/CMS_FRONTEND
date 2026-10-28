@@ -16,15 +16,20 @@ import {
   InventoryPredictionSummaryData,
   ProductInventoryPredictionData,
 } from '@/src/types';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 
 export const AiInventoryPrediction: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [questionInput, setQuestionInput] = useState('Which products will run out of stock and when should I reorder?');
   const [selectedFilter, setSelectedFilter] = useState<'ALL' | 'CRITICAL' | 'WARNING' | 'HEALTHY'>('ALL');
   const [data, setData] = useState<AiInventoryPredictionResult | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchPredictions = async (query?: string) => {
-    setLoading(true);
+    setIsRefreshing(true);
     try {
       const q = query || questionInput;
       const res = await cmsService.predictInventoryStockouts({
@@ -36,10 +41,12 @@ export const AiInventoryPrediction: React.FC = () => {
       console.error('Failed to load inventory predictions:', err);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
+    setPage(1);
     fetchPredictions();
   }, [selectedFilter]);
 
@@ -48,6 +55,8 @@ export const AiInventoryPrediction: React.FC = () => {
   const filteredPredictions = selectedFilter === 'ALL'
     ? predictions
     : predictions.filter((p) => p.alertLevel === selectedFilter);
+
+  const paginatedPredictions = filteredPredictions.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -145,9 +154,12 @@ export const AiInventoryPrediction: React.FC = () => {
       {/* ─── INVENTORY PREDICTIONS TABLE ───────────────────────────────────── */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-            SKU Stockout Runway ({filteredPredictions.length} Products)
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+              SKU Stockout Runway ({filteredPredictions.length} Products)
+            </h2>
+            <TableRefreshButton onRefresh={() => fetchPredictions()} isRefreshing={isRefreshing} />
+          </div>
           {selectedFilter !== 'ALL' && (
             <button
               onClick={() => setSelectedFilter('ALL')}
@@ -171,7 +183,7 @@ export const AiInventoryPrediction: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredPredictions.map((prod) => (
+              {paginatedPredictions.map((prod) => (
                 <tr key={prod.id} className="hover:bg-slate-50/50">
                   <td className="py-3">
                     <span className="font-bold text-slate-900 dark:text-white block">{prod.name}</span>
@@ -205,6 +217,17 @@ export const AiInventoryPrediction: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={page}
+          totalItems={filteredPredictions.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
+        />
       </div>
     </div>
   );

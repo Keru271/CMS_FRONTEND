@@ -18,6 +18,8 @@ import { ProductExportModal } from '@/src/components/cms/ProductExportModal';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { getCurrencySymbol } from '@/src/lib/currency';
 import { cmsService } from '@/src/services/cmsService';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 
 interface ProductTableProps {
   products: CMSProduct[];
@@ -50,6 +52,19 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    if (!onRefreshProducts) return;
+    setIsRefreshing(true);
+    try {
+      await onRefreshProducts();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch =
@@ -62,6 +77,8 @@ export const ProductTable: React.FC<ProductTableProps> = ({
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
+  const paginatedProducts = filteredProducts.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <div className="space-y-4">
       {/* Table Header & Controls Bar */}
@@ -73,7 +90,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             type="text"
             placeholder="Search products by title, SKU..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#121212] border border-[#cbd5e0] text-xs font-sans text-[#191a1b] placeholder:text-[#beb9b3] outline-none focus:border-[#cbc2ea] focus:ring-2 focus:ring-[#cbc2ea]/40 transition-all"
           />
         </div>
@@ -83,7 +103,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           {/* Category Filter */}
           <select
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);
+              setPage(1);
+            }}
             className="flex-1 sm:flex-none min-w-[130px] bg-[#121212] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
           >
             <option value="all">All Categories</option>
@@ -97,7 +120,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           {/* Status Filter */}
           <select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
+            onChange={(e) => {
+              setSelectedStatus(e.target.value);
+              setPage(1);
+            }}
             className="flex-1 sm:flex-none min-w-[130px] bg-[#121212] border border-[#cbd5e0] text-xs font-sans rounded-lg px-3 py-2 focus:outline-none focus:border-[#cbc2ea] text-[#191a1b] font-medium cursor-pointer"
           >
             <option value="all">All Statuses</option>
@@ -106,8 +132,12 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             <option value="archived">Archived</option>
           </select>
 
-          {/* Import / Export / Add Buttons */}
+          {/* Import / Export / Add / Refresh Buttons */}
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto pt-1 sm:pt-0">
+            {onRefreshProducts && (
+              <TableRefreshButton onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+            )}
+
             <button
               type="button"
               onClick={() => setIsImportModalOpen(true)}
@@ -166,7 +196,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   </td>
                 </tr>
               ) : (
-                filteredProducts.map((p) => (
+                paginatedProducts.map((p) => (
                   <tr key={p.id} className="hover:bg-[#121212]/60 transition-colors group">
                     {/* Product info */}
                     <td className="py-3.5 px-4 sm:px-5">
@@ -270,15 +300,16 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           </table>
         </div>
 
-        {/* Footer Summary */}
-        <div className="p-4 border-t border-[#cbd5e0] text-xs font-sans text-[#5e5a5a] flex items-center justify-between">
-          <span>
-            Showing{' '}
-            <strong className="text-[#191a1b] font-medium">{filteredProducts.length}</strong> of{' '}
-            <strong className="text-[#191a1b] font-medium">{products.length}</strong> total catalog
-            products
-          </span>
-        </div>
+        <TablePagination
+          currentPage={page}
+          totalItems={filteredProducts.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
+        />
       </div>
 
       {/* Product Import Modal */}

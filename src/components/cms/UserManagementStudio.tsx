@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import { CMSStoreMember, CreateStoreMemberPayload, StoreMemberRole } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import { usePlanAccess } from '@/src/hooks/usePlanAccess';
@@ -197,6 +199,10 @@ export const UserManagementStudio: React.FC = () => {
     text: string;
     type: 'success' | 'error';
   } | null>(null);
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -566,15 +572,21 @@ export const UserManagementStudio: React.FC = () => {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search staff by name, email, or role..."
             className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
 
-        <span className="text-xs text-slate-500 font-semibold">
-          Showing <strong>{filteredMembers.length}</strong> active team members
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-500 font-semibold">
+            Showing <strong>{filteredMembers.length}</strong> active team members
+          </span>
+          <TableRefreshButton onRefresh={loadMembers} isLoading={isLoading} size="sm" />
+        </div>
       </div>
 
       {/* TEAM MEMBERS TABLE */}
@@ -591,7 +603,16 @@ export const UserManagementStudio: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-border font-medium">
-              {filteredMembers.map((member) => {
+              {filteredMembers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-12 text-slate-400 font-bold">
+                    No team members found matching your search.
+                  </td>
+                </tr>
+              ) : (
+                filteredMembers
+                  .slice((page - 1) * pageSize, page * pageSize)
+                  .map((member) => {
                 const isOwner = member.isOwner || member.role === 'OWNER';
                 return (
                   <tr
@@ -763,10 +784,23 @@ export const UserManagementStudio: React.FC = () => {
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        <TablePagination
+          currentPage={page}
+          totalItems={filteredMembers.length}
+          pageSize={pageSize}
+          onPageChange={(p) => setPage(p)}
+          onPageSizeChange={(s) => {
+            setPageSize(s);
+            setPage(1);
+          }}
+          itemName="team members"
+        />
       </div>
 
       {/* ADD / INVITE MEMBER MODAL */}

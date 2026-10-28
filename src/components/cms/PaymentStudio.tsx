@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import {
   CreditCard,
   ShieldCheck,
@@ -83,6 +85,10 @@ export const PaymentStudio: React.FC = () => {
   // Active Tab: 'gateways' | 'transactions' | 'calculator'
   const [activeTab, setActiveTab] = useState<'gateways' | 'transactions' | 'calculator'>('gateways');
   const [filterGateway, setFilterGateway] = useState<string>('ALL');
+
+  // Transactions Pagination
+  const [txPage, setTxPage] = useState(1);
+  const [txPageSize, setTxPageSize] = useState(10);
 
   // Fee Calculator State
   const [calcAmount, setCalcAmount] = useState<number>(5000);
@@ -1166,7 +1172,10 @@ export const PaymentStudio: React.FC = () => {
               <span className="text-xs font-bold text-slate-500">Filter:</span>
               <select
                 value={filterGateway}
-                onChange={(e) => setFilterGateway(e.target.value)}
+                onChange={(e) => {
+                  setFilterGateway(e.target.value);
+                  setTxPage(1);
+                }}
                 className="text-xs px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200 dark:border-border font-bold text-slate-800 dark:text-slate-200 focus:outline-none shadow-xs"
               >
                 <option value="ALL">All Gateways</option>
@@ -1174,6 +1183,7 @@ export const PaymentStudio: React.FC = () => {
                 <option value="PAYPAL">PayPal (International)</option>
                 <option value="COD">Cash on Delivery</option>
               </select>
+              <TableRefreshButton onRefresh={loadData} isLoading={isLoading} size="sm" />
             </div>
           </div>
 
@@ -1199,7 +1209,9 @@ export const PaymentStudio: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredTransactions.map((t) => (
+                  filteredTransactions
+                    .slice((txPage - 1) * txPageSize, txPage * txPageSize)
+                    .map((t) => (
                     <tr key={t.id} className="hover:bg-slate-50/60 dark:hover:bg-accent/20 transition">
                       <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-foreground">
                         <div>{t.transactionNumber}</div>
@@ -1272,6 +1284,18 @@ export const PaymentStudio: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          <TablePagination
+            currentPage={txPage}
+            totalItems={filteredTransactions.length}
+            pageSize={txPageSize}
+            onPageChange={(p) => setTxPage(p)}
+            onPageSizeChange={(s) => {
+              setTxPageSize(s);
+              setTxPage(1);
+            }}
+            itemName="transactions"
+          />
         </div>
       )}
 

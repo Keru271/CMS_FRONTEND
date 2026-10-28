@@ -1487,6 +1487,8 @@ export interface PriceTierData {
   priceMonthlyUsd: number;
   priceAnnualInr: number;
   priceAnnualUsd: number;
+  priceOneTimeInr?: number;
+  priceOneTimeUsd?: number;
   transactionFeePercent: number;
   maxProducts: number;
   maxStaff: number;
@@ -1503,7 +1505,7 @@ export interface StoreBillingInvoiceData {
   id: string;
   invoiceNumber: string;
   tierName: string;
-  billingCycle: 'MONTHLY' | 'ANNUAL' | string;
+  billingCycle: 'MONTHLY' | 'ANNUAL' | 'ONE_TIME' | 'LIFETIME' | string;
   amount: number;
   currency: string;
   paymentMethod: string;
@@ -1540,7 +1542,9 @@ export interface StoreSubscriptionData {
   storeName: string;
   plan: 'STARTER' | 'GROWTH' | 'ENTERPRISE' | string;
   planConfig: PriceTierData;
-  billingCycle: 'MONTHLY' | 'ANNUAL';
+  billingCycle: 'MONTHLY' | 'ANNUAL' | 'ONE_TIME' | 'LIFETIME' | string;
+  isOneTime?: boolean;
+  isLifetime?: boolean;
   planStartedAt: string;
   planRenewsAt: string;
   planPaymentMethod: 'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'PAYPAL' | 'NETBANKING' | string;

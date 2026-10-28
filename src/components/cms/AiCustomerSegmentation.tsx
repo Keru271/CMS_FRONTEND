@@ -17,6 +17,8 @@ import {
   SegmentCustomerProfileData,
   SegmentGroupSummaryData,
 } from '@/src/types';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 
 export const AiCustomerSegmentation: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -24,9 +26,12 @@ export const AiCustomerSegmentation: React.FC = () => {
   const [data, setData] = useState<AiCustomerSegmentationResult | null>(null);
   const [selectedSegmentFilter, setSelectedSegmentFilter] = useState<string>('ALL');
   const [deploySuccess, setDeploySuccess] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchSegmentation = async (query?: string) => {
-    setLoading(true);
+    setIsRefreshing(true);
     try {
       const q = query || promptInput;
       const res = await cmsService.queryCustomerSegmentation({ prompt: q });
@@ -35,6 +40,7 @@ export const AiCustomerSegmentation: React.FC = () => {
       console.error('Failed to load customer segmentation:', err);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -68,6 +74,8 @@ export const AiCustomerSegmentation: React.FC = () => {
   const filteredCustomers = selectedSegmentFilter === 'ALL'
     ? customers
     : customers.filter((c) => c.segment === selectedSegmentFilter);
+
+  const paginatedCustomers = filteredCustomers.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -135,7 +143,10 @@ export const AiCustomerSegmentation: React.FC = () => {
           return (
             <button
               key={seg.segment}
-              onClick={() => setSelectedSegmentFilter(isSelected ? 'ALL' : seg.segment)}
+              onClick={() => {
+                setSelectedSegmentFilter(isSelected ? 'ALL' : seg.segment);
+                setPage(1);
+              }}
               className={`p-4 rounded-xl border text-left transition-all ${
                 isSelected
                   ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-300 dark:border-purple-700 shadow-xs'
@@ -201,12 +212,18 @@ export const AiCustomerSegmentation: React.FC = () => {
       {/* ─── CUSTOMER LIST TABLE ─────────────────────────────────────────── */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-            Customer Profiles ({filteredCustomers.length})
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+              Customer Profiles ({filteredCustomers.length})
+            </h2>
+            <TableRefreshButton onRefresh={() => fetchSegmentation()} isRefreshing={isRefreshing} />
+          </div>
           {selectedSegmentFilter !== 'ALL' && (
             <button
-              onClick={() => setSelectedSegmentFilter('ALL')}
+              onClick={() => {
+                setSelectedSegmentFilter('ALL');
+                setPage(1);
+              }}
               className="text-xs text-indigo-600 font-semibold hover:underline"
             >
               Show All Customers
@@ -227,7 +244,7 @@ export const AiCustomerSegmentation: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredCustomers.map((cust) => (
+              {paginatedCustomers.map((cust) => (
                 <tr key={cust.id} className="hover:bg-slate-50/50">
                   <td className="py-2.5">
                     <span className="font-bold text-slate-900 dark:text-white block">{cust.name}</span>
@@ -249,6 +266,17 @@ export const AiCustomerSegmentation: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={page}
+          totalItems={filteredCustomers.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
+        />
       </div>
     </div>
   );

@@ -488,7 +488,8 @@ export const DiscountStudio: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredDiscounts
                 .slice((discountPage - 1) * discountPageSize, discountPage * discountPageSize)
                 .map((disc) => {
@@ -596,6 +597,7 @@ export const DiscountStudio: React.FC = () => {
               onPageSizeChange={(s) => { setDiscountPageSize(s); setDiscountPage(1); }}
               itemName="discounts"
             />
+          </>
           )}
         </div>
 

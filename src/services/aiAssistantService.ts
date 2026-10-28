@@ -7,10 +7,47 @@ import {
 } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 
+export type FormFieldType = 'text' | 'number' | 'select' | 'textarea';
+
+export interface FormFieldOption {
+  label: string;
+  value: string;
+}
+
+export interface FormFieldDefinition {
+  name: string;
+  label: string;
+  type: FormFieldType;
+  placeholder?: string;
+  required?: boolean;
+  defaultValue?: any;
+  options?: FormFieldOption[];
+  prefix?: string;
+  suffix?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+export interface ChatInteractiveForm {
+  id: string;
+  type: 'ADD_PRODUCT' | 'EDIT_PRODUCT' | 'ADD_CATEGORY' | 'EDIT_CATEGORY' | 'CREATE_DISCOUNT';
+  title: string;
+  subtitle?: string;
+  icon?: string;
+  fields: FormFieldDefinition[];
+  submitButtonText: string;
+  submitButtonIcon?: string;
+  initialValues?: Record<string, any>;
+  submitted?: boolean;
+  submittedData?: Record<string, any>;
+  resultMessage?: string;
+}
+
 export interface ChatAction {
   id: string;
   label: string;
-  type: 'NAVIGATE' | 'OPEN_PRODUCT_MODAL' | 'COPY_TEXT' | 'PREFILL_PROMPT' | 'EXECUTE_PROMOTION' | string;
+  type: 'NAVIGATE' | 'OPEN_PRODUCT_MODAL' | 'COPY_TEXT' | 'PREFILL_PROMPT' | 'EXECUTE_PROMOTION' | 'OPEN_FORM' | string;
   payload: any;
   icon?: string;
 }
@@ -21,6 +58,7 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   actions?: ChatAction[];
+  form?: ChatInteractiveForm;
   isThinking?: boolean;
   model?: 'Gemini' | 'ChatGPT' | 'Default Text' | string;
 }
@@ -33,9 +71,544 @@ export interface StoreContextData {
   merchantData: MerchantOnboardingData | null;
   currentPath: string;
   userRole?: string;
+  currency?: string;
+  currencySymbol?: string;
+}
+
+export function createAddProductForm(
+  initial?: { name?: string; category?: string; price?: number; stock?: number; description?: string },
+  categories: CMSCategory[] = [],
+  currencySymbol = '₹',
+): ChatInteractiveForm {
+  const safeCategories = Array.isArray(categories) ? categories.filter((c) => c && c.name) : [];
+  const categoryOptions: FormFieldOption[] =
+    safeCategories.length > 0
+      ? safeCategories.map((c) => ({ label: `${c.icon || '📁'} ${c.name}`, value: c.name }))
+      : [{ label: 'General', value: 'General' }];
+
+  if (
+    initial?.category &&
+    !categoryOptions.some(
+      (o) => (o.value || '').toLowerCase() === (initial.category || '').toLowerCase(),
+    )
+  ) {
+    categoryOptions.unshift({ label: `📁 ${initial.category}`, value: initial.category });
+  }
+
+  const defaultCat = initial?.category || (safeCategories[0]?.name ?? 'General');
+
+  return {
+    id: `form-add-product-${Date.now()}`,
+    type: 'ADD_PRODUCT',
+    title: 'Add New Product to Store',
+    subtitle: 'Enter product details to add directly to your store catalog',
+    icon: 'PackagePlus',
+    submitButtonText: 'Add Product to Catalog',
+    submitButtonIcon: 'Plus',
+    initialValues: {
+      name: initial?.name || '',
+      category: defaultCat,
+      price: initial?.price !== undefined ? initial.price : '',
+      stock: initial?.stock !== undefined ? initial.stock : 25,
+      description: initial?.description || '',
+    },
+    fields: [
+      {
+        name: 'name',
+        label: 'Product Title',
+        type: 'text',
+        placeholder: 'e.g. Wireless Noise-Cancelling Headphones',
+        required: true,
+        defaultValue: initial?.name || '',
+      },
+      {
+        name: 'category',
+        label: 'Category',
+        type: 'select',
+        options: categoryOptions,
+        required: true,
+        defaultValue: defaultCat,
+      },
+      {
+        name: 'price',
+        label: 'Retail Price',
+        type: 'number',
+        prefix: currencySymbol,
+        placeholder: '0.00',
+        min: 1,
+        step: 0.01,
+        required: true,
+        defaultValue: initial?.price || '',
+      },
+      {
+        name: 'stock',
+        label: 'Inventory Stock Quantity',
+        type: 'number',
+        min: 0,
+        required: true,
+        defaultValue: initial?.stock !== undefined ? initial.stock : 25,
+      },
+      {
+        name: 'description',
+        label: 'Product Description (Optional)',
+        type: 'textarea',
+        placeholder: 'Brief product description and key features...',
+        defaultValue: initial?.description || '',
+      },
+    ],
+  };
+}
+
+export function createAddCategoryForm(initialName?: string): ChatInteractiveForm {
+  return {
+    id: `form-add-category-${Date.now()}`,
+    type: 'ADD_CATEGORY',
+    title: 'Create Store Category',
+    subtitle: 'Group products into a new category for storefront navigation',
+    icon: 'FolderPlus',
+    submitButtonText: 'Create Category',
+    submitButtonIcon: 'FolderPlus',
+    initialValues: {
+      name: initialName || '',
+      icon: '📁',
+      description: '',
+    },
+    fields: [
+      {
+        name: 'name',
+        label: 'Category Name',
+        type: 'text',
+        placeholder: 'e.g. Electronics, Footwear, Fashion...',
+        required: true,
+        defaultValue: initialName || '',
+      },
+      {
+        name: 'icon',
+        label: 'Emoji Icon',
+        type: 'text',
+        placeholder: 'e.g. ⚡, 👟, 💻, 👗, ⌚',
+        defaultValue: '📁',
+      },
+      {
+        name: 'description',
+        label: 'Category Description',
+        type: 'textarea',
+        placeholder: 'Describe the products categorized here...',
+      },
+    ],
+  };
+}
+
+export function createEditCategoryForm(categories: CMSCategory[] = []): ChatInteractiveForm {
+  const safeCategories = Array.isArray(categories) ? categories.filter((c) => c && c.name) : [];
+  const categoryOptions: FormFieldOption[] =
+    safeCategories.length > 0
+      ? safeCategories.map((c) => ({
+          label: `${c.icon || '📁'} ${c.name} (${c.productCount || 0} items)`,
+          value: c.id,
+        }))
+      : [{ label: 'No categories available', value: '' }];
+
+  const firstCat = safeCategories[0];
+
+  return {
+    id: `form-edit-category-${Date.now()}`,
+    type: 'EDIT_CATEGORY',
+    title: 'Edit Store Category',
+    subtitle: 'Select and update category name, emoji icon, or description',
+    icon: 'Edit3',
+    submitButtonText: 'Save Category Changes',
+    submitButtonIcon: 'Check',
+    initialValues: {
+      categoryId: firstCat?.id || '',
+      name: firstCat?.name || '',
+      icon: firstCat?.icon || '📁',
+      description: firstCat?.description || '',
+    },
+    fields: [
+      {
+        name: 'categoryId',
+        label: 'Select Category',
+        type: 'select',
+        options: categoryOptions,
+        required: true,
+        defaultValue: firstCat?.id || '',
+      },
+      {
+        name: 'name',
+        label: 'Updated Category Name',
+        type: 'text',
+        placeholder: 'Category display name',
+        required: true,
+        defaultValue: firstCat?.name || '',
+      },
+      {
+        name: 'icon',
+        label: 'Emoji Icon',
+        type: 'text',
+        placeholder: 'e.g. ⚡, 👟, 💻',
+        defaultValue: firstCat?.icon || '📁',
+      },
+      {
+        name: 'description',
+        label: 'Description',
+        type: 'textarea',
+        placeholder: 'Category description...',
+        defaultValue: firstCat?.description || '',
+      },
+    ],
+  };
+}
+
+export function createEditProductForm(
+  products: CMSProduct[] = [],
+  categories: CMSCategory[] = [],
+  currencySymbol = '₹',
+): ChatInteractiveForm {
+  const safeProducts = Array.isArray(products) ? products.filter((p) => p && p.name) : [];
+  const safeCategories = Array.isArray(categories) ? categories.filter((c) => c && c.name) : [];
+
+  const productOptions: FormFieldOption[] =
+    safeProducts.length > 0
+      ? safeProducts.map((p) => ({
+          label: `${p.name} — ${currencySymbol}${p.price}`,
+          value: p.id,
+        }))
+      : [{ label: 'No products available', value: '' }];
+
+  const categoryOptions: FormFieldOption[] =
+    safeCategories.length > 0
+      ? safeCategories.map((c) => ({
+          label: c.name,
+          value: c.name,
+        }))
+      : [{ label: 'General', value: 'General' }];
+
+  const firstProd = safeProducts[0];
+
+  return {
+    id: `form-edit-product-${Date.now()}`,
+    type: 'EDIT_PRODUCT',
+    title: 'Edit Product Details',
+    subtitle: 'Select product to modify pricing, inventory stock, or categorization',
+    icon: 'Edit3',
+    submitButtonText: 'Update Product',
+    submitButtonIcon: 'Check',
+    initialValues: {
+      productId: firstProd?.id || '',
+      name: firstProd?.name || '',
+      price: firstProd?.price || '',
+      stock: firstProd?.inventory ?? firstProd?.stockQuantity ?? 25,
+      category: firstProd?.categoryName || firstProd?.category || 'General',
+      status: firstProd?.status || 'ACTIVE',
+    },
+    fields: [
+      {
+        name: 'productId',
+        label: 'Select Product',
+        type: 'select',
+        options: productOptions,
+        required: true,
+        defaultValue: firstProd?.id || '',
+      },
+      {
+        name: 'name',
+        label: 'Product Title',
+        type: 'text',
+        required: true,
+        defaultValue: firstProd?.name || '',
+      },
+      {
+        name: 'price',
+        label: 'Selling Price',
+        type: 'number',
+        prefix: currencySymbol,
+        min: 1,
+        step: 0.01,
+        required: true,
+        defaultValue: firstProd?.price || '',
+      },
+      {
+        name: 'stock',
+        label: 'Inventory Stock Quantity',
+        type: 'number',
+        min: 0,
+        required: true,
+        defaultValue: firstProd?.inventory ?? firstProd?.stockQuantity ?? 25,
+      },
+      {
+        name: 'category',
+        label: 'Category',
+        type: 'select',
+        options: categoryOptions,
+        defaultValue: firstProd?.categoryName || firstProd?.category || 'General',
+      },
+      {
+        name: 'status',
+        label: 'Status',
+        type: 'select',
+        options: [
+          { label: 'Active', value: 'ACTIVE' },
+          { label: 'Draft', value: 'DRAFT' },
+          { label: 'Archived', value: 'ARCHIVED' },
+        ],
+        defaultValue: firstProd?.status || 'ACTIVE',
+      },
+    ],
+  };
+}
+
+export function createDiscountForm(
+  currencySymbol = '₹',
+  initial?: { code?: string; value?: number; type?: string; title?: string },
+): ChatInteractiveForm {
+  return {
+    id: `form-create-discount-${Date.now()}`,
+    type: 'CREATE_DISCOUNT',
+    title: 'Create Promotional Discount Code',
+    subtitle: 'Configure a coupon code for your customers to redeem at checkout',
+    icon: 'Percent',
+    submitButtonText: 'Activate Discount Code',
+    submitButtonIcon: 'Percent',
+    initialValues: {
+      code: initial?.code || 'WELCOME10',
+      title: initial?.title || 'Special Promotional Offer',
+      discountType: initial?.type || 'PERCENTAGE',
+      value: initial?.value || 10,
+      minOrderAmount: 0,
+    },
+    fields: [
+      {
+        name: 'code',
+        label: 'Coupon Code',
+        type: 'text',
+        placeholder: 'e.g. SUMMER20, WELCOME10',
+        required: true,
+        defaultValue: initial?.code || 'WELCOME10',
+      },
+      {
+        name: 'title',
+        label: 'Promotion Title',
+        type: 'text',
+        placeholder: 'e.g. Summer Kickoff Sale',
+        required: true,
+        defaultValue: initial?.title || 'Special Promotional Offer',
+      },
+      {
+        name: 'discountType',
+        label: 'Discount Type',
+        type: 'select',
+        options: [
+          { label: 'Percentage Off (%)', value: 'PERCENTAGE' },
+          { label: `Fixed Amount Off (${currencySymbol})`, value: 'FIXED_AMOUNT' },
+        ],
+        required: true,
+        defaultValue: initial?.type || 'PERCENTAGE',
+      },
+      {
+        name: 'value',
+        label: 'Discount Value',
+        type: 'number',
+        placeholder: 'e.g. 15 for 15% or 200 for ₹200 off',
+        min: 1,
+        required: true,
+        defaultValue: initial?.value || 10,
+      },
+      {
+        name: 'minOrderAmount',
+        label: 'Minimum Order Value (Optional)',
+        type: 'number',
+        prefix: currencySymbol,
+        min: 0,
+        placeholder: '0 for no minimum',
+        defaultValue: 0,
+      },
+    ],
+  };
 }
 
 class AIAssistantService {
+  /**
+   * Automatically detects if the prompt requires customer / merchant input,
+   * such as adding/editing products, adding/editing categories, or creating discounts.
+   */
+  public detectInteractiveForm(
+    userMessage: string,
+    context: StoreContextData,
+    currencySymbol = '₹',
+    assistantReply = '',
+  ): ChatInteractiveForm | undefined {
+    const raw = (userMessage || '').trim();
+    const cleanUser = raw.replace(/[*_"`']/g, ' ');
+    const cleanReply = (assistantReply || '').replace(/[*_"`']/g, ' ');
+    const userLower = cleanUser.toLowerCase();
+    const msg = userLower;
+    const replyLower = cleanReply.toLowerCase();
+
+    // 1. ADD / CREATE PRODUCT
+    const isAddProduct =
+      (userLower.includes('add') && (userLower.includes('product') || userLower.includes('item'))) ||
+      (userLower.includes('create') && (userLower.includes('product') || userLower.includes('item'))) ||
+      userLower.includes('new product') ||
+      userLower.includes('new item') ||
+      userLower.startsWith('add ') ||
+      userLower.includes('add some product') ||
+      userLower === 'add product form' ||
+      userLower === 'add product' ||
+      replyLower.includes('interactive product form') ||
+      replyLower.includes('product creation form') ||
+      (replyLower.includes('product form') && (replyLower.includes('below') || replyLower.includes('chat') || replyLower.includes('customize')));
+
+    if (isAddProduct && !userLower.includes('discount') && !userLower.includes('promo') && !userLower.includes('coupon')) {
+      // 1. Match category from store context first
+      let matchedCat: string | undefined = undefined;
+      if (context?.categories && Array.isArray(context.categories)) {
+        for (const c of context.categories) {
+          if (c?.name && (userLower.includes(c.name.toLowerCase()) || replyLower.includes(c.name.toLowerCase()))) {
+            matchedCat = c.name;
+            break;
+          }
+        }
+      }
+
+      // 2. Fallback to regex pattern on clean text
+      if (!matchedCat) {
+        const catMatch =
+          cleanUser.match(/(?:in|to|for|under|into|your)\s+([A-Za-z0-9& -]+?)(?:\s+category|\s+collection|$)/i) ||
+          cleanReply.match(/(?:in|to|for|under|into|your)\s+([A-Za-z0-9& -]+?)(?:\s+category|\s+collection|$)/i);
+
+        if (catMatch && catMatch[1]) {
+          const candidate = catMatch[1].replace(/^(the|your)\s+/i, '').trim();
+          if (candidate.length > 1 && !/^(product|item|store|catalog|cart|order)$/i.test(candidate)) {
+            matchedCat = candidate;
+          }
+        }
+      }
+
+      // Extract candidate product name
+      let prodName = '';
+      const nameMatch = raw.match(/(?:called|named|title|name)\s+["“']?([^"”',\n.]+)/i);
+      if (nameMatch && nameMatch[1]) {
+        prodName = nameMatch[1].trim();
+      } else if (assistantReply) {
+        const recMatch = cleanReply.match(/(?:recommendation(?: for what to add next, a)?|recommend(?: a)?|such as a|like a|e\.g\.,?\s*a?)\s+([A-Za-z0-9\s-]{3,40}?)(?:\s*\(priced|\s*\(around|,|\.|\s+priced)/i);
+        if (recMatch && recMatch[1]) {
+          prodName = recMatch[1].replace(/^(a|an|the)\s+/i, '').trim();
+        }
+      }
+
+      // Extract candidate price
+      let price: number | undefined = undefined;
+      const priceMatch =
+        raw.match(/(?:₹|\$|rs\.?|inr)\s*(\d+(?:,\d+)*(?:\.\d+)?)/i) ||
+        raw.match(/(\d+)\s*(?:rupees|inr|usd|dollars)/i);
+      if (priceMatch && priceMatch[1]) {
+        price = parseFloat(priceMatch[1].replace(/,/g, ''));
+      } else if (assistantReply) {
+        const recPriceMatch = cleanReply.match(/(?:priced around|around|priced at)\s*(?:₹|\$|rs\.?|inr)?\s*(\d+(?:,\d+)*(?:\.\d+)?)/i);
+        if (recPriceMatch && recPriceMatch[1]) {
+          price = parseFloat(recPriceMatch[1].replace(/,/g, ''));
+        }
+      }
+
+      return createAddProductForm(
+        {
+          name: prodName,
+          category: matchedCat,
+          price,
+          stock: 25,
+        },
+        context?.categories || [],
+        currencySymbol,
+      );
+    }
+
+    // 2. EDIT / UPDATE PRODUCT
+    const isEditProduct =
+      ((userLower.includes('edit') || userLower.includes('update') || userLower.includes('modify') || userLower.includes('change price') || userLower.includes('update stock')) &&
+        (userLower.includes('product') || userLower.includes('item') || userLower.includes('price') || userLower.includes('inventory'))) ||
+      userLower === 'edit product form' ||
+      userLower === 'edit product' ||
+      replyLower.includes('edit product form') ||
+      (replyLower.includes('edit product') && replyLower.includes('form'));
+
+    if (isEditProduct && !msg.includes('category') && context?.products && context.products.length > 0) {
+      return createEditProductForm(context.products, context.categories || [], currencySymbol);
+    }
+
+    // 3. EDIT / UPDATE CATEGORY
+    const isEditCategory =
+      ((msg.includes('edit') || msg.includes('update') || msg.includes('rename') || msg.includes('modify')) && msg.includes('category')) ||
+      msg === 'edit category form' ||
+      msg === 'edit category' ||
+      replyLower.includes('edit category form') ||
+      (replyLower.includes('edit category') && replyLower.includes('form'));
+
+    if (isEditCategory && context?.categories && context.categories.length > 0) {
+      return createEditCategoryForm(context.categories);
+    }
+
+    // 4. ADD / CREATE CATEGORY
+    const isAddCategory =
+      ((msg.includes('add') || msg.includes('create') || msg.includes('new')) && msg.includes('category')) ||
+      msg === 'add category form' ||
+      msg === 'create category form' ||
+      msg === 'create category' ||
+      replyLower.includes('create category form') ||
+      replyLower.includes('category creation form') ||
+      (replyLower.includes('category form') && replyLower.includes('below'));
+
+    if (isAddCategory && !isAddProduct) {
+      let catName = '';
+      const catMatch =
+        raw.match(/(?:called|named|category)\s+["“']?([^"”',\n.]+)/i) ||
+        (assistantReply && assistantReply.match(/(?:called|named|category)\s+["“']?([^"”',\n.]+)/i));
+      if (catMatch && catMatch[1]) {
+        catName = catMatch[1].replace(/^(a\s+|new\s+|category\s+)/i, '').trim();
+      }
+      return createAddCategoryForm(catName);
+    }
+
+    // 5. CREATE DISCOUNT / PROMOTION
+    const isDiscount =
+      msg.includes('discount') ||
+      msg.includes('promo') ||
+      msg.includes('coupon') ||
+      msg.includes('voucher') ||
+      msg === 'create discount form' ||
+      replyLower.includes('discount form') ||
+      replyLower.includes('promo form');
+
+    if (
+      isDiscount &&
+      (msg.includes('create') ||
+        msg.includes('add') ||
+        msg.includes('new') ||
+        msg.includes('discount form') ||
+        msg.includes('%') ||
+        msg.includes('off') ||
+        replyLower.includes('discount form'))
+    ) {
+      let value = 10;
+      let type = 'PERCENTAGE';
+      const pctMatch = raw.match(/(\d+)\s*%/) || (assistantReply && assistantReply.match(/(\d+)\s*%/));
+      if (pctMatch && pctMatch[1]) {
+        value = parseInt(pctMatch[1], 10);
+        type = 'PERCENTAGE';
+      } else {
+        const amtMatch = raw.match(/(?:₹|\$)\s*(\d+)/) || (assistantReply && assistantReply.match(/(?:₹|\$)\s*(\d+)/));
+        if (amtMatch && amtMatch[1]) {
+          value = parseInt(amtMatch[1], 10);
+          type = 'FIXED_AMOUNT';
+        }
+      }
+      let code = `PROMO${value}`;
+      return createDiscountForm(currencySymbol, { value, type, code });
+    }
+
+    return undefined;
+  }
+
   /**
    * Generates a context-aware response based on the store's active state and merchant's inquiry.
    */
@@ -43,11 +616,28 @@ class AIAssistantService {
     userMessage: string,
     context: StoreContextData,
     history: ChatMessage[] = [],
-  ): Promise<{ content: string; actions?: ChatAction[]; model?: string }> {
+  ): Promise<{ content: string; actions?: ChatAction[]; form?: ChatInteractiveForm; model?: string }> {
+    const storeId = context.merchantData?.store?.id;
+    const currency = (context.currency || (context.merchantData?.store as any)?.currency || 'INR').toUpperCase();
+    const currencySymbol =
+      context.currencySymbol ||
+      (currency === 'USD'
+        ? '$'
+        : currency === 'EUR'
+        ? '€'
+        : currency === 'GBP'
+        ? '£'
+        : currency === 'JPY'
+        ? '¥'
+        : currency === 'AUD'
+        ? 'A$'
+        : currency === 'CAD'
+        ? 'CA$'
+        : '₹');
+
     // 1. Try calling the autonomous AI Agent endpoint with real-time tool orchestration
     try {
-      const storeId = context.merchantData?.store?.id;
-      const historyPayload = history.slice(-6).map((h) => ({
+      const historyPayload = history.slice(-25).map((h) => ({
         role: h.sender === 'user' ? 'user' : 'assistant',
         content: h.content,
       }));
@@ -55,34 +645,49 @@ class AIAssistantService {
       const agentRes = await cmsService.runAiAgent({
         message: userMessage,
         storeId,
+        currency,
+        currencySymbol,
         history: historyPayload,
       });
 
       if (agentRes && agentRes.reply) {
+        let content = agentRes.reply;
+        if (currency !== 'USD') {
+          content = content.replace(/\$(\s*\d+(?:,\d+)*(?:\.\d+)?)/g, `${currencySymbol}$1`);
+        }
+        const form = this.detectInteractiveForm(userMessage, context, currencySymbol, content);
         return {
-          content: agentRes.reply,
+          content,
           actions: agentRes.actions,
+          form,
           model: agentRes.model || 'Default Text',
         };
       }
     } catch (agentErr) {
       console.warn('Backend runAiAgent failed, attempting copilotChat fallback:', agentErr);
       try {
-        const storeId = context.merchantData?.store?.id;
-        const historyPayload = history.slice(-6).map((h) => ({
+        const historyPayload = history.slice(-25).map((h) => ({
           sender: h.sender,
           content: h.content,
         }));
         const backendRes = await cmsService.copilotChat({
           message: userMessage,
           storeId,
+          currency,
+          currencySymbol,
           history: historyPayload,
         });
 
         if (backendRes && backendRes.content) {
+          let content = backendRes.content;
+          if (currency !== 'USD') {
+            content = content.replace(/\$(\s*\d+(?:,\d+)*(?:\.\d+)?)/g, `${currencySymbol}$1`);
+          }
+          const form = this.detectInteractiveForm(userMessage, context, currencySymbol, content);
           return {
-            content: backendRes.content,
+            content,
             actions: backendRes.actions,
+            form,
             model: backendRes.model || 'Default Text',
           };
         }
@@ -91,7 +696,11 @@ class AIAssistantService {
       }
     }
 
-    const fallbackRes = await this.generateClientFallbackResponse(userMessage, context);
+    const fallbackRes = await this.generateClientFallbackResponse(userMessage, {
+      ...context,
+      currency,
+      currencySymbol,
+    });
     return {
       ...fallbackRes,
       model: 'Default Text',
@@ -101,7 +710,7 @@ class AIAssistantService {
   private async generateClientFallbackResponse(
     userMessage: string,
     context: StoreContextData,
-  ): Promise<{ content: string; actions?: ChatAction[] }> {
+  ): Promise<{ content: string; actions?: ChatAction[]; form?: ChatInteractiveForm }> {
     // Artificial small delay for natural conversational feel
     await new Promise((resolve) => setTimeout(resolve, 300));
 
@@ -115,6 +724,22 @@ class AIAssistantService {
       currentPath,
     } = context;
     const storeName = merchantData?.store?.storeName || 'Your Store';
+    const storeCurrency = (context.currency || (merchantData?.store as any)?.currency || 'INR').toUpperCase();
+    const currencySymbol =
+      context.currencySymbol ||
+      (storeCurrency === 'USD'
+        ? '$'
+        : storeCurrency === 'EUR'
+        ? '€'
+        : storeCurrency === 'GBP'
+        ? '£'
+        : storeCurrency === 'JPY'
+        ? '¥'
+        : storeCurrency === 'AUD'
+        ? 'A$'
+        : storeCurrency === 'CAD'
+        ? 'CA$'
+        : '₹');
 
     // 0. CATEGORY MANAGEMENT (DELETE ALL, DELETE, CREATE, LIST)
     if (
@@ -185,36 +810,91 @@ class AIAssistantService {
       }
     }
 
-    // 1. ADD / CREATE PRODUCT
-    if (
-      (msg.includes('add') && (msg.includes('product') || msg.includes('item'))) ||
-      (msg.includes('create') && (msg.includes('product') || msg.includes('item'))) ||
-      msg.includes('new product') ||
-      msg.startsWith('add ')
-    ) {
-      let prodName = 'New Product';
-      const match = userMessage.match(/(?:called|named|title|name|for|add)\s+["“']?([^"”',\n.]+)/i);
-      if (match && match[1]) {
-        prodName = match[1].replace(/^(one\s+more\s+product|a\s+product|product|item)\s+/i, '').trim();
+    // 1. DYNAMIC INTERACTIVE FORMS (ADD/EDIT PRODUCT, ADD/EDIT CATEGORY, DISCOUNT)
+    const detectedForm = this.detectInteractiveForm(userMessage, context, currencySymbol);
+    if (detectedForm) {
+      if (detectedForm.type === 'ADD_PRODUCT') {
+        const catPrefill = (detectedForm.initialValues?.category as string) || '';
+        return {
+          content: `### 📦 Add New Product${catPrefill ? ` (${catPrefill})` : ''}\n\nI have prepared the interactive product creation form below. Please enter the title, set your selling price in **${storeCurrency} (${currencySymbol})**, stock quantity, and category:`,
+          form: detectedForm,
+          actions: [
+            {
+              id: 'open_prod',
+              label: '📦 Open Full Products Studio',
+              type: 'OPEN_PRODUCT_MODAL',
+              payload: '',
+            },
+            {
+              id: 'view_prods',
+              label: '📋 View All Products',
+              type: 'NAVIGATE',
+              payload: '/products',
+            },
+          ],
+        };
       }
 
-      return {
-        content: `### 📦 Add New Product to Catalog: **${prodName}**\n\nReady to add **${prodName}** to your store inventory.\n\nClick below to open the Product Editor with full support for pricing, 3D AR models, variants, and instant publishing.`,
-        actions: [
-          {
-            id: 'open_prod',
-            label: `➕ Add '${prodName}'`,
-            type: 'OPEN_PRODUCT_MODAL',
-            payload: '',
-          },
-          {
-            id: 'view_prods',
-            label: '📦 View Products Studio',
-            type: 'NAVIGATE',
-            payload: '/products',
-          },
-        ],
-      };
+      if (detectedForm.type === 'EDIT_PRODUCT') {
+        return {
+          content: `### ✏️ Edit Product Details\n\nSelect a product from the dropdown below to modify its title, price (${currencySymbol}), inventory stock, or category:`,
+          form: detectedForm,
+          actions: [
+            {
+              id: 'view_prods',
+              label: '📦 View Products Studio',
+              type: 'NAVIGATE',
+              payload: '/products',
+            },
+          ],
+        };
+      }
+
+      if (detectedForm.type === 'ADD_CATEGORY') {
+        const catName = (detectedForm.initialValues?.name as string) || '';
+        return {
+          content: `### 📁 Create New Store Category${catName ? `: **${catName}**` : ''}\n\nPlease specify the category name, emoji icon badge, and description using the form below:`,
+          form: detectedForm,
+          actions: [
+            {
+              id: 'view_cats',
+              label: '📁 View Categories Studio',
+              type: 'NAVIGATE',
+              payload: '/categories',
+            },
+          ],
+        };
+      }
+
+      if (detectedForm.type === 'EDIT_CATEGORY') {
+        return {
+          content: `### ✏️ Edit Store Category\n\nChoose the category you wish to modify from the dropdown below, update its name or emoji icon, and save:`,
+          form: detectedForm,
+          actions: [
+            {
+              id: 'view_cats',
+              label: '📁 View Categories Studio',
+              type: 'NAVIGATE',
+              payload: '/categories',
+            },
+          ],
+        };
+      }
+
+      if (detectedForm.type === 'CREATE_DISCOUNT') {
+        return {
+          content: `### 🎟️ Create Promotional Discount Code\n\nConfigure your discount code, discount type, value (${currencySymbol}), and minimum order requirement below:`,
+          form: detectedForm,
+          actions: [
+            {
+              id: 'view_discounts',
+              label: '🎟️ View Discounts Studio',
+              type: 'NAVIGATE',
+              payload: '/discounts',
+            },
+          ],
+        };
+      }
     }
 
     // 2. WHY NO ORDERS / SALES DECREASE / IMPROVE SALES
@@ -335,7 +1015,7 @@ class AIAssistantService {
           `| :--- | :--- | :--- |\n` +
           `| 📦 **Total Catalog Products** | **${products.length} items** | ${products.length > 0 ? 'Active' : 'No items yet'} |\n` +
           `| 🛍️ **Total Orders** | **${orders.length} orders** | ${paidOrders} paid |\n` +
-          `| 💵 **Total Gross Sales** | **$${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** | Recorded |\n` +
+          `| 💵 **Total Gross Sales** | **${currencySymbol}${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** | Recorded |\n` +
           `| ⏳ **Pending Fulfillment** | **${pendingOrders} orders** | ${pendingOrders > 0 ? '⚠️ Action needed' : 'All clear'} |\n` +
           `| ⚠️ **Low Stock Alert (≤5 units)** | **${lowStockCount} items** | ${lowStockCount > 0 ? 'Restock suggested' : 'Healthy stock'} |\n` +
           `| 📁 **Categories** | **${categories.length} active** | Organized |\n\n` +
@@ -398,7 +1078,7 @@ class AIAssistantService {
         .map((p) => {
           const qty = p.inventory ?? p.stockQuantity ?? 0;
           const statusIcon = qty === 0 ? '🔴 **OUT OF STOCK**' : `🟡 **${qty} left**`;
-          return `- **${p.name}** (SKU: \`${p.sku || 'N/A'}\`) — ${statusIcon} · Price: $${p.price?.toFixed(2) || '0.00'}`;
+          return `- **${p.name}** (SKU: \`${p.sku || 'N/A'}\`) — ${statusIcon} · Price: ${currencySymbol}${p.price?.toFixed(2) || '0.00'}`;
         })
         .join('\n');
 
@@ -475,7 +1155,7 @@ class AIAssistantService {
         .slice(0, 5)
         .map(
           (o) =>
-            `- **Order #${o.orderNumber || o.id.slice(0, 8)}** by *${o.customerName || 'Customer'}* — **$${o.totalAmount?.toFixed(2) || '0.00'}** (${o.orderStatus || 'Pending'})`,
+            `- **Order #${o.orderNumber || o.id.slice(0, 8)}** by *${o.customerName || 'Customer'}* — **${currencySymbol}${o.totalAmount?.toFixed(2) || '0.00'}** (${o.orderStatus || 'Pending'})`,
         )
         .join('\n');
 
@@ -598,13 +1278,13 @@ class AIAssistantService {
         content:
           `🏷️ **High-Converting Promo Campaign Ideas for ${storeName}:**\n\n` +
           `1. **Flash Weekend Sale (\`FLASH20\`):**\n` +
-          `   - **Offer:** 20% off all orders over $75.\n` +
+          `   - **Offer:** 20% off all orders over ${currencySymbol}75.\n` +
           `   - **Urgency:** Active for 48 hours only.\n\n` +
           `2. **VIP Welcome Incentive (\`WELCOME15\`):**\n` +
           `   - **Offer:** 15% off first purchase for new registered customers.\n` +
           `   - **Rule:** One usage per customer account.\n\n` +
           `3. **Tiered Free Shipping Promotion:**\n` +
-          `   - Automatically apply free priority shipping for carts above $100 to increase Average Order Value (AOV).\n\n` +
+          `   - Automatically apply free priority shipping for carts above ${currencySymbol}100 to increase Average Order Value (AOV).\n\n` +
           `You can generate and activate these coupon codes in the **Discount Studio**!`,
         actions: [
           {
@@ -853,10 +1533,13 @@ class AIAssistantService {
   public getContextualSuggestions(pathname: string): string[] {
     if (pathname.startsWith('/products') || pathname.startsWith('/categories')) {
       return [
-        'Create a product description for this product.',
-        'Show me my best-selling products.',
+        'Add some product in Electronics Category',
+        'Add product form',
+        'Create category form',
+        'Edit category form',
+        'Edit product form',
         'Which products are low on stock?',
-        'Create a 10% discount for products in Shoes.',
+        'Show me my best-selling products.',
       ];
     }
     if (pathname.startsWith('/orders') || pathname.startsWith('/shipping') || pathname.startsWith('/analytics')) {
@@ -865,17 +1548,20 @@ class AIAssistantService {
         'Show me my best-selling products.',
         'What should I improve today?',
         'Show unfulfilled orders',
+        'Create a 10% discount for products in Shoes.',
       ];
     }
     if (pathname.startsWith('/discounts') || pathname.startsWith('/marketing')) {
       return [
         'Create a 10% discount for products in Shoes.',
+        'Create discount form',
         'Create an Instagram campaign for my new collection.',
         'Create a summer collection with my top-selling products.',
       ];
     }
     if (pathname.startsWith('/themes') || pathname.startsWith('/store-setup') || pathname.startsWith('/pages')) {
       return [
+        'Add some product in Electronics Category',
         'Change my homepage headline.',
         'Create a summer collection with my top-selling products.',
         'Update theme accent color to gold',
@@ -884,13 +1570,13 @@ class AIAssistantService {
 
     // Default general suggestions
     return [
+      'Add some product in Electronics Category',
       'What should I improve today?',
-      'Create a summer collection with my top-selling products.',
-      'Why did my sales decrease this month?',
-      'Create an Instagram campaign for my new collection.',
-      'Change my homepage headline.',
-      'Show me my best-selling products.',
+      'Add product form',
+      'Create category form',
+      'Edit category form',
       'Create a 10% discount for products in Shoes.',
+      'Show me my best-selling products.',
     ];
   }
 }

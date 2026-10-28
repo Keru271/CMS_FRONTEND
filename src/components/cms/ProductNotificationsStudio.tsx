@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import {
   Bell,
   BellRing,
@@ -50,6 +52,10 @@ export function ProductNotificationsStudio() {
 
   // Bulk Selection
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Action Modals
   const [batchNotifyProduct, setBatchNotifyProduct] = useState<{
@@ -622,23 +628,32 @@ export function ProductNotificationsStudio() {
               </div>
             )}
 
-            <div className="relative min-w-[240px] sm:w-64">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search shopper, product, email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
+            <div className="flex items-center gap-2">
+              <div className="relative min-w-[240px] sm:w-64">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search shopper, product, email..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setPage(1);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <TableRefreshButton onRefresh={fetchData} isLoading={refreshing || loading} size="sm" />
             </div>
           </div>
         </div>
@@ -662,7 +677,8 @@ export function ProductNotificationsStudio() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -686,7 +702,9 @@ export function ProductNotificationsStudio() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
-                {filteredNotifications.map((item) => {
+                {filteredNotifications
+                  .slice((page - 1) * pageSize, page * pageSize)
+                  .map((item) => {
                   const isSelected = selectedIds.includes(item.id);
                   const isPending = item.status === 'PENDING';
                   const isNotified = item.status === 'NOTIFIED';
@@ -886,6 +904,19 @@ export function ProductNotificationsStudio() {
               </tbody>
             </table>
           </div>
+
+          <TablePagination
+            currentPage={page}
+            totalItems={filteredNotifications.length}
+            pageSize={pageSize}
+            onPageChange={(p) => setPage(p)}
+            onPageSizeChange={(s) => {
+              setPageSize(s);
+              setPage(1);
+            }}
+            itemName="requests"
+          />
+        </>
         )}
       </div>
 

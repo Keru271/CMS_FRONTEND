@@ -29,6 +29,11 @@ import {
   Lock,
   GitBranch,
   Activity,
+  FolderTree,
+  Tag,
+  Gift,
+  Truck,
+  Heart,
 } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -76,11 +81,11 @@ interface Section {
 const BASE_URL = process.env.NEXT_PUBLIC_STOREFRONT_API_URL || 'http://localhost:5002';
 
 const METHOD_STYLES: Record<string, string> = {
-  GET: 'bg-[#32D74B]/15 text-[#32D74B] border border-[#32D74B]/30',
-  POST: 'bg-[#00E5FF]/15 text-[#00E5FF] border border-[#00E5FF]/30',
-  PATCH: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
-  DELETE: 'bg-[#FF453A]/15 text-[#FF453A] border border-[#FF453A]/30',
-  PUT: 'bg-purple-500/15 text-purple-400 border border-purple-500/30',
+  GET: 'bg-[#4ADE80]/10 text-[#4ADE80] border border-[#4ADE80]/30 rounded-[4px]',
+  POST: 'bg-[#22D3EE]/10 text-[#22D3EE] border border-[#22D3EE]/30 rounded-[4px]',
+  PATCH: 'bg-[#FBBF24]/10 text-[#FBBF24] border border-[#FBBF24]/30 rounded-[4px]',
+  DELETE: 'bg-[#F87171]/10 text-[#F87171] border border-[#F87171]/30 rounded-[4px]',
+  PUT: 'bg-[#A78BFA]/10 text-[#A78BFA] border border-[#A78BFA]/30 rounded-[4px]',
 };
 
 const SECTIONS: Section[] = [
@@ -366,6 +371,94 @@ curl "${BASE_URL}/api/v1/products/aeropulse-headphones" \\
         },
         curlExample: `curl "${BASE_URL}/api/v1/collections/summer-collection/products?sort=price_asc&limit=12" \\
   -H "X-Storefront-Key: pk_live_YOUR_KEY"`,
+      },
+    ],
+  },
+  {
+    id: 'categories',
+    label: 'Categories',
+    icon: FolderTree,
+    color: 'text-[#22D3EE]',
+    endpoints: [
+      {
+        id: 'list-categories',
+        method: 'GET',
+        path: '/api/v1/categories',
+        title: 'List Categories',
+        desc: 'Returns a list of all active categories in the store. Includes category hierarchy with parent_id, slug, image, and description. Ideal for category grids, breadcrumbs, and catalog navigation.',
+        auth: 'storefront_key',
+        successExample: {
+          data: [
+            {
+              id: 'cat_electronics',
+              name: 'Electronics',
+              slug: 'electronics',
+              description: 'Audio, mobile accessories, and gadgets.',
+              image: 'https://cdn.example.com/cat_electronics.jpg',
+              parent_id: null,
+              created_at: '2026-01-10T10:00:00Z',
+            },
+            {
+              id: 'cat_headphones',
+              name: 'Headphones',
+              slug: 'headphones',
+              description: 'Wireless and wired audio gear.',
+              image: 'https://cdn.example.com/cat_headphones.jpg',
+              parent_id: 'cat_electronics',
+              created_at: '2026-01-12T14:30:00Z',
+            },
+          ],
+          total: 8,
+        },
+        responseFields: [
+          { field: 'data[].id', type: 'string', desc: 'Category unique identifier' },
+          { field: 'data[].name', type: 'string', desc: 'Category display name' },
+          { field: 'data[].slug', type: 'string', desc: 'URL-friendly slug' },
+          { field: 'data[].description', type: 'string | null', desc: 'Category description' },
+          { field: 'data[].image', type: 'string | null', desc: 'Hero image URL' },
+          { field: 'data[].parent_id', type: 'string | null', desc: 'Parent category ID for nested subcategories' },
+          { field: 'total', type: 'number', desc: 'Total number of categories' },
+        ],
+        curlExample: `curl "${BASE_URL}/api/v1/categories" \\
+  -H "X-Storefront-Key: pk_live_YOUR_KEY"`,
+        jsExample: `const res = await fetch('${BASE_URL}/api/v1/categories', {
+  headers: { 'X-Storefront-Key': 'pk_live_YOUR_KEY' }
+});
+const { data, total } = await res.json();
+console.log(\`Fetched \${total} categories\`);`,
+      },
+      {
+        id: 'get-category',
+        method: 'GET',
+        path: '/api/v1/categories/:id',
+        title: 'Get Category',
+        desc: 'Fetches details of a specific category using either its UUID ID or its URL-friendly slug.',
+        auth: 'storefront_key',
+        pathParams: [
+          { name: 'id', type: 'string', required: true, desc: 'Category unique identifier or URL slug' },
+        ],
+        successExample: {
+          data: {
+            id: 'cat_headphones',
+            name: 'Headphones',
+            slug: 'headphones',
+            description: 'Wireless and wired audio gear.',
+            image: 'https://cdn.example.com/cat_headphones.jpg',
+            parent_id: 'cat_electronics',
+            created_at: '2026-01-12T14:30:00Z',
+            updated_at: '2026-02-15T09:20:00Z',
+          },
+        },
+        errorExample: {
+          error: 'Not Found',
+          message: 'Category "headphones" not found.',
+        },
+        curlExample: `curl "${BASE_URL}/api/v1/categories/headphones" \\
+  -H "X-Storefront-Key: pk_live_YOUR_KEY"`,
+        jsExample: `const res = await fetch('${BASE_URL}/api/v1/categories/headphones', {
+  headers: { 'X-Storefront-Key': 'pk_live_YOUR_KEY' }
+});
+const { data } = await res.json();`,
       },
     ],
   },
@@ -1072,6 +1165,313 @@ localStorage.setItem('customer_token', customer_token);`,
       },
     ],
   },
+  {
+    id: 'discounts',
+    label: 'Discounts',
+    icon: Tag,
+    color: 'text-[#FBBF24]',
+    endpoints: [
+      {
+        id: 'validate-discount',
+        method: 'POST',
+        path: '/api/v1/discounts/validate',
+        title: 'Validate Coupon / Discount',
+        desc: 'Validates a coupon code against the cart subtotal, checks start/end date eligibility, per-customer and overall usage caps, and minimum purchase thresholds. Computes total savings.',
+        auth: 'storefront_key',
+        bodyParams: [
+          { name: 'code', type: 'string', required: true, desc: 'Discount coupon code string (e.g. SUMMER25)' },
+          { name: 'cartSubtotal', type: 'number', required: true, desc: 'Current cart subtotal before discounts' },
+          { name: 'productIds', type: 'string[]', desc: 'Array of product UUIDs currently in the cart' },
+          { name: 'customerGroup', type: 'string', desc: 'Optional customer tier group (e.g. VIP, WHOLESALE)' },
+        ],
+        successExample: {
+          valid: true,
+          discount: {
+            id: 'disc_9a8b7c',
+            title: 'Summer Splash 20%',
+            code: 'SUMMER25',
+            discountType: 'PERCENTAGE',
+            value: 20,
+            freeShipping: false,
+          },
+          savings: 499.8,
+          newSubtotal: 1999.2,
+          message: 'Coupon code applied: 20% off!',
+        },
+        errorExample: {
+          valid: false,
+          message: 'Minimum order subtotal of ₹2500 required for this coupon',
+        },
+        curlExample: `curl -X POST "${BASE_URL}/api/v1/discounts/validate" \\
+  -H "X-Storefront-Key: pk_live_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"code":"SUMMER25","cartSubtotal":2499,"productIds":["prod_abc"]}'`,
+        jsExample: `const res = await fetch('${BASE_URL}/api/v1/discounts/validate', {
+  method: 'POST',
+  headers: { 'X-Storefront-Key': 'pk_live_YOUR_KEY', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ code: 'SUMMER25', cartSubtotal: 2499 })
+});
+const result = await res.json();
+if (result.valid) {
+  console.log(\`Discount applied: Saved ₹\${result.savings}\`);
+}`,
+      },
+      {
+        id: 'automatic-discounts',
+        method: 'GET',
+        path: '/api/v1/discounts/automatic',
+        title: 'List Automatic Discounts',
+        desc: 'Fetches all currently running automatic store discounts that do not require entering a code (e.g. Buy X Get Y, volume tiers, seasonal sitewide markdowns).',
+        auth: 'storefront_key',
+        successExample: {
+          discounts: [
+            {
+              id: 'disc_auto_festive',
+              title: 'Festive Flash 10% Off',
+              discountType: 'PERCENTAGE',
+              value: 10,
+              minOrderAmount: 999,
+              appliesTo: 'ALL',
+            },
+          ],
+        },
+        curlExample: `curl "${BASE_URL}/api/v1/discounts/automatic" \\
+  -H "X-Storefront-Key: pk_live_YOUR_KEY"`,
+      },
+    ],
+  },
+  {
+    id: 'gift-cards',
+    label: 'Gift Cards',
+    icon: Gift,
+    color: 'text-[#A78BFA]',
+    endpoints: [
+      {
+        id: 'check-gift-card',
+        method: 'POST',
+        path: '/api/v1/gift-cards/check-balance',
+        title: 'Check Gift Card Balance',
+        desc: 'Looks up a digital gift card by its alphanumeric redemption code and returns remaining balance, currency, active status, and expiry date.',
+        auth: 'storefront_key',
+        bodyParams: [
+          { name: 'code', type: 'string', required: true, desc: '16-character gift card redemption code' },
+        ],
+        successExample: {
+          valid: true,
+          card: {
+            code: 'GIFT-8921-4820-9124',
+            balance: 1500,
+            initialValue: 2000,
+            currency: 'INR',
+            expiresAt: '2027-12-31T23:59:59Z',
+            recipientName: 'Vikram Mehta',
+          },
+        },
+        errorExample: {
+          valid: false,
+          message: 'Gift card not found. Please verify the code and try again.',
+        },
+        curlExample: `curl -X POST "${BASE_URL}/api/v1/gift-cards/check-balance" \\
+  -H "X-Storefront-Key: pk_live_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"code":"GIFT-8921-4820-9124"}'`,
+      },
+      {
+        id: 'apply-gift-card',
+        method: 'POST',
+        path: '/api/v1/gift-cards/apply',
+        title: 'Apply Gift Card to Order',
+        desc: 'Deducts order total against the gift card balance during checkout and returns applied amount, remaining gift card balance, and remaining order payable balance.',
+        auth: 'storefront_key',
+        bodyParams: [
+          { name: 'code', type: 'string', required: true, desc: 'Gift card code' },
+          { name: 'orderTotal', type: 'number', required: true, desc: 'Total payable amount before gift card' },
+        ],
+        successExample: {
+          success: true,
+          appliedAmount: 1500,
+          remainingBalance: 0,
+          newTotal: 999,
+          cardCode: 'GIFT-8921-4820-9124',
+        },
+        errorExample: {
+          valid: false,
+          message: 'This gift card has no remaining balance.',
+        },
+        curlExample: `curl -X POST "${BASE_URL}/api/v1/gift-cards/apply" \\
+  -H "X-Storefront-Key: pk_live_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"code":"GIFT-8921-4820-9124","orderTotal":2499}'`,
+      },
+    ],
+  },
+  {
+    id: 'shipping',
+    label: 'Shipping',
+    icon: Truck,
+    color: 'text-[#4ADE80]',
+    endpoints: [
+      {
+        id: 'check-serviceability',
+        method: 'POST',
+        path: '/api/v1/shipping/serviceability',
+        title: 'Check Pincode Serviceability',
+        desc: 'Checks if an address or pincode is serviceable by integrated logistics carriers (Shiprocket, Delhivery, Bluedart, etc.) and whether Cash on Delivery (COD) is available.',
+        auth: 'storefront_key',
+        bodyParams: [
+          { name: 'pincode', type: 'string', required: true, desc: 'Postal PIN code or ZIP code' },
+          { name: 'country', type: 'string', desc: 'Country name (Default: India)' },
+          { name: 'weightKg', type: 'number', desc: 'Estimated parcel dead weight in kg (Default: 0.5)' },
+          { name: 'cod', type: 'boolean', desc: 'Whether Cash on Delivery is requested' },
+        ],
+        successExample: {
+          success: true,
+          serviceable: true,
+          codAvailable: true,
+          city: 'Bangalore',
+          state: 'Karnataka',
+          estimatedDays: 2,
+          providers: [
+            { provider: 'Delhivery Surface', serviceable: true, codAvailable: true, estimatedDays: 2 },
+            { provider: 'BlueDart Air Express', serviceable: true, codAvailable: true, estimatedDays: 1 },
+          ],
+        },
+        curlExample: `curl -X POST "${BASE_URL}/api/v1/shipping/serviceability" \\
+  -H "X-Storefront-Key: pk_live_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"pincode":"560001","cod":true}'`,
+      },
+      {
+        id: 'shipping-quotes',
+        method: 'POST',
+        path: '/api/v1/shipping/quotes',
+        title: 'Get Live Rate Quotes',
+        desc: 'Fetches real-time comparative courier rate quotes for checkout shipping options (Standard Ground, Express Air, Overnight).',
+        auth: 'storefront_key',
+        bodyParams: [
+          { name: 'destination.pincode', type: 'string', required: true, desc: 'Delivery pincode' },
+          { name: 'destination.city', type: 'string', desc: 'Destination city' },
+          { name: 'destination.state', type: 'string', desc: 'Destination state' },
+          { name: 'parcel.weightKg', type: 'number', desc: 'Weight in kg' },
+        ],
+        successExample: {
+          quotes: [
+            { id: 'rate_standard', name: 'Standard Surface (3-5 days)', rate: 60, estimatedDays: 4 },
+            { id: 'rate_express', name: 'Priority Air Express (1-2 days)', rate: 140, estimatedDays: 1 },
+          ],
+        },
+        curlExample: `curl -X POST "${BASE_URL}/api/v1/shipping/quotes" \\
+  -H "X-Storefront-Key: pk_live_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"destination":{"pincode":"600001","city":"Chennai"}}'`,
+      },
+      {
+        id: 'track-shipment',
+        method: 'GET',
+        path: '/api/v1/shipping/track/:awb',
+        title: 'Live Shipment Tracking',
+        desc: 'Fetches current dispatch status, live checkpoint milestones, current hub location, and estimated delivery date using the Air Waybill (AWB) tracking number.',
+        auth: 'storefront_key',
+        pathParams: [
+          { name: 'awb', type: 'string', required: true, desc: 'Air Waybill or courier consignment number' },
+        ],
+        successExample: {
+          success: true,
+          awb: 'AWB9821402914',
+          carrier: 'DELHIVERY',
+          status: 'IN_TRANSIT',
+          currentLocation: 'Chennai Processing Hub',
+          estimatedDelivery: '2026-10-31',
+          milestones: [
+            { status: 'MANIFESTED', location: 'Warehouse Bangalore', timestamp: '2026-10-28T09:00:00Z' },
+            { status: 'PICKED_UP', location: 'Warehouse Bangalore', timestamp: '2026-10-28T14:30:00Z' },
+            { status: 'IN_TRANSIT', location: 'Chennai Processing Hub', timestamp: '2026-10-29T02:15:00Z' },
+          ],
+        },
+        curlExample: `curl "${BASE_URL}/api/v1/shipping/track/AWB9821402914" \\
+  -H "X-Storefront-Key: pk_live_YOUR_KEY"`,
+      },
+    ],
+  },
+  {
+    id: 'wishlist',
+    label: 'Wishlist',
+    icon: Heart,
+    color: 'text-[#F87171]',
+    endpoints: [
+      {
+        id: 'get-wishlist',
+        method: 'GET',
+        path: '/api/v1/wishlist',
+        title: 'Get Customer Wishlist',
+        desc: 'Retrieves the saved wishlist items for the authenticated customer or specified customer email.',
+        auth: 'both',
+        queryParams: [
+          { name: 'email', type: 'string', desc: 'Customer email (if not using customer_token Bearer header)' },
+        ],
+        successExample: {
+          wishlist: [
+            {
+              id: 'prod_abc',
+              name: 'AeroPulse Headphones',
+              slug: 'aeropulse-headphones',
+              price: 2499,
+              image: 'https://cdn.example.com/p1.jpg',
+              available: true,
+            },
+          ],
+          total: 1,
+        },
+        curlExample: `curl "${BASE_URL}/api/v1/wishlist" \\
+  -H "X-Storefront-Key: pk_live_YOUR_KEY" \\
+  -H "Authorization: Bearer CUSTOMER_TOKEN"`,
+      },
+      {
+        id: 'add-wishlist',
+        method: 'POST',
+        path: '/api/v1/wishlist/add',
+        title: 'Add to Wishlist',
+        desc: 'Saves a product to the customer wishlist.',
+        auth: 'both',
+        bodyParams: [
+          { name: 'productId', type: 'string', required: true, desc: 'Product UUID to add to wishlist' },
+          { name: 'email', type: 'string', desc: 'Customer email (if not authenticated via Bearer token)' },
+        ],
+        successExample: {
+          success: true,
+          message: 'Product added to wishlist',
+          count: 2,
+        },
+        curlExample: `curl -X POST "${BASE_URL}/api/v1/wishlist/add" \\
+  -H "X-Storefront-Key: pk_live_YOUR_KEY" \\
+  -H "Authorization: Bearer CUSTOMER_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{"productId":"prod_abc"}'`,
+      },
+      {
+        id: 'remove-wishlist',
+        method: 'POST',
+        path: '/api/v1/wishlist/remove',
+        title: 'Remove from Wishlist',
+        desc: 'Removes a specific product from the customer wishlist.',
+        auth: 'both',
+        bodyParams: [
+          { name: 'productId', type: 'string', required: true, desc: 'Product UUID to remove' },
+          { name: 'email', type: 'string', desc: 'Customer email' },
+        ],
+        successExample: {
+          success: true,
+          message: 'Product removed from wishlist',
+          count: 1,
+        },
+        curlExample: `curl -X POST "${BASE_URL}/api/v1/wishlist/remove" \\
+  -H "X-Storefront-Key: pk_live_YOUR_KEY" \\
+  -H "Authorization: Bearer CUSTOMER_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{"productId":"prod_abc"}'`,
+      },
+    ],
+  },
 ];
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -1081,22 +1481,22 @@ const AuthBadge = ({ auth }: { auth?: string }) => {
   if (auth === 'both')
     return (
       <div className="flex flex-wrap gap-2">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30">
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-[#22D3EE]/10 text-[#22D3EE] border border-[#22D3EE]/30">
           <Key className="w-3 h-3" /> X-Storefront-Key
         </span>
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/30">
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-[#A78BFA]/10 text-[#A78BFA] border border-[#A78BFA]/30">
           <Lock className="w-3 h-3" /> customer_token
         </span>
       </div>
     );
   if (auth === 'customer_token')
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/30">
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-[#A78BFA]/10 text-[#A78BFA] border border-[#A78BFA]/30">
         <Lock className="w-3 h-3" /> Customer Token
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30">
+    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-[#22D3EE]/10 text-[#22D3EE] border border-[#22D3EE]/30">
       <Key className="w-3 h-3" /> X-Storefront-Key
     </span>
   );
@@ -1145,24 +1545,24 @@ export default function DocsPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* ── Top Header Banner Card ── */}
-      <div className="bg-[#1E1E1E] border border-[#2C2C2E] rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+      <div className="bg-[#1E293B] border border-[#334155] rounded-[8px] p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#00E5FF]/10 border border-[#00E5FF]/30 flex items-center justify-center text-[#00E5FF] shrink-0">
-            <Code2 className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-[4px] bg-[#0F172A] border border-[#334155] flex items-center justify-center text-[#4ADE80] shrink-0 shadow-[0_0_12px_rgba(74,222,128,0.12)]">
+            <Code2 className="w-5 h-5" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold text-white font-sans">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#F1F5F9] font-mono tracking-tight">
                 REST API Documentation
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#00E5FF]/10 text-[#00E5FF] text-xs font-mono font-bold border border-[#00E5FF]/30">
+              <span className="px-2 py-0.5 rounded-[4px] bg-[#22D3EE]/10 text-[#22D3EE] text-xs font-mono font-semibold border border-[#22D3EE]/30">
                 v1 REST
               </span>
-              <span className="text-xs font-mono text-[#32D74B] flex items-center gap-1.5 bg-[#32D74B]/10 px-2.5 py-0.5 rounded-full border border-[#32D74B]/30 font-semibold">
+              <span className="text-xs font-mono text-[#4ADE80] flex items-center gap-1.5 bg-[#4ADE80]/10 px-2 py-0.5 rounded-[4px] border border-[#4ADE80]/30 font-semibold shadow-[0_0_8px_rgba(74,222,128,0.1)]">
                 <Activity className="w-3 h-3 animate-pulse" /> Live
               </span>
             </div>
-            <p className="text-xs text-[#98989D] mt-1 leading-relaxed">
+            <p className="text-xs text-[#94A3B8] mt-1 font-sans">
               Explore public storefront endpoints, parameters, JSON response schemas, and event webhooks.
             </p>
           </div>
@@ -1171,9 +1571,9 @@ export default function DocsPage() {
         <div className="flex items-center gap-2.5 shrink-0">
           <a
             href="/developer"
-            className="px-3.5 py-2 rounded-xl bg-[#161616] hover:bg-[#252525] text-xs font-mono text-[#98989D] hover:text-white border border-[#2C2C2E] transition flex items-center gap-2"
+            className="px-3 py-1.5 rounded-[4px] bg-[#0F172A] hover:bg-[#334155] text-xs font-mono text-[#94A3B8] hover:text-[#F1F5F9] border border-[#334155] transition flex items-center gap-2 shadow-sm"
           >
-            <GitBranch className="w-3.5 h-3.5 text-[#00E5FF]" />
+            <GitBranch className="w-3.5 h-3.5 text-[#22D3EE]" />
             Developer Studio
           </a>
         </div>
@@ -1183,56 +1583,56 @@ export default function DocsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Navigator Sidebar */}
         <aside className="lg:col-span-4 xl:col-span-3 space-y-4 lg:sticky lg:top-4">
-          <div className="bg-[#1E1E1E] border border-[#2C2C2E] rounded-2xl p-4 max-h-[calc(100vh-7rem)] overflow-y-auto space-y-4 shadow-lg">
+          <div className="bg-[#1E293B] border border-[#334155] rounded-[8px] p-3.5 max-h-[calc(100vh-7rem)] overflow-y-auto space-y-4 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             {/* Search Filter */}
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-[#98989D] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filter endpoints..."
-                className="w-full pl-8 pr-3 py-2 bg-[#161616] border border-[#2C2C2E] focus:border-[#00E5FF] rounded-xl text-xs text-white placeholder-[#98989D] outline-none font-mono transition"
+                className="w-full pl-8 pr-3 py-1.5 bg-[#0F172A] border border-[#334155] focus:border-[#4ADE80] rounded-[4px] text-xs text-[#F1F5F9] placeholder-[#64748B] outline-none font-mono transition focus:shadow-[0_0_10px_rgba(74,222,128,0.15)]"
               />
             </div>
 
             <nav className="space-y-4">
               {/* Guides */}
               <div className="space-y-1">
-                <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#98989D]">
+                <div className="px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-[#64748B]">
                   Getting Started
                 </div>
                 <button
                   onClick={() => setActiveEndpoint('__auth')}
-                  className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition border ${
+                  className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-xs font-mono transition border ${
                     activeEndpoint === '__auth'
-                      ? 'bg-[#00E5FF]/10 text-[#00E5FF] border-[#00E5FF]/30 font-semibold shadow-[0_0_12px_rgba(0,229,255,0.1)]'
-                      : 'text-[#98989D] hover:text-white hover:bg-[#252525] border-transparent'
+                      ? 'bg-[#4ADE80]/10 text-[#4ADE80] border-[#4ADE80]/30 font-semibold shadow-[0_0_10px_rgba(74,222,128,0.12)]'
+                      : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155] border-transparent'
                   }`}
                 >
-                  <Shield className="w-3.5 h-3.5 shrink-0 text-[#00E5FF]" />
+                  <Shield className="w-3.5 h-3.5 shrink-0 text-[#22D3EE]" />
                   <span>Authentication Guide</span>
                 </button>
                 <button
                   onClick={() => setActiveEndpoint('__webhooks')}
-                  className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition border ${
+                  className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-xs font-mono transition border ${
                     activeEndpoint === '__webhooks'
-                      ? 'bg-[#00E5FF]/10 text-[#00E5FF] border-[#00E5FF]/30 font-semibold shadow-[0_0_12px_rgba(0,229,255,0.1)]'
-                      : 'text-[#98989D] hover:text-white hover:bg-[#252525] border-transparent'
+                      ? 'bg-[#4ADE80]/10 text-[#4ADE80] border-[#4ADE80]/30 font-semibold shadow-[0_0_10px_rgba(74,222,128,0.12)]'
+                      : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155] border-transparent'
                   }`}
                 >
-                  <Webhook className="w-3.5 h-3.5 shrink-0 text-violet-400" />
+                  <Webhook className="w-3.5 h-3.5 shrink-0 text-[#A78BFA]" />
                   <span>Webhook Events</span>
                 </button>
                 <button
                   onClick={() => setActiveEndpoint('__errors')}
-                  className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition border ${
+                  className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-xs font-mono transition border ${
                     activeEndpoint === '__errors'
-                      ? 'bg-[#FF453A]/10 text-[#FF453A] border-[#FF453A]/30 font-semibold shadow-[0_0_12px_rgba(255,69,58,0.1)]'
-                      : 'text-[#98989D] hover:text-white hover:bg-[#252525] border-transparent'
+                      ? 'bg-[#F87171]/15 text-[#F87171] border-[#F87171]/40 font-semibold shadow-[0_0_10px_rgba(248,113,113,0.15)]'
+                      : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155] border-transparent'
                   }`}
                 >
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0 text-[#FF453A]" />
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 text-[#F87171]" />
                   <span>Error Code Reference</span>
                 </button>
               </div>
@@ -1242,8 +1642,8 @@ export default function DocsPage() {
                 const Icon = section.icon;
                 return (
                   <div key={section.id} className="space-y-1">
-                    <div className="flex items-center gap-2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#98989D]">
-                      <Icon className="w-3 h-3 text-[#00E5FF]" />
+                    <div className="flex items-center gap-2 px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-[#64748B]">
+                      <Icon className="w-3 h-3 text-[#22D3EE]" />
                       {section.label}
                     </div>
                     <div className="space-y-1">
@@ -1251,14 +1651,14 @@ export default function DocsPage() {
                         <button
                           key={ep.id}
                           onClick={() => setActiveEndpoint(ep.id)}
-                          className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs transition border ${
+                          className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-[4px] text-xs font-mono transition border ${
                             activeEndpoint === ep.id
-                              ? 'bg-[#00E5FF]/10 text-[#00E5FF] border-[#00E5FF]/30 font-semibold shadow-[0_0_12px_rgba(0,229,255,0.1)]'
-                              : 'text-[#98989D] hover:text-white hover:bg-[#252525] border-transparent'
+                              ? 'bg-[#4ADE80]/10 text-[#4ADE80] border-[#4ADE80]/30 font-semibold shadow-[0_0_10px_rgba(74,222,128,0.12)]'
+                              : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155] border-transparent'
                           }`}
                         >
                           <span
-                            className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 ${METHOD_STYLES[ep.method] || ''}`}
+                            className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-[3px] shrink-0 ${METHOD_STYLES[ep.method] || ''}`}
                           >
                             {ep.method}
                           </span>
@@ -1274,39 +1674,39 @@ export default function DocsPage() {
         </aside>
 
         {/* Right Main Documentation Panel */}
-        <main className="lg:col-span-8 xl:col-span-9 bg-[#1E1E1E] border border-[#2C2C2E] rounded-2xl p-6 sm:p-8 space-y-8 shadow-xl min-w-0">
+        <main className="lg:col-span-8 xl:col-span-9 bg-[#1E293B] border border-[#334155] rounded-[8px] p-6 sm:p-8 space-y-8 shadow-[0_4px_20px_rgba(0,0,0,0.3)] min-w-0">
           {/* ── Auth Guide ─────────────────────────────────────────────────────── */}
           {activeEndpoint === '__auth' && (
             <div className="space-y-8">
               <div>
-                <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#00E5FF] mb-2 flex items-center gap-2">
+                <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#22D3EE] mb-2 flex items-center gap-2">
                   <Shield className="w-3.5 h-3.5" /> Authentication
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white font-sans mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#F1F5F9] font-mono mb-2 tracking-tight">
                   Authenticating API Requests
                 </h1>
-                <p className="text-[#98989D] text-sm leading-relaxed">
+                <p className="text-[#94A3B8] text-sm leading-relaxed font-sans">
                   The Storefront REST API uses scoped client keys and optional customer JWT tokens depending on the endpoint security profile.
                 </p>
               </div>
 
               <div className="space-y-6">
-                <div className="rounded-2xl border border-[#2C2C2E] bg-[#161616] overflow-hidden">
-                  <div className="px-5 py-4 border-b border-[#2C2C2E] bg-[#181818] flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-[#00E5FF] font-bold text-sm">
+                <div className="rounded-[6px] border border-[#334155] bg-[#0F172A] overflow-hidden">
+                  <div className="px-5 py-3 border-b border-[#334155] bg-[#1E293B] flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-[#22D3EE] font-mono font-bold text-sm">
                       <Key className="w-4 h-4" /> Storefront API Key
                     </div>
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30">
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-[4px] bg-[#22D3EE]/10 text-[#22D3EE] border border-[#22D3EE]/30">
                       Public Client Key
                     </span>
                   </div>
                   <div className="p-5 space-y-3">
-                    <div className="font-mono text-xs bg-[#121212] border border-[#2C2C2E] rounded-xl p-4 text-[#32D74B]">
+                    <div className="font-mono text-xs bg-[#0F172A] border border-[#334155] rounded-[4px] p-3 text-[#4ADE80]">
                       X-Storefront-Key: pk_live_YOUR_KEY
                     </div>
-                    <p className="text-xs text-[#98989D] leading-relaxed">
-                      Keys are prefixed with <code className="text-[#00E5FF] font-mono">pk_live_</code> (production) or <code className="text-[#00E5FF] font-mono">pk_test_</code> (testing). Generate and configure your keys in{' '}
-                      <a href="/developer" className="text-[#00E5FF] hover:underline font-semibold">
+                    <p className="text-xs text-[#94A3B8] leading-relaxed font-sans">
+                      Keys are prefixed with <code className="text-[#22D3EE] font-mono">pk_live_</code> (production) or <code className="text-[#22D3EE] font-mono">pk_test_</code> (testing). Generate and configure your keys in{' '}
+                      <a href="/developer" className="text-[#22D3EE] hover:underline font-mono font-semibold">
                         Developer Studio → API Keys
                       </a>
                       .
@@ -1314,42 +1714,42 @@ export default function DocsPage() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-[#2C2C2E] bg-[#161616] overflow-hidden">
-                  <div className="px-5 py-4 border-b border-[#2C2C2E] bg-[#181818] flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-violet-400 font-bold text-sm">
+                <div className="rounded-[6px] border border-[#334155] bg-[#0F172A] overflow-hidden">
+                  <div className="px-5 py-3 border-b border-[#334155] bg-[#1E293B] flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-[#A78BFA] font-mono font-bold text-sm">
                       <Lock className="w-4 h-4" /> Customer JWT Token (for /customers/me)
                     </div>
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/30">
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-[4px] bg-[#A78BFA]/10 text-[#A78BFA] border border-[#A78BFA]/30">
                       Bearer Token
                     </span>
                   </div>
                   <div className="p-5 space-y-3">
-                    <div className="font-mono text-xs bg-[#121212] border border-[#2C2C2E] rounded-xl p-4 text-violet-300">
+                    <div className="font-mono text-xs bg-[#0F172A] border border-[#334155] rounded-[4px] p-3 text-[#A78BFA]">
                       Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
                     </div>
-                    <p className="text-xs text-[#98989D] leading-relaxed">
-                      Obtained from <code className="text-[#00E5FF] font-mono">POST /api/v1/customers/login</code> or <code className="text-[#00E5FF] font-mono">POST /api/v1/customers</code>. Session tokens expire in 7 days.
+                    <p className="text-xs text-[#94A3B8] leading-relaxed font-sans">
+                      Obtained from <code className="text-[#22D3EE] font-mono">POST /api/v1/customers/login</code> or <code className="text-[#22D3EE] font-mono">POST /api/v1/customers</code>. Session tokens expire in 7 days.
                     </p>
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-[#3A1C1C] border-l-4 border-[#FF453A] p-5 flex gap-3.5">
-                  <AlertCircle className="w-5 h-5 text-[#FF453A] shrink-0 mt-0.5" />
+                <div className="rounded-[6px] bg-[#F87171]/10 border-l-4 border-[#F87171] border-y border-r border-[#F87171]/20 p-4 flex gap-3.5">
+                  <AlertCircle className="w-5 h-5 text-[#F87171] shrink-0 mt-0.5" />
                   <div className="space-y-1">
-                    <div className="text-sm font-bold text-[#FF453A]">
+                    <div className="text-sm font-mono font-bold text-[#F87171]">
                       Never expose merchant administrative secret keys
                     </div>
-                    <p className="text-xs text-[#98989D] leading-relaxed">
-                      The <code className="text-white font-mono">X-Storefront-Key</code> is a scoped public client key — safe to bundle in storefront web apps. Never place your CMS merchant administrative tokens into client-side bundles.
+                    <p className="text-xs text-[#94A3B8] leading-relaxed font-sans">
+                      The <code className="text-[#F1F5F9] font-mono">X-Storefront-Key</code> is a scoped public client key — safe to bundle in storefront web apps. Never place your CMS merchant administrative tokens into client-side bundles.
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="text-sm font-bold text-white">Complete Request Example</h3>
-                  <div className="rounded-2xl bg-[#161616] border border-[#2C2C2E] overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-2.5 bg-[#181818] border-b border-[#2C2C2E]">
-                      <span className="text-xs text-[#98989D] font-mono">cURL Terminal</span>
+                  <h3 className="text-sm font-mono font-bold text-[#F1F5F9]">Complete Request Example</h3>
+                  <div className="rounded-[6px] bg-[#0F172A] border border-[#334155] overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-2 bg-[#1E293B] border-b border-[#334155]">
+                      <span className="text-xs text-[#64748B] font-mono">cURL Terminal</span>
                       <button
                         onClick={() =>
                           copy(
@@ -1357,17 +1757,17 @@ export default function DocsPage() {
                             'auth-curl',
                           )
                         }
-                        className="text-xs text-[#98989D] hover:text-[#00E5FF] flex items-center gap-1.5 transition font-mono"
+                        className="text-xs text-[#94A3B8] hover:text-[#4ADE80] flex items-center gap-1.5 transition font-mono hover:bg-[#0F172A] px-2 py-1 rounded-[4px] border border-transparent hover:border-[#334155]"
                       >
                         {copied === 'auth-curl' ? (
-                          <Check className="w-3.5 h-3.5 text-[#32D74B]" />
+                          <Check className="w-3.5 h-3.5 text-[#4ADE80]" />
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
                         {copied === 'auth-curl' ? 'Copied' : 'Copy'}
                       </button>
                     </div>
-                    <pre className="p-4 text-xs font-mono text-[#32D74B] overflow-x-auto leading-relaxed">{`curl "${BASE_URL}/api/v1/products" \\
+                    <pre className="p-4 text-xs font-mono text-[#4ADE80] overflow-x-auto leading-relaxed">{`curl "${BASE_URL}/api/v1/products" \\
   -H "X-Storefront-Key: pk_live_YOUR_KEY"`}</pre>
                   </div>
                 </div>
@@ -1379,23 +1779,23 @@ export default function DocsPage() {
           {activeEndpoint === '__webhooks' && (
             <div className="space-y-8">
               <div>
-                <div className="text-xs font-mono font-bold uppercase tracking-wider text-violet-400 mb-2 flex items-center gap-2">
+                <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#A78BFA] mb-2 flex items-center gap-2">
                   <Webhook className="w-3.5 h-3.5" /> Webhooks
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white font-sans mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#F1F5F9] font-mono mb-2 tracking-tight">
                   Webhook Event Reference
                 </h1>
-                <p className="text-[#98989D] text-sm leading-relaxed">
+                <p className="text-[#94A3B8] text-sm leading-relaxed font-sans">
                   Subscribe to real-time asynchronous store events in{' '}
-                  <a href="/developer" className="text-[#00E5FF] hover:underline font-semibold">
+                  <a href="/developer" className="text-[#22D3EE] hover:underline font-mono font-semibold">
                     Developer Studio → Webhooks
                   </a>
                   . Your server endpoint receives a signed HTTP POST request with an event payload.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-[#2C2C2E] bg-[#161616] overflow-hidden">
-                <div className="bg-[#181818] px-5 py-3 border-b border-[#2C2C2E] text-xs font-mono font-bold text-[#98989D] uppercase tracking-wider grid grid-cols-3">
+              <div className="rounded-[6px] border border-[#334155] bg-[#0F172A] overflow-hidden">
+                <div className="bg-[#1E293B] px-5 py-2.5 border-b border-[#334155] text-xs font-mono font-bold text-[#64748B] uppercase tracking-wider grid grid-cols-3">
                   <span>Event Topic</span>
                   <span>Group</span>
                   <span>Description</span>
@@ -1454,30 +1854,30 @@ export default function DocsPage() {
                 ].map((ev) => (
                   <div
                     key={ev.event}
-                    className="grid grid-cols-3 gap-4 px-5 py-3.5 border-b border-[#2C2C2E] hover:bg-[#252525] transition items-center text-xs"
+                    className="grid grid-cols-3 gap-4 px-5 py-3 border-b border-[#1E293B] hover:bg-[#1E293B]/50 transition items-center text-xs"
                   >
-                    <code className="font-mono font-bold text-[#00E5FF]">{ev.event}</code>
+                    <code className="font-mono font-bold text-[#22D3EE]">{ev.event}</code>
                     <div>
                       <span
-                        className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                        className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-[4px] ${
                           ev.group === 'Order'
-                            ? 'bg-[#00E5FF]/10 text-[#00E5FF] border border-[#00E5FF]/30'
-                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                            ? 'bg-[#22D3EE]/10 text-[#22D3EE] border border-[#22D3EE]/30'
+                            : 'bg-[#FBBF24]/10 text-[#FBBF24] border border-[#FBBF24]/30'
                         }`}
                       >
                         {ev.group}
                       </span>
                     </div>
-                    <span className="text-[#98989D]">{ev.desc}</span>
+                    <span className="text-[#94A3B8] font-sans">{ev.desc}</span>
                   </div>
                 ))}
               </div>
 
               <div className="space-y-3">
-                <h3 className="text-sm font-bold text-white">Sample Payload — checkout.completed</h3>
-                <div className="rounded-2xl bg-[#161616] border border-[#2C2C2E] overflow-hidden">
-                  <div className="flex justify-between items-center px-4 py-2.5 bg-[#181818] border-b border-[#2C2C2E]">
-                    <span className="text-xs text-[#98989D] font-mono">application/json</span>
+                <h3 className="text-sm font-mono font-bold text-[#F1F5F9]">Sample Payload — checkout.completed</h3>
+                <div className="rounded-[6px] bg-[#0F172A] border border-[#334155] overflow-hidden">
+                  <div className="flex justify-between items-center px-4 py-2 bg-[#1E293B] border-b border-[#334155]">
+                    <span className="text-xs text-[#64748B] font-mono">application/json</span>
                     <button
                       onClick={() =>
                         copy(
@@ -1497,17 +1897,17 @@ export default function DocsPage() {
                           'wh-payload',
                         )
                       }
-                      className="text-xs text-[#98989D] hover:text-[#00E5FF] flex items-center gap-1.5 transition font-mono"
+                      className="text-xs text-[#94A3B8] hover:text-[#4ADE80] flex items-center gap-1.5 transition font-mono hover:bg-[#0F172A] px-2 py-1 rounded-[4px] border border-transparent hover:border-[#334155]"
                     >
                       {copied === 'wh-payload' ? (
-                        <Check className="w-3.5 h-3.5 text-[#32D74B]" />
+                        <Check className="w-3.5 h-3.5 text-[#4ADE80]" />
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
                       Copy
                     </button>
                   </div>
-                  <pre className="p-4 text-xs font-mono text-slate-200 overflow-x-auto leading-relaxed">
+                  <pre className="p-4 text-xs font-mono text-[#F1F5F9] overflow-x-auto leading-relaxed">
                     {JSON.stringify(
                       {
                         event: 'checkout.completed',
@@ -1533,12 +1933,12 @@ export default function DocsPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-[#161616] border border-[#2C2C2E] p-5 space-y-2">
-                <div className="text-sm font-bold text-white flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-[#32D74B]" /> Webhook Signature Verification
+              <div className="rounded-[6px] bg-[#0F172A] border border-[#334155] p-5 space-y-2">
+                <div className="text-sm font-mono font-bold text-[#F1F5F9] flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-[#4ADE80]" /> Webhook Signature Verification
                 </div>
-                <p className="text-xs text-[#98989D] leading-relaxed">
-                  Every webhook HTTP POST includes an <code className="text-[#00E5FF] font-mono">X-Webhook-Secret</code> header. Always verify that this matches your registered endpoint secret token to prevent spoofed triggers.
+                <p className="text-xs text-[#94A3B8] leading-relaxed font-sans">
+                  Every webhook HTTP POST includes an <code className="text-[#22D3EE] font-mono">X-Webhook-Secret</code> header. Always verify that this matches your registered endpoint secret token to prevent spoofed triggers.
                 </p>
               </div>
             </div>
@@ -1548,32 +1948,32 @@ export default function DocsPage() {
           {activeEndpoint === '__errors' && (
             <div className="space-y-8">
               <div>
-                <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#FF453A] mb-2 flex items-center gap-2">
+                <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#F87171] mb-2 flex items-center gap-2">
                   <AlertCircle className="w-3.5 h-3.5" /> Reference
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white font-sans mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#F1F5F9] font-mono mb-2 tracking-tight">
                   HTTP Error Codes & Responses
                 </h1>
-                <p className="text-[#98989D] text-sm leading-relaxed">
+                <p className="text-[#94A3B8] text-sm leading-relaxed font-sans">
                   All error responses return standard HTTP status codes and a consistent JSON payload structure.
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-[#161616] border border-[#2C2C2E] p-5 font-mono text-xs leading-relaxed">
-                <span className="text-[#98989D]">{'{'}</span>
+              <div className="rounded-[6px] bg-[#0F172A] border border-[#334155] p-4 font-mono text-xs leading-relaxed">
+                <span className="text-[#64748B]">{'{'}</span>
                 <br />
-                <span className="text-[#98989D] ml-4">"error": </span>
-                <span className="text-[#FF453A]">"Not Found"</span>
-                <span className="text-[#98989D]">,</span>
+                <span className="text-[#94A3B8] ml-4">"error": </span>
+                <span className="text-[#F87171]">"Not Found"</span>
+                <span className="text-[#64748B]">,</span>
                 <br />
-                <span className="text-[#98989D] ml-4">"message": </span>
-                <span className="text-amber-400">"Product 'abc' not found."</span>
+                <span className="text-[#94A3B8] ml-4">"message": </span>
+                <span className="text-[#FBBF24]">"Product 'abc' not found."</span>
                 <br />
-                <span className="text-[#98989D]">{'}'}</span>
+                <span className="text-[#64748B]">{'}'}</span>
               </div>
 
-              <div className="rounded-2xl border border-[#2C2C2E] bg-[#161616] overflow-hidden">
-                <div className="bg-[#181818] px-5 py-3 border-b border-[#2C2C2E] grid grid-cols-4 text-xs font-mono font-bold text-[#98989D] uppercase tracking-wider">
+              <div className="rounded-[6px] border border-[#334155] bg-[#0F172A] overflow-hidden">
+                <div className="bg-[#1E293B] px-5 py-2.5 border-b border-[#334155] grid grid-cols-4 text-xs font-mono font-bold text-[#64748B] uppercase tracking-wider">
                   <span>HTTP Status</span>
                   <span>Error Field</span>
                   <span>When it occurs</span>
@@ -1637,22 +2037,22 @@ export default function DocsPage() {
                 ].map((row) => (
                   <div
                     key={row.status}
-                    className="grid grid-cols-4 gap-3 px-5 py-3.5 border-b border-[#2C2C2E] hover:bg-[#252525] transition text-xs items-start"
+                    className="grid grid-cols-4 gap-3 px-5 py-3 border-b border-[#1E293B] hover:bg-[#1E293B]/50 transition text-xs items-start"
                   >
                     <code
                       className={`font-mono font-bold ${
                         row.status.includes('200') || row.status.includes('201')
-                          ? 'text-[#32D74B]'
+                          ? 'text-[#4ADE80]'
                           : row.status.includes('4')
-                            ? 'text-amber-400'
-                            : 'text-[#FF453A]'
+                            ? 'text-[#FBBF24]'
+                            : 'text-[#F87171]'
                       }`}
                     >
                       {row.status}
                     </code>
-                    <code className="font-mono text-[#98989D] text-[11px]">{row.error}</code>
-                    <span className="text-[#98989D]">{row.when}</span>
-                    <span className="text-white">{row.fix}</span>
+                    <code className="font-mono text-[#94A3B8] text-[11px]">{row.error}</code>
+                    <span className="text-[#94A3B8] font-sans">{row.when}</span>
+                    <span className="text-[#F1F5F9] font-sans">{row.fix}</span>
                   </div>
                 ))}
               </div>
@@ -1673,50 +2073,50 @@ export default function DocsPage() {
                   return (
                     <div
                       key={s.id}
-                      className="flex items-center gap-1.5 text-xs font-mono font-semibold text-[#00E5FF]"
+                      className="flex items-center gap-1.5 text-xs font-mono font-semibold text-[#22D3EE]"
                     >
                       <Icon className="w-3.5 h-3.5" />
                       <span>{s.label}</span>
-                      <ChevronRight className="w-3 h-3 text-[#98989D]" />
-                      <span className="text-[#98989D] font-normal">{currentEndpoint.title}</span>
+                      <ChevronRight className="w-3 h-3 text-[#64748B]" />
+                      <span className="text-[#94A3B8] font-normal">{currentEndpoint.title}</span>
                     </div>
                   );
                 })}
 
                 {/* Title + Desc */}
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white font-sans mb-2">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-[#F1F5F9] font-mono mb-2 tracking-tight">
                     {currentEndpoint.title}
                   </h1>
-                  <p className="text-[#98989D] text-sm leading-relaxed">{currentEndpoint.desc}</p>
+                  <p className="text-[#94A3B8] text-sm leading-relaxed font-sans">{currentEndpoint.desc}</p>
                 </div>
 
                 {/* Method + Path Box */}
-                <div className="rounded-2xl bg-[#161616] border border-[#2C2C2E] overflow-hidden">
-                  <div className="flex flex-wrap items-center gap-3 p-4 border-b border-[#2C2C2E]">
+                <div className="rounded-[6px] bg-[#0F172A] border border-[#334155] overflow-hidden">
+                  <div className="flex flex-wrap items-center gap-3 p-3.5 border-b border-[#334155]">
                     <span
-                      className={`text-xs font-bold px-2.5 py-1 rounded-lg font-mono ${METHOD_STYLES[currentEndpoint.method]}`}
+                      className={`text-xs font-bold px-2 py-0.5 rounded-[4px] font-mono ${METHOD_STYLES[currentEndpoint.method]}`}
                     >
                       {currentEndpoint.method}
                     </span>
-                    <code className="font-mono text-white text-xs sm:text-sm flex-1 min-w-[200px]">
+                    <code className="font-mono text-[#F1F5F9] text-xs sm:text-sm flex-1 min-w-[200px]">
                       {BASE_URL}
                       {currentEndpoint.path}
                     </code>
                     <button
                       onClick={() => copy(`${BASE_URL}${currentEndpoint.path}`, 'path')}
-                      className="text-[#98989D] hover:text-[#00E5FF] hover:bg-[#252525] p-1.5 rounded-lg border border-[#2C2C2E] transition"
+                      className="text-[#94A3B8] hover:text-[#4ADE80] hover:bg-[#1E293B] p-1.5 rounded-[4px] border border-[#334155] transition"
                       title="Copy URL"
                     >
                       {copied === 'path' ? (
-                        <Check className="w-4 h-4 text-[#32D74B]" />
+                        <Check className="w-4 h-4 text-[#4ADE80]" />
                       ) : (
                         <Copy className="w-4 h-4" />
                       )}
                     </button>
                   </div>
-                  <div className="px-4 py-3 flex items-center gap-3 bg-[#181818]">
-                    <span className="text-xs text-[#98989D] font-mono">Authentication:</span>
+                  <div className="px-4 py-2.5 flex items-center gap-3 bg-[#1E293B]/60">
+                    <span className="text-xs text-[#64748B] font-mono">Authentication:</span>
                     <AuthBadge auth={currentEndpoint.auth} />
                   </div>
                 </div>
@@ -1726,38 +2126,38 @@ export default function DocsPage() {
                   currentEndpoint.queryParams ||
                   currentEndpoint.bodyParams) && (
                   <div className="space-y-6">
-                    <h2 className="text-base font-bold text-white font-sans">Parameters</h2>
+                    <h2 className="text-base font-bold text-[#F1F5F9] font-mono">Parameters</h2>
 
                     {currentEndpoint.pathParams && (
                       <div className="space-y-2">
-                        <div className="text-xs font-mono font-bold text-[#98989D] uppercase tracking-wider">
+                        <div className="text-xs font-mono font-bold text-[#64748B] uppercase tracking-wider">
                           Path Parameters
                         </div>
-                        <div className="rounded-2xl border border-[#2C2C2E] bg-[#161616] overflow-hidden">
+                        <div className="rounded-[6px] border border-[#334155] bg-[#0F172A] overflow-hidden">
                           {currentEndpoint.pathParams.map((p, i) => (
                             <div
                               key={p.name}
                               className={`flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 px-4 py-3 text-xs ${
                                 i < currentEndpoint.pathParams!.length - 1
-                                  ? 'border-b border-[#2C2C2E]'
+                                  ? 'border-b border-[#1E293B]'
                                   : ''
-                              } hover:bg-[#252525] transition`}
+                              } hover:bg-[#1E293B]/50 transition`}
                             >
-                              <code className="text-[#00E5FF] font-mono font-bold sm:w-32 shrink-0">
+                              <code className="text-[#22D3EE] font-mono font-bold sm:w-32 shrink-0">
                                 {p.name}
                               </code>
                               <div className="flex-1 min-w-0 space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[11px] text-[#98989D] font-mono">
+                                  <span className="text-[11px] text-[#94A3B8] font-mono">
                                     {p.type}
                                   </span>
                                   {p.required && (
-                                    <span className="text-[10px] font-mono font-bold text-[#FF453A] bg-[#FF453A]/15 border border-[#FF453A]/30 px-1.5 py-0.2 rounded">
+                                    <span className="text-[10px] font-mono font-bold text-[#F87171] bg-[#F87171]/10 border border-[#F87171]/30 px-1.5 py-0.5 rounded-[4px]">
                                       required
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-xs text-[#98989D]">{p.desc}</p>
+                                <p className="text-xs text-[#94A3B8] font-sans">{p.desc}</p>
                               </div>
                             </div>
                           ))}
@@ -1767,34 +2167,34 @@ export default function DocsPage() {
 
                     {currentEndpoint.queryParams && (
                       <div className="space-y-2">
-                        <div className="text-xs font-mono font-bold text-[#98989D] uppercase tracking-wider">
+                        <div className="text-xs font-mono font-bold text-[#64748B] uppercase tracking-wider">
                           Query Parameters
                         </div>
-                        <div className="rounded-2xl border border-[#2C2C2E] bg-[#161616] overflow-hidden">
+                        <div className="rounded-[6px] border border-[#334155] bg-[#0F172A] overflow-hidden">
                           {currentEndpoint.queryParams.map((p, i) => (
                             <div
                               key={p.name}
                               className={`flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 px-4 py-3 text-xs ${
                                 i < currentEndpoint.queryParams!.length - 1
-                                  ? 'border-b border-[#2C2C2E]'
+                                  ? 'border-b border-[#1E293B]'
                                   : ''
-                              } hover:bg-[#252525] transition`}
+                              } hover:bg-[#1E293B]/50 transition`}
                             >
-                              <code className="text-[#00E5FF] font-mono font-bold sm:w-36 shrink-0">
+                              <code className="text-[#22D3EE] font-mono font-bold sm:w-36 shrink-0">
                                 {p.name}
                               </code>
                               <div className="flex-1 min-w-0 space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[11px] text-[#98989D] font-mono">
+                                  <span className="text-[11px] text-[#94A3B8] font-mono">
                                     {p.type}
                                   </span>
                                   {p.required && (
-                                    <span className="text-[10px] font-mono font-bold text-[#FF453A] bg-[#FF453A]/15 border border-[#FF453A]/30 px-1.5 py-0.2 rounded">
+                                    <span className="text-[10px] font-mono font-bold text-[#F87171] bg-[#F87171]/10 border border-[#F87171]/30 px-1.5 py-0.5 rounded-[4px]">
                                       required
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-xs text-[#98989D]">{p.desc}</p>
+                                <p className="text-xs text-[#94A3B8] font-sans">{p.desc}</p>
                               </div>
                             </div>
                           ))}
@@ -1804,37 +2204,37 @@ export default function DocsPage() {
 
                     {currentEndpoint.bodyParams && (
                       <div className="space-y-2">
-                        <div className="text-xs font-mono font-bold text-[#98989D] uppercase tracking-wider flex items-center gap-2">
+                        <div className="text-xs font-mono font-bold text-[#64748B] uppercase tracking-wider flex items-center gap-2">
                           Body Parameters{' '}
-                          <span className="text-[11px] text-[#98989D] font-normal">
+                          <span className="text-[11px] text-[#64748B] font-mono font-normal">
                             (application/json)
                           </span>
                         </div>
-                        <div className="rounded-2xl border border-[#2C2C2E] bg-[#161616] overflow-hidden">
+                        <div className="rounded-[6px] border border-[#334155] bg-[#0F172A] overflow-hidden">
                           {currentEndpoint.bodyParams.map((p, i) => (
                             <div
                               key={p.name}
                               className={`flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 px-4 py-3 text-xs ${
                                 i < currentEndpoint.bodyParams!.length - 1
-                                  ? 'border-b border-[#2C2C2E]'
+                                  ? 'border-b border-[#1E293B]'
                                   : ''
-                              } hover:bg-[#252525] transition`}
+                              } hover:bg-[#1E293B]/50 transition`}
                             >
-                              <code className="text-amber-400 font-mono font-bold sm:w-48 shrink-0">
+                              <code className="text-[#FBBF24] font-mono font-bold sm:w-48 shrink-0">
                                 {p.name}
                               </code>
                               <div className="flex-1 min-w-0 space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[11px] text-[#98989D] font-mono">
+                                  <span className="text-[11px] text-[#94A3B8] font-mono">
                                     {p.type}
                                   </span>
                                   {p.required && (
-                                    <span className="text-[10px] font-mono font-bold text-[#FF453A] bg-[#FF453A]/15 border border-[#FF453A]/30 px-1.5 py-0.2 rounded">
+                                    <span className="text-[10px] font-mono font-bold text-[#F87171] bg-[#F87171]/10 border border-[#F87171]/30 px-1.5 py-0.5 rounded-[4px]">
                                       required
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-xs text-[#98989D]">{p.desc}</p>
+                                <p className="text-xs text-[#94A3B8] font-sans">{p.desc}</p>
                               </div>
                             </div>
                           ))}
@@ -1847,9 +2247,9 @@ export default function DocsPage() {
                 {/* Response Fields */}
                 {currentEndpoint.responseFields && (
                   <div className="space-y-3">
-                    <h2 className="text-base font-bold text-white font-sans">Response Fields</h2>
-                    <div className="rounded-2xl border border-[#2C2C2E] bg-[#161616] overflow-hidden">
-                      <div className="grid grid-cols-3 px-4 py-3 bg-[#181818] border-b border-[#2C2C2E] text-xs font-mono font-bold uppercase tracking-wider text-[#98989D]">
+                    <h2 className="text-base font-bold text-[#F1F5F9] font-mono">Response Fields</h2>
+                    <div className="rounded-[6px] border border-[#334155] bg-[#0F172A] overflow-hidden">
+                      <div className="grid grid-cols-3 px-4 py-2.5 bg-[#1E293B] border-b border-[#334155] text-xs font-mono font-bold uppercase tracking-wider text-[#64748B]">
                         <span>Field</span>
                         <span>Type</span>
                         <span>Description</span>
@@ -1859,13 +2259,13 @@ export default function DocsPage() {
                           key={rf.field}
                           className={`grid grid-cols-3 gap-3 px-4 py-3 text-xs ${
                             i < currentEndpoint.responseFields!.length - 1
-                              ? 'border-b border-[#2C2C2E]'
+                              ? 'border-b border-[#1E293B]'
                               : ''
-                          } hover:bg-[#252525] transition`}
+                          } hover:bg-[#1E293B]/50 transition`}
                         >
-                          <code className="font-mono text-[#32D74B] font-semibold">{rf.field}</code>
-                          <code className="font-mono text-[#98989D]">{rf.type}</code>
-                          <span className="text-[#98989D]">{rf.desc}</span>
+                          <code className="font-mono text-[#4ADE80] font-semibold">{rf.field}</code>
+                          <code className="font-mono text-[#22D3EE] text-[11px]">{rf.type}</code>
+                          <span className="text-[#94A3B8] font-sans">{rf.desc}</span>
                         </div>
                       ))}
                     </div>
@@ -1874,10 +2274,10 @@ export default function DocsPage() {
 
                 {/* Code Examples */}
                 <div className="space-y-3">
-                  <h2 className="text-base font-bold text-white font-sans">Code Examples</h2>
+                  <h2 className="text-base font-bold text-[#F1F5F9] font-mono">Code Examples</h2>
 
                   {/* Tabs */}
-                  <div className="flex gap-2 border-b border-[#2C2C2E] pb-2 overflow-x-auto">
+                  <div className="flex gap-2 border-b border-[#334155] pb-2 overflow-x-auto">
                     {[
                       { key: 'response', label: '✅ Success Response', always: true },
                       {
@@ -1893,10 +2293,10 @@ export default function DocsPage() {
                         <button
                           key={tab.key}
                           onClick={() => setTab(currentEndpoint.id, tab.key as any)}
-                          className={`px-3 py-2 text-xs font-mono font-bold rounded-xl transition whitespace-nowrap border ${
+                          className={`px-3 py-1.5 text-xs font-mono font-bold rounded-[4px] transition whitespace-nowrap border ${
                             getTab(currentEndpoint.id) === tab.key
-                              ? 'bg-[#00E5FF]/10 text-[#00E5FF] border-[#00E5FF]/30 shadow-[0_0_12px_rgba(0,229,255,0.1)]'
-                              : 'text-[#98989D] hover:text-white hover:bg-[#252525] border-transparent'
+                              ? 'bg-[#4ADE80]/15 text-[#4ADE80] border-[#4ADE80]/40 shadow-[0_0_10px_rgba(74,222,128,0.12)]'
+                              : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#334155] border-transparent'
                           }`}
                         >
                           {tab.label}
@@ -1904,9 +2304,9 @@ export default function DocsPage() {
                       ))}
                   </div>
 
-                  <div className="rounded-2xl bg-[#161616] border border-[#2C2C2E] overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-2.5 bg-[#181818] border-b border-[#2C2C2E]">
-                      <span className="text-xs text-[#98989D] font-mono">
+                  <div className="rounded-[6px] bg-[#0F172A] border border-[#334155] overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-2 bg-[#1E293B] border-b border-[#334155]">
+                      <span className="text-xs text-[#64748B] font-mono">
                         {getTab(currentEndpoint.id) === 'response'
                           ? '200 OK / 201 Created Schema'
                           : getTab(currentEndpoint.id) === 'request'
@@ -1928,10 +2328,10 @@ export default function DocsPage() {
                                   : currentEndpoint.jsExample || '';
                           copy(content, `${currentEndpoint.id}-${tab}`);
                         }}
-                        className="text-xs text-[#98989D] hover:text-[#00E5FF] flex items-center gap-1.5 transition font-mono"
+                        className="text-xs text-[#94A3B8] hover:text-[#4ADE80] flex items-center gap-1.5 transition font-mono hover:bg-[#0F172A] px-2 py-1 rounded-[4px] border border-transparent hover:border-[#334155]"
                       >
                         {copied === `${currentEndpoint.id}-${getTab(currentEndpoint.id)}` ? (
-                          <Check className="w-3.5 h-3.5 text-[#32D74B]" />
+                          <Check className="w-3.5 h-3.5 text-[#4ADE80]" />
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
@@ -1939,12 +2339,12 @@ export default function DocsPage() {
                       </button>
                     </div>
                     <pre
-                      className={`p-5 text-xs font-mono overflow-x-auto leading-relaxed max-h-96 ${
+                      className={`p-4 text-xs font-mono overflow-x-auto leading-relaxed max-h-96 ${
                         getTab(currentEndpoint.id) === 'response'
-                          ? 'text-[#32D74B]'
+                          ? 'text-[#4ADE80]'
                           : getTab(currentEndpoint.id) === 'request'
-                            ? 'text-[#FF453A]'
-                            : 'text-slate-200'
+                            ? 'text-[#F87171]'
+                            : 'text-[#F1F5F9]'
                       }`}
                     >
                       {getTab(currentEndpoint.id) === 'response'
@@ -1959,7 +2359,7 @@ export default function DocsPage() {
                 </div>
 
                 {/* Prev / Next */}
-                <div className="flex items-center justify-between pt-6 border-t border-[#2C2C2E]">
+                <div className="flex items-center justify-between pt-6 border-t border-[#334155]">
                   {(() => {
                     const idx = allEndpoints.findIndex((e) => e.id === currentEndpoint.id);
                     const prev = allEndpoints[idx - 1];
@@ -1970,14 +2370,14 @@ export default function DocsPage() {
                           {prev && (
                             <button
                               onClick={() => setActiveEndpoint(prev.id)}
-                              className="flex items-center gap-2.5 text-xs text-[#98989D] hover:text-[#00E5FF] transition group"
+                              className="flex items-center gap-2.5 text-xs text-[#94A3B8] hover:text-[#4ADE80] transition group"
                             >
-                              <ArrowRight className="w-4 h-4 rotate-180 text-[#98989D] group-hover:text-[#00E5FF]" />
+                              <ArrowRight className="w-4 h-4 rotate-180 text-[#64748B] group-hover:text-[#4ADE80]" />
                               <div className="text-left">
-                                <div className="text-[10px] uppercase font-mono tracking-wider text-[#98989D]">
+                                <div className="text-[10px] uppercase font-mono tracking-wider text-[#64748B]">
                                   Previous
                                 </div>
-                                <div className="font-bold text-white group-hover:text-[#00E5FF]">
+                                <div className="font-mono font-bold text-[#F1F5F9] group-hover:text-[#4ADE80]">
                                   {prev.title}
                                 </div>
                               </div>
@@ -1988,17 +2388,17 @@ export default function DocsPage() {
                           {next && (
                             <button
                               onClick={() => setActiveEndpoint(next.id)}
-                              className="flex items-center gap-2.5 text-xs text-[#98989D] hover:text-[#00E5FF] transition group"
+                              className="flex items-center gap-2.5 text-xs text-[#94A3B8] hover:text-[#4ADE80] transition group"
                             >
                               <div className="text-right">
-                                <div className="text-[10px] uppercase font-mono tracking-wider text-[#98989D]">
+                                <div className="text-[10px] uppercase font-mono tracking-wider text-[#64748B]">
                                   Next
                                 </div>
-                                <div className="font-bold text-white group-hover:text-[#00E5FF]">
+                                <div className="font-mono font-bold text-[#F1F5F9] group-hover:text-[#4ADE80]">
                                   {next.title}
                                 </div>
                               </div>
-                              <ArrowRight className="w-4 h-4 text-[#98989D] group-hover:text-[#00E5FF]" />
+                              <ArrowRight className="w-4 h-4 text-[#64748B] group-hover:text-[#4ADE80]" />
                             </button>
                           )}
                         </div>

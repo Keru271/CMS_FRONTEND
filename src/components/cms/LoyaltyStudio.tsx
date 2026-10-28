@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import { LoyaltyConfigData, LoyaltyTierData, LoyaltyMemberData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import { usePlanAccess } from '@/src/hooks/usePlanAccess';
@@ -49,6 +51,10 @@ export const LoyaltyStudio: React.FC = () => {
     text: string;
     type: 'success' | 'error';
   } | null>(null);
+
+  // Pagination
+  const [memberPage, setMemberPage] = useState(1);
+  const [memberPageSize, setMemberPageSize] = useState(10);
 
   useEffect(() => {
     loadData();
@@ -321,10 +327,13 @@ export const LoyaltyStudio: React.FC = () => {
         {/* Right: VIP Customer Ledger Table */}
         <div className="lg:col-span-7 space-y-4">
           <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
-            <h3 className="font-black text-base text-slate-900 dark:text-foreground flex items-center gap-2">
-              <Award className="w-5 h-5 text-indigo-600" />
-              <span>VIP Members Points Ledger</span>
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-black text-base text-slate-900 dark:text-foreground flex items-center gap-2">
+                <Award className="w-5 h-5 text-indigo-600" />
+                <span>VIP Members Points Ledger</span>
+              </h3>
+              <TableRefreshButton onRefresh={loadData} isLoading={isLoading} size="sm" />
+            </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
@@ -338,32 +347,56 @@ export const LoyaltyStudio: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-border">
-                  {members.map((m) => (
-                    <tr key={m.id} className="hover:bg-slate-50 dark:hover:bg-accent/40">
-                      <td className="py-3.5">
-                        <span className="font-bold text-slate-900 dark:text-foreground block">
-                          {m.customerName}
-                        </span>
-                        <span className="text-[11px] text-slate-400 font-mono">{m.email}</span>
+                  {members.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-400">
+                        No VIP members recorded yet.
                       </td>
-                      <td className="py-3.5">
-                        <span className="px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 font-bold text-[10px] border border-amber-200">
-                          {m.tier}
-                        </span>
-                      </td>
-                      <td className="py-3.5 font-bold">₹{m.totalSpent.toLocaleString()}</td>
-                      <td className="py-3.5">
-                        <span className="font-black text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
-                          <Coins className="w-3.5 h-3.5 text-amber-500" />
-                          <span>{m.pointsBalance} pts</span>
-                        </span>
-                      </td>
-                      <td className="py-3.5 text-slate-500">{m.pointsRedeemed} pts</td>
                     </tr>
-                  ))}
+                  ) : (
+                    members
+                      .slice((memberPage - 1) * memberPageSize, memberPage * memberPageSize)
+                      .map((m) => (
+                      <tr key={m.id} className="hover:bg-slate-50 dark:hover:bg-accent/40">
+                        <td className="py-3.5">
+                          <span className="font-bold text-slate-900 dark:text-foreground block">
+                            {m.customerName}
+                          </span>
+                          <span className="text-[11px] text-slate-400 font-mono">{m.email}</span>
+                        </td>
+                        <td className="py-3.5">
+                          <span className="px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 font-bold text-[10px] border border-amber-200">
+                            {m.tier}
+                          </span>
+                        </td>
+                        <td className="py-3.5 font-bold">₹{m.totalSpent.toLocaleString()}</td>
+                        <td className="py-3.5">
+                          <span className="font-black text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                            <Coins className="w-3.5 h-3.5 text-amber-500" />
+                            <span>{m.pointsBalance} pts</span>
+                          </span>
+                        </td>
+                        <td className="py-3.5 text-slate-500">{m.pointsRedeemed} pts</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
+
+            {members.length > 0 && (
+              <TablePagination
+                currentPage={memberPage}
+                totalItems={members.length}
+                pageSize={memberPageSize}
+                onPageChange={(p) => setMemberPage(p)}
+                onPageSizeChange={(s) => {
+                  setMemberPageSize(s);
+                  setMemberPage(1);
+                }}
+                itemName="VIP members"
+              />
+            )}
           </div>
         </div>
       </div>

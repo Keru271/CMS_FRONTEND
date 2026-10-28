@@ -20,6 +20,7 @@ import {
 import { cmsService } from '@/src/services/cmsService';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { getCurrencySymbol } from '@/src/lib/currency';
+import { TablePagination } from '@/src/components/ui/TablePagination';
 
 interface ProductImportModalProps {
   isOpen: boolean;
@@ -57,6 +58,8 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
 
   const [duplicateStrategy, setDuplicateStrategy] = useState<'UPDATE' | 'SKIP'>('UPDATE');
   const [isImporting, setIsImporting] = useState(false);
+  const [previewPage, setPreviewPage] = useState(1);
+  const [previewPageSize, setPreviewPageSize] = useState(10);
   const [importResult, setImportResult] = useState<{
     createdCount: number;
     updatedCount: number;
@@ -83,6 +86,7 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
     setFile(selectedFile);
     setErrorMessage(null);
     setImportResult(null);
+    setPreviewPage(1);
     setIsLoadingPreview(true);
 
     try {
@@ -436,7 +440,9 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {previewData.products.slice(0, 50).map((p: any, idx: number) => (
+                    {previewData.products
+                      .slice((previewPage - 1) * previewPageSize, previewPage * previewPageSize)
+                      .map((p: any, idx: number) => (
                       <tr
                         key={idx}
                         className="hover:bg-slate-50 dark:hover:bg-accent/40 transition-colors"
@@ -476,11 +482,16 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
                   </tbody>
                 </table>
               </div>
-              {previewData.products.length > 50 && (
-                <p className="text-[11px] text-slate-400 text-center">
-                  Showing first 50 rows of {previewData.products.length} total products.
-                </p>
-              )}
+              <TablePagination
+                currentPage={previewPage}
+                totalItems={previewData.products.length}
+                pageSize={previewPageSize}
+                onPageChange={setPreviewPage}
+                onPageSizeChange={(newSize) => {
+                  setPreviewPageSize(newSize);
+                  setPreviewPage(1);
+                }}
+              />
             </div>
           )}
         </div>

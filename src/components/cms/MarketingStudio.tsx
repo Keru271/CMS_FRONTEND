@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import {
   CMSMarketingCampaign,
   CMSPixelConfig,
@@ -272,6 +274,12 @@ export const MarketingStudio: React.FC = () => {
     text: string;
     type: 'success' | 'error';
   } | null>(null);
+
+  // Pagination states
+  const [campaignPage, setCampaignPage] = useState(1);
+  const [campaignPageSize, setCampaignPageSize] = useState(10);
+  const [cartPage, setCartPage] = useState(1);
+  const [cartPageSize, setCartPageSize] = useState(10);
 
   const [activePixelGuide, setActivePixelGuide] = useState<PixelGuide | null>(null);
 
@@ -638,6 +646,8 @@ export const MarketingStudio: React.FC = () => {
             </h3>
 
             <div className="flex items-center gap-2.5">
+              <TableRefreshButton onRefresh={loadData} isLoading={isLoading} size="sm" />
+
               <a
                 href="/email-templates"
                 className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-400 text-xs font-extrabold flex items-center gap-1.5 border border-indigo-200 dark:border-indigo-900/50 transition-all"
@@ -659,84 +669,106 @@ export const MarketingStudio: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-accent border-b border-slate-200/80 dark:border-border text-slate-500 font-extrabold uppercase text-[10px] tracking-wider">
-                  <th className="py-4 px-6">Campaign Title</th>
-                  <th className="py-4 px-6">Channel</th>
-                  <th className="py-4 px-6">Target Audience</th>
-                  <th className="py-4 px-6">Sent Reach</th>
-                  <th className="py-4 px-6">Clicks & CTR</th>
-                  <th className="py-4 px-6">Revenue ({currencySymbol})</th>
-                  <th className="py-4 px-6 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-border font-medium text-slate-800 dark:text-slate-200">
-                {(() => {
-                  const filtered = campaigns.filter((c) =>
-                    activeTab === 'CAMPAIGNS' ? true : c.channel === activeTab,
-                  );
-                  if (filtered.length === 0) {
-                    return (
-                      <tr>
-                        <td colSpan={7} className="text-center py-16 text-slate-400">
-                          <Megaphone className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                          <span className="block text-slate-600 dark:text-slate-300 font-bold text-sm">
-                            No campaigns found
-                          </span>
-                          <span className="text-xs text-slate-400 font-normal">
-                            Create your first broadcast to start engaging your audience.
-                          </span>
-                        </td>
+          {(() => {
+            const filtered = campaigns.filter((c) =>
+              activeTab === 'CAMPAIGNS' ? true : c.channel === activeTab,
+            );
+            return (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-accent border-b border-slate-200/80 dark:border-border text-slate-500 font-extrabold uppercase text-[10px] tracking-wider">
+                        <th className="py-4 px-6">Campaign Title</th>
+                        <th className="py-4 px-6">Channel</th>
+                        <th className="py-4 px-6">Target Audience</th>
+                        <th className="py-4 px-6">Sent Reach</th>
+                        <th className="py-4 px-6">Clicks & CTR</th>
+                        <th className="py-4 px-6">Revenue ({currencySymbol})</th>
+                        <th className="py-4 px-6 text-right">Actions</th>
                       </tr>
-                    );
-                  }
-                  return filtered.map((c) => (
-                    <tr
-                      key={c.id}
-                      className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors"
-                    >
-                      <td className="py-4 px-6">
-                        <div className="font-extrabold text-sm text-slate-900 dark:text-foreground">
-                          {c.title}
-                        </div>
-                        <div className="text-[11px] text-slate-400 italic">{c.subject}</div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-accent font-black text-[10px] uppercase text-indigo-600 dark:text-indigo-400">
-                          {c.channel}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 font-semibold">{c.targetSegment}</td>
-                      <td className="py-4 px-6 font-bold">{c.sentCount.toLocaleString()} Sent</td>
-                      <td className="py-4 px-6">
-                        <span className="font-black text-slate-900 dark:text-foreground">
-                          {c.clickCount} Clicks
-                        </span>
-                        <span className="text-[10px] text-slate-400 block font-mono">
-                          {((c.clickCount / (c.sentCount || 1)) * 100).toFixed(1)}% CTR
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 font-black text-sm text-emerald-600">
-                        {currencySymbol}
-                        {c.revenueTotal.toFixed(2)}
-                      </td>
-                      <td className="py-4 px-6 text-right space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteCampaign(c.id)}
-                          className="p-1.5 rounded-xl bg-slate-100 dark:bg-accent text-rose-500 hover:bg-rose-50"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ));
-                })()}
-              </tbody>
-            </table>
-          </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-border font-medium text-slate-800 dark:text-slate-200">
+                      {filtered.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="text-center py-16 text-slate-400">
+                            <Megaphone className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                            <span className="block text-slate-600 dark:text-slate-300 font-bold text-sm">
+                              No campaigns found
+                            </span>
+                            <span className="text-xs text-slate-400 font-normal">
+                              Create your first broadcast to start engaging your audience.
+                            </span>
+                          </td>
+                        </tr>
+                      ) : (
+                        filtered
+                          .slice(
+                            (campaignPage - 1) * campaignPageSize,
+                            campaignPage * campaignPageSize,
+                          )
+                          .map((c) => (
+                          <tr
+                            key={c.id}
+                            className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors"
+                          >
+                            <td className="py-4 px-6">
+                              <div className="font-extrabold text-sm text-slate-900 dark:text-foreground">
+                                {c.title}
+                              </div>
+                              <div className="text-[11px] text-slate-400 italic">{c.subject}</div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-accent font-black text-[10px] uppercase text-indigo-600 dark:text-indigo-400">
+                                {c.channel}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6 font-semibold">{c.targetSegment}</td>
+                            <td className="py-4 px-6 font-bold">{c.sentCount.toLocaleString()} Sent</td>
+                            <td className="py-4 px-6">
+                              <span className="font-black text-slate-900 dark:text-foreground">
+                                {c.clickCount} Clicks
+                              </span>
+                              <span className="text-[10px] text-slate-400 block font-mono">
+                                {((c.clickCount / (c.sentCount || 1)) * 100).toFixed(1)}% CTR
+                              </span>
+                            </td>
+                            <td className="py-4 px-6 font-black text-sm text-emerald-600">
+                              {currencySymbol}
+                              {c.revenueTotal.toFixed(2)}
+                            </td>
+                            <td className="py-4 px-6 text-right space-x-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCampaign(c.id)}
+                                className="p-1.5 rounded-xl bg-slate-100 dark:bg-accent text-rose-500 hover:bg-rose-50"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {filtered.length > 0 && (
+                  <TablePagination
+                    currentPage={campaignPage}
+                    totalItems={filtered.length}
+                    pageSize={campaignPageSize}
+                    onPageChange={(p) => setCampaignPage(p)}
+                    onPageSizeChange={(s) => {
+                      setCampaignPageSize(s);
+                      setCampaignPage(1);
+                    }}
+                    itemName="campaigns"
+                  />
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
 
@@ -767,6 +799,7 @@ export const MarketingStudio: React.FC = () => {
                   with promo vouchers.
                 </p>
               </div>
+              <TableRefreshButton onRefresh={loadData} isLoading={isLoading} size="sm" />
             </div>
 
             <div className="overflow-x-auto">
@@ -796,7 +829,9 @@ export const MarketingStudio: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    abandonedCarts.map((ac) => (
+                    abandonedCarts
+                      .slice((cartPage - 1) * cartPageSize, cartPage * cartPageSize)
+                      .map((ac) => (
                       <tr
                         key={ac.id}
                         className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors"
@@ -843,6 +878,20 @@ export const MarketingStudio: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {abandonedCarts.length > 0 && (
+              <TablePagination
+                currentPage={cartPage}
+                totalItems={abandonedCarts.length}
+                pageSize={cartPageSize}
+                onPageChange={(p) => setCartPage(p)}
+                onPageSizeChange={(s) => {
+                  setCartPageSize(s);
+                  setCartPage(1);
+                }}
+                itemName="abandoned carts"
+              />
+            )}
           </div>
         ))}
 

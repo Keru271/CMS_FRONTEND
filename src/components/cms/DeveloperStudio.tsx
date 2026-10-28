@@ -769,15 +769,7 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
       {/* ── TAB: API Keys ─────────────────────────────────────────────────────── */}
       {activeTab === 'API_KEYS' && (
         <div className="space-y-6">
-          {!canUseDeveloperApi ? (
-            <PlanLockOverlay
-              requiredPlan="API"
-              featureTitle="Storefront API Keys"
-              featureDescription="Developer API is a dedicated add-on (1,000/mo). Activate it to generate public API keys and access /api/v1 without altering your current store plan."
-            />
-          ) : (
-            <>
-              <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-sm text-slate-500">
                     Use{' '}
@@ -904,23 +896,13 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                   </div>
                 )}
               </div>
-            </>
-          )}
         </div>
       )}
 
       {/* ── TAB: Webhooks ─────────────────────────────────────────────────────── */}
       {activeTab === 'WEBHOOKS' && (
         <div className="space-y-6">
-          {!canUseWebhooks ? (
-            <PlanLockOverlay
-              requiredPlan="API"
-              featureTitle="Webhooks"
-              featureDescription="Subscribe to real-time storefront events like checkout.completed. Requires the API Tier add-on (1,000/mo) without changing your base store plan."
-            />
-          ) : (
-            <>
-              <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4">
                 <p className="text-sm text-slate-500">
                   Your endpoint receives a POST with a signed payload and a{' '}
                   <code className="text-indigo-600 bg-indigo-50 px-1 rounded text-xs">
@@ -1004,8 +986,6 @@ const { data: checkout } = await fetch('/api/v1/checkout', {
                   </div>
                 )}
               </div>
-            </>
-          )}
         </div>
       )}
 

@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { cmsService } from '@/src/services/cmsService';
 import { AiForecastResult } from '@/src/types';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 
 interface AiSalesForecastingProps {
   initialHorizon?: '30d' | '60d' | '90d';
@@ -22,10 +24,14 @@ export const AiSalesForecasting: React.FC<AiSalesForecastingProps> = ({ initialH
   const [horizon, setHorizon] = useState<'30d' | '60d' | '90d'>(initialHorizon);
   const [questionInput, setQuestionInput] = useState('How much can I expect to sell next month?');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [catPage, setCatPage] = useState(1);
+  const [catPageSize, setCatPageSize] = useState(5);
   const [data, setData] = useState<AiForecastResult | null>(null);
 
   const fetchForecast = async (query?: string, selectedHorizon?: '30d' | '60d' | '90d') => {
     setIsLoading(true);
+    setIsRefreshing(true);
     try {
       const q = query || questionInput || 'How much can I expect to sell next month?';
       const h = selectedHorizon || horizon;
@@ -35,10 +41,12 @@ export const AiSalesForecasting: React.FC<AiSalesForecastingProps> = ({ initialH
       console.error('Failed to load forecast:', err);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
+    setCatPage(1);
     fetchForecast(questionInput, horizon);
   }, [horizon]);
 
@@ -162,32 +170,61 @@ export const AiSalesForecasting: React.FC<AiSalesForecastingProps> = ({ initialH
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Category Breakdown */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white">Top Expected Categories</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400">
-                  <th className="pb-2 font-medium">Category</th>
-                  <th className="pb-2 font-medium">Projected Revenue</th>
-                  <th className="pb-2 font-medium">Share</th>
-                  <th className="pb-2 font-medium text-right">Orders</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {(data?.topExpectedCategories || []).map((cat, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/50">
-                    <td className="py-2.5 font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <span className="text-slate-400 font-mono text-[11px]">#{cat.rank}</span>
-                      {cat.category}
-                    </td>
-                    <td className="py-2.5 text-slate-700 dark:text-slate-300 font-semibold">{cat.expectedRevenue}</td>
-                    <td className="py-2.5 text-slate-500">{cat.sharePercent}%</td>
-                    <td className="py-2.5 text-right font-medium text-slate-900 dark:text-white">{cat.expectedOrders}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Top Expected Categories</h2>
+            <TableRefreshButton onRefresh={() => fetchForecast()} isRefreshing={isRefreshing} />
           </div>
+          {(() => {
+            const categories = data?.topExpectedCategories || [];
+            const paginatedCategories = categories.slice((catPage - 1) * catPageSize, catPage * catPageSize);
+            return (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400">
+                        <th className="pb-2 font-medium">Category</th>
+                        <th className="pb-2 font-medium">Projected Revenue</th>
+                        <th className="pb-2 font-medium">Share</th>
+                        <th className="pb-2 font-medium text-right">Orders</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {paginatedCategories.length > 0 ? (
+                        paginatedCategories.map((cat, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50/50">
+                            <td className="py-2.5 font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                              <span className="text-slate-400 font-mono text-[11px]">#{cat.rank}</span>
+                              {cat.category}
+                            </td>
+                            <td className="py-2.5 text-slate-700 dark:text-slate-300 font-semibold">{cat.expectedRevenue}</td>
+                            <td className="py-2.5 text-slate-500">{cat.sharePercent}%</td>
+                            <td className="py-2.5 text-right font-medium text-slate-900 dark:text-white">{cat.expectedOrders}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={4} className="py-8 text-center text-slate-400">
+                            No category data available.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <TablePagination
+                  currentPage={catPage}
+                  totalItems={categories.length}
+                  pageSize={catPageSize}
+                  onPageChange={setCatPage}
+                  onPageSizeChange={(newSize) => {
+                    setCatPageSize(newSize);
+                    setCatPage(1);
+                  }}
+                />
+              </>
+            );
+          })()}
         </div>
 
         {/* Stockout Warnings */}

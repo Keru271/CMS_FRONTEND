@@ -49,6 +49,8 @@ export const GoLiveModal: React.FC<GoLiveModalProps> = ({
     setActiveStore,
   } = useCMS();
 
+  const router = useRouter();
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [readiness, setReadiness] = useState<StoreLaunchReadiness | null>(null);

@@ -473,7 +473,8 @@ export const GiftCardManager: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead className="bg-slate-50 dark:bg-accent/40 text-slate-500 uppercase text-[10px] font-black tracking-wider border-b border-slate-200/80 dark:border-border">
                 <tr>
@@ -676,6 +677,7 @@ export const GiftCardManager: React.FC = () => {
             onPageSizeChange={(s) => { setGiftCardPageSize(s); setGiftCardPage(1); }}
             itemName="gift cards"
           />
+        </>
         )}
       </div>
 

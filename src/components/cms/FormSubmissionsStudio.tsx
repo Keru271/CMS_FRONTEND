@@ -31,6 +31,8 @@ import {
 } from 'lucide-react';
 import { CMSForm, FormSubmission, FormSubmissionStatus, FormField } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 
 interface Props {
   initialFormId?: string;
@@ -50,6 +52,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({ initialFormId, onBackTo
   const [staffNotes, setStaffNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({
@@ -76,13 +79,14 @@ export const FormSubmissionsStudio: React.FC<Props> = ({ initialFormId, onBackTo
   // Fetch submissions based on filters
   const loadSubmissions = async () => {
     setLoading(true);
+    setRefreshing(true);
     try {
       if (selectedFormId && selectedFormId !== 'ALL') {
         const res = await cmsService.getFormSubmissions(selectedFormId, {
           status: selectedStatus,
           search: searchQuery,
           page,
-          limit: 25,
+          limit: pageSize,
         });
         setSubmissions(res.submissions);
         setTotalCount(res.total);
@@ -92,7 +96,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({ initialFormId, onBackTo
           status: selectedStatus,
           search: searchQuery,
           page,
-          limit: 25,
+          limit: pageSize,
         });
         setSubmissions(res.submissions);
         setTotalCount(res.total);
@@ -110,7 +114,7 @@ export const FormSubmissionsStudio: React.FC<Props> = ({ initialFormId, onBackTo
   useEffect(() => {
     loadSubmissions();
     setSelectedIds([]);
-  }, [selectedFormId, selectedStatus, page]);
+  }, [selectedFormId, selectedStatus, page, pageSize]);
 
   // Handle Search submit
   const handleSearch = (e: React.FormEvent) => {
@@ -426,6 +430,8 @@ export const FormSubmissionsStudio: React.FC<Props> = ({ initialFormId, onBackTo
               className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </form>
+
+          <TableRefreshButton onRefresh={loadSubmissions} isRefreshing={refreshing} />
         </div>
       </div>
 
@@ -594,30 +600,16 @@ export const FormSubmissionsStudio: React.FC<Props> = ({ initialFormId, onBackTo
         )}
 
         {/* Pagination Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 text-xs text-slate-500">
-          <span>
-            Showing {submissions.length} of {totalCount} submissions
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="font-semibold text-slate-700 dark:text-slate-300">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <TablePagination
+          currentPage={page}
+          totalItems={totalCount}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
+        />
       </div>
 
       {/* Detail Submission Modal / Slide-over */}

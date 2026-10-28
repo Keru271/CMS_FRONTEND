@@ -1,6 +1,6 @@
 // ─── Tier Permissions & Quota Engine ─────────────────────────────────────────
 
-export type SubscriptionPlanTier = 'STARTER' | 'GROWTH' | 'ENTERPRISE' | 'AGENCY' | 'API';
+export type SubscriptionPlanTier = 'STARTER' | 'GROWTH' | 'ENTERPRISE' | 'AGENCY';
 
 export interface TierConfig {
   id: SubscriptionPlanTier;
@@ -26,7 +26,7 @@ export const TIER_CONFIGS: Record<SubscriptionPlanTier, TierConfig> = {
     maxProducts: 50,
     maxStaff: 2,
     customDomains: false,
-    developerApi: false,
+    developerApi: true,
     loyalty: false,
     marketingAutomations: false,
     reviewModeration: false,
@@ -41,7 +41,7 @@ export const TIER_CONFIGS: Record<SubscriptionPlanTier, TierConfig> = {
     maxProducts: 1000,
     maxStaff: 10,
     customDomains: true,
-    developerApi: false,
+    developerApi: true,
     loyalty: true,
     marketingAutomations: true,
     reviewModeration: true,
@@ -56,7 +56,7 @@ export const TIER_CONFIGS: Record<SubscriptionPlanTier, TierConfig> = {
     maxProducts: 999999,
     maxStaff: 999,
     customDomains: true,
-    developerApi: false,
+    developerApi: true,
     loyalty: true,
     marketingAutomations: true,
     reviewModeration: true,
@@ -68,21 +68,6 @@ export const TIER_CONFIGS: Record<SubscriptionPlanTier, TierConfig> = {
     id: 'AGENCY',
     name: 'VIP Agency & Enterprise Plus',
     badge: 'Dedicated Cloud & SLA',
-    maxProducts: 999999,
-    maxStaff: 999,
-    customDomains: true,
-    developerApi: false,
-    loyalty: true,
-    marketingAutomations: true,
-    reviewModeration: true,
-    advancedAnalytics: true,
-    exportAnalytics: true,
-    transactionFeePercent: 0.0,
-  },
-  API: {
-    id: 'API',
-    name: 'API Tier',
-    badge: 'Developer Exclusive • 1,000/mo',
     maxProducts: 999999,
     maxStaff: 999,
     customDomains: true,
@@ -99,7 +84,6 @@ export const TIER_CONFIGS: Record<SubscriptionPlanTier, TierConfig> = {
 export function normalizeTier(plan?: string | null): SubscriptionPlanTier {
   if (!plan) return 'STARTER';
   const upper = plan.toUpperCase();
-  if (upper === 'API') return 'API';
   if (upper === 'AGENCY' || upper.includes('VIP') || upper.includes('PLUS')) return 'AGENCY';
   if (upper === 'ENTERPRISE' || upper.includes('SCALE')) return 'ENTERPRISE';
   if (upper === 'GROWTH' || upper.includes('PRO')) return 'GROWTH';
@@ -116,7 +100,7 @@ export function canUseCustomDomains(plan?: string | null): boolean {
 }
 
 export function canUseDeveloperApi(plan?: string | null): boolean {
-  return normalizeTier(plan) === 'API';
+  return true;
 }
 
 export function canUseLoyalty(plan?: string | null): boolean {

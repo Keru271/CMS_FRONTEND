@@ -5386,33 +5386,6 @@ export const cmsService = {
               'Dedicated Account Manager (SLA 1-Hour)',
             ],
           },
-          {
-            id: 'API',
-            name: 'API Tier',
-            badge: 'Developer Exclusive',
-            description:
-              'Full programmatic access to Developer REST APIs (/api/v1), Webhooks, and Headless Commerce engine.',
-            priceMonthlyInr: 1000,
-            priceMonthlyUsd: 1000,
-            priceAnnualInr: 10000,
-            priceAnnualUsd: 10000,
-            transactionFeePercent: 0.0,
-            maxProducts: 999999,
-            maxStaff: 999,
-            customDomain: true,
-            analyticsTier: 'API Telemetry & Request Metrics',
-            supportTier: 'Priority Developer Support',
-            popular: true,
-            features: [
-              'Exclusive Access to /api/v1 Developer REST APIs',
-              'Unlimited Storefront API Keys & Scopes',
-              'Real-Time Webhooks & HMAC Signatures',
-              'Unified /payments/process & Sandbox Simulator',
-              'Headless Commerce & Mobile App SDK',
-              'Sub-10ms Fastify High-Throughput Engine',
-              '0.0% Zero Platform Surcharge on API Orders',
-            ],
-          },
         ],
       };
     }
@@ -5495,8 +5468,8 @@ export const cmsService = {
 
   async changeStorePlan(payload: {
     plan: 'STARTER' | 'GROWTH' | 'ENTERPRISE' | 'AGENCY' | 'API' | string;
-    billingCycle: 'MONTHLY' | 'ANNUAL';
-    paymentMethod: 'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'STRIPE_CARD' | 'NETBANKING';
+    billingCycle: 'MONTHLY' | 'ANNUAL' | 'ONE_TIME' | 'LIFETIME' | string;
+    paymentMethod: 'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'STRIPE_CARD' | 'NETBANKING' | string;
     paymentMethodDetails?: string;
   }): Promise<{
     success: boolean;
@@ -5507,54 +5480,6 @@ export const cmsService = {
   }> {
     const response = await apiClient.post('/billing/change-plan', payload);
     return response.data;
-  },
-
-  async subscribeApiTier(payload?: {
-    paymentMethod?: string;
-    paymentMethodDetails?: string;
-  }): Promise<{
-    success: boolean;
-    message: string;
-    apiPlanActive: boolean;
-    apiPlanStatus: string;
-    basePlan: string;
-    renewsAt?: string;
-    invoice?: any;
-  }> {
-    try {
-      const response = await apiClient.post('/billing/api-tier/subscribe', payload || {});
-      return response.data;
-    } catch {
-      // Mock success for offline/client fallback
-      return {
-        success: true,
-        message: 'API Tier activated successfully for 1,000/mo. Your base tier remains unchanged.',
-        apiPlanActive: true,
-        apiPlanStatus: 'ACTIVE',
-        basePlan: 'STARTER',
-      };
-    }
-  },
-
-  async cancelApiTier(): Promise<{
-    success: boolean;
-    message: string;
-    apiPlanActive: boolean;
-    apiPlanStatus: string;
-    basePlan: string;
-  }> {
-    try {
-      const response = await apiClient.post('/billing/api-tier/cancel');
-      return response.data;
-    } catch {
-      return {
-        success: true,
-        message: 'API Tier subscription cancelled. Your base store tier remains unchanged.',
-        apiPlanActive: false,
-        apiPlanStatus: 'CANCELLED',
-        basePlan: 'STARTER',
-      };
-    }
   },
 
   async updateStorePaymentMethod(payload: {
@@ -5572,8 +5497,8 @@ export const cmsService = {
 
   // ─── RAZORPAY (FOR INDIAN MERCHANTS - INR) ──────────────────────────────
   async createBillingRazorpayOrder(payload: {
-    plan: 'GROWTH' | 'ENTERPRISE';
-    billingCycle: 'MONTHLY' | 'ANNUAL';
+    plan: 'GROWTH' | 'ENTERPRISE' | 'AGENCY' | 'API' | string;
+    billingCycle: 'MONTHLY' | 'ANNUAL' | 'ONE_TIME' | 'LIFETIME' | string;
   }): Promise<{
     success: boolean;
     orderId: string;
@@ -5596,8 +5521,8 @@ export const cmsService = {
     razorpay_order_id: string;
     razorpay_payment_id: string;
     razorpay_signature?: string;
-    plan: 'GROWTH' | 'ENTERPRISE';
-    billingCycle: 'MONTHLY' | 'ANNUAL';
+    plan: 'GROWTH' | 'ENTERPRISE' | 'AGENCY' | 'API' | string;
+    billingCycle: 'MONTHLY' | 'ANNUAL' | 'ONE_TIME' | 'LIFETIME' | string;
     paymentMethodDetails?: string;
   }): Promise<{
     success: boolean;
@@ -5613,7 +5538,7 @@ export const cmsService = {
   // ─── PAYPAL (FOR INTERNATIONAL MERCHANTS - USD/EUR/GBP) ──────────────────
   async createBillingPaypalOrder(payload: {
     plan: string;
-    billingCycle: 'MONTHLY' | 'ANNUAL';
+    billingCycle: 'MONTHLY' | 'ANNUAL' | 'ONE_TIME' | 'LIFETIME' | string;
     currency?: 'USD' | 'EUR' | 'GBP';
   }): Promise<{
     success: boolean;
@@ -5639,7 +5564,7 @@ export const cmsService = {
   async captureBillingPaypalOrder(payload: {
     orderId: string;
     plan: string;
-    billingCycle: 'MONTHLY' | 'ANNUAL';
+    billingCycle: 'MONTHLY' | 'ANNUAL' | 'ONE_TIME' | 'LIFETIME' | string;
     paymentMethodDetails?: string;
     currency?: string;
   }): Promise<{
@@ -7069,6 +6994,8 @@ export const cmsService = {
   async copilotChat(payload: {
     message: string;
     storeId?: string;
+    currency?: string;
+    currencySymbol?: string;
     history?: any[];
   }): Promise<{
     content: string;
@@ -7090,6 +7017,8 @@ export const cmsService = {
   async runAiAgent(payload: {
     message: string;
     storeId?: string;
+    currency?: string;
+    currencySymbol?: string;
     history?: any[];
   }): Promise<{
     reply: string;

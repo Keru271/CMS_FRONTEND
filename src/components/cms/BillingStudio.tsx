@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
+import { TablePagination } from '@/src/components/ui/TablePagination';
+import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import { PriceTierData, StoreSubscriptionData, StoreBillingInvoiceData, AiCreditStatsData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import {
@@ -81,13 +83,17 @@ const loadPaypalScript = (clientId: string = 'sb', currency: string = 'USD'): Pr
 export const BillingStudio: React.FC = () => {
   const [subscription, setSubscription] = useState<StoreSubscriptionData | null>(null);
   const [tiers, setTiers] = useState<PriceTierData[]>([]);
-  const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'ANNUAL'>('MONTHLY');
+  const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'ANNUAL' | 'ONE_TIME'>('MONTHLY');
   const [customerRegion, setCustomerRegion] = useState<'INDIA' | 'INTERNATIONAL'>('INDIA');
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<{
     text: string;
     type: 'success' | 'error';
   } | null>(null);
+
+  // Invoices Pagination
+  const [invoicePage, setInvoicePage] = useState(1);
+  const [invoicePageSize, setInvoicePageSize] = useState(10);
 
   // Pricing Carousel State
   const [activePricingSlide, setActivePricingSlide] = useState(0);
@@ -167,8 +173,6 @@ export const BillingStudio: React.FC = () => {
     loadBillingData();
   }, []);
 
-  const [isProcessingApiTier, setIsProcessingApiTier] = useState(false);
-
   const loadBillingData = async () => {
     setIsLoading(true);
     try {
@@ -199,40 +203,6 @@ export const BillingStudio: React.FC = () => {
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 4000);
-  };
-
-  const handleSubscribeApiTier = async () => {
-    setIsProcessingApiTier(true);
-    try {
-      const res = await cmsService.subscribeApiTier({
-        paymentMethod: customerRegion === 'INDIA' ? 'RAZORPAY_UPI' : 'PAYPAL',
-      });
-      showToast(`🎉 ${res.message}`, 'success');
-      await loadBillingData();
-    } catch (err: any) {
-      showToast(err?.message || 'Failed to activate API Tier', 'error');
-    } finally {
-      setIsProcessingApiTier(false);
-    }
-  };
-
-  const handleCancelApiTier = async () => {
-    if (
-      !confirm(
-        'Are you sure you want to cancel the API Tier? Developer API access will be deactivated, but your base store plan remains unaffected.',
-      )
-    )
-      return;
-    setIsProcessingApiTier(true);
-    try {
-      const res = await cmsService.cancelApiTier();
-      showToast(`ℹ️ ${res.message}`, 'success');
-      await loadBillingData();
-    } catch (err: any) {
-      showToast(err?.message || 'Failed to cancel API Tier', 'error');
-    } finally {
-      setIsProcessingApiTier(false);
-    }
   };
 
   // Open Checkout or Directly Activate Free Tier
@@ -615,6 +585,7 @@ export const BillingStudio: React.FC = () => {
               <div className="flex items-center gap-3">
                 <span className="px-3 py-1 rounded-full text-xs font-black bg-[#00E5FF] text-[#191a1b] uppercase tracking-wider">
                   Active Tier: {subscription.planConfig?.name || subscription.plan}
+                  {(subscription.billingCycle === 'ONE_TIME' || subscription.billingCycle === 'LIFETIME' || subscription.isOneTime || subscription.isLifetime) && ' • Lifetime Deal'}
                 </span>
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" />
@@ -633,15 +604,26 @@ export const BillingStudio: React.FC = () => {
 
               <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 pt-2">
                 <div className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-indigo-400" />
-                  <span>
-                    Renews on:{' '}
-                    {new Date(subscription.planRenewsAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </span>
+                  {(subscription.billingCycle === 'ONE_TIME' || subscription.billingCycle === 'LIFETIME' || subscription.isOneTime || subscription.isLifetime || !subscription.planRenewsAt) ? (
+                    <>
+                      <Crown className="w-4 h-4 text-amber-300" />
+                      <span className="text-amber-200 font-bold">
+                        Lifetime Access • No Renewal Required (Never Expires)
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-4 h-4 text-indigo-400" />
+                      <span>
+                        Renews on:{' '}
+                        {new Date(subscription.planRenewsAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    </>
+                  )}
                 </div>
                 <span>•</span>
                 <div className="flex items-center gap-1.5">
@@ -1004,12 +986,12 @@ export const BillingStudio: React.FC = () => {
           </p>
         </div>
 
-        {/* Monthly vs Annual Toggle (Refero Segmented Pill) */}
-        <div className="inline-flex items-center p-1 rounded-full bg-[#edf0f5] border border-[#e2e8f0] shadow-xs mt-2">
+        {/* Monthly vs Annual vs One-Time Lifetime Toggle (Refero Segmented Pill) */}
+        <div className="inline-flex items-center p-1 rounded-full bg-[#edf0f5] border border-[#e2e8f0] shadow-xs mt-2 flex-wrap justify-center gap-1">
           <button
             type="button"
             onClick={() => setBillingCycle('MONTHLY')}
-            className={`px-6 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+            className={`px-5 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
               billingCycle === 'MONTHLY'
                 ? 'bg-white text-slate-900 shadow-sm font-extrabold'
                 : 'text-slate-500 hover:text-slate-900'
@@ -1020,7 +1002,7 @@ export const BillingStudio: React.FC = () => {
           <button
             type="button"
             onClick={() => setBillingCycle('ANNUAL')}
-            className={`px-6 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               billingCycle === 'ANNUAL'
                 ? 'bg-white text-slate-900 shadow-sm font-extrabold'
                 : 'text-slate-500 hover:text-slate-900'
@@ -1029,6 +1011,25 @@ export const BillingStudio: React.FC = () => {
             <span>Annual Billing</span>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-600 border border-rose-200">
               Save 20%
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setBillingCycle('ONE_TIME')}
+            className={`px-5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              billingCycle === 'ONE_TIME'
+                ? 'bg-slate-900 text-[#00E5FF] shadow-sm font-extrabold'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <Crown className="w-3.5 h-3.5 text-amber-400" />
+            <span>One-Time Lifetime</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+              billingCycle === 'ONE_TIME'
+                ? 'bg-white/20 text-[#00E5FF]'
+                : 'bg-amber-100 text-amber-700 border border-amber-200'
+            }`}>
+              Pay Once ✨
             </span>
           </button>
         </div>
@@ -1047,28 +1048,40 @@ export const BillingStudio: React.FC = () => {
                 const isCurrentPlanAndCycle = currentPlanId.toUpperCase() === id && activeCycle === billingCycle;
                 const isSwitchingCycleOnSamePlan = currentPlanId.toUpperCase() === id && activeCycle !== billingCycle;
                 const isCurrent = isCurrentPlanAndCycle;
+                const isOneTime = billingCycle === 'ONE_TIME';
                 const isAnnual = billingCycle === 'ANNUAL';
                 const isIndian = customerRegion === 'INDIA';
 
                 const price = isIndian
-                  ? isAnnual
-                    ? tier.priceAnnualInr
-                    : tier.priceMonthlyInr
-                  : isAnnual
-                    ? tier.priceAnnualUsd
-                    : tier.priceMonthlyUsd;
+                  ? isOneTime
+                    ? (tier.priceOneTimeInr ?? (tier.priceAnnualInr ? Math.round(tier.priceAnnualInr * 2.2) : 0))
+                    : isAnnual
+                      ? tier.priceAnnualInr
+                      : tier.priceMonthlyInr
+                  : isOneTime
+                    ? (tier.priceOneTimeUsd ?? (tier.priceAnnualUsd ? Math.round(tier.priceAnnualUsd * 2.2) : 0))
+                    : isAnnual
+                      ? tier.priceAnnualUsd
+                      : tier.priceMonthlyUsd;
 
                 const currentTier =
                   tiers.find(
                     (t) => (currentPlanId || 'STARTER').toUpperCase() === t.id.toUpperCase(),
                   ) || tiers[0];
+                const currentIsOneTime = activeCycle === 'ONE_TIME' || activeCycle === 'LIFETIME';
+                const currentIsAnnual = activeCycle === 'ANNUAL';
+
                 const currentPrice = isIndian
-                  ? isAnnual
-                    ? currentTier.priceAnnualInr
-                    : currentTier.priceMonthlyInr
-                  : isAnnual
-                    ? currentTier.priceAnnualUsd
-                    : currentTier.priceMonthlyUsd;
+                  ? currentIsOneTime
+                    ? (currentTier.priceOneTimeInr ?? (currentTier.priceAnnualInr ? Math.round(currentTier.priceAnnualInr * 2.2) : 0))
+                    : currentIsAnnual
+                      ? currentTier.priceAnnualInr
+                      : currentTier.priceMonthlyInr
+                  : currentIsOneTime
+                    ? (currentTier.priceOneTimeUsd ?? (currentTier.priceAnnualUsd ? Math.round(currentTier.priceAnnualUsd * 2.2) : 0))
+                    : currentIsAnnual
+                      ? currentTier.priceAnnualUsd
+                      : currentTier.priceMonthlyUsd;
 
                 const isUpgradeTier = !isCurrent && price > currentPrice && currentPrice > 0;
                 const upgradeDiffPrice = isUpgradeTier ? Math.max(0, price - currentPrice) : price;
@@ -1099,12 +1112,12 @@ export const BillingStudio: React.FC = () => {
                       {isCurrent ? (
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10 whitespace-nowrap">
                           <CheckCircle2 className="w-3 h-3" />
-                          <span>Active Plan ({activeCycle.toLowerCase()})</span>
+                          <span>Active Plan ({activeCycle === 'ONE_TIME' ? 'Lifetime' : activeCycle.toLowerCase()})</span>
                         </div>
                       ) : isSwitchingCycleOnSamePlan ? (
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10 whitespace-nowrap">
                           <Sparkles className="w-3 h-3 text-amber-200" />
-                          <span>Switch to {billingCycle.toLowerCase()}</span>
+                          <span>Switch to {isOneTime ? 'Lifetime (Pay Once)' : billingCycle.toLowerCase()}</span>
                         </div>
                       ) : isUpgradeTier ? (
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10 whitespace-nowrap">
@@ -1146,30 +1159,44 @@ export const BillingStudio: React.FC = () => {
                         </div>
 
                         {/* Savings Callout Pill */}
-                        {isAnnual && !isStarter && (
+                        {isOneTime && !isStarter ? (
+                          <div className="text-xs font-bold text-amber-600 flex items-center gap-1">
+                            <Crown className="w-3.5 h-3.5 text-amber-500" />
+                            <span>Lifetime Deal: Pay once, never renew</span>
+                            <span>✨</span>
+                          </div>
+                        ) : isAnnual && !isStarter ? (
                           <div className="text-xs font-bold text-rose-600 flex items-center gap-1">
                             <span>Save 20% on Annual Plan</span>
                             <span>✨</span>
                           </div>
-                        )}
+                        ) : null}
 
                         {/* Price Display */}
                         <div className="py-2">
                           <div className="flex items-baseline gap-1">
                             <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight font-sans">
                               {currencySymbol}
-                              {isStarter ? '0' : isAnnual ? monthlyEquivalent.toLocaleString() : upgradeDiffPrice.toLocaleString()}
+                              {isStarter
+                                ? '0'
+                                : isOneTime
+                                  ? (isUpgradeTier ? upgradeDiffPrice.toLocaleString() : price.toLocaleString())
+                                  : isAnnual
+                                    ? monthlyEquivalent.toLocaleString()
+                                    : upgradeDiffPrice.toLocaleString()}
                             </span>
                             <span className="text-xl sm:text-2xl font-sans italic text-slate-500 font-normal">
-                              /month
+                              {isOneTime ? '/one-time' : '/month'}
                             </span>
                           </div>
                           <div className="text-[11px] font-medium text-slate-500 mt-1">
                             {isStarter
-                              ? 'Free to use'
-                              : isAnnual
-                                ? `${currencySymbol}${price.toLocaleString()} billed annually (${currencySymbol}${monthlyEquivalent.toLocaleString()}/mo)`
-                                : 'Billed monthly'}
+                              ? 'Free to use forever'
+                              : isOneTime
+                                ? 'One-time payment • Lifetime access • Zero monthly renewals'
+                                : isAnnual
+                                  ? `${currencySymbol}${price.toLocaleString()} billed annually (${currencySymbol}${monthlyEquivalent.toLocaleString()}/mo)`
+                                  : 'Billed monthly'}
                           </div>
                         </div>
 
@@ -1244,6 +1271,11 @@ export const BillingStudio: React.FC = () => {
                           >
                             {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
                               <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : isOneTime ? (
+                              <>
+                                <span>Switch to Lifetime (Pay Once)</span>
+                                <Crown className="w-4 h-4 text-amber-200" />
+                              </>
                             ) : isAnnual ? (
                               <>
                                 <span>Switch to Annual (Save 20%)</span>
@@ -1283,6 +1315,11 @@ export const BillingStudio: React.FC = () => {
                                   {upgradeDiffPrice.toLocaleString()}
                                 </span>
                                 <ArrowRight className="w-4 h-4" />
+                              </>
+                            ) : isOneTime ? (
+                              <>
+                                <span>Get Lifetime Access</span>
+                                <Crown className="w-4 h-4 text-amber-400" />
                               </>
                             ) : (
                               <>
@@ -1360,118 +1397,6 @@ export const BillingStudio: React.FC = () => {
         </div>
       )}
 
-      {/* ── DEVELOPER API TIER ADD-ON (1,000/mo) ────────────────────────── */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/40 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-3 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-500/40 flex items-center gap-1.5">
-                <Code2 className="w-3.5 h-3.5" />
-                Developer API Add-on Tier
-              </span>
-              {subscription?.apiPlanActive ? (
-                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[11px] flex items-center gap-1.5 border border-emerald-500/40">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Active • API Access Unlocked
-                </span>
-              ) : (
-                <span className="px-3 py-1 rounded-full bg-slate-800 text-slate-400 font-bold text-[11px] border border-slate-700">
-                  Not Subscribed
-                </span>
-              )}
-            </div>
-
-            <div>
-              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-                <span>API Tier (1,000 / month)</span>
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed">
-                The API Tier is a dedicated add-on exclusively for Developer API access. Purchasing
-                it unlocks the entire{' '}
-                <code className="text-indigo-400 font-mono bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-800/60">
-                  /api/v1/*
-                </code>{' '}
-                REST engine, API keys, and Webhooks{' '}
-                <strong>without altering your current base plan</strong> (your store remains on{' '}
-                {subscription?.planConfig?.name || subscription?.plan || 'Starter'}).
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs text-slate-200">
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Full /api/v1 Storefront REST Catalog</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Public Storefront Keys (pk_live_...)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Real-Time Webhooks & HMAC Signatures</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Preserves Current Base Store Quotas</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="w-full lg:w-auto flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-4 p-5 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 shrink-0">
-            <div>
-              <div className="text-xs text-indigo-300 font-bold uppercase tracking-wider">
-                Add-on Price
-              </div>
-              <div className="text-3xl font-black text-white mt-0.5">
-                {customerRegion === 'INDIA' ? '₹1,000' : '$1,000'}
-                <span className="text-xs font-normal text-slate-400"> / month</span>
-              </div>
-              {subscription?.apiPlanActive && subscription.apiPlanRenewsAt && (
-                <div className="text-[11px] text-emerald-300 mt-1">
-                  Renews: {new Date(subscription.apiPlanRenewsAt).toLocaleDateString()}
-                </div>
-              )}
-            </div>
-
-            <div className="w-full sm:w-auto">
-              {subscription?.apiPlanActive ? (
-                <button
-                  type="button"
-                  disabled={isProcessingApiTier}
-                  onClick={handleCancelApiTier}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {isProcessingApiTier ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <span>Cancel API Add-on</span>
-                  )}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  disabled={isProcessingApiTier}
-                  onClick={handleSubscribeApiTier}
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-500/30 transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                >
-                  {isProcessingApiTier ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Zap className="w-4 h-4 fill-current text-amber-300" />
-                      <span>Activate API Tier (1,000/mo)</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* BILLING & INVOICES HISTORY */}
       <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#cbd5e0] shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
@@ -1484,66 +1409,87 @@ export const BillingStudio: React.FC = () => {
               Official tax invoices and payment receipts with GST breakdowns.
             </p>
           </div>
+          <TableRefreshButton onRefresh={loadBillingData} isLoading={isLoading} size="sm" />
         </div>
 
         {subscription?.invoices && subscription.invoices.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-[10px]">
-                  <th className="py-3 px-4">Invoice #</th>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Plan / Tier</th>
-                  <th className="py-3 px-4">Billing Interval</th>
-                  <th className="py-3 px-4">Amount Paid</th>
-                  <th className="py-3 px-4">Currency</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {subscription.invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#191a1b]">
-                      {inv.invoiceNumber}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-500">
-                      {new Date(inv.paidAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </td>
-                    <td className="py-3.5 px-4 font-bold text-[#191a1b]">{inv.tierName}</td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-500">{inv.billingCycle}</td>
-                    <td className="py-3.5 px-4 font-bold text-[#191a1b]">
-                      {inv.currency === 'INR' ? '₹' : '$'}
-                      {inv.amount.toLocaleString()}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900">
-                        {inv.currency || 'INR'}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                        {inv.paymentStatus}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedInvoiceForReceipt(inv)}
-                        className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer flex items-center justify-end gap-1 ml-auto"
-                      >
-                        <Receipt className="w-3.5 h-3.5" />
-                        <span>View Receipt</span>
-                      </button>
-                    </td>
+          <div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-[10px]">
+                    <th className="py-3 px-4">Invoice #</th>
+                    <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4">Plan / Tier</th>
+                    <th className="py-3 px-4">Billing Interval</th>
+                    <th className="py-3 px-4">Amount Paid</th>
+                    <th className="py-3 px-4">Currency</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {subscription.invoices
+                    .slice((invoicePage - 1) * invoicePageSize, invoicePage * invoicePageSize)
+                    .map((inv) => (
+                    <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3.5 px-4 font-mono font-bold text-[#191a1b]">
+                        {inv.invoiceNumber}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-500">
+                        {new Date(inv.paidAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-[#191a1b]">{inv.tierName}</td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-500">
+                        {inv.billingCycle === 'ONE_TIME' || inv.billingCycle === 'LIFETIME'
+                          ? 'One-Time (Lifetime)'
+                          : inv.billingCycle}
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-[#191a1b]">
+                        {inv.currency === 'INR' ? '₹' : '$'}
+                        {inv.amount.toLocaleString()}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900">
+                          {inv.currency || 'INR'}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                          {inv.paymentStatus}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedInvoiceForReceipt(inv)}
+                          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer flex items-center justify-end gap-1 ml-auto"
+                        >
+                          <Receipt className="w-3.5 h-3.5" />
+                          <span>View Receipt</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <TablePagination
+              currentPage={invoicePage}
+              totalItems={subscription.invoices.length}
+              pageSize={invoicePageSize}
+              onPageChange={(p) => setInvoicePage(p)}
+              onPageSizeChange={(s) => {
+                setInvoicePageSize(s);
+                setInvoicePage(1);
+              }}
+              itemName="invoices"
+            />
           </div>
         ) : (
           <div className="py-8 text-center text-xs text-slate-400">
@@ -1600,7 +1546,7 @@ export const BillingStudio: React.FC = () => {
                             : 'Subscription Upgrade'}
                         </span>
                         <strong className="text-sm text-slate-900 font-bold">
-                          {selectedPlanForPayment.name} ({billingCycle.toLowerCase()})
+                          {selectedPlanForPayment.name} ({billingCycle === 'ONE_TIME' ? 'One-Time Lifetime' : billingCycle.toLowerCase()})
                         </strong>
                       </div>
                       <div className="text-right">
@@ -1618,7 +1564,9 @@ export const BillingStudio: React.FC = () => {
                             <span className="text-xs text-slate-500 block">Total Payable:</span>
                             <strong className="text-lg font-bold text-[#0c2340]">
                               ₹
-                              {(billingCycle === 'ANNUAL'
+                              {(billingCycle === 'ONE_TIME'
+                                ? (selectedPlanForPayment.priceOneTimeInr ?? (selectedPlanForPayment.priceAnnualInr ? Math.round(selectedPlanForPayment.priceAnnualInr * 2.2) : 0))
+                                : billingCycle === 'ANNUAL'
                                 ? selectedPlanForPayment.priceAnnualInr
                                 : selectedPlanForPayment.priceMonthlyInr
                               ).toLocaleString()}
@@ -1859,7 +1807,7 @@ export const BillingStudio: React.FC = () => {
                             : 'Subscription Plan'}
                         </span>
                         <strong className="text-sm text-slate-900 font-bold">
-                          {selectedPlanForPayment.name} ({billingCycle.toLowerCase()})
+                          {selectedPlanForPayment.name} ({billingCycle === 'ONE_TIME' ? 'One-Time Lifetime' : billingCycle.toLowerCase()})
                         </strong>
                       </div>
                       <div className="text-right">
@@ -1878,7 +1826,9 @@ export const BillingStudio: React.FC = () => {
                             <span className="text-xs text-slate-500 block">Total Payable:</span>
                             <strong className="text-lg font-bold text-slate-900">
                               $
-                              {(billingCycle === 'ANNUAL'
+                              {(billingCycle === 'ONE_TIME'
+                                ? (selectedPlanForPayment.priceOneTimeUsd ?? (selectedPlanForPayment.priceAnnualUsd ? Math.round(selectedPlanForPayment.priceAnnualUsd * 2.2) : 0))
+                                : billingCycle === 'ANNUAL'
                                 ? selectedPlanForPayment.priceAnnualUsd
                                 : selectedPlanForPayment.priceMonthlyUsd
                               ).toLocaleString()}{' '}
@@ -1915,7 +1865,9 @@ export const BillingStudio: React.FC = () => {
                       <span className="text-xs font-bold text-slate-800 ml-1">
                         — 1-Click Checkout ($
                         {(upgradeDetails?.upgradeDifference ||
-                          (billingCycle === 'ANNUAL'
+                          (billingCycle === 'ONE_TIME'
+                            ? (selectedPlanForPayment.priceOneTimeUsd ?? (selectedPlanForPayment.priceAnnualUsd ? Math.round(selectedPlanForPayment.priceAnnualUsd * 2.2) : 0))
+                            : billingCycle === 'ANNUAL'
                             ? selectedPlanForPayment.priceAnnualUsd
                             : selectedPlanForPayment.priceMonthlyUsd)
                         ).toLocaleString()}{' '}
@@ -2060,7 +2012,9 @@ export const BillingStudio: React.FC = () => {
                   <div className="flex justify-between text-slate-900 font-medium">
                     <span>
                       {selectedInvoiceForReceipt.tierName} Plan (
-                      {selectedInvoiceForReceipt.billingCycle.toLowerCase()})
+                      {selectedInvoiceForReceipt.billingCycle === 'ONE_TIME' || selectedInvoiceForReceipt.billingCycle === 'LIFETIME'
+                        ? 'One-Time Lifetime'
+                        : selectedInvoiceForReceipt.billingCycle.toLowerCase()})
                     </span>
                     <span>
                       {selectedInvoiceForReceipt.currency === 'INR' ? '₹' : '$'}

@@ -843,6 +843,8 @@ export const ThemeManager: React.FC = () => {
       return sectionsMap[lowerSlug];
     }
     const ALIASES: Record<string, string[]> = {
+      techno: ['techno', 'techno-template', 'marketnest', 'artisan', 'craft', 'handmade'],
+      marketnest: ['marketnest', 'techno', 'artisan', 'craft', 'handmade'],
       funo: ['funo', 'funie', 'funo-furniture', 'nordic'],
       funie: ['funie', 'funo', 'funo-furniture', 'nordic'],
       mincom: ['mincom', 'mincom-furniture', 'furniture', 'artisan-craft', 'modern', 'mincom-theme'],

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { cmsService } from '@/src/services/cmsService';
@@ -32,7 +32,58 @@ import {
   ShieldCheck,
   Percent,
   User,
+  PackagePlus,
+  FolderPlus,
+  Edit3,
+  History,
 } from 'lucide-react';
+import { ChatInteractiveFormView } from './ChatInteractiveFormView';
+
+const CHAT_STORAGE_KEY_PREFIX = 'cms_ai_chatbot_memory_';
+const CHAT_DRAFT_KEY_PREFIX = 'cms_ai_chatbot_draft_';
+
+const getDefaultGreeting = (productsCount = 0, ordersCount = 0, storeName = 'your store'): ChatMessage => ({
+  id: 'welcome-1',
+  sender: 'assistant',
+  content: `👋 **Welcome to your AI Store Assistant!**\n\nI have live visibility into your catalog (**${productsCount} items**) and orders (**${ordersCount} orders**).\n\nI can help you add products, create marketing campaigns, analyze sales performance, and optimize ${storeName}.\n\n### 💡 What would you like to do today?`,
+  timestamp: new Date().toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  }),
+  model: 'Default Text',
+  actions: [
+    {
+      id: 'a1',
+      label: '✨ What should I improve today?',
+      type: 'PREFILL_PROMPT',
+      payload: 'What should I improve today?',
+    },
+    {
+      id: 'a2',
+      label: '🏖️ Create Summer Collection',
+      type: 'PREFILL_PROMPT',
+      payload: 'Create a summer collection with my top-selling products.',
+    },
+    {
+      id: 'a3',
+      label: '📉 Why did sales decrease?',
+      type: 'PREFILL_PROMPT',
+      payload: 'Why did my sales decrease this month?',
+    },
+    {
+      id: 'a4',
+      label: '🏆 Show Best-Selling Products',
+      type: 'PREFILL_PROMPT',
+      payload: 'Show me my best-selling products.',
+    },
+    {
+      id: 'a5',
+      label: '👟 10% Off Shoes Discount',
+      type: 'PREFILL_PROMPT',
+      payload: 'Create a 10% discount for products in Shoes.',
+    },
+  ],
+});
 
 let _inMemoryChatHistory: ChatMessage[] = [];
 
@@ -40,8 +91,60 @@ export const CMSChatbot: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
 
-  const { products, orders, categories, stats, merchantData, openAddProductModal } =
-    useCMSContext();
+  const {
+    products,
+    orders,
+    categories,
+    stats,
+    merchantData,
+    openAddProductModal,
+    activeStore,
+    currency,
+    currencySymbol,
+    fetchDashboardDetails,
+  } = useCMSContext();
+
+  const activeCurrency = (
+    currency ||
+    activeStore?.currency ||
+    (merchantData?.store as any)?.currency ||
+    'INR'
+  ).toUpperCase();
+
+  const activeCurrencySymbol =
+    currencySymbol ||
+    (activeCurrency === 'USD'
+      ? '$'
+      : activeCurrency === 'EUR'
+      ? '€'
+      : activeCurrency === 'GBP'
+      ? '£'
+      : activeCurrency === 'JPY'
+      ? '¥'
+      : activeCurrency === 'AUD'
+      ? 'A$'
+      : activeCurrency === 'CAD'
+      ? 'CA$'
+      : '₹');
+
+  const storeContext: StoreContextData = useMemo(
+    () => ({
+      products: products || [],
+      orders: orders || [],
+      categories: categories || [],
+      stats,
+      merchantData,
+      currentPath: pathname,
+      userRole: merchantData?.merchant?.role || 'OWNER',
+      currency: activeCurrency,
+      currencySymbol: activeCurrencySymbol,
+    }),
+    [products, orders, categories, stats, merchantData, pathname, activeCurrency, activeCurrencySymbol],
+  );
+
+  const storeStorageId = activeStore?.id || merchantData?.store?.id || 'default_store';
+  const chatStorageKey = `${CHAT_STORAGE_KEY_PREFIX}${storeStorageId}`;
+  const draftStorageKey = `${CHAT_DRAFT_KEY_PREFIX}${storeStorageId}`;
 
   const [isOpen, setIsOpen] = useState(false);
   const [isRendered, setIsRendered] = useState(false);
@@ -61,67 +164,42 @@ export const CMSChatbot: React.FC = () => {
     }
   }, [isOpen]);
 
-  // Initialize messages from in-memory history or default greeting
+  // Initialize messages from persistent storage, in-memory history, or default greeting
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved =
+          localStorage.getItem('cms_ai_chatbot_memory_current') ||
+          localStorage.getItem('cms_ai_chatbot_memory_default_store');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            _inMemoryChatHistory = parsed;
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load chat memory from localStorage:', e);
+      }
+    }
     if (_inMemoryChatHistory.length > 0) {
       return _inMemoryChatHistory;
     }
-    return [
-      {
-        id: 'welcome-1',
-        sender: 'assistant',
-        content: `👋 **Welcome to your AI Store Assistant!**\n\nI have live visibility into your catalog (**${products?.length || 0} items**) and orders (**${orders?.length || 0} orders**).\n\nI can help you add products, create marketing campaigns, analyze sales performance, and optimize your store.\n\n### 💡 What would you like to do today?`,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        model: 'Default Text',
-        actions: [
-          {
-            id: 'a1',
-            label: '✨ What should I improve today?',
-            type: 'PREFILL_PROMPT',
-            payload: 'What should I improve today?',
-          },
-          {
-            id: 'a2',
-            label: '🏖️ Create Summer Collection',
-            type: 'PREFILL_PROMPT',
-            payload: 'Create a summer collection with my top-selling products.',
-          },
-          {
-            id: 'a3',
-            label: '📉 Why did sales decrease?',
-            type: 'PREFILL_PROMPT',
-            payload: 'Why did my sales decrease this month?',
-          },
-          {
-            id: 'a4',
-            label: '🏆 Show Best-Selling Products',
-            type: 'PREFILL_PROMPT',
-            payload: 'Show me my best-selling products.',
-          },
-          {
-            id: 'a5',
-            label: '👟 10% Off Shoes Discount',
-            type: 'PREFILL_PROMPT',
-            payload: 'Create a 10% discount for products in Shoes.',
-          },
-        ],
-      },
-    ];
+    return [getDefaultGreeting(products?.length || 0, orders?.length || 0, merchantData?.store?.storeName)];
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Open modal with smooth animation
+  // Open modal with smooth animation and auto-scroll to continue from last message
   const handleOpen = useCallback(() => {
     setIsRendered(true);
-    // Allow DOM mount before applying active animation classes
     setTimeout(() => {
       setIsAnimating(true);
-      setTimeout(() => inputRef.current?.focus(), 100);
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+        inputRef.current?.focus();
+      }, 80);
     }, 20);
   }, []);
 
@@ -143,12 +221,113 @@ export const CMSChatbot: React.FC = () => {
     }
   }, [isOpen, isRendered, handleOpen, handleClose]);
 
-  // Save chat history to in-memory history
+  // Load store-specific memory when store ID changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const saved = localStorage.getItem(chatStorageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+          _inMemoryChatHistory = parsed;
+          return;
+        }
+      }
+      const current = localStorage.getItem('cms_ai_chatbot_memory_current');
+      if (current && storeStorageId !== 'default_store') {
+        const parsed = JSON.parse(current);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+          _inMemoryChatHistory = parsed;
+          localStorage.setItem(chatStorageKey, current);
+        }
+      }
+    } catch (e) {
+      console.warn('Error reading store chat memory:', e);
+    }
+  }, [chatStorageKey, storeStorageId]);
+
+  // Persist chat memory to localStorage and in-memory cache
   useEffect(() => {
     if (messages.length > 0) {
-      _inMemoryChatHistory = messages.slice(-30);
+      _inMemoryChatHistory = messages.slice(-50);
+      if (typeof window !== 'undefined') {
+        try {
+          const serialized = JSON.stringify(messages.slice(-50));
+          localStorage.setItem(chatStorageKey, serialized);
+          localStorage.setItem('cms_ai_chatbot_memory_current', serialized);
+        } catch (e) {
+          console.warn('Failed to persist chat memory to localStorage:', e);
+        }
+      }
     }
-  }, [messages]);
+  }, [messages, chatStorageKey]);
+
+  // Restore draft prompt on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedDraft =
+          localStorage.getItem(draftStorageKey) ||
+          localStorage.getItem('cms_ai_chatbot_draft_current');
+        if (savedDraft && !inputValue) {
+          setInputValue(savedDraft);
+        }
+      } catch {}
+    }
+  }, [draftStorageKey]);
+
+  // Persist draft prompt as user types
+  const handleInputChange = (text: string) => {
+    setInputValue(text);
+    if (typeof window !== 'undefined') {
+      try {
+        if (text) {
+          localStorage.setItem(draftStorageKey, text);
+          localStorage.setItem('cms_ai_chatbot_draft_current', text);
+        } else {
+          localStorage.removeItem(draftStorageKey);
+          localStorage.removeItem('cms_ai_chatbot_draft_current');
+        }
+      } catch {}
+    }
+  };
+
+  // Auto-enrich any assistant messages that discuss or require interactive forms
+  useEffect(() => {
+    let hasChanges = false;
+    const updated = messages.map((m, idx) => {
+      if (m.sender === 'assistant' && !m.form) {
+        const prevUserMsg = messages
+          .slice(0, idx)
+          .reverse()
+          .find((item) => item.sender === 'user')?.content || '';
+        const detected = aiAssistantService.detectInteractiveForm(
+          prevUserMsg,
+          storeContext,
+          activeCurrencySymbol,
+          m.content,
+        );
+        if (detected) {
+          hasChanges = true;
+          return {
+            ...m,
+            form: {
+              ...detected,
+              id: `form-${m.id}`,
+            },
+          };
+        }
+      }
+      return m;
+    });
+
+    if (hasChanges) {
+      setMessages(updated);
+      _inMemoryChatHistory = updated.slice(-30);
+    }
+  }, [messages, storeContext, activeCurrencySymbol]);
 
   // Scroll to bottom on new message
   const scrollToBottom = () => {
@@ -230,17 +409,13 @@ export const CMSChatbot: React.FC = () => {
 
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(draftStorageKey);
+        localStorage.removeItem('cms_ai_chatbot_draft_current');
+      } catch {}
+    }
     setIsTyping(true);
-
-    const storeContext: StoreContextData = {
-      products,
-      orders,
-      categories,
-      stats,
-      merchantData,
-      currentPath: pathname,
-      userRole: merchantData?.merchant?.role || 'OWNER',
-    };
 
     try {
       const response = await aiAssistantService.generateResponse(
@@ -250,15 +425,30 @@ export const CMSChatbot: React.FC = () => {
       );
       playChime();
 
+      let finalContent = response.content;
+      if (activeCurrency !== 'USD') {
+        finalContent = finalContent.replace(/\$(\s*\d+(?:,\d+)*(?:\.\d+)?)/g, `${activeCurrencySymbol}$1`);
+      }
+
+      const detectedForm =
+        response.form ||
+        aiAssistantService.detectInteractiveForm(
+          textToSend,
+          storeContext,
+          activeCurrencySymbol,
+          finalContent,
+        );
+
       const assistantMessage: ChatMessage = {
         id: `assistant-${Date.now()}`,
         sender: 'assistant',
-        content: response.content,
+        content: finalContent,
         timestamp: new Date().toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
         }),
         actions: response.actions,
+        form: detectedForm,
         model: response.model || 'Default Text',
       };
 
@@ -282,6 +472,89 @@ export const CMSChatbot: React.FC = () => {
     } finally {
       setIsTyping(false);
     }
+  };
+
+  const handleFormSubmitted = (
+    messageId: string,
+    resultMessage: string,
+    submittedData: Record<string, any>,
+  ) => {
+    playChime();
+
+    // Mark the form as submitted in messages state
+    setMessages((prev) =>
+      prev.map((m, idx) => {
+        if (m.id === messageId) {
+          const resolvedForm =
+            m.form ||
+            aiAssistantService.detectInteractiveForm(
+              prev.slice(0, idx).reverse().find((item) => item.sender === 'user')?.content || '',
+              storeContext,
+              activeCurrencySymbol,
+              m.content,
+            );
+
+          return {
+            ...m,
+            form: resolvedForm
+              ? {
+                  ...resolvedForm,
+                  id: resolvedForm.id || `form-${m.id}`,
+                  submitted: true,
+                  submittedData,
+                  resultMessage,
+                }
+              : {
+                  id: `form-${messageId}`,
+                  type: 'ADD_PRODUCT',
+                  title: 'Store Item Saved',
+                  subtitle: '',
+                  fields: [],
+                  initialValues: {},
+                  submitButtonText: 'Saved',
+                  submitted: true,
+                  submittedData,
+                  resultMessage,
+                },
+          };
+        }
+        return m;
+      }),
+    );
+
+    // Append confirmation message to the chat stream with direct action links
+    const confirmationMessage: ChatMessage = {
+      id: `confirm-${Date.now()}`,
+      sender: 'assistant',
+      content: `🎉 **Successfully saved to store!**\n\n${resultMessage}\n\nYour changes are live in your catalog. What would you like to do next?`,
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      model: 'Default Text',
+      actions: [
+        {
+          id: 'view_prods_conf',
+          label: '📦 View Products Studio',
+          type: 'NAVIGATE',
+          payload: '/products',
+        },
+        {
+          id: 'view_cats_conf',
+          label: '📁 View Categories Studio',
+          type: 'NAVIGATE',
+          payload: '/categories',
+        },
+        {
+          id: 'add_another_prod',
+          label: '➕ Add Another Product',
+          type: 'PREFILL_PROMPT',
+          payload: 'Add product form',
+        },
+      ],
+    };
+
+    setMessages((prev) => [...prev, confirmationMessage]);
   };
 
   const handleActionClick = async (action: ChatAction) => {
@@ -355,37 +628,22 @@ export const CMSChatbot: React.FC = () => {
   };
 
   const handleClearChat = () => {
-    const freshGreeting: ChatMessage = {
-      id: `welcome-${Date.now()}`,
-      sender: 'assistant',
-      content: `👋 Chat history cleared. How can I help you manage **${merchantData?.store?.storeName || 'your store'}**?`,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      actions: [
-        {
-          id: 'c1',
-          label: '📊 Store Overview',
-          type: 'PREFILL_PROMPT',
-          payload: 'Give me a store overview',
-        },
-        {
-          id: 'c2',
-          label: '⚠️ Low Stock Alert',
-          type: 'PREFILL_PROMPT',
-          payload: 'Which products are low on stock?',
-        },
-        {
-          id: 'c3',
-          label: '➕ New Product',
-          type: 'OPEN_PRODUCT_MODAL',
-          payload: '',
-        },
-      ],
-    };
+    const freshGreeting = getDefaultGreeting(
+      products?.length || 0,
+      orders?.length || 0,
+      merchantData?.store?.storeName,
+    );
     setMessages([freshGreeting]);
     _inMemoryChatHistory = [freshGreeting];
+    if (typeof window !== 'undefined') {
+      try {
+        const serialized = JSON.stringify([freshGreeting]);
+        localStorage.setItem(chatStorageKey, serialized);
+        localStorage.setItem('cms_ai_chatbot_memory_current', serialized);
+        localStorage.removeItem(draftStorageKey);
+        localStorage.removeItem('cms_ai_chatbot_draft_current');
+      } catch {}
+    }
   };
 
   const handleCopyMessage = (id: string, text: string) => {
@@ -401,6 +659,23 @@ export const CMSChatbot: React.FC = () => {
   // Helper to sanitize message content: removes robotic tool traces and debug blocks
   const cleanHumanMessage = (rawText: string): string => {
     if (!rawText) return '';
+    const resolvedCurrency = (currency || activeStore?.currency || (merchantData?.store as any)?.currency || 'INR').toUpperCase();
+    const resolvedSymbol =
+      currencySymbol ||
+      (resolvedCurrency === 'USD'
+        ? '$'
+        : resolvedCurrency === 'EUR'
+        ? '€'
+        : resolvedCurrency === 'GBP'
+        ? '£'
+        : resolvedCurrency === 'JPY'
+        ? '¥'
+        : resolvedCurrency === 'AUD'
+        ? 'A$'
+        : resolvedCurrency === 'CAD'
+        ? 'CA$'
+        : '₹');
+
     // Strip code blocks that contain tool execution traces
     let cleaned = rawText.replace(
       /```[\s\S]*?(?:\[(?:create_\w+|get_\w+|update_\w+|execute_tool|\w+)\]|platform tool execution trace|tool execution trace)[\s\S]*?```/gi,
@@ -410,6 +685,12 @@ export const CMSChatbot: React.FC = () => {
     cleaned = cleaned.replace(/^\s*(?:\[\w+\]|\d+\.\s*\[\w+\])\s*->.*$/gim, '');
     cleaned = cleaned.replace(/^.*platform tool execution trace.*$/gim, '');
     cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+
+    // If store default currency is not USD, ensure any residual $ prices are converted to store default currency symbol
+    if (resolvedCurrency !== 'USD') {
+      cleaned = cleaned.replace(/\$(\s*\d+(?:,\d+)*(?:\.\d+)?)/g, `${resolvedSymbol}$1`);
+    }
+
     return cleaned.trim();
   };
 
@@ -616,12 +897,6 @@ export const CMSChatbot: React.FC = () => {
     });
   };
 
-  // Calculate quick dashboard stats
-  const totalProductsCount = products?.length || 0;
-  const totalOrdersCount = orders?.length || 0;
-  const lowStockCount =
-    products?.filter((p) => typeof p.inventory === 'number' && p.inventory <= 5).length || 0;
-
   return (
     <>
       {/* Floating Launcher Button in Bottom-Right Corner */}
@@ -665,9 +940,9 @@ export const CMSChatbot: React.FC = () => {
               : 'bg-slate-900/0 backdrop-blur-none opacity-0 pointer-events-none'
           }`}
         >
-          {/* Main Modal Box: 90% Width x 90% Height */}
+          {/* Main Modal Box: Single-column chat layout */}
           <div
-            className={`relative w-[90vw] h-[90vh] max-w-[1600px] max-h-[1000px] bg-white border border-slate-200/90 shadow-2xl rounded-2xl md:rounded-3xl flex flex-col overflow-hidden transition-all duration-250 ease-out transform ${
+            className={`relative w-[92vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] max-w-[1100px] h-[90vh] max-h-[960px] bg-white border border-slate-200/90 shadow-2xl rounded-2xl md:rounded-3xl flex flex-col overflow-hidden transition-all duration-250 ease-out transform ${
               isAnimating
                 ? 'scale-100 opacity-100 translate-y-0 shadow-2xl'
                 : 'scale-95 opacity-0 translate-y-3 shadow-none'
@@ -690,6 +965,13 @@ export const CMSChatbot: React.FC = () => {
                     </h2>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-sans font-medium flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Online
+                    </span>
+                    <span
+                      className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 text-[10px] font-sans font-medium"
+                      title="Continuous Memory: Prompts, context, and conversation history are persistently saved across page refreshes and sessions."
+                    >
+                      <History className="w-3 h-3 text-violet-500" />
+                      <span>Memory Active</span>
                     </span>
                     {creditsInfo && (
                       <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-mono font-bold flex items-center gap-1">
@@ -737,135 +1019,8 @@ export const CMSChatbot: React.FC = () => {
               </div>
             </div>
 
-            {/* Modal Body: 2-Column Responsive Layout */}
-            <div className="flex-1 flex overflow-hidden">
-              {/* Left Sidebar (Desktop / Tablet): Live Store Context & Fast Action Categories */}
-              <div className="hidden lg:flex w-72 xl:w-80 flex-col bg-slate-50/70 border-r border-slate-200 p-4 xl:p-5 space-y-4 shrink-0 overflow-y-auto">
-                {/* Live Store Stats Overview */}
-                <div>
-                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2.5">
-                    <span>Live Store Context</span>
-                    <span className="flex items-center gap-1 text-emerald-600 font-semibold lowercase text-[10px]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> sync
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="p-3 bg-white rounded-xl border border-slate-200/90 shadow-xs">
-                      <div className="flex items-center gap-1.5 text-slate-500 text-[11px] mb-1">
-                        <Package className="w-3.5 h-3.5 text-cyan-600" /> Catalog
-                      </div>
-                      <div className="text-base font-bold text-slate-900">{totalProductsCount} items</div>
-                    </div>
-                    <div className="p-3 bg-white rounded-xl border border-slate-200/90 shadow-xs">
-                      <div className="flex items-center gap-1.5 text-slate-500 text-[11px] mb-1">
-                        <ShoppingBag className="w-3.5 h-3.5 text-indigo-600" /> Orders
-                      </div>
-                      <div className="text-base font-bold text-slate-900">{totalOrdersCount} placed</div>
-                    </div>
-                    <div className="p-3 bg-white rounded-xl border border-slate-200/90 shadow-xs">
-                      <div className="flex items-center gap-1.5 text-slate-500 text-[11px] mb-1">
-                        <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> Revenue
-                      </div>
-                      <div className="text-base font-bold text-slate-900">
-                        ₹{stats?.totalRevenue?.toLocaleString('en-IN') || '0'}
-                      </div>
-                    </div>
-                    <div className="p-3 bg-white rounded-xl border border-slate-200/90 shadow-xs">
-                      <div className="flex items-center gap-1.5 text-slate-500 text-[11px] mb-1">
-                        <Zap className="w-3.5 h-3.5 text-amber-600" /> Low Stock
-                      </div>
-                      <div className="text-base font-bold text-slate-900">{lowStockCount} alerts</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Capability Categories */}
-                <div className="space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Quick Action Presets
-                  </div>
-
-                  <button
-                    onClick={() => handleSendMessage('What should I improve today?')}
-                    className="w-full text-left p-2.5 rounded-xl bg-white hover:bg-slate-100/90 border border-slate-200 text-xs font-medium text-slate-800 hover:text-slate-900 transition-all flex items-center gap-2.5 shadow-xs cursor-pointer group"
-                  >
-                    <div className="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0 group-hover:bg-cyan-100">
-                      <Flame className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-semibold text-slate-900 truncate">Store Audit & Growth</div>
-                      <div className="text-[10px] text-slate-500 truncate">Daily insights & fixes</div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => handleSendMessage('Create a summer collection with my top-selling products.')}
-                    className="w-full text-left p-2.5 rounded-xl bg-white hover:bg-slate-100/90 border border-slate-200 text-xs font-medium text-slate-800 hover:text-slate-900 transition-all flex items-center gap-2.5 shadow-xs cursor-pointer group"
-                  >
-                    <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:bg-indigo-100">
-                      <Layers className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-semibold text-slate-900 truncate">Smart Collection</div>
-                      <div className="text-[10px] text-slate-500 truncate">Auto-curate from sales data</div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => handleSendMessage('Create a 10% discount for products in Shoes.')}
-                    className="w-full text-left p-2.5 rounded-xl bg-white hover:bg-slate-100/90 border border-slate-200 text-xs font-medium text-slate-800 hover:text-slate-900 transition-all flex items-center gap-2.5 shadow-xs cursor-pointer group"
-                  >
-                    <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:bg-emerald-100">
-                      <Percent className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-semibold text-slate-900 truncate">Create 10% Promo</div>
-                      <div className="text-[10px] text-slate-500 truncate">Apply discount code instantly</div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => handleSendMessage('Why did my sales decrease this month?')}
-                    className="w-full text-left p-2.5 rounded-xl bg-white hover:bg-slate-100/90 border border-slate-200 text-xs font-medium text-slate-800 hover:text-slate-900 transition-all flex items-center gap-2.5 shadow-xs cursor-pointer group"
-                  >
-                    <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 group-hover:bg-amber-100">
-                      <BarChart3 className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-semibold text-slate-900 truncate">Sales & Conversion Analysis</div>
-                      <div className="text-[10px] text-slate-500 truncate">Root cause & bottlenecks</div>
-                    </div>
-                  </button>
-                </div>
-
-                {/* Store Capabilities Tag Strip */}
-                <div className="pt-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Store Capabilities
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      'Catalog & Products',
-                      'Orders & Tracking',
-                      'Sales Analytics',
-                      'Discounts & Promos',
-                      'Curated Collections',
-                      'Theme Customizer',
-                      'Store Settings',
-                    ].map((cap) => (
-                      <span
-                        key={cap}
-                        className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-sans font-medium text-slate-600 shadow-2xs"
-                      >
-                        {cap}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Main Area: Chat Stream & Message Input */}
-              <div className="flex-1 flex flex-col min-w-0 bg-white">
+            {/* Modal Body: Full Width Chat Area */}
+            <div className="flex-1 flex flex-col min-w-0 bg-white overflow-hidden">
                 {/* Horizontal Quick Prompt Chips Strip */}
                 <div className="px-4 py-2.5 bg-slate-50/90 border-b border-slate-200/90 overflow-x-auto flex items-center gap-2 shrink-0 scrollbar-none">
                   <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1 pl-0.5">
@@ -884,9 +1039,24 @@ export const CMSChatbot: React.FC = () => {
 
                 {/* Chat Message Stream */}
                 <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 bg-slate-50/30">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
+                  {messages.map((msg, index) => {
+                    const formToRender =
+                      msg.form ||
+                      (msg.sender === 'assistant'
+                        ? aiAssistantService.detectInteractiveForm(
+                            messages
+                              .slice(0, index)
+                              .reverse()
+                              .find((m) => m.sender === 'user')?.content || '',
+                            storeContext,
+                            activeCurrencySymbol,
+                            msg.content,
+                          )
+                        : undefined);
+
+                    return (
+                      <div
+                        key={msg.id}
                       className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'} group`}
                     >
                       <div className="flex items-end gap-2.5 max-w-[92%] sm:max-w-[85%]">
@@ -934,6 +1104,20 @@ export const CMSChatbot: React.FC = () => {
 
                           {/* Message content */}
                           <div className="space-y-1 text-slate-900 font-sans">{renderFormattedContent(msg.content)}</div>
+
+                          {/* Interactive Form Card */}
+                          {formToRender && (
+                            <ChatInteractiveFormView
+                              key={`form-${msg.id}`}
+                              form={formToRender}
+                              messageId={msg.id}
+                              currencySymbol={activeCurrencySymbol}
+                              categories={categories || []}
+                              products={products || []}
+                              fetchDashboardDetails={fetchDashboardDetails}
+                              onFormSubmitted={handleFormSubmitted}
+                            />
+                          )}
 
                           {/* Interactive Action Buttons */}
                           {msg.actions && msg.actions.length > 0 && (
@@ -991,7 +1175,8 @@ export const CMSChatbot: React.FC = () => {
                         </button>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
 
                   {/* Animated Typing Indicator */}
                   {isTyping && (
@@ -1024,7 +1209,7 @@ export const CMSChatbot: React.FC = () => {
                         ref={inputRef}
                         type="text"
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        onChange={(e) => handleInputChange(e.target.value)}
                         placeholder="Ask anything about your store... (e.g. 'What should I improve today?')"
                         disabled={isTyping}
                         className="w-full pl-4 pr-9 py-3 rounded-xl bg-white border border-slate-300 text-xs sm:text-sm font-sans text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-100 transition-all disabled:opacity-50 shadow-xs"
@@ -1032,7 +1217,7 @@ export const CMSChatbot: React.FC = () => {
                       {inputValue && (
                         <button
                           type="button"
-                          onClick={() => setInputValue('')}
+                          onClick={() => handleInputChange('')}
                           className="absolute right-3 top-3 text-slate-400 hover:text-slate-700 cursor-pointer"
                         >
                           <X className="w-4 h-4" />
@@ -1052,7 +1237,10 @@ export const CMSChatbot: React.FC = () => {
 
                   <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400 px-1 font-sans font-medium">
                     <span className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> AI Assistant Active • Ready to help you grow
+                      <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
+                      <span className="text-slate-500">Memory Active</span>
+                      <span className="text-slate-300">•</span>
+                      <span>Context preserved across sessions & refresh</span>
                     </span>
                     <span className="hidden sm:inline">Press Enter ↵ to send · Esc to close</span>
                   </div>
@@ -1060,8 +1248,7 @@ export const CMSChatbot: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </>
   );
 };
