@@ -49,6 +49,8 @@ import {
   BookOpen,
   Key,
   Sparkles,
+  FileText,
+  Smartphone,
 } from 'lucide-react';
 
 interface PixelGuide {
@@ -251,15 +253,78 @@ const PIXEL_HELP_GUIDES: Record<string, PixelGuide> = {
   },
 };
 
+const WHATSAPP_TEMPLATE_PRESETS = [
+  {
+    id: 'wa-diwali',
+    name: 'Diwali Festive Celebration Blast 🪔',
+    subject: 'Festive Diwali Sale – Exclusive Offers Just for You!',
+    body: 'Celebrate Diwali with joy and massive savings! Enjoy flat 20% OFF across our top categories with code DIWALI20. Free priority shipping on all orders today.',
+  },
+  {
+    id: 'wa-flash',
+    name: 'Flash Sale 24-Hour Alert ⚡',
+    subject: '⚡ Flash Sale Live: Up to 50% Off Everything!',
+    body: 'Hurry! Our biggest flash sale of the season has just begun. Exclusive deals on bestsellers are live for 24 hours only. Tap below to claim your deal before items sell out!',
+  },
+  {
+    id: 'wa-vip',
+    name: 'VIP Customer Early Access 👑',
+    subject: '👑 Exclusive VIP Preview: Early Access Granted',
+    body: 'Hello VIP! As one of our most valued customers, you get private early access to our seasonal collection. Use your personal code VIPEXCLUSIVE for 20% off today.',
+  },
+  {
+    id: 'wa-cart',
+    name: 'Cart Recovery Friendly Reminder 🛒',
+    subject: '🛒 Did you leave something special behind in your cart?',
+    body: 'We noticed you left some favorites in your cart. Good news: we have reserved them for you! Use code COMEBACK10 within 3 hours to take 10% off your order.',
+  },
+];
+
+const SMS_TEMPLATE_PRESETS = [
+  {
+    id: 'sms-diwali',
+    name: 'Diwali Festive Special Offer 🪔',
+    subject: 'Diwali Mega Sale',
+    body: 'Diwali Mega Sale! Flat 20% OFF sitewide with code DIWALI20. Free delivery above ₹999. Valid today only! Shop: {store_url}',
+  },
+  {
+    id: 'sms-flash',
+    name: 'Weekend Flash 20% Off ⚡',
+    subject: 'Weekend Flash Sale',
+    body: 'FLASH SALE: 20% OFF everything this weekend with code FLASH20. Limited quantities remaining! Shop: {store_url}',
+  },
+  {
+    id: 'sms-cart',
+    name: 'Cart Reminder with 10% Off 🛒',
+    subject: 'Reserved Items in Cart',
+    body: 'Your items are reserved in your cart! Complete your order now and save 10% with code CART10: {cart_url}',
+  },
+  {
+    id: 'sms-welcome',
+    name: 'Welcome 15% Off New Customer 🎉',
+    subject: 'Welcome Offer',
+    body: 'Welcome! Enjoy 15% Off Your First Order with Code WELCOME15 at checkout. Explore our collection: {store_url}',
+  },
+];
+
 export const MarketingStudio: React.FC = () => {
   const { isStarter } = usePlanAccess();
   let currencySymbol = '₹';
+  let storeName = 'OmniStore';
   try {
     const cmsCtx = useCMSContext();
     currencySymbol = cmsCtx.currencySymbol || '₹';
+    const storeObj = (cmsCtx as any)?.store;
+    if (storeObj?.storeName || storeObj?.name) {
+      storeName = storeObj.storeName || storeObj.name;
+    }
   } catch {
     const session = cmsService.getMerchantSession();
     currencySymbol = getCurrencySymbol(session?.store?.currency || 'INR');
+    const storeObj = session?.store as any;
+    if (storeObj?.storeName || storeObj?.name) {
+      storeName = storeObj.storeName || storeObj.name;
+    }
   }
 
   const [campaigns, setCampaigns] = useState<CMSMarketingCampaign[]>([]);
@@ -274,6 +339,78 @@ export const MarketingStudio: React.FC = () => {
     text: string;
     type: 'success' | 'error';
   } | null>(null);
+
+  // Broadcast Template Preview state
+  const [previewCampaign, setPreviewCampaign] = useState<CMSMarketingCampaign | null>(null);
+  const [copiedTemplateText, setCopiedTemplateText] = useState(false);
+  const [templatePreviewTab, setTemplatePreviewTab] = useState<'visual' | 'text'>('visual');
+
+  const getChannelMeta = (channel: string) => {
+    const norm = (channel || 'EMAIL').toUpperCase();
+    switch (norm) {
+      case 'WHATSAPP':
+        return {
+          id: 'WHATSAPP',
+          label: 'WhatsApp Broadcast',
+          shortLabel: 'WhatsApp',
+          templateName: 'WhatsApp Template',
+          icon: MessageCircle,
+          badgeClass:
+            'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100 dark:hover:bg-emerald-900/50',
+          avatarClass:
+            'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+          tagClass: 'bg-emerald-500 text-white',
+          accentColor: '#25D366',
+          channelName: 'WhatsApp Cloud API',
+        };
+      case 'SMS':
+        return {
+          id: 'SMS',
+          label: 'SMS Broadcast',
+          shortLabel: 'SMS',
+          templateName: 'SMS Template',
+          icon: MessageSquare,
+          badgeClass:
+            'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/80 hover:bg-amber-100 dark:hover:bg-amber-900/50',
+          avatarClass:
+            'bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+          tagClass: 'bg-amber-500 text-white',
+          accentColor: '#F59E0B',
+          channelName: 'SMS Gateway (DLT Approved)',
+        };
+      case 'PUSH':
+        return {
+          id: 'PUSH',
+          label: 'Web Push Notification',
+          shortLabel: 'Web Push',
+          templateName: 'Push Template',
+          icon: Bell,
+          badgeClass:
+            'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/80 hover:bg-purple-100 dark:hover:bg-purple-900/50',
+          avatarClass:
+            'bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800',
+          tagClass: 'bg-purple-500 text-white',
+          accentColor: '#8B5CF6',
+          channelName: 'Web Push Notification Service',
+        };
+      case 'EMAIL':
+      default:
+        return {
+          id: 'EMAIL',
+          label: 'Email Broadcast',
+          shortLabel: 'Email',
+          templateName: 'Email Template',
+          icon: Mail,
+          badgeClass:
+            'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/80 hover:bg-indigo-100 dark:hover:bg-indigo-900/50',
+          avatarClass:
+            'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800',
+          tagClass: 'bg-indigo-600 text-white',
+          accentColor: '#6366F1',
+          channelName: 'Transactional & Marketing SMTP',
+        };
+    }
+  };
 
   // Pagination states
   const [campaignPage, setCampaignPage] = useState(1);
@@ -350,14 +487,37 @@ export const MarketingStudio: React.FC = () => {
 
   // CAMPAIGN CREATION
   const handleOpenCreateCampaign = (channel: MarketingChannel = 'EMAIL') => {
-    const defaultTmpl = emailTemplates.find((t) => t.category === 'MARKETING') || emailTemplates[0];
+    let initialTitle = '';
+    let initialSubject = '';
+    let initialBody = 'Explore our latest collections and enjoy exclusive discounts on your order today!';
+    let initialTemplateId = '';
+
+    if (channel === 'WHATSAPP') {
+      const waPreset = WHATSAPP_TEMPLATE_PRESETS[0];
+      initialTitle = waPreset.name;
+      initialSubject = waPreset.subject;
+      initialBody = waPreset.body;
+      initialTemplateId = waPreset.id;
+    } else if (channel === 'SMS') {
+      const smsPreset = SMS_TEMPLATE_PRESETS[0];
+      initialTitle = smsPreset.name;
+      initialSubject = smsPreset.subject;
+      initialBody = smsPreset.body;
+      initialTemplateId = smsPreset.id;
+    } else {
+      const defaultTmpl = emailTemplates.find((t) => t.category === 'MARKETING') || emailTemplates[0];
+      initialTitle = defaultTmpl?.name || '';
+      initialSubject = defaultTmpl?.subject || '🔥 Special Offer Just for You!';
+      initialTemplateId = defaultTmpl?.id || '';
+    }
+
     setCampaignForm({
-      title: defaultTmpl?.name || '',
+      title: initialTitle,
       channel,
       targetSegment: 'All Customers',
-      subject: defaultTmpl?.subject || (channel === 'EMAIL' ? '🔥 Special Offer Just for You!' : 'New Update'),
-      body: 'Explore our latest collections and enjoy exclusive discounts on your order today!',
-      templateId: defaultTmpl?.id || '',
+      subject: initialSubject,
+      body: initialBody,
+      templateId: initialTemplateId,
     });
     setIsCampaignModalOpen(true);
   };
@@ -707,47 +867,89 @@ export const MarketingStudio: React.FC = () => {
                             (campaignPage - 1) * campaignPageSize,
                             campaignPage * campaignPageSize,
                           )
-                          .map((c) => (
-                          <tr
-                            key={c.id}
-                            className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors"
-                          >
-                            <td className="py-4 px-6">
-                              <div className="font-extrabold text-sm text-slate-900 dark:text-foreground">
-                                {c.title}
-                              </div>
-                              <div className="text-[11px] text-slate-400 italic">{c.subject}</div>
-                            </td>
-                            <td className="py-4 px-6">
-                              <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-accent font-black text-[10px] uppercase text-indigo-600 dark:text-indigo-400">
-                                {c.channel}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6 font-semibold">{c.targetSegment}</td>
-                            <td className="py-4 px-6 font-bold">{c.sentCount.toLocaleString()} Sent</td>
-                            <td className="py-4 px-6">
-                              <span className="font-black text-slate-900 dark:text-foreground">
-                                {c.clickCount} Clicks
-                              </span>
-                              <span className="text-[10px] text-slate-400 block font-mono">
-                                {((c.clickCount / (c.sentCount || 1)) * 100).toFixed(1)}% CTR
-                              </span>
-                            </td>
-                            <td className="py-4 px-6 font-black text-sm text-emerald-600">
-                              {currencySymbol}
-                              {c.revenueTotal.toFixed(2)}
-                            </td>
-                            <td className="py-4 px-6 text-right space-x-2">
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteCampaign(c.id)}
-                                className="p-1.5 rounded-xl bg-slate-100 dark:bg-accent text-rose-500 hover:bg-rose-50"
+                          .map((c) => {
+                            const meta = getChannelMeta(c.channel);
+                            const ChannelIcon = meta.icon;
+                            return (
+                              <tr
+                                key={c.id}
+                                className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors group"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
+                                <td className="py-4 px-6">
+                                  <div className="flex items-center gap-3">
+                                    <button
+                                      type="button"
+                                      onClick={() => setPreviewCampaign(c)}
+                                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-all hover:scale-105 active:scale-95 shadow-xs ${meta.avatarClass}`}
+                                      title={`Click to show ${meta.shortLabel} template`}
+                                    >
+                                      <ChannelIcon className="w-4 h-4" />
+                                    </button>
+                                    <div className="min-w-0">
+                                      <button
+                                        type="button"
+                                        onClick={() => setPreviewCampaign(c)}
+                                        className="text-left font-extrabold text-sm text-slate-900 dark:text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition truncate max-w-xs block"
+                                        title="Click to view template preview"
+                                      >
+                                        {c.title}
+                                      </button>
+                                      <div className="text-[11px] text-slate-400 italic line-clamp-1 max-w-sm">
+                                        {c.subject || c.body || 'No message preview provided'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-4 px-6">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewCampaign(c)}
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-black text-[10px] uppercase border transition-all hover:shadow-xs hover:scale-[1.02] active:scale-[0.98] ${meta.badgeClass}`}
+                                    title={`Show ${meta.shortLabel} Template`}
+                                  >
+                                    <ChannelIcon className="w-3 h-3" />
+                                    <span>{meta.shortLabel}</span>
+                                    <Eye className="w-2.5 h-2.5 opacity-60 ml-0.5" />
+                                  </button>
+                                </td>
+                                <td className="py-4 px-6 font-semibold">{c.targetSegment}</td>
+                                <td className="py-4 px-6 font-bold">{c.sentCount.toLocaleString()} Sent</td>
+                                <td className="py-4 px-6">
+                                  <span className="font-black text-slate-900 dark:text-foreground">
+                                    {c.clickCount} Clicks
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 block font-mono">
+                                    {((c.clickCount / (c.sentCount || 1)) * 100).toFixed(1)}% CTR
+                                  </span>
+                                </td>
+                                <td className="py-4 px-6 font-black text-sm text-emerald-600">
+                                  {currencySymbol}
+                                  {c.revenueTotal.toFixed(2)}
+                                </td>
+                                <td className="py-4 px-6 text-right whitespace-nowrap">
+                                  <div className="inline-flex items-center justify-end gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setPreviewCampaign(c)}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs transition-all shadow-xs hover:shadow hover:scale-[1.02] active:scale-[0.98]"
+                                      title={`View ${meta.shortLabel} Template`}
+                                    >
+                                      <Eye className="w-3.5 h-3.5 text-indigo-100" />
+                                      <span>View Template</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteCampaign(c.id)}
+                                      className="p-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 dark:bg-accent dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 border border-transparent hover:border-rose-200 dark:hover:border-rose-900/50 transition"
+                                      title="Delete broadcast"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
                       )}
                     </tbody>
                   </table>
@@ -1365,7 +1567,7 @@ export const MarketingStudio: React.FC = () => {
             <form onSubmit={handleSaveCampaign} className="p-6 space-y-4">
               {/* Template Selector for EMAIL channel */}
               {campaignForm.channel === 'EMAIL' && (
-                <div className="space-y-1.5 p-3.5 rounded-2xl bg-slate-50/90 dark:bg-slate-900/40 border border-slate-200/80 dark:border-border">
+                <div className="space-y-1.5 p-3.5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50">
                   <div className="flex items-center justify-between">
                     <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
@@ -1433,6 +1635,94 @@ export const MarketingStudio: React.FC = () => {
                       </div>
                     );
                   })()}
+                </div>
+              )}
+
+              {/* Template Selector for WHATSAPP channel */}
+              {campaignForm.channel === 'WHATSAPP' && (
+                <div className="space-y-1.5 p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Choose WhatsApp Verified Template</span>
+                    </label>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full">
+                      Meta Verified
+                    </span>
+                  </div>
+
+                  <select
+                    value={campaignForm.templateId || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const tmpl = WHATSAPP_TEMPLATE_PRESETS.find((t) => t.id === val);
+                      if (tmpl) {
+                        setCampaignForm((prev) => ({
+                          ...prev,
+                          templateId: tmpl.id,
+                          title: prev.title || tmpl.name,
+                          subject: tmpl.subject,
+                          body: tmpl.body,
+                        }));
+                      } else {
+                        setCampaignForm((prev) => ({ ...prev, templateId: '' }));
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 text-xs font-semibold text-slate-900 dark:text-foreground transition shadow-xs"
+                  >
+                    <option value="">Custom WhatsApp Message (Write below)</option>
+                    <optgroup label="💬 WhatsApp Pre-Approved Templates">
+                      {WHATSAPP_TEMPLATE_PRESETS.map((tmpl) => (
+                        <option key={tmpl.id} value={tmpl.id}>
+                          {tmpl.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </div>
+              )}
+
+              {/* Template Selector for SMS channel */}
+              {campaignForm.channel === 'SMS' && (
+                <div className="space-y-1.5 p-3.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                      <span>Choose SMS Template Preset</span>
+                    </label>
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded-full">
+                      DLT Approved
+                    </span>
+                  </div>
+
+                  <select
+                    value={campaignForm.templateId || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const tmpl = SMS_TEMPLATE_PRESETS.find((t) => t.id === val);
+                      if (tmpl) {
+                        setCampaignForm((prev) => ({
+                          ...prev,
+                          templateId: tmpl.id,
+                          title: prev.title || tmpl.name,
+                          subject: tmpl.subject,
+                          body: tmpl.body,
+                        }));
+                      } else {
+                        setCampaignForm((prev) => ({ ...prev, templateId: '' }));
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 text-xs font-semibold text-slate-900 dark:text-foreground transition shadow-xs"
+                  >
+                    <option value="">Custom SMS Text (Write below)</option>
+                    <optgroup label="📱 DLT Compliant SMS Templates">
+                      {SMS_TEMPLATE_PRESETS.map((tmpl) => (
+                        <option key={tmpl.id} value={tmpl.id}>
+                          {tmpl.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
                 </div>
               )}
 
@@ -1565,6 +1855,476 @@ export const MarketingStudio: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ─── BROADCAST TEMPLATE PREVIEW MODAL ─── */}
+      {previewCampaign && (() => {
+        const c = previewCampaign;
+        const meta = getChannelMeta(c.channel);
+        const ChannelIcon = meta.icon;
+        const linkedEmailTemplate = c.templateId
+          ? emailTemplates.find((t) => t.id === c.templateId)
+          : null;
+
+        const copyTemplateContent = () => {
+          const parts: string[] = [];
+          if (c.subject) parts.push(`Subject / Header: ${c.subject}`);
+          if (c.body) parts.push(`Body Content:\n${c.body}`);
+          const textToCopy = parts.join('\n\n') || c.title;
+          navigator.clipboard.writeText(textToCopy);
+          setCopiedTemplateText(true);
+          setTimeout(() => setCopiedTemplateText(false), 2500);
+          showToast(`${meta.shortLabel} template copied to clipboard!`, 'success');
+        };
+
+        const charCount = (c.body?.length || 0) + (c.subject ? c.subject.length + 2 : 0);
+        const smsSegments = Math.max(1, Math.ceil(charCount / 160));
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl max-w-2xl w-full p-6 sm:p-7 space-y-6 shadow-2xl relative my-8 max-h-[92vh] overflow-y-auto">
+              
+              {/* Header */}
+              <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-border">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border ${meta.badgeClass}`}>
+                      <ChannelIcon className="w-3.5 h-3.5" />
+                      <span>{meta.templateName}</span>
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-400 dark:text-muted-foreground">
+                      Channel: <strong className="text-slate-700 dark:text-slate-300">{meta.channelName}</strong>
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-foreground">
+                    {c.title}
+                  </h3>
+                  <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-muted-foreground pt-0.5">
+                    <span>Audience: <strong className="text-slate-800 dark:text-slate-200">{c.targetSegment}</strong></span>
+                    <span>•</span>
+                    <span>Sent: <strong className="text-indigo-600 dark:text-indigo-400">{c.sentCount.toLocaleString()}</strong></span>
+                    <span>•</span>
+                    <span>Clicks: <strong className="text-emerald-600">{c.clickCount.toLocaleString()}</strong></span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setPreviewCampaign(null)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  title="Close Template Preview"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* View Switcher / Sub Tabs */}
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center p-1 bg-slate-100 dark:bg-accent rounded-xl text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setTemplatePreviewTab('visual')}
+                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                      templatePreviewTab === 'visual'
+                        ? 'bg-white dark:bg-card text-slate-900 dark:text-foreground shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Live Device Preview</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTemplatePreviewTab('text')}
+                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                      templatePreviewTab === 'text'
+                        ? 'bg-white dark:bg-card text-slate-900 dark:text-foreground shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Raw Template Copy</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={copyTemplateContent}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition"
+                >
+                  {copiedTemplateText ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy Message</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* TAB 1: LIVE DEVICE PREVIEW */}
+              {templatePreviewTab === 'visual' && (
+                <div className="space-y-4">
+                  {/* CHANNEL: WHATSAPP */}
+                  {meta.id === 'WHATSAPP' && (
+                    <div className="max-w-md mx-auto rounded-3xl overflow-hidden border border-slate-300 dark:border-slate-800 shadow-xl bg-slate-900">
+                      {/* WhatsApp Phone Mockup Header */}
+                      <div className="bg-[#075E54] text-white px-4 py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center font-black text-xs text-white border border-white/20">
+                            {storeName ? storeName.charAt(0).toUpperCase() : 'O'}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1 text-xs font-extrabold leading-tight">
+                              <span>{storeName || 'OmniStore'}</span>
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400" />
+                            </div>
+                            <span className="text-[10px] text-emerald-100 opacity-90 block">
+                              Verified Business Account
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-[10px] bg-emerald-700/60 px-2 py-0.5 rounded-full border border-emerald-500/30 font-medium">
+                          WhatsApp Cloud
+                        </div>
+                      </div>
+
+                      {/* WhatsApp Chat Area */}
+                      <div className="p-4 bg-[#E5DDD5] dark:bg-[#0B141A] min-h-[260px] flex flex-col justify-between space-y-3">
+                        <div className="text-center">
+                          <span className="text-[10px] font-bold uppercase tracking-wider bg-white/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-3 py-1 rounded-full shadow-xs">
+                            Today
+                          </span>
+                        </div>
+
+                        {/* Incoming WhatsApp Message Bubble */}
+                        <div className="bg-white dark:bg-[#1F2C34] text-slate-900 dark:text-slate-100 rounded-2xl rounded-tl-xs p-4 shadow-sm border border-black/5 dark:border-white/5 space-y-2 max-w-[92%]">
+                          {c.subject && (
+                            <div className="font-extrabold text-sm text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-1.5 flex items-center gap-1.5">
+                              <span>{c.subject}</span>
+                            </div>
+                          )}
+                          <div className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-line leading-relaxed">
+                            {c.body || 'Hi there! We have special offers prepared just for you. Visit our store today to claim your discount!'}
+                          </div>
+                          <div className="flex items-center justify-end gap-1 pt-1 text-[10px] text-slate-400 dark:text-slate-500">
+                            <span>10:30 AM</span>
+                            <span className="text-sky-500 font-bold">✓✓</span>
+                          </div>
+                        </div>
+
+                        {/* WhatsApp Quick Reply / Action Buttons */}
+                        <div className="space-y-1.5 pt-1">
+                          <button
+                            type="button"
+                            className="w-full py-2 bg-white dark:bg-[#1F2C34] hover:bg-slate-50 dark:hover:bg-slate-800 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold shadow-xs border border-emerald-100 dark:border-emerald-950 flex items-center justify-center gap-1.5 transition"
+                          >
+                            <span>🛍️ Visit Store Catalog</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="w-full py-2 bg-white dark:bg-[#1F2C34] hover:bg-slate-50 dark:hover:bg-slate-800 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold shadow-xs border border-emerald-100 dark:border-emerald-950 flex items-center justify-center gap-1.5 transition"
+                          >
+                            <span>🎁 Claim Discount Code</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-950 px-4 py-2 text-center text-[10px] text-slate-400 flex items-center justify-center gap-1.5 border-t border-slate-800">
+                        <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                        <span>Official Meta Approved Template • End-to-End Encrypted</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CHANNEL: SMS */}
+                  {meta.id === 'SMS' && (
+                    <div className="max-w-md mx-auto rounded-3xl overflow-hidden border border-slate-300 dark:border-slate-800 shadow-xl bg-slate-900 text-slate-100">
+                      {/* Mobile Top Bar */}
+                      <div className="bg-slate-800/90 px-4 py-2 flex items-center justify-between text-[11px] font-semibold text-slate-300 border-b border-slate-700/60">
+                        <span>9:41 AM</span>
+                        <div className="w-16 h-3 bg-black rounded-full" />
+                        <span>5G • 100% 🔋</span>
+                      </div>
+
+                      {/* SMS Header */}
+                      <div className="bg-slate-800 px-4 py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xs border border-amber-500/40">
+                            SMS
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-white flex items-center gap-1">
+                              <span>OMNISTR</span>
+                              <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-mono">
+                                DLT
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-slate-400">Verified Sender ID</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">Carrier Direct</span>
+                      </div>
+
+                      {/* SMS Body */}
+                      <div className="p-5 bg-slate-950 min-h-[220px] flex flex-col justify-between space-y-4">
+                        <div className="text-center">
+                          <span className="text-[10px] text-slate-500 font-medium">
+                            Today • Promotional SMS
+                          </span>
+                        </div>
+
+                        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-100 rounded-2xl rounded-bl-xs p-4 space-y-2 shadow-sm max-w-[90%]">
+                          {c.subject && (
+                            <div className="font-extrabold text-xs text-amber-300 border-b border-amber-500/20 pb-1">
+                              {c.subject}
+                            </div>
+                          )}
+                          <div className="text-xs leading-relaxed font-sans text-slate-200">
+                            {c.body || 'Special offers and updates for you today!'}
+                          </div>
+                          <div className="pt-2 text-[10px] text-slate-400 border-t border-amber-500/10 italic">
+                            Reply STOP to 56161 to opt-out
+                          </div>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-[11px]">
+                          <span className="text-slate-400">Length: <strong className="text-white font-mono">{charCount}</strong> chars</span>
+                          <span className="text-slate-400">Segments: <strong className="text-amber-400 font-mono">{smsSegments} SMS</strong></span>
+                          <span className="text-emerald-400 font-semibold">100% Delivery SLA</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CHANNEL: EMAIL */}
+                  {meta.id === 'EMAIL' && (
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-lg bg-white dark:bg-slate-900">
+                      {/* Email Window Mockup Header */}
+                      <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2.5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                          <span className="ml-2 text-xs font-bold text-slate-600 dark:text-slate-300">
+                            Email Client Preview
+                          </span>
+                        </div>
+                        {linkedEmailTemplate && (
+                          <a
+                            href={`/email-templates?id=${linkedEmailTemplate.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                          >
+                            <span>Open in Builder</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Email Meta Info Bar */}
+                      <div className="p-4 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 space-y-1 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400 font-bold w-16">Subject:</span>
+                          <span className="font-extrabold text-slate-900 dark:text-white">
+                            {c.subject || c.title}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400 font-medium w-16">From:</span>
+                          <span className="text-slate-700 dark:text-slate-300">
+                            {storeName} &lt;newsletter@{storeName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'omnistore'}.com&gt;
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400 font-medium w-16">To:</span>
+                          <span className="text-slate-700 dark:text-slate-300">
+                            {c.targetSegment} ({c.sentCount.toLocaleString()} Subscribers)
+                          </span>
+                        </div>
+                        {linkedEmailTemplate && (
+                          <div className="flex items-center gap-2 pt-1 text-[11px]">
+                            <span className="text-indigo-600 dark:text-indigo-400 font-bold w-16">Template:</span>
+                            <span className="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-200 dark:border-indigo-800">
+                              ✨ {linkedEmailTemplate.name}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Email Content Body */}
+                      <div className="p-6 bg-slate-50/50 dark:bg-card space-y-6">
+                        <div className="max-w-md mx-auto bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md p-6 space-y-4">
+                          {/* Brand Banner */}
+                          <div className="text-center pb-4 border-b border-slate-100 dark:border-slate-800">
+                            <span className="text-lg font-black tracking-tight text-indigo-600 dark:text-indigo-400 uppercase">
+                              {storeName || 'OMNISTORE'}
+                            </span>
+                          </div>
+
+                          {/* Email Headline */}
+                          {c.subject && (
+                            <h4 className="text-base font-extrabold text-slate-900 dark:text-white text-center">
+                              {c.subject}
+                            </h4>
+                          )}
+
+                          {/* Email Body Text */}
+                          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line text-center">
+                            {c.body || 'Explore our latest collections and enjoy exclusive discounts on your order today!'}
+                          </p>
+
+                          {/* CTA Button */}
+                          <div className="text-center pt-2">
+                            <button
+                              type="button"
+                              className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold shadow-md shadow-indigo-600/30 hover:bg-indigo-700 transition"
+                            >
+                              Shop Exclusive Deals →
+                            </button>
+                          </div>
+
+                          {/* Email Footer */}
+                          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-center text-[10px] text-slate-400 space-y-1">
+                            <p>© {new Date().getFullYear()} {storeName || 'OmniStore'}. All rights reserved.</p>
+                            <p>You received this email because you opted in to marketing broadcasts.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CHANNEL: PUSH */}
+                  {meta.id === 'PUSH' && (
+                    <div className="max-w-md mx-auto p-4 rounded-2xl border border-purple-200 dark:border-purple-800/80 bg-white dark:bg-slate-900 shadow-xl space-y-3">
+                      <div className="flex items-center justify-between text-[11px] text-slate-400">
+                        <div className="flex items-center gap-1.5">
+                          <Bell className="w-3.5 h-3.5 text-purple-600" />
+                          <span className="font-bold text-slate-700 dark:text-slate-300">Web Push Alert</span>
+                        </div>
+                        <span>Just now</span>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900/50 flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
+                          {storeName ? storeName.charAt(0).toUpperCase() : 'O'}
+                        </div>
+                        <div className="space-y-1 min-w-0">
+                          <h5 className="font-extrabold text-xs text-slate-900 dark:text-white truncate">
+                            {c.subject || c.title}
+                          </h5>
+                          <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                            {c.body || 'Tap to explore new promotions in our store now!'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        >
+                          Dismiss
+                        </button>
+                        <button
+                          type="button"
+                          className="px-4 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold shadow-xs hover:bg-purple-700"
+                        >
+                          View Offer
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 2: RAW TEMPLATE COPY & METADATA */}
+              {templatePreviewTab === 'text' && (
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Subject / Header
+                    </label>
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-900 dark:text-foreground break-words">
+                      {c.subject || <span className="text-slate-400 italic">No subject line</span>}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Message Body Content
+                    </label>
+                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200 whitespace-pre-line leading-relaxed font-mono">
+                      {c.body || <span className="text-slate-400 italic font-sans">No message body content</span>}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">Channel</span>
+                      <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">{meta.shortLabel}</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">Sent Reach</span>
+                      <span className="text-xs font-black text-slate-900 dark:text-foreground">{c.sentCount.toLocaleString()}</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">Clicks</span>
+                      <span className="text-xs font-black text-slate-900 dark:text-foreground">{c.clickCount.toLocaleString()}</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">Revenue</span>
+                      <span className="text-xs font-black text-emerald-600">{currencySymbol}{c.revenueTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-border">
+                <div className="flex items-center gap-2">
+                  {meta.id === 'EMAIL' && (
+                    <a
+                      href="/email-templates"
+                      className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 text-xs font-extrabold flex items-center gap-1.5 border border-indigo-200 dark:border-indigo-800 transition"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Email Template Builder</span>
+                    </a>
+                  )}
+                  {meta.id === 'WHATSAPP' && (
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Meta Approved Template</span>
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={copyTemplateContent}
+                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition flex items-center gap-1.5"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy Text</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewCampaign(null)}
+                    className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm transition"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Pixel Help & Setup Guide Modal */}
       {activePixelGuide && (() => {

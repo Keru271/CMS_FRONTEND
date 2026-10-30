@@ -342,6 +342,23 @@ let productsMemoryState: CMSProduct[] = [];
 let categoriesMemoryState: CMSCategory[] = [];
 let ordersMemoryState: CMSOrder[] = [];
 
+export function parseProductImages(imagesRaw?: string | string[] | null): string[] {
+  if (!imagesRaw) return [];
+  if (Array.isArray(imagesRaw)) return imagesRaw.map(String).map((s) => s.trim()).filter(Boolean);
+  const trimmed = String(imagesRaw).trim();
+  if (!trimmed) return [];
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed.map(String).map((s) => s.trim()).filter(Boolean);
+    } catch {}
+  }
+  return trimmed
+    .split(",")
+    .map((s) => s.trim().replace(/^["']|["']$/g, ""))
+    .filter(Boolean);
+}
+
 export const cmsService = {
   // Get Aggregated Dashboard Details (1 Single API Call for stats, products, categories, orders)
   async getDashboardDetails(): Promise<{
@@ -643,8 +660,8 @@ export const cmsService = {
                   .filter(Boolean)
               : [],
             status: p.status || 'ACTIVE',
-            image: p.images ? p.images.split(',')[0] : '',
-            images: p.images ? p.images.split(',') : [],
+            image: parseProductImages(p.images)[0] || p.ogImage || '',
+            images: parseProductImages(p.images),
             tags: p.tags ? p.tags.split(',').map((t: string) => t.trim()) : [],
             variants: p.variantsJson
               ? (() => {
@@ -672,7 +689,7 @@ export const cmsService = {
                 .toLowerCase()
                 .trim()
                 .replace(/[^a-z0-9]/g, '-'),
-            ogImage: p.ogImage || (p.images ? p.images.split(',')[0] : ''),
+            ogImage: p.ogImage || parseProductImages(p.images)[0] || '',
             canonicalUrl: p.canonicalUrl || '',
             structuredDataJson: p.structuredDataJson || null,
             createdAt: p.createdAt
@@ -791,14 +808,15 @@ export const cmsService = {
                 .filter(Boolean)
             : formData.collections || [],
           status: p.status || 'ACTIVE',
-          image: p.images
-            ? p.images.split(',')[0]
-            : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
-          images: p.images
-            ? p.images.split(',')
-            : [
-                'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
-              ],
+          image:
+            parseProductImages(p.images)[0] ||
+            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+          images:
+            parseProductImages(p.images).length > 0
+              ? parseProductImages(p.images)
+              : [
+                  'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+                ],
           tags: p.tags ? p.tags.split(',').map((t: string) => t.trim()) : [],
           variants: p.variantsJson
             ? (() => {
@@ -827,7 +845,7 @@ export const cmsService = {
               .toLowerCase()
               .trim()
               .replace(/[^a-z0-9]+/g, '-'),
-          ogImage: p.ogImage || (p.images ? p.images.split(',')[0] : ''),
+          ogImage: p.ogImage || parseProductImages(p.images)[0] || '',
           canonicalUrl: p.canonicalUrl || '',
           structuredDataJson: p.structuredDataJson || null,
           createdAt: p.createdAt
@@ -997,14 +1015,15 @@ export const cmsService = {
                 .filter(Boolean)
             : formData.collections || [],
           status: p.status || 'ACTIVE',
-          image: p.images
-            ? p.images.split(',')[0]
-            : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
-          images: p.images
-            ? p.images.split(',')
-            : [
-                'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
-              ],
+          image:
+            parseProductImages(p.images)[0] ||
+            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+          images:
+            parseProductImages(p.images).length > 0
+              ? parseProductImages(p.images)
+              : [
+                  'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+                ],
           tags: p.tags ? p.tags.split(',').map((t: string) => t.trim()) : [],
           variants: p.variantsJson
             ? (() => {
@@ -1033,7 +1052,7 @@ export const cmsService = {
               .toLowerCase()
               .trim()
               .replace(/[^a-z0-9]+/g, '-'),
-          ogImage: p.ogImage || (p.images ? p.images.split(',')[0] : ''),
+          ogImage: p.ogImage || parseProductImages(p.images)[0] || '',
           canonicalUrl: p.canonicalUrl || '',
           structuredDataJson: p.structuredDataJson || null,
           createdAt: p.createdAt
@@ -6105,6 +6124,79 @@ export const cmsService = {
     payload: Partial<ProductSeoData>,
   ): Promise<ProductSeoData> {
     const response = await apiClient.put<ProductSeoData>(`/seo/product/${productId}`, payload);
+    return response.data;
+  },
+
+  async getAiSeoContext(): Promise<{
+    storeId: string;
+    storeName: string;
+    storeDomain: string;
+    siteUrl: string;
+    currentScore: number;
+    detectedNiche: string;
+    suggestedKeywords: string[];
+    suggestedValueProps: string[];
+    suggestedMarkets: string[];
+    productsCount: number;
+    categoriesCount: number;
+  }> {
+    const response = await apiClient.get('/seo/ai-assist/context');
+    return response.data;
+  },
+
+  async runAiSeoAssist(payload: {
+    niche?: string;
+    targetMarket?: string;
+    valueProposition?: string;
+    targetKeywords?: string[];
+    brandTone?: string;
+    scope?: {
+      globalMeta?: boolean;
+      openGraph?: boolean;
+      jsonLd?: boolean;
+      robotsTxt?: boolean;
+      products?: boolean;
+    };
+    autoApply?: boolean;
+    storeId?: string;
+    aiModel?: 'gemini' | 'chatgpt' | 'ensemble' | 'auto';
+    additionalNotes?: string;
+  }): Promise<{
+    success: boolean;
+    applied: boolean;
+    storeId: string;
+    modelUsed?: string;
+    detectedNiche?: string;
+    detectedMarket?: string;
+    valueProposition?: string;
+    seoScore: number;
+    seoSiteTitle: string;
+    seoMetaDescription: string;
+    seoCanonicalUrl: string;
+    seoOgTitle: string;
+    seoOgDescription: string;
+    seoOgImage: string;
+    seoRobotsTxt: string;
+    seoStructuredDataJson: string;
+    keywordInsights: Array<{
+      keyword: string;
+      intent: string;
+      relevanceScore: number;
+      searchVolume: string;
+      competition: string;
+    }>;
+    productOptimizations?: Array<{
+      id: string;
+      name: string;
+      seoTitle: string;
+      seoDescription: string;
+      urlSlug: string;
+    }>;
+    optimizationsSummary: string[];
+  }> {
+    const response = await apiClient.post('/seo/ai-assist', payload, {
+      timeout: 120000,
+    });
     return response.data;
   },
 
