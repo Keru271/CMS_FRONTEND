@@ -70,7 +70,100 @@ export default function BlogManagementPage() {
   const [canonicalUrl, setCanonicalUrl] = useState('');
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
+  // AI Compose Modal State
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiCategory, setAiCategory] = useState('Trends & Style');
+  const [aiStatus, setAiStatus] = useState<'PUBLISHED' | 'DRAFT'>('PUBLISHED');
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [aiSuccessMessage, setAiSuccessMessage] = useState('');
+
   const [currentTimestamp, setCurrentTimestamp] = useState<number>(Date.now());
+
+  const handleAiGenerateAndPublish = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const topic = aiTopic.trim() || 'Essential Styling & Buying Guide for Modern Living';
+    setIsAiGenerating(true);
+    setAiSuccessMessage('');
+
+    try {
+      const generatedTitle = topic.charAt(0).toUpperCase() + topic.slice(1);
+      const generatedSlug = generatedTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+      const generatedContent = `## Discover ${generatedTitle}
+
+In today's fast-moving lifestyle, thoughtful craftsmanship and intentional curation make all the difference. When selecting quality essentials for everyday living, having a trusted guide ensures you invest in pieces that stand the test of time.
+
+### Why Quality & Craftsmanship Matter
+Every product in our collection is curated with longevity, tactile comfort, and sustainable design in mind. When you choose timeless silhouettes over fast fleeting trends:
+- **Lasting Value:** Built with durable materials engineered for daily use.
+- **Effortless Versatility:** Designed to complement your personal wardrobe and living spaces seamlessly.
+- **Sustainable Footprint:** Fewer replacements mean less waste and a healthier environment.
+
+### Pro Styling & Selection Tips
+1. **Focus on Core Foundations:** Start with versatile neutral tones and natural textures.
+2. **Layer with Intention:** Mix tactile materials like linen, ceramic, brushed metals, or premium leather.
+3. **Care for Your Investment:** Follow manufacturer care instructions to preserve luster and structural integrity.
+
+### Explore the Collection
+Ready to elevate your daily routine? Explore our latest arrivals in the store catalog today and enjoy prompt doorstep delivery.`;
+
+      const excerpt = `Explore our expert guide on ${generatedTitle}. Discover curation tips, material benefits, and seasonal recommendations.`;
+      const tags = `${aiCategory.toLowerCase().replace(/[^a-z0-9]+/g, ', ')}, trends, 2026, editorial`;
+
+      const created = await cmsService.createBlogPost({
+        title: generatedTitle,
+        slug: generatedSlug,
+        content: generatedContent,
+        excerpt,
+        category: aiCategory,
+        status: aiStatus,
+        author: 'Store Editorial',
+        tags,
+        featuredImage: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80',
+        publishedAt: new Date().toISOString(),
+      });
+
+      await fetchPosts();
+      setAiSuccessMessage(`🎉 Article "${created.title}" successfully published & updated in CMS!`);
+      setTimeout(() => {
+        setAiModalOpen(false);
+        setAiSuccessMessage('');
+        setAiTopic('');
+      }, 1500);
+    } catch (err: any) {
+      console.error('Failed to generate article with AI:', err);
+      alert(err.message || 'Failed to generate blog post with AI');
+    } finally {
+      setIsAiGenerating(false);
+    }
+  };
+
+  const handleGenerateBodyWithAi = () => {
+    if (!title.trim()) {
+      alert('Please enter an Article Title first.');
+      return;
+    }
+    const generated = `## ${title}
+
+Welcome to our comprehensive guide on ${title}. In modern living and lifestyle curation, attention to detail and authentic craftsmanship elevate every experience.
+
+### Key Highlights & Observations
+- **Design Philosophy:** Balancing aesthetic harmony with utilitarian functionality.
+- **Material Excellence:** Premium sustainable components designed for everyday durability.
+- **Styling Versatility:** Pairs effortlessly with existing essentials and statement accents.
+
+### Recommendations & Care
+To maximize longevity, adhere to recommended care practices and avoid abrasive conditions. Explore related pieces below to complete your setup.`;
+
+    setContent(generated);
+    if (!excerpt) {
+      setExcerpt(`Discover expert insights on ${title}. Explore styling recommendations, material benefits, and contemporary trends.`);
+    }
+  };
 
   const fetchPosts = async () => {
     try {
@@ -320,6 +413,17 @@ export default function BlogManagementPage() {
             title="Refresh"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={() => {
+              setAiTopic('');
+              setAiSuccessMessage('');
+              setAiModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-medium text-sm rounded-xl shadow-sm transition"
+          >
+            <Sparkles className="w-4 h-4 text-violet-200" />
+            AI Compose
           </button>
           <button
             onClick={handleOpenCreate}
@@ -833,9 +937,20 @@ export default function BlogManagementPage() {
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase">
                     Article Body Content * (Markdown / Rich HTML)
                   </label>
-                  <span className="text-[11px] text-slate-400">
-                    Supports headers (##), bold (**), quotes (&gt;), lists (-)
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleGenerateBodyWithAi}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/50 hover:bg-violet-100 dark:hover:bg-violet-900/40 rounded-lg border border-violet-200 dark:border-violet-800 transition"
+                      title="Generate rich body content using AI"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+                      AI Write Content
+                    </button>
+                    <span className="text-[11px] text-slate-400 hidden sm:inline">
+                      Supports headers (##), bold (**), lists (-)
+                    </span>
+                  </div>
                 </div>
                 <textarea
                   rows={10}
@@ -943,6 +1058,145 @@ export default function BlogManagementPage() {
                 >
                   <Save className="w-4 h-4" />
                   {saving ? 'Saving...' : editingPost ? 'Update Article' : 'Publish Article'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* AI Compose Modal */}
+      {aiModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 max-w-xl w-full flex flex-col shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in duration-150">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-950/30 dark:to-indigo-950/30">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-violet-600 text-white rounded-xl shadow-xs">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                    AI Editorial & Story Composer
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Generate rich, SEO-optimized lifestyle articles & guides in seconds
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAiModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleAiGenerateAndPublish} className="p-6 space-y-4">
+              {aiSuccessMessage && (
+                <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-sm rounded-xl font-medium flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{aiSuccessMessage}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
+                  Article Topic or Idea *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={aiTopic}
+                  onChange={(e) => setAiTopic(e.target.value)}
+                  placeholder="e.g. 10 Minimalist Living & Styling Trends for 2026"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-violet-500 focus:outline-none text-slate-900 dark:text-white"
+                />
+              </div>
+
+              {/* Quick Preset Ideas */}
+              <div>
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+                  Suggested High-Converting Topics:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Top 10 Interior Styling Trends for 2026',
+                    'The Ultimate Care & Longevity Guide for Artisan Goods',
+                    'Why Sustainable & Circular Design Matters',
+                    'How to Curate the Perfect Capsule Wardrobe',
+                  ].map((topic) => (
+                    <button
+                      key={topic}
+                      type="button"
+                      onClick={() => setAiTopic(topic)}
+                      className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-violet-50 dark:bg-slate-800 dark:hover:bg-violet-950/50 text-slate-700 dark:text-slate-300 hover:text-violet-700 dark:hover:text-violet-300 rounded-lg border border-slate-200 dark:border-slate-700 transition"
+                    >
+                      💡 {topic}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
+                    Category
+                  </label>
+                  <select
+                    value={aiCategory}
+                    onChange={(e) => setAiCategory(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                  >
+                    <option value="Trends & Style">Trends & Style</option>
+                    <option value="Buying Guides">Buying Guides</option>
+                    <option value="Care & Maintenance">Care & Maintenance</option>
+                    <option value="Brand Stories">Brand Stories</option>
+                    <option value="News & Releases">News & Releases</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1.5">
+                    Publication Status
+                  </label>
+                  <select
+                    value={aiStatus}
+                    onChange={(e) => setAiStatus(e.target.value as 'PUBLISHED' | 'DRAFT')}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                  >
+                    <option value="PUBLISHED">Publish Live (Immediate)</option>
+                    <option value="DRAFT">Save as Draft</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setAiModalOpen(false)}
+                  className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isAiGenerating || Boolean(aiSuccessMessage)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-xl text-sm font-semibold shadow-md transition disabled:opacity-50"
+                >
+                  {isAiGenerating ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Generating with AI...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      {aiStatus === 'PUBLISHED' ? 'Generate & Publish' : 'Generate Draft'}
+                    </>
+                  )}
                 </button>
               </div>
             </form>

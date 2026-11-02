@@ -1,5 +1,6 @@
 'use client';
 
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect } from 'react';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { useTranslation } from '@/src/context/LanguageContext';
@@ -304,20 +305,14 @@ export const UserPreferencesStudio: React.FC = () => {
     <div className="space-y-6 max-w-5xl">
       {/* Toast Alert */}
       {toast && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 px-4.5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border animate-in slide-in-from-bottom-5 duration-300 ${
-            toast.type === 'success'
-              ? 'bg-slate-900 text-[#00E5FF] border-slate-800'
-              : 'bg-rose-900 text-white border-rose-700'
-          }`}
-        >
-          {toast.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-[#00E5FF] shrink-0" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-white shrink-0" />
-          )}
-          <span className="text-xs font-sans font-bold">{toast.text}</span>
-        </div>
+        <SwipeToast
+          open={!!toast}
+          type={toast.type}
+          title={toast.type === 'success' ? 'Success' : 'Error'}
+          description={(toast as any).text || (toast as any).msg}
+          onClose={() => setToast(null)}
+          duration={4000}
+        />
       )}
 
       {/* Header Banner Card (Light Mode) */}

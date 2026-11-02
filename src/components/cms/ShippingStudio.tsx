@@ -1,5 +1,6 @@
 'use client';
 
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect } from 'react';
 import { TablePagination } from '@/src/components/ui/TablePagination';
 import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
@@ -49,6 +50,7 @@ import {
   Send,
   Printer,
   Sliders,
+  AppWindow,
 } from 'lucide-react';
 
 export const ShippingStudio: React.FC = () => {
@@ -62,7 +64,7 @@ export const ShippingStudio: React.FC = () => {
   const [providers, setProviders] = useState<CMSShippingProvider[]>([]);
   const [policy, setPolicy] = useState<RateShoppingPolicy>({
     priority: 'CHEAPEST',
-    preferredCarrierCode: 'SHIPROCKET',
+    preferredCarrierCode: '',
     fallbackEnabled: true,
     codEnabled: true,
     codMarkupAmount: 0.0,
@@ -98,7 +100,7 @@ export const ShippingStudio: React.FC = () => {
   // Manifest Shipment Modal
   const [isManifestModalOpen, setIsManifestModalOpen] = useState(false);
   const [manifestOrderId, setManifestOrderId] = useState('');
-  const [manifestCarrier, setManifestCarrier] = useState('SHIPROCKET');
+  const [manifestCarrier, setManifestCarrier] = useState('');
   const [manifestServiceType, setManifestServiceType] = useState('standard');
   const [manifestWeight, setManifestWeight] = useState(0.8);
   const [isManifesting, setIsManifesting] = useState(false);
@@ -158,8 +160,8 @@ export const ShippingStudio: React.FC = () => {
   const [simResult, setSimResult] = useState<any>(null);
 
   // Tracking Lookup State
-  const [trackingNumberInput, setTrackingNumberInput] = useState('SR84920194IN');
-  const [selectedCarrier, setSelectedCarrier] = useState('SHIPROCKET');
+  const [trackingNumberInput, setTrackingNumberInput] = useState('');
+  const [selectedCarrier, setSelectedCarrier] = useState('');
   const [isTrackingLoading, setIsTrackingLoading] = useState(false);
   const [trackingResult, setTrackingResult] = useState<any>(null);
 
@@ -187,7 +189,13 @@ export const ShippingStudio: React.FC = () => {
       setZones(zoneData);
       setProviders(providerData);
       if (policyData) setPolicy(policyData);
-      if (credData) setCredentials(credData);
+      if (credData) {
+        setCredentials(credData);
+        if (credData.length > 0) {
+          setManifestCarrier((prev) => prev || credData[0].carrierCode);
+          setSelectedCarrier((prev) => prev || credData[0].carrierCode);
+        }
+      }
       if (shipmentData) setShipments(shipmentData);
       if (ndrData) setNdrRecords(ndrData);
     } catch (err) {
@@ -251,15 +259,24 @@ export const ShippingStudio: React.FC = () => {
 
   // 4. Manifest Shipment
   const handleManifestShipment = async () => {
+    if (credentials.length === 0) {
+      showToast('No logistics app installed. Please install a shipping app from Apps marketplace first.', 'error');
+      return;
+    }
     if (!manifestOrderId) {
       showToast('Please enter or select an Order ID', 'error');
+      return;
+    }
+    const carrierToUse = manifestCarrier || credentials[0]?.carrierCode;
+    if (!carrierToUse) {
+      showToast('No carrier selected or available', 'error');
       return;
     }
     setIsManifesting(true);
     try {
       const res = await cmsService.createShipment({
         orderId: manifestOrderId,
-        carrierCode: manifestCarrier,
+        carrierCode: carrierToUse,
         serviceType: manifestServiceType,
         packageWeightKg: manifestWeight,
       });
@@ -344,20 +361,14 @@ export const ShippingStudio: React.FC = () => {
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 p-6 md:p-8 space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-xl border flex items-center gap-3 transition-all ${
-            toastMessage.type === 'success'
-              ? 'bg-emerald-950/90 text-emerald-200 border-emerald-800'
-              : 'bg-rose-950/90 text-rose-200 border-rose-800'
-          }`}
-        >
-          {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-rose-400" />
-          )}
-          <span className="text-sm font-semibold">{toastMessage.text}</span>
-        </div>
+        <SwipeToast
+          open={!!toastMessage}
+          type={toastMessage.type}
+          title={toastMessage.type === 'success' ? 'Success' : 'Error'}
+          description={toastMessage.text}
+          onClose={() => setToastMessage(null)}
+          duration={4000}
+        />
       )}
 
       {/* Header Banner */}
@@ -554,7 +565,7 @@ export const ShippingStudio: React.FC = () => {
                   Merchant-Preferred Carrier
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Routes orders preferentially to your contract carrier (e.g. Delhivery Direct or
+                  Routes orders preferentially to your installed logistics carrier (e.g.
                   Shiprocket) when serviceable.
                 </p>
               </div>
@@ -566,6 +577,25 @@ export const ShippingStudio: React.FC = () => {
 
           {/* Policy Settings Form */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6">
+            {credentials.length === 0 && (
+              <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                  <div>
+                    <span className="font-bold block">No Logistics App Installed</span>
+                    <span>Only logistics apps installed from the App Marketplace can fulfill and route orders.</span>
+                  </div>
+                </div>
+                <a
+                  href="/apps"
+                  className="px-3.5 py-1.5 bg-amber-600 text-white rounded-xl font-bold text-xs hover:bg-amber-700 transition flex items-center gap-1.5 whitespace-nowrap"
+                >
+                  <AppWindow className="w-3.5 h-3.5" />
+                  Install Logistics App
+                </a>
+              </div>
+            )}
+
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Sliders className="w-5 h-5 text-indigo-500" />
               Routing Rules & Guardrails
@@ -574,18 +604,23 @@ export const ShippingStudio: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               <div>
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Preferred Courier Partner
+                  Preferred Courier Partner (Installed Apps)
                 </label>
                 <select
-                  value={policy.preferredCarrierCode}
+                  value={policy.preferredCarrierCode || ''}
                   onChange={(e) => setPolicy({ ...policy, preferredCarrierCode: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-semibold"
+                  disabled={credentials.length === 0}
                 >
-                  <option value="SHIPROCKET">Shiprocket Aggregator (Multi-Courier)</option>
-                  <option value="DELHIVERY">Delhivery Direct Enterprise</option>
-                  <option value="BLUEDART">Blue Dart Air Express</option>
-                  <option value="INDIAPOST">India Post Speed Post</option>
-                  <option value="EASYPOST">EasyPost (FedEx/UPS/DHL Global)</option>
+                  {credentials.length === 0 ? (
+                    <option value="">No logistics apps installed</option>
+                  ) : (
+                    credentials.map((c) => (
+                      <option key={c.carrierCode} value={c.carrierCode}>
+                        {c.carrierName} ({c.carrierCode})
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 
@@ -685,89 +720,111 @@ export const ShippingStudio: React.FC = () => {
       {/* ─── TAB 2: CARRIER INTEGRATIONS ──────────────────────────────────── */}
       {activeTab === 'carriers' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {credentials.map((cred) => {
-              const isTesting = testingCarrier === cred.carrierCode;
-              return (
-                <div
-                  key={cred.id || cred.carrierCode}
-                  className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between"
+          {credentials.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-12 text-center shadow-sm">
+              <div className="w-16 h-16 mx-auto rounded-3xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 shadow-inner">
+                <AppWindow className="w-8 h-8" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                No Logistics Apps Installed
+              </h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto mt-2 leading-relaxed">
+                Logistics carriers are strictly managed through installed apps from the App Marketplace.
+                Apart from installed apps, no logistics providers are enabled or displayed.
+              </p>
+              <div className="mt-6 flex justify-center">
+                <a
+                  href="/apps"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold transition shadow-md shadow-indigo-500/20"
                 >
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                        {cred.carrierCode}
-                      </span>
-                      <span
-                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                          cred.isActive
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                            : 'bg-slate-100 text-slate-500'
-                        }`}
+                  <AppWindow className="w-4 h-4" />
+                  Install Logistics App in Apps Marketplace
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {credentials.map((cred) => {
+                const isTesting = testingCarrier === cred.carrierCode;
+                return (
+                  <div
+                    key={cred.id || cred.carrierCode}
+                    className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                          {cred.carrierCode}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                            Marketplace App
+                          </span>
+                          <span
+                            className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                              cred.isActive
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                                : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            {cred.isActive ? 'Active' : 'Disabled'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                        {cred.carrierName}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1 font-mono truncate">
+                        {cred.endpointUrl || 'https://api.carrier.com'}
+                      </p>
+
+                      <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl space-y-1.5 text-xs">
+                        <div className="flex justify-between text-slate-500">
+                          <span>API Token:</span>
+                          <span className="font-mono text-slate-800 dark:text-slate-200">
+                            {cred.apiKey ? `${cred.apiKey.slice(0, 6)}••••••••` : 'Configured via App'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-slate-500">
+                          <span>Account #:</span>
+                          <span className="font-mono text-slate-800 dark:text-slate-200">
+                            {cred.accountNumber || '—'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-slate-500">
+                          <span>Environment:</span>
+                          <span className="font-semibold text-indigo-600">
+                            {cred.sandboxMode ? 'Sandbox Simulator' : 'Production Live'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => handleTestConnection(cred.carrierCode)}
+                        disabled={isTesting}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 transition"
                       >
-                        {cred.isActive ? 'Active' : 'Disabled'}
-                      </span>
-                    </div>
+                        <Zap
+                          className={`w-3.5 h-3.5 text-amber-500 ${isTesting ? 'animate-spin' : ''}`}
+                        />
+                        {isTesting ? 'Pinging...' : 'Test Ping'}
+                      </button>
 
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                      {cred.carrierName}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1 font-mono truncate">
-                      {cred.endpointUrl || 'https://api.carrier.com'}
-                    </p>
-
-                    <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl space-y-1.5 text-xs">
-                      <div className="flex justify-between text-slate-500">
-                        <span>API Key:</span>
-                        <span className="font-mono text-slate-800 dark:text-slate-200">
-                          {cred.apiKey || 'Not configured'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-slate-500">
-                        <span>Account #:</span>
-                        <span className="font-mono text-slate-800 dark:text-slate-200">
-                          {cred.accountNumber || '—'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-slate-500">
-                        <span>Environment:</span>
-                        <span className="font-semibold text-indigo-600">
-                          {cred.sandboxMode ? 'Sandbox Simulator' : 'Production Live'}
-                        </span>
-                      </div>
+                      <a
+                        href="/apps"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-xs font-bold transition hover:opacity-90"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Manage in Apps
+                      </a>
                     </div>
                   </div>
-
-                  <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                    <button
-                      onClick={() => handleTestConnection(cred.carrierCode)}
-                      disabled={isTesting}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 transition"
-                    >
-                      <Zap
-                        className={`w-3.5 h-3.5 text-amber-500 ${isTesting ? 'animate-spin' : ''}`}
-                      />
-                      {isTesting ? 'Pinging...' : 'Test Ping'}
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setEditingCred(cred);
-                        setCredApiKeyInput(cred.apiKey || '');
-                        setCredApiSecretInput(cred.apiSecret || '');
-                        setCredSandboxInput(cred.sandboxMode);
-                        setCredActiveInput(cred.isActive);
-                        setIsCredModalOpen(true);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-xs font-bold transition hover:opacity-90"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" /> Edit Keys
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -951,8 +1008,13 @@ export const ShippingStudio: React.FC = () => {
               </p>
             </div>
 
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {ndrRecords.map((record) => (
+            {ndrRecords.length === 0 ? (
+              <div className="p-12 text-center text-slate-400 font-bold text-xs">
+                No active non-delivery reports (NDR) found.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {ndrRecords.map((record) => (
                 <div
                   key={record.id}
                   className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4"
@@ -1030,9 +1092,10 @@ export const ShippingStudio: React.FC = () => {
                 </div>
               ))}
             </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
+    )}
 
       {/* ─── TAB 5: ZONES & RATES ─────────────────────────────────────────── */}
       {activeTab === 'zones' && (
@@ -1263,7 +1326,7 @@ export const ShippingStudio: React.FC = () => {
                 Live Tracking Milestone Simulator
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Lookup any live AWB or test consignment across Shiprocket, Delhivery, or FedEx.
+                Lookup any live AWB or consignment across your installed logistics carrier apps.
               </p>
             </div>
 
@@ -1465,19 +1528,29 @@ export const ShippingStudio: React.FC = () => {
 
               <div>
                 <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                  Carrier Provider
+                  Carrier Provider (Installed Logistics Apps)
                 </label>
-                <select
-                  value={manifestCarrier}
-                  onChange={(e) => setManifestCarrier(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
-                >
-                  <option value="SHIPROCKET">Shiprocket (Multi-Courier Aggregator)</option>
-                  <option value="DELHIVERY">Delhivery Direct Express</option>
-                  <option value="INDIAPOST">India Post Speed Post</option>
-                  <option value="EASYPOST">EasyPost (FedEx/DHL/UPS)</option>
-                  <option value="DHL">DHL Express Worldwide</option>
-                </select>
+                {credentials.length === 0 ? (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-800 dark:text-amber-300 text-xs">
+                    No logistics app installed. Please install a shipping app from the{' '}
+                    <a href="/apps" className="underline font-bold">
+                      App Marketplace
+                    </a>{' '}
+                    first.
+                  </div>
+                ) : (
+                  <select
+                    value={manifestCarrier}
+                    onChange={(e) => setManifestCarrier(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
+                  >
+                    {credentials.map((c) => (
+                      <option key={c.carrierCode} value={c.carrierCode}>
+                        {c.carrierName} ({c.carrierCode})
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1519,8 +1592,8 @@ export const ShippingStudio: React.FC = () => {
               </button>
               <button
                 onClick={handleManifestShipment}
-                disabled={isManifesting}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5"
+                disabled={isManifesting || credentials.length === 0}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 disabled:opacity-50"
               >
                 {isManifesting ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />

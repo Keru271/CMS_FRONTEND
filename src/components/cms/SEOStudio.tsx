@@ -1,6 +1,8 @@
 'use client';
+import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
 import React, { useState, useEffect } from 'react';
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import {
   Search,
   Globe,
@@ -505,22 +507,16 @@ export const SEOStudio: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Toast Notification */}
+      {/* Swipe Toast Notification */}
       {toastMessage && (
-        <div
-          className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border transition-all animate-bounce ${
-            toastMessage.type === 'success'
-              ? 'bg-emerald-50 dark:bg-emerald-950/80 border-emerald-500/40 text-emerald-800 dark:text-emerald-300'
-              : 'bg-rose-50 dark:bg-rose-950/80 border-rose-500/40 text-rose-800 dark:text-rose-300'
-          }`}
-        >
-          {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-rose-600" />
-          )}
-          <span className="text-xs font-bold">{toastMessage.text}</span>
-        </div>
+        <SwipeToast
+          open={!!toastMessage}
+          type={toastMessage.type}
+          title={toastMessage.type === 'success' ? 'Success' : 'Error'}
+          description={toastMessage.text}
+          onClose={() => setToastMessage(null)}
+          duration={4000}
+        />
       )}
 
       {/* Header Banner */}
@@ -545,6 +541,7 @@ export const SEOStudio: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <PageAiSpecularButton size="md" />
           {/* Assist Button according to DESIGN.md (#00E5FF Cyan Neon Primary Action, #121212 high contrast, 16px radius) */}
           <button
             type="button"

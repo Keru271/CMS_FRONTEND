@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import { useRouter } from 'next/navigation';
 import {
   Mail,
@@ -793,20 +794,14 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
     <div className="fixed inset-0 z-50 flex flex-col w-screen h-screen bg-slate-100 text-slate-900 font-sans selection:bg-indigo-500 selection:text-white overflow-hidden">
       {/* Toast Alert */}
       {notification && (
-        <div
-          className={`fixed top-5 right-5 z-[60] flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-xs font-semibold transition-all transform animate-in fade-in slide-in-from-top-4 ${
-            notification.type === 'success'
-              ? 'bg-emerald-600 text-white border-emerald-700 shadow-emerald-500/20'
-              : 'bg-rose-50 text-rose-900 border-rose-300 shadow-rose-500/10'
-          }`}
-        >
-          {notification.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
-          ) : (
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-          )}
-          <span>{notification.msg}</span>
-        </div>
+        <SwipeToast
+          open={!!notification}
+          type={notification.type}
+          title={notification.type === 'success' ? 'Success' : 'Error'}
+          description={notification.msg}
+          onClose={() => setNotification(null)}
+          duration={4000}
+        />
       )}
 
       {/* ─── STUDIO TOP BAR ────────────────────────── */}

@@ -31,7 +31,14 @@ export interface FormFieldDefinition {
 
 export interface ChatInteractiveForm {
   id: string;
-  type: 'ADD_PRODUCT' | 'EDIT_PRODUCT' | 'ADD_CATEGORY' | 'EDIT_CATEGORY' | 'CREATE_DISCOUNT';
+  type:
+    | 'ADD_PRODUCT'
+    | 'EDIT_PRODUCT'
+    | 'ADD_CATEGORY'
+    | 'EDIT_CATEGORY'
+    | 'CREATE_DISCOUNT'
+    | 'CREATE_BLOG'
+    | 'EDIT_BLOG';
   title: string;
   subtitle?: string;
   icon?: string;
@@ -427,6 +434,132 @@ export function createDiscountForm(
   };
 }
 
+export function createAddBlogForm(
+  initial?: { title?: string; category?: string; status?: string; content?: string },
+): ChatInteractiveForm {
+  return {
+    id: `form-add-blog-${Date.now()}`,
+    type: 'CREATE_BLOG',
+    title: 'Publish New Blog Article',
+    subtitle: 'Draft or publish rich storytelling, trends, and buying guides to your store blog',
+    icon: 'BookOpen',
+    submitButtonText: 'Publish Blog Post',
+    submitButtonIcon: 'Sparkles',
+    initialValues: {
+      title: initial?.title || '',
+      category: initial?.category || 'Stories & Guides',
+      status: initial?.status || 'PUBLISHED',
+      content: initial?.content || '',
+      author: 'Store Editorial',
+      tags: 'trends, guides, lifestyle',
+    },
+    fields: [
+      {
+        name: 'title',
+        label: 'Article Title',
+        type: 'text',
+        placeholder: 'e.g. 5 Contemporary Interior Styling Tips for 2026',
+        required: true,
+        defaultValue: initial?.title || '',
+      },
+      {
+        name: 'category',
+        label: 'Category',
+        type: 'text',
+        placeholder: 'e.g. Trends & Style, Buying Guides, Brand News',
+        required: true,
+        defaultValue: initial?.category || 'Stories & Guides',
+      },
+      {
+        name: 'status',
+        label: 'Publication Status',
+        type: 'select',
+        options: [
+          { label: 'Published (Live Immediately)', value: 'PUBLISHED' },
+          { label: 'Draft (Save for Later)', value: 'DRAFT' },
+        ],
+        required: true,
+        defaultValue: initial?.status || 'PUBLISHED',
+      },
+      {
+        name: 'author',
+        label: 'Author Byline',
+        type: 'text',
+        defaultValue: 'Store Editorial',
+      },
+      {
+        name: 'tags',
+        label: 'Tags (Comma-Separated)',
+        type: 'text',
+        placeholder: 'trends, fashion, styling',
+        defaultValue: 'trends, guides, lifestyle',
+      },
+      {
+        name: 'content',
+        label: 'Article Content (Markdown supported)',
+        type: 'textarea',
+        placeholder: 'Write your story, styling advice, or product recommendations...',
+        required: true,
+        defaultValue: initial?.content || '',
+      },
+    ],
+  };
+}
+
+export function createEditBlogForm(
+  initial?: { id?: string; title?: string; category?: string; status?: string; content?: string },
+): ChatInteractiveForm {
+  return {
+    id: `form-edit-blog-${Date.now()}`,
+    type: 'EDIT_BLOG',
+    title: 'Edit Blog Article',
+    subtitle: 'Update article title, content, or publication status',
+    icon: 'Edit3',
+    submitButtonText: 'Update Blog Article',
+    submitButtonIcon: 'Check',
+    initialValues: {
+      postId: initial?.id || '',
+      title: initial?.title || '',
+      category: initial?.category || 'Stories & Guides',
+      status: initial?.status || 'PUBLISHED',
+      content: initial?.content || '',
+    },
+    fields: [
+      {
+        name: 'title',
+        label: 'Article Title',
+        type: 'text',
+        required: true,
+        defaultValue: initial?.title || '',
+      },
+      {
+        name: 'category',
+        label: 'Category',
+        type: 'text',
+        defaultValue: initial?.category || 'Stories & Guides',
+      },
+      {
+        name: 'status',
+        label: 'Status',
+        type: 'select',
+        options: [
+          { label: 'Published (Live)', value: 'PUBLISHED' },
+          { label: 'Draft', value: 'DRAFT' },
+        ],
+        required: true,
+        defaultValue: initial?.status || 'PUBLISHED',
+      },
+      {
+        name: 'content',
+        label: 'Article Body',
+        type: 'textarea',
+        required: true,
+        defaultValue: initial?.content || '',
+      },
+    ],
+  };
+}
+
 class AIAssistantService {
   /**
    * Automatically detects if the prompt requires customer / merchant input,
@@ -606,6 +739,25 @@ class AIAssistantService {
       return createDiscountForm(currencySymbol, { value, type, code });
     }
 
+    // 6. BLOG & ARTICLE INTERACTIVE FORM
+    const isBlogForm =
+      (userLower.includes('blog') || userLower.includes('article')) &&
+      (userLower.includes('form') ||
+        userLower.includes('interactive') ||
+        replyLower.includes('blog form') ||
+        replyLower.includes('article form') ||
+        (userLower.includes('write') && userLower.includes('form')) ||
+        (userLower.includes('create') && userLower.includes('form')));
+
+    if (isBlogForm) {
+      let title = '';
+      const titleMatch = raw.match(/(?:titled|called|named|about|on)\s+["“']?([^"”',\n.]+)/i);
+      if (titleMatch && titleMatch[1]) {
+        title = titleMatch[1].trim();
+      }
+      return createAddBlogForm({ title });
+    }
+
     return undefined;
   }
 
@@ -740,6 +892,56 @@ class AIAssistantService {
         : storeCurrency === 'CAD'
         ? 'CA$'
         : '₹');
+
+    // 0.0 BLOG MANAGEMENT (CREATE, UPDATE, LIST)
+    if (msg.includes('blog') || msg.includes('article') || msg.includes('editorial')) {
+      if (
+        msg.includes('create') ||
+        msg.includes('write') ||
+        msg.includes('publish') ||
+        msg.includes('post') ||
+        msg.includes('draft') ||
+        msg.includes('new')
+      ) {
+        let postTitle = 'Essential Styling & Buying Guide for Modern Living';
+        const titleMatch =
+          userMessage.match(/(?:titled|called|named)\s+["“']?([^"”',\n]+)["”']?/i) ||
+          userMessage.match(/(?:about|on|for)\s+["“']?([^"”',\n.]+)/i);
+        if (titleMatch && titleMatch[1]) {
+          postTitle = titleMatch[1].trim();
+          postTitle = postTitle.charAt(0).toUpperCase() + postTitle.slice(1);
+        }
+
+        try {
+          const content = `## Discover ${postTitle}\n\nIn today's fast-moving lifestyle, thoughtful craftsmanship and intentional curation make all the difference. When selecting quality essentials for everyday living, having a trusted guide ensures you invest in pieces that stand the test of time.\n\n### Why Quality & Craftsmanship Matter\nEvery product in our collection is curated with longevity, tactile comfort, and sustainable design in mind.\n\n### Explore the Collection\nReady to elevate your daily routine? Explore our latest arrivals in the store catalog today and enjoy prompt doorstep delivery.`;
+
+          const created = await cmsService.createBlogPost({
+            title: postTitle,
+            content,
+            category: 'Stories & Trends',
+            status: 'PUBLISHED',
+            author: 'Store Editorial',
+            tags: 'trends, styling, lifestyle',
+            excerpt: `Explore our expert guide on ${postTitle}. Discover curation tips and seasonal recommendations.`,
+            publishedAt: new Date().toISOString(),
+          });
+
+          return {
+            content: `🎉 **Blog Post Successfully Published & Live!**\n\n- **Title:** **${created.title}**\n- **Category:** ${created.category || 'Stories & Trends'}\n- **Status:** **PUBLISHED (Live)**\n- **Slug:** \`/blog/${created.slug}\`\n\nYour article is saved in the CMS and is now visible on your storefront blog at \`/blog/${created.slug}\`!`,
+            actions: [
+              {
+                id: 'goto-blog',
+                label: '📰 View in Blog Studio',
+                type: 'NAVIGATE',
+                payload: '/blog',
+              },
+            ],
+          };
+        } catch (err) {
+          console.warn('Client fallback failed to create blog post:', err);
+        }
+      }
+    }
 
     // 0. CATEGORY MANAGEMENT (DELETE ALL, DELETE, CREATE, LIST)
     if (
@@ -1531,6 +1733,14 @@ class AIAssistantService {
    * Returns suggested prompt chips tailored to the current CMS route
    */
   public getContextualSuggestions(pathname: string): string[] {
+    if (pathname.startsWith('/blog')) {
+      return [
+        'Write a blog post about top trends for 2026 and publish it',
+        'Create a blog post form',
+        'Show my published blog articles',
+        'Write an artisan buying and care guide',
+      ];
+    }
     if (pathname.startsWith('/products') || pathname.startsWith('/categories')) {
       return [
         'Add some product in Electronics Category',

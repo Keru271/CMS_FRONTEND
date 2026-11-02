@@ -7,27 +7,19 @@ import {
   Sparkles,
   RefreshCw,
   Search,
-  ArrowRight,
   AlertTriangle,
   CheckCircle2,
-  Package,
   Layers,
   ShoppingBag,
   ShoppingCart,
-  Users,
   Percent,
-  Clock,
-  Send,
   Zap,
-  Tag,
-  Mail,
   ShieldAlert,
-  SlidersHorizontal,
   DollarSign,
   ArrowUpRight,
   ArrowDownRight,
   ChevronRight,
-  HelpCircle,
+  Bot,
 } from 'lucide-react';
 import { cmsService } from '@/src/services/cmsService';
 import { AiAnalyticsResult, CalculatedStoreAnalytics } from '@/src/types';
@@ -45,6 +37,7 @@ const SAMPLE_PROMPTS = [
 
 export const AiAnalyticsStudio: React.FC = () => {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
+  const [aiProvider, setAiProvider] = useState<'auto' | 'gemini' | 'chatgpt'>('auto');
   const [queryInput, setQueryInput] = useState<string>('Why are my sales down?');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -54,15 +47,47 @@ export const AiAnalyticsStudio: React.FC = () => {
   const [analyticsResult, setAnalyticsResult] = useState<AiAnalyticsResult | null>(null);
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  useEffect(() => {
-    setCategoryPage(1);
-    loadAnalytics();
-  }, [timeRange]);
-
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToast({ text, type });
     setTimeout(() => setToast(null), 3500);
   };
+
+  const handleTimeRangeChange = (r: '7d' | '30d' | '90d') => {
+    setTimeRange(r);
+    setCategoryPage(1);
+  };
+
+  useEffect(() => {
+    let ignore = false;
+    async function load() {
+      setIsRefreshing(true);
+      try {
+        const result = await cmsService.queryAiAnalytics({
+          question: queryInput,
+          timeRange,
+          aiProvider,
+        });
+        if (!ignore) {
+          setAnalyticsResult(result);
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error('Failed to load AI analytics:', err);
+          showToast('Failed to compute analytics.', 'error');
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRange, aiProvider]);
 
   const loadAnalytics = async () => {
     setIsRefreshing(true);
@@ -70,6 +95,7 @@ export const AiAnalyticsStudio: React.FC = () => {
       const result = await cmsService.queryAiAnalytics({
         question: queryInput,
         timeRange,
+        aiProvider,
       });
       setAnalyticsResult(result);
     } catch (err) {
@@ -81,7 +107,7 @@ export const AiAnalyticsStudio: React.FC = () => {
     }
   };
 
-  const handleRunQuery = async (customQ?: string) => {
+  const handleRunQuery = async (customQ?: string, provider?: 'auto' | 'gemini' | 'chatgpt') => {
     const q = customQ || queryInput;
     if (!q.trim()) return;
 
@@ -89,9 +115,11 @@ export const AiAnalyticsStudio: React.FC = () => {
     setIsQuerying(true);
 
     try {
+      const activeProvider = provider || aiProvider;
       const result = await cmsService.queryAiAnalytics({
         question: q,
         timeRange,
+        aiProvider: activeProvider,
       });
       setAnalyticsResult(result);
       showToast('✨ AI Analytics Diagnosis generated successfully!');
@@ -109,20 +137,26 @@ export const AiAnalyticsStudio: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-16">
       {/* ─── HEADER BAR ────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm">
         <div className="space-y-1.5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl font-black text-slate-900 dark:text-foreground">
                   AI Analytics Studio
                 </h1>
                 <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[10px] font-black tracking-wider uppercase border border-indigo-200/60 dark:border-indigo-800/60">
                   Deterministic Math + LLM Explainer
                 </span>
+                {analyticsResult?.aiProviderUsed && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-black tracking-wider uppercase border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Powered by {analyticsResult.aiProviderUsed}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Backend computes exact metrics across Orders, Revenue, Categories, Traffic, Conversion, and Abandonment — AI delivers clear diagnostic explanations.
@@ -131,18 +165,59 @@ export const AiAnalyticsStudio: React.FC = () => {
           </div>
         </div>
 
-        {/* Time Range Selector */}
-        <div className="flex items-center gap-2">
+        {/* Header Controls: AI Provider Pills + Time Range + Refresh */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* AI Model Selector */}
+          <div className="flex items-center bg-slate-100 dark:bg-accent/40 p-1 rounded-2xl border border-slate-200/60 dark:border-border text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => setAiProvider('auto')}
+              className={`px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+                aiProvider === 'auto'
+                  ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-300 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Auto AI</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAiProvider('gemini')}
+              className={`px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+                aiProvider === 'gemini'
+                  ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-300 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>Google Gemini</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAiProvider('chatgpt')}
+              className={`px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+                aiProvider === 'chatgpt'
+                  ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-300 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground'
+              }`}
+            >
+              <Bot className="w-3.5 h-3.5" />
+              <span>ChatGPT</span>
+            </button>
+          </div>
+
+          {/* Time Range Selector */}
           <div className="flex items-center bg-slate-100 dark:bg-accent/40 p-1 rounded-2xl border border-slate-200/60 dark:border-border text-xs font-bold">
             {(['7d', '30d', '90d'] as const).map((r) => (
               <button
                 key={r}
                 type="button"
-                onClick={() => setTimeRange(r)}
+                onClick={() => handleTimeRangeChange(r)}
                 className={`px-3.5 py-1.5 rounded-xl transition cursor-pointer ${
                   timeRange === r
                     ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-300 shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground'
                 }`}
               >
                 {r === '7d' ? 'Last 7 Days' : r === '90d' ? 'Last 90 Days' : 'Last 30 Days'}
@@ -178,10 +253,13 @@ export const AiAnalyticsStudio: React.FC = () => {
 
       {/* ─── NATURAL LANGUAGE AI QUERY BAR ───────────────────────── */}
       <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-50/90 via-purple-50/40 to-white dark:from-indigo-950/20 dark:via-purple-950/10 dark:to-card border border-indigo-200/80 dark:border-indigo-800/40 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <label className="text-xs font-black uppercase tracking-wider text-indigo-950 dark:text-indigo-200 flex items-center gap-2">
             <Zap className="w-4 h-4 text-indigo-600" />
             <span>Ask Merchant Analytics Copilot</span>
+            <span className="text-[10px] font-bold text-slate-500 normal-case">
+              (Engine: {aiProvider === 'gemini' ? 'Google Gemini' : aiProvider === 'chatgpt' ? 'OpenAI ChatGPT' : 'Auto Dual-Engine'})
+            </span>
           </label>
           <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold">
             Real-time diagnostic over {m?.currentPeriodLabel || '30 days'}
@@ -246,13 +324,18 @@ export const AiAnalyticsStudio: React.FC = () => {
         <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-border pb-5">
             <div className="space-y-1">
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="text-xs font-black uppercase tracking-wider text-slate-400">
                   AI Diagnostic Result for:
                 </span>
                 <span className="px-2.5 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-extrabold">
-                  "{analyticsResult.question}"
+                  &ldquo;{analyticsResult.question}&rdquo;
                 </span>
+                {analyticsResult.aiProviderUsed && (
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300 text-[10px] font-bold">
+                    via {analyticsResult.aiProviderUsed}
+                  </span>
+                )}
               </div>
               <h2 className="text-2xl font-black text-slate-900 dark:text-foreground">
                 {analyticsResult.executiveSummary}

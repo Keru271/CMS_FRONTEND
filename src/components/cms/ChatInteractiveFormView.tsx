@@ -20,6 +20,7 @@ import {
   Sparkles,
   Tag,
   Boxes,
+  BookOpen,
 } from 'lucide-react';
 
 interface ChatInteractiveFormViewProps {
@@ -238,6 +239,40 @@ export const ChatInteractiveFormView: React.FC<ChatInteractiveFormViewProps> = (
           break;
         }
 
+        case 'CREATE_BLOG': {
+          const postTitle = String(formData.title).trim();
+          const created = await cmsService.createBlogPost({
+            title: postTitle,
+            content: formData.content || `## ${postTitle}\n\nWelcome to our latest editorial guide.`,
+            category: formData.category || 'Stories & Guides',
+            status: formData.status || 'PUBLISHED',
+            author: formData.author || 'Store Editorial',
+            tags: formData.tags || '',
+            excerpt: formData.excerpt || String(formData.content || '').slice(0, 160) + '...',
+            publishedAt: new Date().toISOString(),
+          });
+
+          await fetchDashboardDetails();
+          finalMessage = `Blog article "${created.title}" has been successfully published in "${created.category}"!`;
+          break;
+        }
+
+        case 'EDIT_BLOG': {
+          const postId = formData.postId;
+          if (!postId) throw new Error('Blog article ID is required.');
+
+          const updated = await cmsService.updateBlogPost(postId, {
+            title: String(formData.title).trim(),
+            content: formData.content,
+            category: formData.category,
+            status: formData.status,
+          });
+
+          await fetchDashboardDetails();
+          finalMessage = `Blog article "${updated.title}" has been updated (${updated.status})!`;
+          break;
+        }
+
         default:
           throw new Error('Unsupported form action type.');
       }
@@ -268,6 +303,9 @@ export const ChatInteractiveFormView: React.FC<ChatInteractiveFormViewProps> = (
         return <Edit3 className="w-4 h-4 text-amber-600 dark:text-amber-400" />;
       case 'CREATE_DISCOUNT':
         return <Percent className="w-4 h-4 text-rose-600 dark:text-rose-400" />;
+      case 'CREATE_BLOG':
+      case 'EDIT_BLOG':
+        return <BookOpen className="w-4 h-4 text-violet-600 dark:text-violet-400" />;
       default:
         return <Sparkles className="w-4 h-4 text-cyan-600" />;
     }
@@ -285,6 +323,9 @@ export const ChatInteractiveFormView: React.FC<ChatInteractiveFormViewProps> = (
         return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800';
       case 'CREATE_DISCOUNT':
         return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800';
+      case 'CREATE_BLOG':
+      case 'EDIT_BLOG':
+        return 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800';
       default:
         return 'bg-slate-100 text-slate-700 border-slate-200';
     }

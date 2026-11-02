@@ -30,9 +30,12 @@ interface ThreeDViewerProps {
   scale?: number;
   height?: string | number;
   className?: string;
-  showControls?: boolean;
   productName?: string;
   polyCount?: number;
+  showControls?: boolean;
+  usdzUrl?: string | null;
+  dimensions?: { widthCm: number; heightCm: number; depthCm: number };
+  provider?: string;
 }
 
 export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
@@ -48,6 +51,9 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
   showControls = true,
   productName = '3D Product Scan',
   polyCount = 18450,
+  usdzUrl,
+  dimensions,
+  provider,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -375,6 +381,16 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
           <div className="px-2.5 py-1 rounded-full bg-indigo-950/70 backdrop-blur-md border border-indigo-500/30 text-indigo-200 text-[10px] font-mono">
             {polyCount.toLocaleString()} Polys
           </div>
+          {dimensions && (
+            <div className="hidden md:flex px-2.5 py-1 rounded-full bg-emerald-950/70 backdrop-blur-md border border-emerald-500/30 text-emerald-300 text-[10px] font-mono font-bold">
+              {dimensions.widthCm}×{dimensions.heightCm}×{dimensions.depthCm} cm (1:1 AR)
+            </div>
+          )}
+          {provider && (
+            <div className="hidden lg:flex px-2 py-0.5 rounded-full bg-purple-950/70 border border-purple-500/30 text-purple-300 text-[9px] font-mono font-bold uppercase">
+              {provider}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 pointer-events-auto">
@@ -496,8 +512,38 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
               <div className="w-36 h-36 border-4 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center text-slate-800 space-y-1">
                 <Box className="w-10 h-10 text-indigo-600 animate-bounce" />
                 <span className="text-[10px] font-mono font-bold tracking-tight">AR QUICKLOOK</span>
-                <span className="text-[9px] text-slate-500">.USDZ / .GLB</span>
+                <span className="text-[9px] text-slate-500">
+                  {dimensions ? `${dimensions.widthCm}×${dimensions.heightCm}×${dimensions.depthCm} cm` : '.USDZ / .GLB'}
+                </span>
               </div>
+            </div>
+
+            {/* Direct AR Launchers for Mobile */}
+            <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
+              {usdzUrl ? (
+                <a
+                  href={usdzUrl}
+                  rel="ar"
+                  className="py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-1.5 transition"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Apple QuickLook</span>
+                </a>
+              ) : (
+                <div className="py-2 px-3 rounded-xl bg-slate-800 text-slate-400 text-center">
+                  iOS USDZ Ready
+                </div>
+              )}
+              {modelUrl ? (
+                <a
+                  href={modelUrl}
+                  download="product.glb"
+                  className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Android GLB</span>
+                </a>
+              ) : null}
             </div>
 
             <div className="flex gap-2">

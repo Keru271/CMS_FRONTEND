@@ -1,5 +1,7 @@
 'use client';
+import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect } from 'react';
 import {
   FolderTree,
@@ -401,20 +403,14 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* Toast Notification */}
       {toastMessage && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 ${
-            toastMessage.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/90 dark:text-emerald-200 dark:border-emerald-800'
-              : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/90 dark:text-rose-200 dark:border-rose-800'
-          }`}
-        >
-          {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
-          )}
-          <span className="text-xs font-bold">{toastMessage.text}</span>
-        </div>
+        <SwipeToast
+          open={!!toastMessage}
+          type={toastMessage.type}
+          title={toastMessage.type === 'success' ? 'Success' : 'Error'}
+          description={toastMessage.text}
+          onClose={() => setToastMessage(null)}
+          duration={4000}
+        />
       )}
 
       {/* Header Banner */}
@@ -437,6 +433,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
+            <PageAiSpecularButton size="md" />
             {activeTab === 'CATEGORIES' && (
               <button
                 type="button"

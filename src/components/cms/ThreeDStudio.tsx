@@ -1,5 +1,7 @@
 'use client';
+import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -34,6 +36,9 @@ import {
   QrCode,
   Eye,
   Camera,
+  Wand2,
+  Maximize2,
+  RotateCcw,
 } from 'lucide-react';
 import {
   ThreeDStudioData,
@@ -41,6 +46,8 @@ import {
   ThreeDCreditPackage,
   ThreeDCreditTransaction,
   CMSProduct,
+  AIAngleKey,
+  GeneratedAIAngleItem,
 } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import { ThreeDViewer } from '@/src/components/ui/ThreeDViewer';
@@ -49,46 +56,24 @@ import { usePlanAccess } from '@/src/hooks/usePlanAccess';
 import { TablePagination } from '@/src/components/ui/TablePagination';
 import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 
-// Sample multi-angle image presets for one-click testing
-const SAMPLE_PRESET_IMAGES = [
-  {
-    name: 'Cyber Kinetic Sneaker (5 Angles)',
-    images: [
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1515955656352-a1fa3ffcd111?auto=format&fit=crop&w=600&q=80',
-    ],
-  },
-  {
-    name: 'Studio Wireless Headphones (5 Angles)',
-    images: [
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=600&q=80',
-    ],
-  },
-  {
-    name: 'Luxury Chronograph Watch (5 Angles)',
-    images: [
-      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1533139502658-0198f920d8e8?auto=format&fit=crop&w=600&q=80',
-    ],
-  },
-];
 
 const RECONSTRUCTION_STAGES = [
-  'Point Cloud Keypoint Matching (SIFT / ORB)',
-  'Neural Depth & Spatial Volumetric Synthesis',
-  'Poisson Surface Mesh Optimization',
-  'PBR High-Res Texture Baking (Diffuse, Normal, Roughness)',
-  'Exporting GLB + USDZ AR Asset Packages',
+  'Photo Validation & Multi-View Normalization',
+  'Feature Alignment & Camera Pose Estimation (SIFT / ORB)',
+  'Dense Neural Volumetric Synthesis & Mesh Extraction',
+  '4K PBR Texture Map Baking (Albedo, Normal, Roughness, Metalness)',
+  'Compiling Production Assets: GLB (Android / Web) + USDZ (Apple AR QuickLook)',
+];
+
+const DEFAULT_SLOT_CONFIGS = [
+  { label: 'Front View (0°)', desc: 'Direct face on eye-level capture', tag: 'Required' },
+  { label: 'Back View (180°)', desc: 'Rear angle with consistent lighting', tag: 'Required' },
+  { label: 'Left Profile (90°)', desc: 'Left lateral orthographic view', tag: 'Required' },
+  { label: 'Right Profile (270°)', desc: 'Right lateral orthographic view', tag: 'Required' },
+  { label: 'Top / Elevation (45°)', desc: 'Elevated isometric angle for depth', tag: 'Recommended' },
+  { label: 'Isometric 3/4 Angle', desc: 'Perspective corner overview', tag: 'Recommended' },
+  { label: 'Base / Bottom View', desc: 'Underside or base detail', tag: 'Optional' },
+  { label: 'Macro Texture Detail', desc: 'High-res close-up for PBR maps', tag: 'Optional' },
 ];
 
 export const ThreeDStudio: React.FC = () => {
@@ -106,16 +91,21 @@ export const ThreeDStudio: React.FC = () => {
   // Active Tab
   const [activeTab, setActiveTab] = useState<'create' | 'library' | 'credits' | 'history'>('create');
 
-  // Multi-angle Image Upload State (Slot 1 to 5)
-  const [uploadedImages, setUploadedImages] = useState<string[]>([
-    SAMPLE_PRESET_IMAGES[0].images[0],
-    SAMPLE_PRESET_IMAGES[0].images[1],
-    SAMPLE_PRESET_IMAGES[0].images[2],
-    SAMPLE_PRESET_IMAGES[0].images[3],
-    SAMPLE_PRESET_IMAGES[0].images[4],
-  ]);
-  const [modelName, setModelName] = useState('Cyber Kinetic Sneaker Scan');
+  // Multi-angle Image Upload State (8 default slots, expandable to 12)
+  const [slotConfigs, setSlotConfigs] = useState(DEFAULT_SLOT_CONFIGS);
+  const [uploadedImages, setUploadedImages] = useState<string[]>(new Array(DEFAULT_SLOT_CONFIGS.length).fill(''));
+  const [modelName, setModelName] = useState('');
   const [selectedProductId, setSelectedProductId] = useState<string>('');
+
+  // AI 3D Provider ('meshy' | 'tripo')
+  const [selectedProvider, setSelectedProvider] = useState<'meshy' | 'tripo'>('meshy');
+
+  // Real-world Product Dimensions (Width, Height, Depth in cm for 1:1 true-scale AR)
+  const [dimensions, setDimensions] = useState({
+    widthCm: 80,
+    heightCm: 90,
+    depthCm: 75,
+  });
 
   // Generation Pipeline Progress State
   const [isGenerating, setIsGenerating] = useState(false);
@@ -143,6 +133,19 @@ export const ThreeDStudio: React.FC = () => {
   const [isReadingFiles, setIsReadingFiles] = useState(false);
   const masterFileInputRef = React.useRef<HTMLInputElement | null>(null);
   const slotInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+
+  // AI Multi-Angle Photo Studio State (Front 0°, Back 180°, Left 90°, Right 270°, Isometric 45°)
+  const [isAIAnglesModalOpen, setIsAIAnglesModalOpen] = useState(false);
+  const [aiProductPrompt, setAiProductPrompt] = useState('');
+  const [aiCategory, setAiCategory] = useState('Furniture');
+  const [aiStyle, setAiStyle] = useState<'studio-white' | 'neutral-grey' | 'luxury-dark'>('studio-white');
+  const [aiReferenceImage, setAiReferenceImage] = useState<string>('');
+  const [isAiGeneratingAngles, setIsAiGeneratingAngles] = useState(false);
+  const [aiGeneratedAngles, setAiGeneratedAngles] = useState<GeneratedAIAngleItem[]>([]);
+  const [aiSeed, setAiSeed] = useState<number>(424242);
+  const [regeneratingAngleKey, setRegeneratingAngleKey] = useState<string | null>(null);
+  const [previewZoomImage, setPreviewZoomImage] = useState<{ url: string; title: string } | null>(null);
+  const aiRefImageInputRef = React.useRef<HTMLInputElement | null>(null);
 
   // User Privileges
   const userRole = (merchantData?.merchant?.role || 'OWNER').toUpperCase();
@@ -178,7 +181,7 @@ export const ThreeDStudio: React.FC = () => {
     }
   };
 
-  // Trigger 3D Reconstruction Job
+  // Trigger 3D Reconstruction Job via Meshy or Tripo
   const handleStartGeneration = async () => {
     const validImages = uploadedImages.filter((img) => img && img.trim().length > 0);
     if (validImages.length < 4) {
@@ -199,48 +202,65 @@ export const ThreeDStudio: React.FC = () => {
 
     setIsGenerating(true);
     setGenStageIndex(0);
-    setGenProgressPercent(10);
-
-    // Multi-stage visual progress simulation
-    const interval = setInterval(() => {
-      setGenProgressPercent((prev) => {
-        if (prev >= 95) return 95;
-        const next = prev + Math.floor(Math.random() * 14) + 6;
-        if (next > 25 && next < 50) setGenStageIndex(1);
-        if (next >= 50 && next < 70) setGenStageIndex(2);
-        if (next >= 70 && next < 90) setGenStageIndex(3);
-        if (next >= 90) setGenStageIndex(4);
-        return Math.min(next, 95);
-      });
-    }, 600);
+    setGenProgressPercent(12);
 
     try {
       const res = await cmsService.generateThreeDModel({
         name: modelName,
         productId: selectedProductId || null,
         sourceImages: validImages,
+        provider: selectedProvider,
+        dimensions,
         settings: {
           autoRotate: true,
           lighting: 'studio',
           materialFinish: 'pbr-metallic',
           background: 'gradient-dark',
           scale: 1.0,
+          dimensions,
         },
       });
 
-      clearInterval(interval);
-      setGenProgressPercent(100);
-      setGenStageIndex(4);
+      if (res.jobId) {
+        let pollCount = 0;
+        const pollInterval = setInterval(async () => {
+          pollCount++;
+          try {
+            const job = await cmsService.getThreeDJobStatus(res.jobId!);
+            setGenProgressPercent(job.progressPercent);
+            setGenStageIndex(job.stageIndex);
 
-      setTimeout(() => {
-        setIsGenerating(false);
-        showToast(`✨ 3D Model "${res.model.name}" reconstructed successfully! 1 credit deducted.`);
-        setSelectedModel(res.model);
-        loadStudioData();
-        setActiveTab('library');
-      }, 800);
+            if (job.status === 'SUCCEEDED' || pollCount >= 15) {
+              clearInterval(pollInterval);
+              setGenProgressPercent(100);
+              setGenStageIndex(4);
+              setTimeout(() => {
+                setIsGenerating(false);
+                showToast(`✨ 3D AR Model "${job.modelName}" synthesized via ${job.provider.toUpperCase()}! 1 credit deducted.`);
+                loadStudioData();
+                setActiveTab('library');
+              }, 800);
+            } else if (job.status === 'FAILED') {
+              clearInterval(pollInterval);
+              setIsGenerating(false);
+              showToast(job.error || '3D reconstruction failed during synthesis pipeline.', 'error');
+            }
+          } catch (pollErr) {
+            // Keep polling
+          }
+        }, 1200);
+      } else {
+        setGenProgressPercent(100);
+        setGenStageIndex(4);
+        setTimeout(() => {
+          setIsGenerating(false);
+          showToast(`✨ 3D Model "${res.model.name}" reconstructed successfully! 1 credit deducted.`);
+          setSelectedModel(res.model);
+          loadStudioData();
+          setActiveTab('library');
+        }, 800);
+      }
     } catch (err: any) {
-      clearInterval(interval);
       setIsGenerating(false);
       if (err.response?.status === 402 || err.response?.data?.code === 'INSUFFICIENT_3D_CREDITS') {
         setIsBuyModalOpen(true);
@@ -290,11 +310,6 @@ export const ThreeDStudio: React.FC = () => {
     }
   };
 
-  const handleApplyPreset = (preset: (typeof SAMPLE_PRESET_IMAGES)[0]) => {
-    setUploadedImages([...preset.images]);
-    setModelName(`${preset.name.replace(/\s*\(5 Angles\)/, '')} 3D Scan`);
-    showToast(`Loaded "${preset.name}" 5-angle preset photos.`);
-  };
 
   const handleImageSlotChange = (index: number, url: string) => {
     const updated = [...uploadedImages];
@@ -322,17 +337,17 @@ export const ThreeDStudio: React.FC = () => {
 
     setIsReadingFiles(true);
     try {
-      if (typeof targetSlotIndex === 'number' && targetSlotIndex >= 0 && targetSlotIndex < 5) {
+      if (typeof targetSlotIndex === 'number' && targetSlotIndex >= 0 && targetSlotIndex < slotConfigs.length) {
         // Targeted single slot upload
         const dataUrl = await readFileAsDataUrl(files[0]);
         handleImageSlotChange(targetSlotIndex, dataUrl);
-        showToast(`📸 Loaded image for ${SLOT_CONFIGS[targetSlotIndex].label}.`);
+        showToast(`📸 Loaded image for ${slotConfigs[targetSlotIndex].label}.`);
       } else {
-        // Multi-slot auto-distribution across 1-5 angle slots
-        const urls = await Promise.all(files.slice(0, 5).map((f) => readFileAsDataUrl(f)));
+        // Multi-slot auto-distribution across angle slots
+        const urls = await Promise.all(files.slice(0, slotConfigs.length).map((f) => readFileAsDataUrl(f)));
         const updated = [...uploadedImages];
         urls.forEach((url, i) => {
-          if (i < 5) {
+          if (i < slotConfigs.length) {
             updated[i] = url;
           }
         });
@@ -349,7 +364,7 @@ export const ThreeDStudio: React.FC = () => {
 
   // Drag-and-Drop Slot Swap
   const handleSwapSlots = (fromIndex: number, toIndex: number) => {
-    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= 5 || toIndex >= 5) return;
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= slotConfigs.length || toIndex >= slotConfigs.length) return;
     const updated = [...uploadedImages];
     const temp = updated[fromIndex];
     updated[fromIndex] = updated[toIndex];
@@ -360,37 +375,158 @@ export const ThreeDStudio: React.FC = () => {
 
   // Clear all uploaded images
   const handleClearAllImages = () => {
-    setUploadedImages(['', '', '', '', '']);
+    setUploadedImages(new Array(slotConfigs.length).fill(''));
     showToast('Cleared all 3D image slots.');
   };
 
-  // Slot Labels for 4-5 photo photogrammetry
-  const SLOT_CONFIGS = [
-    { label: 'Front View (0°)', desc: 'Direct face on eye-level capture', tag: 'Required' },
-    { label: 'Back View (180°)', desc: 'Rear angle with consistent lighting', tag: 'Required' },
-    { label: 'Left Profile (90°)', desc: 'Left lateral orthographic view', tag: 'Required' },
-    { label: 'Right Profile (270°)', desc: 'Right lateral orthographic view', tag: 'Required' },
-    { label: 'Top / Isometric (45°)', desc: 'Elevated isometric angle for depth', tag: 'Recommended' },
-  ];
+  // Open AI Multi-Angle Photo Studio
+  const handleOpenAIAnglesModal = (slotAngleKey?: AIAngleKey) => {
+    if (selectedProductId && studioData?.products) {
+      const prod = studioData.products.find((p) => p.id === selectedProductId);
+      if (prod) {
+        if (!aiProductPrompt) setAiProductPrompt(prod.name);
+        const img = Array.isArray(prod.images) ? prod.images[0] : prod.images;
+        if (img && !aiReferenceImage) setAiReferenceImage(img);
+      }
+    } else if (modelName && !aiProductPrompt) {
+      setAiProductPrompt(modelName);
+    }
+    setIsAIAnglesModalOpen(true);
+  };
+
+  // Generate all 5 canonical multi-angle images (Front, Back, Left, Right, Isometric)
+  const handleGenerateAIAngles = async () => {
+    if (!aiProductPrompt.trim() && !aiReferenceImage) {
+      showToast('Please provide a product title, prompt, or reference image.', 'error');
+      return;
+    }
+
+    setIsAiGeneratingAngles(true);
+    try {
+      const seed = Math.floor(100000 + Math.random() * 900000);
+      setAiSeed(seed);
+
+      const res = await cmsService.generateMultiAngleImages({
+        productName: aiProductPrompt.trim() || modelName || 'E-Commerce Product',
+        category: aiCategory,
+        prompt: aiProductPrompt.trim(),
+        referenceImage: aiReferenceImage || undefined,
+        style: aiStyle,
+        seed,
+        angles: ['front', 'back', 'left', 'right', 'isometric'],
+      });
+
+      if (res && res.angles && res.angles.length > 0) {
+        setAiGeneratedAngles(res.angles);
+        showToast('✨ Successfully generated 5 multi-angle photogrammetry views!', 'success');
+      } else {
+        showToast('Failed to synthesize all angles. Please retry.', 'error');
+      }
+    } catch (err: any) {
+      console.error('AI Multi-Angle generation failed:', err);
+      showToast('Failed to generate multi-angle images: ' + (err?.message || 'Server error'), 'error');
+    } finally {
+      setIsAiGeneratingAngles(false);
+    }
+  };
+
+  // Regenerate an individual angle
+  const handleRegenerateSingleAIAngle = async (angleKey: AIAngleKey) => {
+    setRegeneratingAngleKey(angleKey);
+    try {
+      const newSeed = Math.floor(100000 + Math.random() * 900000);
+      const res = await cmsService.generateSingleAngle({
+        productName: aiProductPrompt.trim() || modelName || 'E-Commerce Product',
+        category: aiCategory,
+        prompt: aiProductPrompt.trim(),
+        referenceImage: aiReferenceImage || undefined,
+        style: aiStyle,
+        seed: newSeed,
+        angle: angleKey,
+      });
+
+      if (res && res.angle) {
+        setAiGeneratedAngles((prev) =>
+          prev.map((item) => (item.key === angleKey ? res.angle : item))
+        );
+        showToast(`Regenerated ${res.angle.label}!`, 'success');
+      }
+    } catch (err: any) {
+      console.error(`Failed to regenerate angle ${angleKey}:`, err);
+      showToast(`Failed to regenerate angle ${angleKey}`, 'error');
+    } finally {
+      setRegeneratingAngleKey(null);
+    }
+  };
+
+  // Apply all 5 generated angles to the 3D pipeline slots
+  const handleApplyAIAnglesToPipeline = () => {
+    if (aiGeneratedAngles.length === 0) {
+      showToast('No generated angles available to apply.', 'error');
+      return;
+    }
+
+    const newImages = [...uploadedImages];
+    aiGeneratedAngles.forEach((angleItem) => {
+      if (angleItem.slotIndex >= 0 && angleItem.slotIndex < newImages.length) {
+        newImages[angleItem.slotIndex] = angleItem.imageUrl;
+      }
+    });
+
+    setUploadedImages(newImages);
+    if (!modelName.trim() && aiProductPrompt.trim()) {
+      setModelName(aiProductPrompt.trim());
+    }
+
+    setIsAIAnglesModalOpen(false);
+    showToast('✨ 5 AI Multi-Angle views successfully applied to photogrammetry slots!', 'success');
+  };
+
+  // Handle single reference image upload for AI studio
+  const handleReferenceImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select a valid image file (JPG, PNG, WebP).', 'error');
+        return;
+      }
+      try {
+        const dataUrl = await readFileAsDataUrl(file);
+        setAiReferenceImage(dataUrl);
+        showToast('Reference image loaded! AI will synthesize matching 360° views.');
+      } catch (err) {
+        console.error('Failed to read reference image:', err);
+      }
+    }
+  };
+
+  // Add extra slot up to 12
+  const handleAddSlot = () => {
+    if (slotConfigs.length >= 12) {
+      showToast('Maximum of 12 multi-angle captures supported.', 'error');
+      return;
+    }
+    const newIdx = slotConfigs.length + 1;
+    setSlotConfigs((prev) => [
+      ...prev,
+      { label: `Angle Detail ${newIdx}`, desc: 'Additional angle perspective', tag: 'Optional' },
+    ]);
+    setUploadedImages((prev) => [...prev, '']);
+    showToast(`Added slot for Angle Detail ${newIdx}.`);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Toast Notification */}
       {toast && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border animate-in slide-in-from-bottom duration-300 ${
-            toast.type === 'error'
-              ? 'bg-rose-950/90 text-rose-200 border-rose-800'
-              : 'bg-indigo-950/90 text-indigo-200 border-indigo-700'
-          }`}
-        >
-          {toast.type === 'error' ? (
-            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
-          ) : (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          )}
-          <span className="text-xs font-bold">{toast.text}</span>
-        </div>
+        <SwipeToast
+          open={!!toast}
+          type={toast.type}
+          title={toast.type === 'success' ? 'Success' : 'Error'}
+          description={(toast as any).text || (toast as any).msg}
+          onClose={() => setToast(null)}
+          duration={4000}
+        />
       )}
 
       {/* Privilege Warning Banner if restricted */}
@@ -457,7 +593,8 @@ export const ThreeDStudio: React.FC = () => {
             </div>
 
             <div className="flex sm:flex-col gap-2 shrink-0">
-              <button
+              <PageAiSpecularButton size="md" />
+                <button
                 type="button"
                 onClick={() => setIsBuyModalOpen(true)}
                 className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-xs flex items-center justify-center gap-1.5 transition cursor-pointer transform active:scale-95"
@@ -522,37 +659,168 @@ export const ThreeDStudio: React.FC = () => {
                 <div className="space-y-1">
                   <h3 className="text-base font-black text-slate-900 dark:text-foreground flex items-center gap-2">
                     <UploadCloud className="w-5 h-5 text-indigo-600" />
-                    <span>Upload 4-5 Multi-Angle Photos</span>
+                    <span>Automated "Photos → 3D/AR Model" Pipeline</span>
                   </h3>
                   <p className="text-xs text-slate-500">
-                    High photogrammetry fidelity requires capturing the product from all 4 cardinal angles plus 1 isometric elevation.
+                    Upload 4-10 photos around your physical product. Our AI multi-image engine reconstructs a 1:1 true-scale 3D mesh with 4K PBR textures and Apple AR QuickLook USDZ.
                   </p>
                 </div>
 
-                {/* Quick Presets & Actions */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[11px] font-bold text-slate-400 hidden md:inline">Demo Presets:</span>
-                  <div className="flex gap-1">
-                    {SAMPLE_PRESET_IMAGES.map((preset, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleApplyPreset(preset)}
-                        className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-accent text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:bg-indigo-50 hover:text-indigo-600 transition"
-                      >
-                        {idx === 0 ? '👟 Sneaker' : idx === 1 ? '🎧 Audio' : '⌚ Watch'}
-                      </button>
-                    ))}
-                  </div>
+                {/* Quick Actions */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAIAnglesModal()}
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white text-xs font-black shadow-md shadow-indigo-500/20 flex items-center gap-1.5 transition-all cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>✨ AI Generate 5 Angles</span>
+                  </button>
                   <button
                     type="button"
                     onClick={handleClearAllImages}
                     title="Clear all photo slots"
-                    className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-border hover:bg-rose-50 hover:border-rose-300 text-rose-600 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-border hover:bg-rose-50 hover:border-rose-300 text-rose-600 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-3.5 h-3.5" />
                     <span>Clear All</span>
                   </button>
+                </div>
+              </div>
+
+              {/* ─── AI 3D ENGINE SELECTOR & REAL-WORLD DIMENSIONS ─────────── */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 1. AI 3D Provider Selection */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/20 border border-slate-200 dark:border-border space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-indigo-600" />
+                      AI 3D Engine Provider
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold">
+                      Multi-Image API
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedProvider('meshy')}
+                      className={`p-3 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer ${
+                        selectedProvider === 'meshy'
+                          ? 'bg-white dark:bg-card border-indigo-600 ring-2 ring-indigo-500/20 shadow-xs'
+                          : 'bg-white/60 dark:bg-accent/30 border-slate-200 dark:border-border hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-xs font-extrabold text-slate-900 dark:text-foreground">Meshy AI</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold">
+                          Default
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-1 leading-snug">
+                        Multi-Image-to-3D · 4K PBR Textures · Apple USDZ AR
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedProvider('tripo')}
+                      className={`p-3 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer ${
+                        selectedProvider === 'tripo'
+                          ? 'bg-white dark:bg-card border-indigo-600 ring-2 ring-indigo-500/20 shadow-xs'
+                          : 'bg-white/60 dark:bg-accent/30 border-slate-200 dark:border-border hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-xs font-extrabold text-slate-900 dark:text-foreground">Tripo 3D</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 font-bold">
+                          Fast Mesh
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-1 leading-snug">
+                        Multi-View Mesh Synthesis · Fast Quad Remeshing
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Real-World Product Dimensions */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/20 border border-slate-200 dark:border-border space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                      <Box className="w-4 h-4 text-emerald-600" />
+                      Product Dimensions (1:1 AR Scale)
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold">
+                      {((dimensions.widthCm * dimensions.heightCm * dimensions.depthCm) / 1000).toFixed(1)} L Volume
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Width (cm)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="1000"
+                        value={dimensions.widthCm}
+                        onChange={(e) => setDimensions({ ...dimensions, widthCm: Math.max(1, parseFloat(e.target.value) || 1) })}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-mono font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Height (cm)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="1000"
+                        value={dimensions.heightCm}
+                        onChange={(e) => setDimensions({ ...dimensions, heightCm: Math.max(1, parseFloat(e.target.value) || 1) })}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-mono font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Depth (cm)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="1000"
+                        value={dimensions.depthCm}
+                        onChange={(e) => setDimensions({ ...dimensions, depthCm: Math.max(1, parseFloat(e.target.value) || 1) })}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-mono font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    Scales 3D model for Apple QuickLook & Android Scene Viewer real-world room placement.
+                  </p>
+                </div>
+              </div>
+
+              {/* ─── PHOTO CAPTURE QUALITY CHECKLIST ───────────────────────── */}
+              <div className="p-3.5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                <div className="flex items-center gap-1.5 font-bold text-indigo-900 dark:text-indigo-200">
+                  <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                  <span>Photogrammetry Quality Checklist:</span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap text-slate-600 dark:text-slate-300">
+                  <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full ${uploadedImages.filter((img) => img && img.trim()).length >= 4 ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold' : 'bg-slate-200 dark:bg-slate-800 text-slate-600'}`}>
+                    <Check className="w-3 h-3" />
+                    <span>Min 4 Angles ({uploadedImages.filter((img) => img && img.trim()).length}/{slotConfigs.length})</span>
+                  </span>
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-accent font-medium">
+                    <Check className="w-3 h-3 text-slate-400" />
+                    <span>Plain Background</span>
+                  </span>
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-accent font-medium">
+                    <Check className="w-3 h-3 text-slate-400" />
+                    <span>Uniform 360° Lighting</span>
+                  </span>
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-accent font-medium">
+                    <Check className="w-3 h-3 text-slate-400" />
+                    <span>Fully In-Frame</span>
+                  </span>
                 </div>
               </div>
 
@@ -622,28 +890,49 @@ export const ThreeDStudio: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-2 pt-1 flex-wrap justify-center">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenAIAnglesModal();
+                      }}
+                      className="px-3 py-1 rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white text-[11px] font-black shadow-xs hover:shadow-md transition flex items-center gap-1 cursor-pointer"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>🪄 Generate 5 Angles with AI</span>
+                    </button>
                     <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
                       JPG, PNG, WebP
                     </span>
                     <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold">
-                      Auto-Distributes 5 Angles
+                      Front · Back · Left · Right · Isometric
                     </span>
                     <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold">
-                      Drag to Swap & Re-order
+                      Drag to Swap
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* 5 Guided Image Slots Grid with Individual Drag & Drop */}
-              <div className="space-y-2">
+              {/* Guided Multi-Angle Image Slots Grid */}
+              <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                  <span>Photogrammetry Angle Slots ({uploadedImages.filter((img) => img && img.trim()).length}/5 Filled)</span>
-                  <span className="text-[10px] text-slate-400 font-normal">💡 Tip: Drag images between slots to swap positions</span>
+                  <span>Multi-Angle Photo Slots ({uploadedImages.filter((img) => img && img.trim()).length}/{slotConfigs.length} Captured)</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAIAnglesModal()}
+                      className="text-indigo-600 dark:text-indigo-400 hover:underline text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>AI Multi-Angle Studio</span>
+                    </button>
+                    <span className="text-[10px] text-slate-400 font-normal">· Drag images to swap</span>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
-                  {SLOT_CONFIGS.map((slot, idx) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
+                  {slotConfigs.map((slot, idx) => {
                     const currentImg = uploadedImages[idx] || '';
                     const isSlotOver = dragOverSlotIndex === idx;
                     const isBeingDragged = draggedSlotIndex === idx;
@@ -758,20 +1047,42 @@ export const ThreeDStudio: React.FC = () => {
                               </div>
                             </>
                           ) : (
-                            <div className="flex flex-col items-center gap-1.5 text-slate-400 text-center p-2">
+                            <div className="flex flex-col items-center gap-1 text-slate-400 text-center p-2">
                               <div className="p-2 rounded-xl bg-white/60 dark:bg-card/60 shadow-sm group-hover:scale-110 transition">
-                                <Camera className="w-5 h-5 text-indigo-500" />
+                                <Camera className="w-4 h-4 text-indigo-500" />
                               </div>
                               <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
                                 {isSlotOver ? 'Drop Image Here' : 'Drop or Browse'}
                               </span>
-                              <span className="text-[9px] text-slate-400">{slot.desc}</span>
+                              <span className="text-[9px] text-slate-400 leading-tight">{slot.desc}</span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenAIAnglesModal();
+                                }}
+                                className="mt-1 px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-[9px] font-extrabold shadow-xs hover:scale-105 transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <Sparkles className="w-2.5 h-2.5" />
+                                <span>AI Generate</span>
+                              </button>
                             </div>
                           )}
 
-                          {/* Quick Replace & Clear actions on hover */}
+                          {/* Quick Replace, Zoom & Clear actions on hover */}
                           {currentImg && (
                             <div className="absolute top-1.5 right-1.5 flex items-center gap-1 z-10">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPreviewZoomImage({ url: currentImg, title: slot.label });
+                                }}
+                                title="Zoom image"
+                                className="p-1 rounded-md bg-black/60 text-white hover:bg-emerald-600 transition cursor-pointer"
+                              >
+                                <Maximize2 className="w-3 h-3" />
+                              </button>
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -809,6 +1120,23 @@ export const ThreeDStudio: React.FC = () => {
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Add Angle Slot Button */}
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[11px] text-slate-400">
+                    Supports up to 12 multi-view angles for complex geometries.
+                  </span>
+                  {slotConfigs.length < 12 && (
+                    <button
+                      type="button"
+                      onClick={handleAddSlot}
+                      className="px-3 py-1.5 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-800 hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Angle Slot ({slotConfigs.length}/12)</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -953,15 +1281,29 @@ export const ThreeDStudio: React.FC = () => {
               <ThreeDViewer
                 modelUrl={selectedModel?.modelUrl}
                 posterUrl={selectedModel?.thumbnailUrl || uploadedImages[0]}
-                productName={modelName}
+                productName={modelName || selectedModel?.name || 'Interactive 3D Preview'}
                 polyCount={selectedModel?.polyCount || 18450}
+                usdzUrl={selectedModel?.usdzUrl}
+                dimensions={dimensions}
+                provider={selectedProvider}
                 height="380px"
               />
 
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/60 dark:border-border text-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-slate-700 dark:text-slate-200">Export Formats:</span>
-                  <span className="font-mono font-bold text-indigo-600">.GLB (WebGL) + .USDZ (iOS AR)</span>
+                  <span className="font-mono font-bold text-indigo-600">.GLB (Android/Web) + .USDZ (Apple AR)</span>
+                </div>
+                <div className="flex items-center gap-2 pt-1 flex-wrap">
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-mono font-bold">
+                    WebXR 1:1 Scale
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[10px] font-mono font-bold">
+                    Apple QuickLook Ready
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-mono font-bold">
+                    Scene Viewer
+                  </span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
                   Generated models are optimized for real-time web rendering (under 4MB) with full PBR metallic-roughness textures.
@@ -1016,6 +1358,11 @@ export const ThreeDStudio: React.FC = () => {
                       <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-mono font-bold">
                         {((model.fileSizeBytes || 3840000) / (1024 * 1024)).toFixed(1)} MB
                       </span>
+                      {model.usdzUrl && (
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-600/80 backdrop-blur-md text-white text-[9px] font-mono font-bold">
+                          Apple AR
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -1058,8 +1405,22 @@ export const ThreeDStudio: React.FC = () => {
                         className="py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-200 hover:bg-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>Download .GLB</span>
+                        <span>.GLB</span>
                       </a>
+
+                      {model.usdzUrl && (
+                        <a
+                          href={model.usdzUrl}
+                          download={`${model.name.toLowerCase().replace(/\s+/g, '-')}.usdz`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="py-2.5 px-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 font-bold text-xs flex items-center justify-center gap-1.5 transition"
+                          title="Download iOS AR QuickLook format"
+                        >
+                          <Download className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>.USDZ (iOS AR)</span>
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1464,6 +1825,389 @@ export const ThreeDStudio: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ─── MODAL: AI MULTI-ANGLE PHOTO STUDIO ───────────────────────────── */}
+      {isAIAnglesModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
+          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden my-6 animate-in zoom-in-95 flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between border-b border-indigo-900/50">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 p-0.5 shadow-lg shadow-indigo-500/30 flex items-center justify-center text-white">
+                  <div className="w-full h-full bg-slate-950/40 rounded-[14px] flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-indigo-300 animate-pulse" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-black text-lg text-white">AI Multi-Angle Photo Studio</h3>
+                    <span className="px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-300 text-[10px] font-mono font-extrabold uppercase">
+                      5-View Synthesis
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    Generate consistent Front (0°), Back (180°), Left (90°), Right (270°) and Isometric (45°) views for 3D photogrammetry.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAIAnglesModalOpen(false)}
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1">
+              {/* Product Inputs & Source Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5 p-5 rounded-2xl bg-slate-50 dark:bg-accent/20 border border-slate-200/80 dark:border-border">
+                {/* Left: Product Info & Prompt (7 cols) */}
+                <div className="md:col-span-7 space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                      <ShoppingBag className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Product Title or Visual Prompt</span>
+                    </label>
+
+                    {/* Quick Catalog Selector */}
+                    {studioData?.products && studioData.products.length > 0 && (
+                      <select
+                        onChange={(e) => {
+                          const prodId = e.target.value;
+                          if (!prodId) return;
+                          const prod = studioData.products.find((p) => p.id === prodId);
+                          if (prod) {
+                            setAiProductPrompt(prod.name);
+                            const img = Array.isArray(prod.images) ? prod.images[0] : prod.images;
+                            if (img) setAiReferenceImage(img);
+                          }
+                        }}
+                        defaultValue=""
+                        className="text-[10px] font-bold px-2 py-1 rounded-lg border border-slate-200 dark:border-border bg-white dark:bg-card text-slate-700 dark:text-slate-300 focus:outline-none"
+                      >
+                        <option value="">⚡ Quick fill from catalog...</option>
+                        {studioData.products.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  <textarea
+                    rows={3}
+                    placeholder="e.g. Modern Scandinavian Oak Armchair with curved backrest and beige linen cushion, minimal clean aesthetic"
+                    value={aiProductPrompt}
+                    onChange={(e) => setAiProductPrompt(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        Category
+                      </label>
+                      <select
+                        value={aiCategory}
+                        onChange={(e) => setAiCategory(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none"
+                      >
+                        <option value="Furniture">Furniture & Decor</option>
+                        <option value="Footwear">Footwear & Sneakers</option>
+                        <option value="Electronics">Electronics & Gadgets</option>
+                        <option value="Accessories">Bags, Backpacks & Luggage</option>
+                        <option value="Jewelry">Jewelry & Luxury Watches</option>
+                        <option value="Apparel">Fashion & Apparel</option>
+                        <option value="Sports">Sports & Outdoor Gear</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        Background Studio Style
+                      </label>
+                      <select
+                        value={aiStyle}
+                        onChange={(e) => setAiStyle(e.target.value as any)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none"
+                      >
+                        <option value="studio-white">Pure White (#FFFFFF) · Optimal</option>
+                        <option value="neutral-grey">Neutral 18% Photography Gray</option>
+                        <option value="luxury-dark">Luxury Dark Minimalist</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Single Seed Reference Photo (5 cols) */}
+                <div className="md:col-span-5 flex flex-col justify-between space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5 text-purple-600" />
+                      <span>Optional Reference Photo</span>
+                    </label>
+                    <span className="text-[10px] font-mono text-slate-400">1 Photo → 5 Angles</span>
+                  </div>
+
+                  <input
+                    ref={aiRefImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleReferenceImageUpload}
+                  />
+
+                  <div
+                    onClick={() => aiRefImageInputRef.current?.click()}
+                    className={`relative rounded-xl border-2 border-dashed p-3 text-center cursor-pointer transition flex flex-col items-center justify-center min-h-[110px] ${
+                      aiReferenceImage
+                        ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20'
+                        : 'border-slate-300 dark:border-slate-700 hover:border-purple-500 bg-white dark:bg-card'
+                    }`}
+                  >
+                    {aiReferenceImage ? (
+                      <div className="relative w-full h-24 rounded-lg overflow-hidden flex items-center justify-center">
+                        <img
+                          src={aiReferenceImage}
+                          alt="Reference"
+                          className="w-full h-full object-contain"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAiReferenceImage('');
+                          }}
+                          className="absolute top-1 right-1 p-1 rounded-md bg-black/70 text-white hover:bg-rose-600 transition"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <UploadCloud className="w-6 h-6 text-purple-500 mx-auto" />
+                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+                          Upload 1 front product photo
+                        </span>
+                        <span className="text-[9px] text-slate-400 block">
+                          AI generates matching Back, Left, Right & Top views
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                    <span>Seed: #{aiSeed}</span>
+                    <span className="text-emerald-600 font-bold">Synchronized Camera Rig</span>
+                  </div>
+                </div>
+
+                {/* Synthesis Trigger Button */}
+                <div className="md:col-span-12 pt-2 border-t border-slate-200 dark:border-border">
+                  <button
+                    type="button"
+                    onClick={handleGenerateAIAngles}
+                    disabled={isAiGeneratingAngles || (!aiProductPrompt.trim() && !aiReferenceImage)}
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isAiGeneratingAngles ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>✨ Synthesizing Calibrated Front, Back, Left, Right & Isometric Views...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-4 h-4" />
+                        <span>🪄 Generate 5 Photogrammetry Angles (0°, 180°, 90°, 270°, 45°)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Generated 5-Angle Gallery */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-indigo-600" />
+                    <h4 className="text-xs font-black text-slate-900 dark:text-foreground">
+                      Photogrammetry Angles (5 Views)
+                    </h4>
+                  </div>
+                  <span className="text-[11px] text-slate-400">
+                    {aiGeneratedAngles.length > 0
+                      ? '✨ 5 angles generated. Preview or regenerate individual views below.'
+                      : 'Enter a prompt or product image above, then click Generate.'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+                  {[
+                    { key: 'front' as AIAngleKey, label: 'Front View (0°)', deg: '0°' },
+                    { key: 'back' as AIAngleKey, label: 'Back View (180°)', deg: '180°' },
+                    { key: 'left' as AIAngleKey, label: 'Left Profile (90°)', deg: '90°' },
+                    { key: 'right' as AIAngleKey, label: 'Right Profile (270°)', deg: '270°' },
+                    { key: 'isometric' as AIAngleKey, label: 'Isometric View (45°)', deg: '45°' },
+                  ].map((meta, i) => {
+                    const found = aiGeneratedAngles.find((a) => a.key === meta.key);
+                    const isItemRegenerating = regeneratingAngleKey === meta.key;
+
+                    return (
+                      <div
+                        key={meta.key}
+                        className="rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-card p-3 flex flex-col justify-between space-y-2.5 shadow-xs"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-black text-slate-800 dark:text-slate-200 truncate">
+                            {meta.label}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-mono text-[9px] font-bold">
+                            {meta.deg}
+                          </span>
+                        </div>
+
+                        {/* Image Preview Area */}
+                        <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center group">
+                          {isItemRegenerating ? (
+                            <div className="flex flex-col items-center gap-1.5 p-3 text-center">
+                              <RefreshCw className="w-5 h-5 text-purple-600 animate-spin" />
+                              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                Regenerating...
+                              </span>
+                            </div>
+                          ) : found ? (
+                            <>
+                              <img
+                                src={found.imageUrl}
+                                alt={meta.label}
+                                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100">
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewZoomImage({ url: found.imageUrl, title: meta.label })}
+                                  title="Full resolution preview"
+                                  className="p-1.5 rounded-lg bg-black/70 text-white hover:bg-emerald-600 transition"
+                                >
+                                  <Maximize2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRegenerateSingleAIAngle(meta.key)}
+                                  title="Regenerate this angle"
+                                  className="p-1.5 rounded-lg bg-black/70 text-white hover:bg-purple-600 transition"
+                                >
+                                  <RotateCcw className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1 p-2 text-center text-slate-400">
+                              <Camera className="w-5 h-5 text-slate-300" />
+                              <span className="text-[10px] font-bold text-slate-500">
+                                Pending {meta.deg}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Status Footer */}
+                        <div className="flex items-center justify-between text-[10px]">
+                          {found ? (
+                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Calibrated</span>
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 font-mono">Not synthesized</span>
+                          )}
+
+                          {found && (
+                            <button
+                              type="button"
+                              onClick={() => handleRegenerateSingleAIAngle(meta.key)}
+                              disabled={isItemRegenerating}
+                              className="text-purple-600 dark:text-purple-400 hover:underline font-bold flex items-center gap-0.5 cursor-pointer disabled:opacity-50"
+                            >
+                              <RotateCcw className="w-2.5 h-2.5" />
+                              <span>Redo</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="p-5 bg-slate-50 dark:bg-accent/40 border-t border-slate-200 dark:border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>
+                  All 5 angles adhere to 85mm optical perspective for clean 3D mesh extraction.
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsAIAnglesModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border hover:bg-slate-100 text-slate-700 dark:text-slate-300 text-xs font-bold transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyAIAnglesToPipeline}
+                  disabled={aiGeneratedAngles.length === 0}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black shadow-lg shadow-emerald-600/25 flex items-center gap-2 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Apply All 5 Angles to 3D Pipeline</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL: ZOOM PREVIEW ────────────────────────────────────────────── */}
+      {previewZoomImage && (
+        <div
+          onClick={() => setPreviewZoomImage(null)}
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in cursor-zoom-out"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-3xl max-h-[90vh] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl p-4 flex flex-col items-center gap-3 cursor-default"
+          >
+            <div className="w-full flex items-center justify-between px-2 text-white">
+              <span className="font-black text-sm">{previewZoomImage.title}</span>
+              <button
+                type="button"
+                onClick={() => setPreviewZoomImage(null)}
+                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <img
+              src={previewZoomImage.url}
+              alt={previewZoomImage.title}
+              className="max-h-[75vh] w-auto object-contain rounded-2xl border border-slate-800"
+            />
+            <span className="text-[11px] font-mono text-slate-400">
+              Photogrammetry Multi-Angle High-Resolution Capture
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

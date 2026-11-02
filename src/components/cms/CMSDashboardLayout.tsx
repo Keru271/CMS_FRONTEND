@@ -121,7 +121,8 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
         path.startsWith('/forms') ||
         path.startsWith('/blog') ||
         path.startsWith('/navigation') ||
-        path.startsWith('/seo')
+        path.startsWith('/seo') ||
+        path.startsWith('/ai-builder')
       );
     }
 
@@ -138,7 +139,8 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
         path.startsWith('/marketing') ||
         path.startsWith('/seo') ||
         path.startsWith('/forms') ||
-        path.startsWith('/blog')
+        path.startsWith('/blog') ||
+        path.startsWith('/ai-builder')
       );
     }
 
@@ -175,7 +177,11 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const isAuthorized = checkRouteAuthorization(pathname);
-  const isFullScreenRoute = pathname === '/email-templates' || pathname.startsWith('/email-templates');
+  const isFullScreenRoute =
+    pathname === '/email-templates' ||
+    pathname.startsWith('/email-templates') ||
+    pathname === '/ai-builder' ||
+    pathname.startsWith('/ai-builder');
 
   const getDefaultAllowedPath = () => {
     if (userRole === 'STOCK_CHECKER') return '/products';

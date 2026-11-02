@@ -43,6 +43,7 @@ import {
   Command,
   CornerDownLeft,
   Wand2,
+  AppWindow,
 } from 'lucide-react';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { useTheme } from '@/src/context/ThemeContext';
@@ -311,6 +312,16 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
         keywords: ['dns', 'cname', 'ssl', 'https', 'custom domain'],
       },
       {
+        id: 'nav-apps',
+        title: 'Apps & Integrations Marketplace',
+        subtitle: 'Connect Mailgun, Wati, Mailbox & third-party service drivers',
+        path: '/apps',
+        icon: AppWindow,
+        badge: 'New',
+        badgeColor: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+        keywords: ['apps', 'integrations', 'mailgun', 'wati', 'mailbox', 'whatsapp', 'smtp', 'plugins', 'marketplace'],
+      },
+      {
         id: 'nav-developer',
         title: 'Developer API & Webhooks',
         subtitle: 'REST APIs, API Keys, Webhook payloads & programmatic integrations',
@@ -345,8 +356,17 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
       });
     });
 
-    // ─── 2. AI FEATURES & COPILOTS ─────────────────────────────
     const aiFeatures = [
+      {
+        id: 'ai-website-builder',
+        title: 'AI Website Builder & Vercel Deployer 🌐',
+        subtitle: 'Build a full-fledged Next.js storefront with live API and 1-click Vercel deploy',
+        path: '/ai-builder',
+        icon: Globe,
+        badge: 'Pro AI',
+        badgeColor: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+        keywords: ['ai website', 'website builder', 'vercel', 'deploy', 'generate site', 'storefront ai', 'full screen'],
+      },
       {
         id: 'ai-store-builder',
         title: 'AI Store Builder 🪄',
@@ -432,7 +452,11 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
         icon: ai.icon,
         keywords: ai.keywords,
         action: () => {
-          router.push(ai.path);
+          if (ai.path === '/ai-builder') {
+            window.open('/ai-builder', '_blank');
+          } else {
+            router.push(ai.path);
+          }
           onClose();
         },
       });

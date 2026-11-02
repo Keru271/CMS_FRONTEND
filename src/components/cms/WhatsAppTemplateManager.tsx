@@ -1,5 +1,6 @@
 'use client';
 
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   FileText,
@@ -754,16 +755,14 @@ export default function WhatsAppTemplateManager({
     <div className="space-y-6">
       {/* Toast */}
       {toast && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 transition-all ${
-            toast.type === 'success'
-              ? 'bg-green-600 text-white'
-              : 'bg-red-600 text-white'
-          }`}
-        >
-          {toast.type === 'success' ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
-          {toast.msg}
-        </div>
+        <SwipeToast
+          open={!!toast}
+          type={toast.type}
+          title={toast.type === 'success' ? 'Success' : 'Error'}
+          description={(toast as any).text || (toast as any).msg}
+          onClose={() => setToast(null)}
+          duration={4000}
+        />
       )}
 
       {/* Header */}

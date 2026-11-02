@@ -1,5 +1,6 @@
 'use client';
 
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect } from 'react';
 import { CMSMenuData, CMSMenuItem, MegaMenuCardItem } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
@@ -461,19 +462,14 @@ export const NavigationManager: React.FC = () => {
     <div className="space-y-6 font-sans">
       {/* Toast Notification */}
       {toastMessage && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border transition-all animate-in slide-in-from-bottom-5 ${toastMessage.type === 'success'
-              ? 'bg-slate-900 text-white border-emerald-500/50'
-              : 'bg-rose-950 text-rose-100 border-rose-500/50'
-            }`}
-        >
-          {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
-          )}
-          <span className="text-xs font-bold">{toastMessage.text}</span>
-        </div>
+        <SwipeToast
+          open={!!toastMessage}
+          type={toastMessage.type}
+          title={toastMessage.type === 'success' ? 'Success' : 'Error'}
+          description={toastMessage.text}
+          onClose={() => setToastMessage(null)}
+          duration={4000}
+        />
       )}
 
       {/* Header Banner */}

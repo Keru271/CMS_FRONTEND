@@ -1,5 +1,7 @@
 'use client';
+import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect, useRef } from 'react';
 import { StoreTemplate, ThemeConfigData, CMSForm, HomepageSection } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
@@ -1899,20 +1901,14 @@ export const ThemeManager: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {toastMessage && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-in slide-in-from-bottom-5 ${
-            toastMessage.type === 'success'
-              ? 'bg-emerald-900/90 text-white border-emerald-700'
-              : 'bg-rose-900/90 text-white border-rose-700'
-          }`}
-        >
-          {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          ) : (
-            <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
-          )}
-          <span className="text-xs font-bold">{toastMessage.text}</span>
-        </div>
+        <SwipeToast
+          open={!!toastMessage}
+          type={toastMessage.type}
+          title={toastMessage.type === 'success' ? 'Success' : 'Error'}
+          description={toastMessage.text}
+          onClose={() => setToastMessage(null)}
+          duration={4000}
+        />
       )}
       <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm relative overflow-hidden space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -1937,6 +1933,7 @@ export const ThemeManager: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            <PageAiSpecularButton size="md" />
             <button
               type="button"
               onClick={() => setIsAiBuilderOpen(true)}

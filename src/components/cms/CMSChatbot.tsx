@@ -38,6 +38,8 @@ import {
   History,
 } from 'lucide-react';
 import { ChatInteractiveFormView } from './ChatInteractiveFormView';
+import { PromptBar } from '@/src/components/ui/PromptBar';
+import { getPageAiContext, PageAiContext } from '@/src/lib/pageAiConfig';
 
 const CHAT_STORAGE_KEY_PREFIX = 'cms_ai_chatbot_memory_';
 const CHAT_DRAFT_KEY_PREFIX = 'cms_ai_chatbot_draft_';
@@ -127,6 +129,12 @@ export const CMSChatbot: React.FC = () => {
       ? 'CA$'
       : '₹');
 
+  const [activePageAi, setActivePageAi] = useState<PageAiContext>(() => getPageAiContext(pathname));
+
+  useEffect(() => {
+    setActivePageAi(getPageAiContext(pathname));
+  }, [pathname]);
+
   const storeContext: StoreContextData = useMemo(
     () => ({
       products: products || [],
@@ -138,8 +146,10 @@ export const CMSChatbot: React.FC = () => {
       userRole: merchantData?.merchant?.role || 'OWNER',
       currency: activeCurrency,
       currencySymbol: activeCurrencySymbol,
+      activePageRole: activePageAi?.specialistRole,
+      activePageTitle: activePageAi?.pageTitle,
     }),
-    [products, orders, categories, stats, merchantData, pathname, activeCurrency, activeCurrencySymbol],
+    [products, orders, categories, stats, merchantData, pathname, activeCurrency, activeCurrencySymbol, activePageAi],
   );
 
   const storeStorageId = activeStore?.id || merchantData?.store?.id || 'default_store';
@@ -359,20 +369,6 @@ export const CMSChatbot: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isRendered, handleClose]);
 
-  // Listen for custom global events to open chatbot with pre-filled prompt
-  useEffect(() => {
-    const handleOpenCopilot = (e: Event) => {
-      const customEvent = e as CustomEvent<{ prompt?: string }>;
-      setIsOpen(true);
-      if (customEvent.detail?.prompt) {
-        handleSendMessage(customEvent.detail.prompt);
-      }
-    };
-
-    window.addEventListener('open-cms-copilot', handleOpenCopilot);
-    return () => window.removeEventListener('open-cms-copilot', handleOpenCopilot);
-  }, [products, orders, categories, stats, merchantData, pathname]);
-
   const playChime = () => {
     if (!soundEnabled || typeof window === 'undefined') return;
     try {
@@ -393,7 +389,60 @@ export const CMSChatbot: React.FC = () => {
     }
   };
 
-  const handleSendMessage = async (customText?: string) => {
+  const handleDictate = useCallback(() => {
+    return new Promise<string | void>((resolve) => {
+      if (typeof window === 'undefined') return resolve();
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert('Voice dictation is not supported by your current browser.');
+        return resolve();
+      }
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          resolve(transcript);
+        };
+        recognition.onerror = () => resolve();
+        recognition.onend = () => resolve();
+        recognition.start();
+      } catch {
+        resolve();
+      }
+    });
+  }, []);
+
+  const handleAttach = useCallback((type?: 'all' | 'video' | 'image') => {
+    return new Promise<string[]>((resolve) => {
+      if (typeof window === 'undefined') return resolve([]);
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.multiple = true;
+      if (type === 'video') {
+        fileInput.accept = 'video/*,.mp4,.webm,.mov,.m4v,.mkv,.avi,.ogv';
+      } else if (type === 'image') {
+        fileInput.accept = 'image/*,.png,.jpg,.jpeg,.webp,.svg,.avif,.gif';
+      } else {
+        fileInput.accept = 'video/*,image/*,.mp4,.webm,.mov,.m4v,.mkv,.avi,.png,.jpg,.jpeg,.webp,.svg,.json,.txt,.csv,.pdf';
+      }
+      fileInput.onchange = (e: Event) => {
+        const target = e.target as HTMLInputElement;
+        const fileNames = Array.from(target.files || []).map((f) => f.name);
+        resolve(fileNames);
+      };
+      fileInput.click();
+    });
+  }, []);
+
+  const handleSendMessage = async (
+    customText?: string,
+    selectedModelName?: string,
+    effortLevel?: string
+  ) => {
     const textToSend = (customText || inputValue).trim();
     if (!textToSend || isTyping) return;
 
@@ -449,7 +498,7 @@ export const CMSChatbot: React.FC = () => {
         }),
         actions: response.actions,
         form: detectedForm,
-        model: response.model || 'Default Text',
+        model: selectedModelName || response.model || 'Gemini 2.5 Flash',
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -466,13 +515,32 @@ export const CMSChatbot: React.FC = () => {
             hour: '2-digit',
             minute: '2-digit',
           }),
-          model: 'Default Text',
+          model: selectedModelName || 'Gemini 2.5 Flash',
         },
       ]);
     } finally {
       setIsTyping(false);
     }
   };
+
+  // Listen for custom global events to open chatbot with pre-filled prompt and page customization
+  useEffect(() => {
+    const handleOpenCopilot = (e: Event) => {
+      const customEvent = e as CustomEvent<{ prompt?: string; pageContext?: PageAiContext }>;
+      setIsOpen(true);
+      if (customEvent.detail?.pageContext) {
+        setActivePageAi(customEvent.detail.pageContext);
+      } else {
+        setActivePageAi(getPageAiContext(pathname));
+      }
+      if (customEvent.detail?.prompt) {
+        handleSendMessage(customEvent.detail.prompt);
+      }
+    };
+
+    window.addEventListener('open-cms-copilot', handleOpenCopilot);
+    return () => window.removeEventListener('open-cms-copilot', handleOpenCopilot);
+  }, [products, orders, categories, stats, merchantData, pathname, handleSendMessage]);
 
   const handleFormSubmitted = (
     messageId: string,
@@ -979,9 +1047,15 @@ export const CMSChatbot: React.FC = () => {
                         <span>{creditsInfo.remaining}/{creditsInfo.total} AI Credits</span>
                       </span>
                     )}
+                    {activePageAi && (
+                      <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-300 text-[10px] font-sans font-bold shadow-2xs">
+                        <Sparkles className="w-3 h-3 text-cyan-600" />
+                        <span>{activePageAi.badge}</span>
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-slate-500 font-sans truncate">
-                    {merchantData?.store?.storeName || 'Merchant Store'} · AI E-Commerce Assistant
+                    {merchantData?.store?.storeName || 'Merchant Store'} · {activePageAi ? activePageAi.specialistRole : 'AI E-Commerce Assistant'}
                   </p>
                 </div>
               </div>
@@ -1195,54 +1269,55 @@ export const CMSChatbot: React.FC = () => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input Footer Bar */}
-                <div className="p-4 sm:p-5 bg-white border-t border-slate-200/90 shrink-0">
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }}
-                    className="flex items-center gap-2.5"
-                  >
-                    <div className="relative flex-1">
-                      <input
-                        ref={inputRef}
-                        type="text"
-                        value={inputValue}
-                        onChange={(e) => handleInputChange(e.target.value)}
-                        placeholder="Ask anything about your store... (e.g. 'What should I improve today?')"
-                        disabled={isTyping}
-                        className="w-full pl-4 pr-9 py-3 rounded-xl bg-white border border-slate-300 text-xs sm:text-sm font-sans text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-100 transition-all disabled:opacity-50 shadow-xs"
-                      />
-                      {inputValue && (
+                {/* React Bits Prompt Bar Footer */}
+                <div className="p-3 sm:p-4 bg-white dark:bg-[#121212] border-t border-slate-200/90 dark:border-[#2C2C2E] shrink-0">
+                  {/* Dynamic Active Page AI Suggestions Bar */}
+                  {activePageAi && activePageAi.suggestions && activePageAi.suggestions.length > 0 && (
+                    <div className="mb-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 shrink-0 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-[#00E5FF]" />
+                        <span>{activePageAi.buttonLabel} Prompts:</span>
+                      </span>
+                      {activePageAi.suggestions.map((sug, i) => (
                         <button
+                          key={i}
                           type="button"
-                          onClick={() => handleInputChange('')}
-                          className="absolute right-3 top-3 text-slate-400 hover:text-slate-700 cursor-pointer"
+                          onClick={() => handleSendMessage(sug.prompt)}
+                          className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-[#1E1E1E] dark:hover:bg-[#2C2C2E] text-slate-700 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-[#00E5FF] transition-all shrink-0 border border-slate-200/80 dark:border-[#2C2C2E] flex items-center gap-1 cursor-pointer active:scale-95"
                         >
-                          <X className="w-4 h-4" />
+                          <span>{sug.label}</span>
                         </button>
-                      )}
+                      ))}
                     </div>
+                  )}
 
-                    <button
-                      type="submit"
-                      disabled={!inputValue.trim() || isTyping}
-                      className="p-3 rounded-xl bg-slate-900 text-[#00E5FF] hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all shadow-sm shrink-0 cursor-pointer"
-                      aria-label="Send message"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </form>
+                  <PromptBar
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    placeholder="Ask anything about your store... (Type '@' for store context, '/' for actions)"
+                    busy={isTyping}
+                    onSend={(prompt, meta) => {
+                      let fullPrompt = prompt;
+                      if (meta.attachments && meta.attachments.length > 0) {
+                        fullPrompt += `\n[Attached files: ${meta.attachments.join(', ')}]`;
+                      }
+                      handleSendMessage(fullPrompt, meta.model?.name, meta.effort);
+                    }}
+                    onStop={() => setIsTyping(false)}
+                    onDictate={handleDictate}
+                    onAttach={handleAttach}
+                    sparkColor="#00E5FF"
+                    sparkBoost={1.4}
+                  />
 
                   <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400 px-1 font-sans font-medium">
                     <span className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
-                      <span className="text-slate-500">Memory Active</span>
-                      <span className="text-slate-300">•</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                      <span className="text-slate-600 dark:text-slate-300">Memory Active</span>
+                      <span className="text-slate-300 dark:text-slate-600">•</span>
                       <span>Context preserved across sessions & refresh</span>
                     </span>
-                    <span className="hidden sm:inline">Press Enter ↵ to send · Esc to close</span>
+                    <span className="hidden sm:inline text-slate-400">Press Enter ↵ to send · Esc to close</span>
                   </div>
                 </div>
               </div>

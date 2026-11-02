@@ -125,6 +125,14 @@ import {
   OrchestratedScenarioData,
   CommerceIntelligenceResponseData,
   CommerceIntelligenceExecuteResult,
+  CMSMarketplaceApp,
+  CMSInstalledApp,
+  CMSAppActivityLog,
+  AiWebsitePlanInput,
+  AiWebsitePlan,
+  AiWebsiteProject,
+  VercelDeploymentResult,
+  DeployToVercelPayload,
 } from '@/src/types';
 
 let inFlightPagesPromise: Promise<CMSPageData[]> | null = null;
@@ -7011,14 +7019,34 @@ export const cmsService = {
     description?: string | null;
     productId?: string | null;
     sourceImages: string[];
+    provider?: 'meshy' | 'tripo';
+    dimensions?: { widthCm: number; heightCm: number; depthCm: number };
     format?: string;
     settings?: import('@/src/types').ThreeDViewerSettings;
-  }): Promise<{ message: string; model: import('@/src/types').ThreeDModelData; remainingCredits: number }> {
+  }): Promise<{
+    message: string;
+    jobId?: string;
+    job?: import('@/src/types').ARGenerationJob;
+    model: import('@/src/types').ThreeDModelData;
+    remainingCredits: number;
+  }> {
     const response = await apiClient.post<{
       message: string;
+      jobId?: string;
+      job?: import('@/src/types').ARGenerationJob;
       model: import('@/src/types').ThreeDModelData;
       remainingCredits: number;
     }>('/three-d/generate', payload);
+    return response.data;
+  },
+
+  async getThreeDJobStatus(jobId: string): Promise<import('@/src/types').ARGenerationJob> {
+    const response = await apiClient.get<import('@/src/types').ARGenerationJob>(`/three-d/jobs/${jobId}`);
+    return response.data;
+  },
+
+  async getThreeDProviders(): Promise<{ providers: import('@/src/types').ThreeDProviderInfo[] }> {
+    const response = await apiClient.get<{ providers: import('@/src/types').ThreeDProviderInfo[] }>('/three-d/providers');
     return response.data;
   },
 
@@ -7065,6 +7093,21 @@ export const cmsService = {
     const response = await apiClient.delete<{ message: string }>(`/three-d/${id}`);
     return response.data;
   },
+
+  async generateMultiAngleImages(
+    payload: import('@/src/types').GenerateAIAnglesPayload
+  ): Promise<import('@/src/types').GenerateAIAnglesResponse> {
+    const response = await apiClient.post<import('@/src/types').GenerateAIAnglesResponse>('/three-d/generate-angles', payload);
+    return response.data;
+  },
+
+  async generateSingleAngle(
+    payload: import('@/src/types').GenerateAIAnglesPayload & { angle: import('@/src/types').AIAngleKey }
+  ): Promise<{ success: boolean; angle: import('@/src/types').GeneratedAIAngleItem }> {
+    const response = await apiClient.post<{ success: boolean; angle: import('@/src/types').GeneratedAIAngleItem }>('/three-d/generate-single-angle', payload);
+    return response.data;
+  },
+
 
   // ─── AI STORE BUILDER METHODS ──────────────────────────────────────────────
 
@@ -7345,265 +7388,45 @@ export const cmsService = {
    */
   async queryAiAnalytics(payload?: import('@/src/types').AiAnalyticsQueryPayload): Promise<import('@/src/types').AiAnalyticsResult> {
     try {
-      const res = await apiClient.post('/api/ai/analytics/query', payload || { question: 'Why are my sales down?', timeRange: '30d' });
+      const res = await apiClient.post<import('@/src/types').AiAnalyticsResult>('/ai/analytics/query', {
+        question: payload?.question || 'Why are my sales down?',
+        timeRange: payload?.timeRange || '30d',
+        storeId: payload?.storeId,
+        aiProvider: payload?.aiProvider || 'auto',
+      });
       if (res.data && res.data.calculatedMetrics) {
         return res.data;
       }
+      return res.data;
     } catch (err) {
-      console.warn('Backend AI Analytics query API notice, calculating local studio fallback:', err);
+      console.error('Backend AI Analytics query API error:', err);
+      throw err;
     }
-
-    // High fidelity fallback calculation
-    const q = payload?.question || 'Why are my sales down?';
-    return {
-      question: q,
-      executiveSummary: 'Your revenue decreased 14.0% compared with the previous period (-₹34,900).',
-      headlineMetric: '-14.0% Revenue (-₹34,900)',
-      status: 'negative',
-      categoryInsight: {
-        primaryCategory: 'Footwear',
-        trafficChange: -3.1,
-        conversionChange: -18.4,
-        ordersChange: -21.0,
-        revenueChange: -23.8,
-        summaryText: 'The largest change was in your Footwear category:\n• Traffic: -3.1%\n• Conversion: -18.4%\n• Orders: -21.0%',
-      },
-      productDeclineDrivers: [
-        {
-          productName: 'AeroPulse Stealth Runner',
-          declineReason: 'Out of stock on popular sizes (US 9, 10, 11) for 12 days.',
-          revenueLoss: 47970,
-        },
-        {
-          productName: 'Classic High-Top Canvas Sneaker',
-          declineReason: 'Conversion dropped 34% after checkout shipping rate update.',
-          revenueLoss: 13990,
-        },
-        {
-          productName: 'Urban Trail Waterproof Boots',
-          declineReason: 'Traffic drop of 14% on social media acquisition channels.',
-          revenueLoss: 15990,
-        },
-      ],
-      rootCauses: [
-        'The largest change was in your Footwear category: Traffic (-3.1%), Conversion (-18.4%), Orders (-21.0%).',
-        'Three products account for 78% of the net decline: AeroPulse Stealth Runner (-62.5% units), Classic High-Top Canvas Sneaker (-50.0% units), Urban Trail Waterproof Boots (-50.0% units).',
-        'Stockouts on top-selling variants caused an estimated ₹28,000 in uncaptured demand.',
-        'Cart abandonment rose by +6.2% (currently at 71.4%).',
-      ],
-      actionPlan: [
-        {
-          priority: 'HIGH',
-          title: 'Restock Top 3 Footwear Variants',
-          description: 'Refill inventory for AeroPulse Stealth Runner to immediately capture lost high-intent demand.',
-          estimatedImpact: '+₹21,000 revenue recovery',
-          actionType: 'RESTOCK',
-        },
-        {
-          priority: 'HIGH',
-          title: 'Deploy 1-Hour Cart Recovery Email/SMS Trigger',
-          description: 'Automate an automated reminder with a 5% dynamic discount 60 minutes after abandonment to re-engage dropping carts.',
-          estimatedImpact: 'Recover 14-18% of abandoned checkouts',
-          actionType: 'EMAIL_TRIGGER',
-        },
-        {
-          priority: 'MEDIUM',
-          title: 'Launch Targeted Flash Bundle for Footwear',
-          description: 'Bundle low-stock and slow-moving items with high-margin top sellers to boost overall AOV.',
-          estimatedImpact: '+8-12% Average Order Value (AOV)',
-          actionType: 'DISCOUNT',
-        },
-      ],
-      calculatedMetrics: {
-        timeRange: payload?.timeRange || '30d',
-        currentPeriodLabel: 'Last 30 Days',
-        previousPeriodLabel: 'Previous 30 Days',
-        currentRevenue: 214500,
-        previousRevenue: 249400,
-        revenueChangePercent: -14.0,
-        revenueDelta: -34900,
-        currentOrders: 142,
-        previousOrders: 168,
-        ordersChangePercent: -15.5,
-        ordersDelta: -26,
-        currentAov: 1510.56,
-        previousAov: 1484.52,
-        aovChangePercent: 1.8,
-        currentSessions: 4544,
-        previousSessions: 4680,
-        trafficChangePercent: -2.9,
-        currentConversionRate: 3.12,
-        previousConversionRate: 3.59,
-        conversionChangePercent: -13.1,
-        conversionDeltaPctPoints: -0.47,
-        currentCartsCreated: 482,
-        currentAbandonedCarts: 344,
-        currentAbandonmentRate: 71.4,
-        previousAbandonmentRate: 65.2,
-        abandonmentChangePercent: 6.2,
-        outOfStockCount: 3,
-        lowStockCount: 5,
-        estimatedLostRevenueDueToStockouts: 28000,
-        categories: [
-          {
-            category: 'Footwear',
-            currentRevenue: 68640,
-            previousRevenue: 90050,
-            revenueChangePercent: -23.8,
-            currentOrders: 44,
-            previousOrders: 56,
-            ordersChangePercent: -21.4,
-            currentTraffic: 1726,
-            previousTraffic: 1780,
-            trafficChangePercent: -3.0,
-            currentConversionRate: 2.55,
-            previousConversionRate: 3.15,
-            conversionChangePercent: -19.0,
-          },
-          {
-            category: 'Audio',
-            currentRevenue: 60060,
-            previousRevenue: 57360,
-            revenueChangePercent: 4.7,
-            currentOrders: 38,
-            previousOrders: 36,
-            ordersChangePercent: 5.6,
-            currentTraffic: 1136,
-            previousTraffic: 1090,
-            trafficChangePercent: 4.2,
-            currentConversionRate: 3.35,
-            previousConversionRate: 3.30,
-            conversionChangePercent: 1.5,
-          },
-          {
-            category: 'Skincare',
-            currentRevenue: 47190,
-            previousRevenue: 44890,
-            revenueChangePercent: 5.1,
-            currentOrders: 34,
-            previousOrders: 32,
-            ordersChangePercent: 6.3,
-            currentTraffic: 908,
-            previousTraffic: 890,
-            trafficChangePercent: 2.0,
-            currentConversionRate: 3.74,
-            previousConversionRate: 3.60,
-            conversionChangePercent: 3.9,
-          },
-          {
-            category: 'Accessories',
-            currentRevenue: 38610,
-            previousRevenue: 37100,
-            revenueChangePercent: 4.1,
-            currentOrders: 26,
-            previousOrders: 24,
-            ordersChangePercent: 8.3,
-            currentTraffic: 774,
-            previousTraffic: 760,
-            trafficChangePercent: 1.8,
-            currentConversionRate: 3.36,
-            previousConversionRate: 3.16,
-            conversionChangePercent: 6.3,
-          },
-        ],
-        topDecliners: [
-          {
-            id: 'prod_decl_1',
-            name: 'AeroPulse Stealth Runner',
-            category: 'Footwear',
-            currentUnitsSold: 18,
-            previousUnitsSold: 48,
-            unitsChangePercent: -62.5,
-            currentRevenue: 28780,
-            previousRevenue: 76750,
-            revenueDelta: -47970,
-            revenueChangePercent: -62.5,
-            currentStock: 0,
-            isOutOfStock: true,
-            reason: 'Out of stock on popular sizes (US 9, 10, 11) for 12 days.',
-          },
-          {
-            id: 'prod_decl_2',
-            name: 'Classic High-Top Canvas Sneaker',
-            category: 'Footwear',
-            currentUnitsSold: 14,
-            previousUnitsSold: 28,
-            unitsChangePercent: -50.0,
-            currentRevenue: 13980,
-            previousRevenue: 27970,
-            revenueDelta: -13990,
-            revenueChangePercent: -50.0,
-            currentStock: 3,
-            isOutOfStock: false,
-            reason: 'Conversion dropped 34% after checkout shipping rate update.',
-          },
-          {
-            id: 'prod_decl_3',
-            name: 'Urban Trail Waterproof Boots',
-            category: 'Footwear',
-            currentUnitsSold: 8,
-            previousUnitsSold: 16,
-            unitsChangePercent: -50.0,
-            currentRevenue: 15990,
-            previousRevenue: 31980,
-            revenueDelta: -15990,
-            revenueChangePercent: -50.0,
-            currentStock: 2,
-            isOutOfStock: false,
-            reason: 'Traffic drop of 14% on social media acquisition channels.',
-          },
-        ],
-        topGainers: [
-          {
-            id: 'prod_gain_1',
-            name: 'Nova Pro Studio Wireless Headphones',
-            category: 'Audio',
-            currentUnitsSold: 34,
-            previousUnitsSold: 22,
-            unitsChangePercent: 54.5,
-            currentRevenue: 67960,
-            previousRevenue: 43970,
-            revenueDelta: 23990,
-            revenueChangePercent: 54.5,
-            currentStock: 45,
-            isOutOfStock: false,
-            reason: 'Featured in storefront banner and positive verified reviews.',
-          },
-          {
-            id: 'prod_gain_2',
-            name: 'Luxe Botanical Glow Serum',
-            category: 'Skincare',
-            currentUnitsSold: 42,
-            previousUnitsSold: 30,
-            unitsChangePercent: 40.0,
-            currentRevenue: 33550,
-            previousRevenue: 23970,
-            revenueDelta: 9580,
-            revenueChangePercent: 40.0,
-            currentStock: 38,
-            isOutOfStock: false,
-            reason: 'High repeat purchase rate and bundled checkout discounts.',
-          },
-        ],
-        activeCampaignsCount: 2,
-        currencySymbol: '₹',
-      },
-    };
   },
 
   /**
    * Get precomputed AI Analytics Insights
    */
-  async getAiAnalyticsInsights(timeRange = '30d'): Promise<import('@/src/types').AiAnalyticsResult> {
+  async getAiAnalyticsInsights(
+    timeRange = '30d',
+    aiProvider: 'auto' | 'gemini' | 'chatgpt' = 'auto'
+  ): Promise<import('@/src/types').AiAnalyticsResult> {
     try {
-      const res = await apiClient.get('/api/ai/analytics/insights', { params: { timeRange } });
+      const res = await apiClient.get<import('@/src/types').AiAnalyticsResult>('/ai/analytics/insights', {
+        params: { timeRange, aiProvider },
+      });
       if (res.data && res.data.calculatedMetrics) {
         return res.data;
       }
+      return res.data;
     } catch (err) {
-      console.warn('Backend AI Analytics insights notice:', err);
+      console.error('Backend AI Analytics insights notice:', err);
+      return this.queryAiAnalytics({
+        question: 'Comprehensive store diagnostic & root cause analysis',
+        timeRange: timeRange as any,
+        aiProvider,
+      });
     }
-    return this.queryAiAnalytics({ question: 'Comprehensive store diagnostic & root cause analysis', timeRange: timeRange as any });
   },
 
   /**
@@ -7614,20 +7437,27 @@ export const cmsService = {
     const question = payload.question || 'How much can I expect to sell next month?';
 
     try {
-      const res = await apiClient.post('/api/ai/forecasting/predict', {
+      const res = await apiClient.post<import('@/src/types').AiForecastResult>('/ai/forecasting/predict', {
         question,
         horizon,
         storeId: payload.storeId,
+        aiProvider: payload.aiProvider || 'auto',
       });
 
-      if (res.data && res.data.calculatedForecast) {
+      if (res.data) {
         return res.data;
       }
     } catch (err) {
-      console.warn('Backend AI Sales Forecast notice, utilizing client deterministic model:', err);
+      console.error('Backend AI Sales Forecast request failed:', err);
+      throw err;
     }
 
-    // High-intelligence client fallback
+    throw new Error('No sales forecast response received from server.');
+  },
+
+  async predictSalesForecastLegacy(payload: import('@/src/types').ForecastSalesPayload): Promise<import('@/src/types').AiForecastResult> {
+    const horizon = payload.horizon || '30d';
+    const question = payload.question || 'How much can I expect to sell next month?';
     const is60 = horizon === '60d';
     const is90 = horizon === '90d';
     const mult = is90 ? 3.0 : is60 ? 2.0 : 1.0;
@@ -7826,172 +7656,24 @@ export const cmsService = {
    */
   async predictInventoryStockouts(payload: import('@/src/types').PredictInventoryPayload): Promise<import('@/src/types').AiInventoryPredictionResult> {
     try {
-      const res = await apiClient.post('/api/ai/inventory/predict', {
+      const res = await apiClient.post<import('@/src/types').AiInventoryPredictionResult>('/ai/inventory/predict', {
         question: payload.question || 'Which products will run out of stock and when should I reorder?',
         category: payload.category || 'ALL',
         supplierLeadTimeDays: payload.supplierLeadTimeDays || 7,
         targetDaysOfCoverage: payload.targetDaysOfCoverage || 30,
         storeId: payload.storeId,
+        aiProvider: payload.aiProvider || 'auto',
       });
 
       if (res.data && res.data.summary) {
         return res.data;
       }
     } catch (err) {
-      console.warn('Backend AI Inventory Prediction notice, using client statistical model:', err);
+      console.error('Backend AI Inventory Prediction error:', err);
+      throw err;
     }
 
-    // High-intelligence client fallback
-    return {
-      question: payload.question || 'Which products will run out of stock and when should I reorder?',
-      executiveSummary: 'Based on current sales velocity, supplier lead time (7 days), and seasonal demand:\n\n• **🔴 Critical**: **Nike Air Running Shoes** has only **5 days remaining** (85 units in stock, ~7 units/day). **You should consider replenishing approximately 120 units before October 15.**\n• **🟡 Warning**: **Oversized Heavyweight Black Hoodie** has **18 days remaining** (72 units in stock, ~4 units/day).\n• **🟢 Healthy**: **Artisan Full-Grain Leather Wallet** has **45 days remaining** (180 units in stock).',
-      headlineSummary: '1 Critical Stockout Imminent (₹1,38,000 at risk)',
-      criticalAlerts: [
-        {
-          productName: 'Nike Air Running Shoes',
-          daysRemaining: 5,
-          recommendedReorder: 'Replenish ~120 units before October 15',
-          alertLevel: 'CRITICAL',
-        },
-      ],
-      warningAlerts: [
-        {
-          productName: 'Oversized Heavyweight Black Hoodie',
-          daysRemaining: 18,
-          recommendedReorder: 'Replenish ~65 units before October 22',
-          alertLevel: 'WARNING',
-        },
-      ],
-      healthyAlerts: [
-        {
-          productName: 'Artisan Full-Grain Leather Wallet',
-          daysRemaining: 45,
-          recommendedReorder: 'Stock healthy (~45 days supply)',
-          alertLevel: 'HEALTHY',
-        },
-      ],
-      keyDrivers: [
-        '**Sales Velocity Acceleration**: Running Shoes velocity is +28% higher due to recent marketing campaigns.',
-        '**Lead Time Buffer**: Supplier requires 7 days delivery. Order must be placed before day 5.',
-        '**Seasonal Multiplier**: +15% festive/Q4 demand uplift factored into baseline velocity.',
-      ],
-      actionPlan: [
-        {
-          priority: 'HIGH',
-          productName: 'Nike Air Running Shoes',
-          title: 'Issue Restock PO for Nike Running Shoes',
-          description: 'Order 120 units immediately from primary supplier to arrive before October 15.',
-          replenishmentUnits: 120,
-          targetDeadline: 'Before October 15',
-          estimatedCost: '₹2,16,000',
-        },
-        {
-          priority: 'HIGH',
-          productName: 'Oversized Heavyweight Black Hoodie',
-          title: 'Prepare Purchase Order for Black Hoodie',
-          description: 'Draft supplier reorder for 65 units to maintain 30-day stock buffer.',
-          replenishmentUnits: 65,
-          targetDeadline: 'Before October 22',
-          estimatedCost: '₹71,500',
-        },
-      ],
-      summary: {
-        storeId: 'default',
-        currency: 'INR',
-        currencySymbol: '₹',
-        totalSkusAnalyzed: 5,
-        criticalCount: 1,
-        warningCount: 1,
-        healthyCount: 3,
-        totalRevenueAtRisk: 138000,
-        totalRecommendedRestockUnits: 185,
-        totalEstimatedRestockCost: 287500,
-        averageDaysOfSupply: 32,
-        predictions: [
-          {
-            id: 'p_shoes',
-            name: 'Nike Air Running Shoes',
-            sku: 'NIKE-RUN-85',
-            category: 'Footwear',
-            price: 3499,
-            currentStock: 85,
-            avgDailySales: 7.0,
-            velocityTrend: 'ACCELERATING',
-            velocityChangePercent: 28,
-            seasonalMultiplier: 1.15,
-            promotionalMultiplier: 1.12,
-            adjustedDailySales: 9.0,
-            daysRemaining: 5,
-            estimatedStockoutDate: '2026-10-04',
-            estimatedStockoutDateFormatted: 'Oct 4, 2026',
-            supplierLeadTimeDays: 7,
-            reorderPointUnits: 72,
-            safetyStockBufferUnits: 28,
-            recommendedReorderUnits: 120,
-            recommendedReorderDate: 'October 15',
-            estimatedReorderCost: 216000,
-            alertLevel: 'CRITICAL',
-            alertBadge: '🔴 Critical (5 days remaining)',
-            urgencyText: 'Stockout imminent in ~5 days! Order replenishment immediately.',
-            estimatedRevenueAtRisk: 138000,
-          },
-          {
-            id: 'p_hoodie',
-            name: 'Oversized Heavyweight Black Hoodie',
-            sku: 'HOODIE-BLK-01',
-            category: 'Apparel',
-            price: 2299,
-            currentStock: 72,
-            avgDailySales: 4.0,
-            velocityTrend: 'STEADY',
-            velocityChangePercent: 0,
-            seasonalMultiplier: 1.15,
-            promotionalMultiplier: 1.0,
-            adjustedDailySales: 4.0,
-            daysRemaining: 18,
-            estimatedStockoutDate: '2026-10-17',
-            estimatedStockoutDateFormatted: 'Oct 17, 2026',
-            supplierLeadTimeDays: 7,
-            reorderPointUnits: 44,
-            safetyStockBufferUnits: 16,
-            recommendedReorderUnits: 65,
-            recommendedReorderDate: 'October 22',
-            estimatedReorderCost: 71500,
-            alertLevel: 'WARNING',
-            alertBadge: '🟡 Warning (18 days remaining)',
-            urgencyText: 'Stock depleting. Reorder recommended before October 22.',
-            estimatedRevenueAtRisk: 64000,
-          },
-          {
-            id: 'p_wallet',
-            name: 'Artisan Full-Grain Leather Wallet',
-            sku: 'WALLET-LTHR-45',
-            category: 'Accessories',
-            price: 1799,
-            currentStock: 180,
-            avgDailySales: 4.0,
-            velocityTrend: 'STEADY',
-            velocityChangePercent: 0,
-            seasonalMultiplier: 1.15,
-            promotionalMultiplier: 1.0,
-            adjustedDailySales: 4.0,
-            daysRemaining: 45,
-            estimatedStockoutDate: '2026-11-12',
-            estimatedStockoutDateFormatted: 'Nov 12, 2026',
-            supplierLeadTimeDays: 7,
-            reorderPointUnits: 44,
-            safetyStockBufferUnits: 16,
-            recommendedReorderUnits: 0,
-            recommendedReorderDate: 'November 5',
-            estimatedReorderCost: 0,
-            alertLevel: 'HEALTHY',
-            alertBadge: '🟢 Healthy (45 days remaining)',
-            urgencyText: 'Stock level is healthy and covers forecasted demand.',
-            estimatedRevenueAtRisk: 0,
-          },
-        ],
-      },
-    };
+    throw new Error('No inventory prediction response received from server.');
   },
 
   // 3. 💰 PRICING INSIGHTS & ELASTICITY SCENARIOS
@@ -8001,14 +7683,27 @@ export const cmsService = {
     try {
       const response = await apiClient.post<AiPricingInsightsResult>(
         '/ai/pricing/insights',
-        payload || {}
+        {
+          question: payload?.question || 'How is my pricing performing and what scenarios maximize my gross profit?',
+          productId: payload?.productId,
+          storeId: payload?.storeId,
+          aiProvider: payload?.aiProvider || 'auto',
+        }
       );
       if (response.data && response.data.executiveSummary) {
         return response.data;
       }
     } catch (err) {
-      console.warn('Backend pricing insights API notice, using deterministic model:', err);
+      console.error('Backend pricing insights API error:', err);
+      throw err;
     }
+
+    throw new Error('No pricing insights response received from server.');
+  },
+
+  async queryPricingInsightsLegacy(
+    payload?: QueryPricingInsightsPayload
+  ): Promise<AiPricingInsightsResult> {
 
     // High-fidelity fallback
     return {
@@ -8282,284 +7977,11 @@ export const cmsService = {
   async queryCustomerSegmentation(
     payload?: QueryCustomerSegmentationPayload
   ): Promise<AiCustomerSegmentationResult> {
-    try {
-      const response = await apiClient.post<AiCustomerSegmentationResult>(
-        '/ai/segmentation/query',
-        payload || {}
-      );
-      if (response.data && response.data.executiveSummary) {
-        return response.data;
-      }
-    } catch (err) {
-      console.warn('Backend customer segmentation API notice, using local deterministic model:', err);
-    }
-
-    // High-fidelity fallback
-    return {
-      question: payload?.prompt || "Create a campaign for customers who purchased shoes but haven't purchased in 90 days.",
-      executiveSummary: 'Our database segmentation engine identified **8 total customers** across **7 behavioral cohorts**.\n\nFor your request (*"customers who purchased shoes but haven\'t purchased in 90 days"*), the system matched an exact audience of **3 customers** who purchased in the **Footwear** category and have been inactive for over **75 days**.\n\nDeploying the personalized win-back campaign is projected to generate **₹4,498 in reclaimed revenue** at an expected **41.8% open rate**.',
-      headlineSummary: '3 Customers Matched (₹4,498 Projected Revenue Lift)',
-      segmentBreakdown: [
-        { segmentName: 'VIP Champions', count: 1, share: '12.5%', revenue: '₹15,490', strategy: 'Exclusive private access, complimentary gifts, personalized styling advice.' },
-        { segmentName: 'High-Value Customers', count: 2, share: '25.0%', revenue: '₹15,780', strategy: 'Upsell bundle sets and premium cross-category luxury collections.' },
-        { segmentName: 'Repeat Customers', count: 1, share: '12.5%', revenue: '₹4,498', strategy: 'Loyalty point multipliers and product replenishment reminders.' },
-        { segmentName: 'New Customers', count: 1, share: '12.5%', revenue: '₹1,999', strategy: 'Post-purchase welcome sequence and fast 2nd order discount coupon.' },
-        { segmentName: 'At-Risk Customers', count: 2, share: '25.0%', revenue: '₹10,788', strategy: 'Time-limited win-back offers and "We Miss You" discount coupons.' },
-        { segmentName: 'One-Time Customers', count: 1, share: '12.5%', revenue: '₹1,499', strategy: 'Highlight product category bestsellers and social proof reviews.' },
-      ],
-      targetedCampaign: {
-        id: `camp_${Date.now()}`,
-        title: 'Win-Back: Footwear Shoppers (75+ Days Inactive)',
-        targetSegment: '3 Customers (Footwear buyers inactive for 75+ days)',
-        matchedCustomerCount: 3,
-        matchedCustomerEmails: ['vikram.m@corporatemail.com', 'neha.gupta@rediffmail.com', 'kavita.nair@gmail.com'],
-        channel: 'EMAIL',
-        subjectLine: "We noticed you've been away! Here is 15% off your next Footwear favorite 👟",
-        previewText: 'Special 15% discount coupon inside. Redeem on our latest seasonal collection before it expires.',
-        messageContent: "Hi {{first_name}},\n\nIt's been a while since your last order with us. We've just introduced new upgrades and complimentary accessories to our Footwear collection.\n\nTo welcome you back, enjoy an exclusive **15% OFF** on your next order.\n\nUse Code: **FOOT-WINBACK15** at checkout.\n\nRecommended for you based on your past favorites:\n• Nike Air Running Shoes\n• Hydrophobic Sneaker Guard & Clean Kit\n\nOffer valid for the next 7 days.",
-        discountCode: 'FOOT-WINBACK15',
-        discountValue: '15% OFF',
-        recommendedProducts: ['Nike Air Running Shoes', 'Hydrophobic Sneaker Guard & Clean Kit', 'Performance Cushioned Insoles'],
-        estimatedReach: 3,
-        projectedOpenRate: '41.8%',
-        projectedConversionRate: '8.4%',
-        projectedRevenueLift: '₹4,498',
-        criteriaExplanation: "Filtered from store database: Customers whose order history includes category 'Footwear' and whose last recorded order occurred > 75 days ago.",
-      },
-      keyInsights: [
-        '**High-Value Concentration**: VIP Champions & High-Value Customers account for 37.5% of your customer base but generate over 68% of total catalog revenue.',
-        '**Reactivation Window**: At-risk customers (2 customers) have an average inactivity of 98.5 days; launching win-back incentives within 90 days prevents permanent churn.',
-        '**Cross-Category Upsell**: 64% of shoe buyers have not yet purchased matching shoe care kits or wallet accessories, presenting an immediate AOV expansion opportunity.',
-        '**One-Time Conversion Opportunity**: Converting 10% of one-time shoppers into repeat buyers lifts annual merchant gross profit by over ₹1,20,000.',
-      ],
-      actionPlan: [
-        {
-          priority: 'HIGH',
-          segment: 'At-Risk Customers',
-          title: 'Launch 1-Click Win-Back Campaign to 3 Inactive Buyers',
-          description: 'Trigger automated email + SMS sequence with code FOOT-WINBACK15 to recover inactive customers.',
-          estimatedImpact: '₹4,498 reclaimed revenue',
-        },
-        {
-          priority: 'HIGH',
-          segment: 'VIP Champions',
-          title: 'Send Private Access to New Product Drops',
-          description: 'Send early preview links via WhatsApp/Email to top spenders with zero discount dependency.',
-          estimatedImpact: '+34% higher repeat order velocity',
-        },
-        {
-          priority: 'MEDIUM',
-          segment: 'New Customers',
-          title: 'Deploy Day-14 Post-Purchase Nurture Guide',
-          description: 'Deliver care guides and 10% second-order incentives before customers hit the 30-day window.',
-          estimatedImpact: '+18% second-purchase conversion rate',
-        },
-      ],
-      summary: {
-        storeId: 'default',
-        currency: 'INR',
-        currencySymbol: '₹',
-        totalCustomers: 8,
-        activeCustomerBase: 4,
-        totalCatalogRevenue: 51253,
-        averageLtv: 6407,
-        segments: [
-          {
-            segment: 'VIP',
-            title: 'VIP Champions',
-            description: 'Top spenders with high purchase frequency and highest brand advocacy.',
-            badgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
-            customerCount: 1,
-            percentageOfBase: 12.5,
-            totalSegmentRevenue: 15490,
-            averageAov: 2582,
-            averageRecencyDays: 8,
-            suggestedCampaignStrategy: 'Exclusive private access, complimentary gifts, personalized styling advice.',
-            defaultDiscountOffer: 'Exclusive VIP Early Access + Free Express Shipping',
-            primaryMarketingChannel: 'WHATSAPP',
-            sampleCustomers: [
-              {
-                id: 'cust_101',
-                name: 'Aarav Sharma',
-                email: 'aarav.sharma@gmail.com',
-                phone: '+91 98201 45890',
-                segment: 'VIP',
-                segmentLabel: 'VIP Champions',
-                segmentBadgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
-                totalOrders: 6,
-                totalSpent: 15490,
-                aov: 2582,
-                lastOrderDate: '2026-09-20',
-                daysSinceLastOrder: 8,
-                topCategories: ['Footwear', 'Accessories'],
-                lastPurchasedProducts: ['Nike Air Running Shoes', 'Artisan Leather Bifold Wallet'],
-                rfmScore: { recency: 5, frequency: 5, monetary: 5, composite: 15 },
-                predictedChurnRiskPercent: 8,
-                recommendedAction: 'Provide early VIP drops, concierge perks & exclusive tier gifts',
-              },
-            ],
-          },
-          {
-            segment: 'HIGH_VALUE',
-            title: 'High-Value Customers',
-            description: 'Frequent buyers with high Average Order Value (AOV).',
-            badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-            customerCount: 2,
-            percentageOfBase: 25.0,
-            totalSegmentRevenue: 15780,
-            averageAov: 2254,
-            averageRecencyDays: 53,
-            suggestedCampaignStrategy: 'Upsell bundle sets and premium cross-category luxury collections.',
-            defaultDiscountOffer: '₹500 OFF on orders over ₹3,000 (Code: HIGHVALUE500)',
-            primaryMarketingChannel: 'EMAIL',
-            sampleCustomers: [],
-          },
-          {
-            segment: 'REPEAT_CUSTOMERS',
-            title: 'Repeat Customers',
-            description: 'Customers with 2+ purchases active in the last 60 days.',
-            badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
-            customerCount: 1,
-            percentageOfBase: 12.5,
-            totalSegmentRevenue: 4498,
-            averageAov: 2249,
-            averageRecencyDays: 25,
-            suggestedCampaignStrategy: 'Loyalty point multipliers and product replenishment reminders.',
-            defaultDiscountOffer: 'Double Loyalty Points on Next Order (Code: REPEAT2X)',
-            primaryMarketingChannel: 'EMAIL',
-            sampleCustomers: [],
-          },
-          {
-            segment: 'NEW_CUSTOMERS',
-            title: 'New Customers',
-            description: 'First purchase completed within the last 30 days.',
-            badgeColor: 'bg-blue-100 text-blue-800 border-blue-300',
-            customerCount: 1,
-            percentageOfBase: 12.5,
-            totalSegmentRevenue: 1999,
-            averageAov: 1999,
-            averageRecencyDays: 12,
-            suggestedCampaignStrategy: 'Post-purchase welcome sequence and fast 2nd order discount coupon.',
-            defaultDiscountOffer: '10% OFF Your 2nd Purchase (Code: WELCOMEBACK10)',
-            primaryMarketingChannel: 'EMAIL',
-            sampleCustomers: [],
-          },
-          {
-            segment: 'AT_RISK',
-            title: 'At-Risk Customers',
-            description: 'Previously active buyers who have not purchased in 60–120 days.',
-            badgeColor: 'bg-orange-100 text-orange-800 border-orange-300',
-            customerCount: 2,
-            percentageOfBase: 25.0,
-            totalSegmentRevenue: 10788,
-            averageAov: 2157,
-            averageRecencyDays: 98,
-            suggestedCampaignStrategy: "Time-limited win-back offers and 'We Miss You' discount coupons.",
-            defaultDiscountOffer: '15% OFF Win-Back Flash Discount (Code: COMEBACK15)',
-            primaryMarketingChannel: 'SMS',
-            sampleCustomers: [],
-          },
-          {
-            segment: 'ONE_TIME',
-            title: 'One-Time Customers',
-            description: 'Purchased once > 30 days ago and have not returned yet.',
-            badgeColor: 'bg-slate-100 text-slate-700 border-slate-300',
-            customerCount: 1,
-            percentageOfBase: 12.5,
-            totalSegmentRevenue: 1499,
-            averageAov: 1499,
-            averageRecencyDays: 48,
-            suggestedCampaignStrategy: 'Highlight product category bestsellers and social proof reviews.',
-            defaultDiscountOffer: 'Free Shipping on Your Next Order (Code: FREESHIP)',
-            primaryMarketingChannel: 'EMAIL',
-            sampleCustomers: [],
-          },
-        ],
-        customers: [
-          {
-            id: 'cust_101',
-            name: 'Aarav Sharma',
-            email: 'aarav.sharma@gmail.com',
-            phone: '+91 98201 45890',
-            segment: 'VIP',
-            segmentLabel: 'VIP Champions',
-            segmentBadgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
-            totalOrders: 6,
-            totalSpent: 15490,
-            aov: 2582,
-            lastOrderDate: '2026-09-20',
-            daysSinceLastOrder: 8,
-            topCategories: ['Footwear', 'Accessories'],
-            lastPurchasedProducts: ['Nike Air Running Shoes', 'Artisan Leather Bifold Wallet'],
-            rfmScore: { recency: 5, frequency: 5, monetary: 5, composite: 15 },
-            predictedChurnRiskPercent: 8,
-            recommendedAction: 'Provide early VIP drops, concierge perks & exclusive tier gifts',
-          },
-          {
-            id: 'cust_102',
-            name: 'Priya Patel',
-            email: 'priya.patel@outlook.com',
-            phone: '+91 98112 67340',
-            segment: 'HIGH_VALUE',
-            segmentLabel: 'High-Value Customers',
-            segmentBadgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-            totalOrders: 4,
-            totalSpent: 8990,
-            aov: 2248,
-            lastOrderDate: '2026-09-14',
-            daysSinceLastOrder: 14,
-            topCategories: ['Footwear', 'Apparel'],
-            lastPurchasedProducts: ['Nike Air Running Shoes', 'Heavyweight Cotton Streetwear Hoodie'],
-            rfmScore: { recency: 5, frequency: 4, monetary: 4, composite: 13 },
-            predictedChurnRiskPercent: 15,
-            recommendedAction: 'Cross-sell high-margin complementary collections',
-          },
-          {
-            id: 'cust_105',
-            name: 'Vikram Malhotra',
-            email: 'vikram.m@corporatemail.com',
-            phone: '+91 99880 44321',
-            segment: 'AT_RISK',
-            segmentLabel: 'At-Risk Customers',
-            segmentBadgeColor: 'bg-orange-100 text-orange-800 border-orange-300',
-            totalOrders: 3,
-            totalSpent: 6790,
-            aov: 2263,
-            lastOrderDate: '2026-06-28',
-            daysSinceLastOrder: 92,
-            topCategories: ['Footwear', 'Accessories'],
-            lastPurchasedProducts: ['Nike Air Running Shoes', 'Shoe Cleaning Kit'],
-            rfmScore: { recency: 2, frequency: 4, monetary: 4, composite: 10 },
-            predictedChurnRiskPercent: 68,
-            recommendedAction: 'Deploy win-back re-engagement campaign with personalized discount',
-          },
-          {
-            id: 'cust_106',
-            name: 'Neha Gupta',
-            email: 'neha.gupta@rediffmail.com',
-            phone: '+91 98711 55678',
-            segment: 'AT_RISK',
-            segmentLabel: 'At-Risk Customers',
-            segmentBadgeColor: 'bg-orange-100 text-orange-800 border-orange-300',
-            totalOrders: 2,
-            totalSpent: 3998,
-            aov: 1999,
-            lastOrderDate: '2026-06-15',
-            daysSinceLastOrder: 105,
-            topCategories: ['Footwear'],
-            lastPurchasedProducts: ['Nike Air Running Shoes'],
-            rfmScore: { recency: 2, frequency: 3, monetary: 3, composite: 8 },
-            predictedChurnRiskPercent: 74,
-            recommendedAction: 'Deploy win-back re-engagement campaign with personalized discount',
-          },
-        ],
-        topCategoryAffinities: [
-          { category: 'Footwear', customerCount: 7, sharePercent: 87.5 },
-          { category: 'Accessories', customerCount: 3, sharePercent: 37.5 },
-          { category: 'Apparel', customerCount: 2, sharePercent: 25.0 },
-        ],
-      },
-    };
+    const response = await apiClient.post<AiCustomerSegmentationResult>(
+      '/ai/segmentation/query',
+      payload || {}
+    );
+    return response.data;
   },
 
   async getCustomerSegmentationSummary(): Promise<CustomerSegmentationSummaryData> {
@@ -8608,6 +8030,7 @@ export const cmsService = {
         prompt: payload?.prompt || 'Create a high-converting campaign for Footwear & Accessories targeting repeat customers with a special bundle offer.',
         targetProduct: payload?.targetProduct,
         storeId: payload?.storeId,
+        aiProvider: payload?.aiProvider || 'auto',
       });
       if (response.data && response.data.channelComparisonMatrix) {
         const raw = response.data;
@@ -8620,7 +8043,7 @@ export const cmsService = {
           targetSegment: rawCamp.targetSegment || rawCamp.targetAudience?.segmentName || 'Target Customers',
           targetProducts: rawCamp.targetProducts || [],
           whatsapp: rawCamp.whatsapp || {
-            emojiHeader: rawCamp.whatsAppAsset?.emojiHeader || '👟 VIP Exclusive Broadcast',
+            emojiHeader: rawCamp.whatsAppAsset?.emojiHeader || '🚀 Exclusive VIP Broadcast',
             messageText: rawCamp.whatsAppAsset?.messageText || 'Special VIP Offer available!',
             quickReplyButtons: rawCamp.whatsAppAsset?.quickReplyButtons || ['Claim Offer 🎁', 'View Details 📦'],
             broadcastListRecommendation: rawCamp.whatsAppAsset?.broadcastListRecommendation || '',
@@ -8678,270 +8101,11 @@ export const cmsService = {
           generatedCampaign: normalizedCampaign,
         };
       }
+      return response.data;
     } catch (err) {
-      console.warn('Backend campaign optimization API notice, falling back to local multi-channel simulator:', err);
+      console.error('Backend campaign optimization API error:', err);
+      throw err;
     }
-
-    // High fidelity fallback matching user specification
-    return {
-      question: payload?.prompt || 'Create a high-converting campaign for Footwear & Accessories targeting repeat customers with a special bundle offer.',
-      executiveSummary: 'AI analysis across 5 marketing channels shows WhatsApp generates 69% higher conversion rates (7.1% vs 4.2%) for Repeat and VIP customers compared to Email, while Push Notifications deliver instant 44% open rates for flash weekend discounts.',
-      headlineObservation: 'Your previous WhatsApp campaigns had higher conversion than your email campaigns for repeat customers (7.1% vs 4.2%).',
-      channelComparisonMatrix: [
-        {
-          channel: 'WhatsApp Direct',
-          openRate: '78.4%',
-          conversionRate: '7.1%',
-          roi: '6.4x ROAS',
-          bestFor: 'Repeat & VIP Customers, Flash Bundles, Abandoned Carts',
-        },
-        {
-          channel: 'Email Newsletter',
-          openRate: '31.2%',
-          conversionRate: '4.2%',
-          roi: '4.8x ROAS',
-          bestFor: 'Editorial Storytelling, Product Catalogs, Re-engagement',
-        },
-        {
-          channel: 'SMS Priority',
-          openRate: '92.1%',
-          conversionRate: '5.8%',
-          roi: '5.2x ROAS',
-          bestFor: 'Expiring Coupons, Flash Sales, High Urgency Notices',
-        },
-        {
-          channel: 'Push Notifications',
-          openRate: '44.3%',
-          conversionRate: '3.9%',
-          roi: '5.9x ROAS',
-          bestFor: 'App Engagement, Back-in-Stock Alerts, Price Drops',
-        },
-        {
-          channel: 'Instagram / Social',
-          openRate: 'N/A (Feed)',
-          conversionRate: '2.4%',
-          roi: '3.6x ROAS',
-          bestFor: 'Top-of-Funnel Discovery, Visual Bundles, New Lookbooks',
-        },
-      ],
-      generatedCampaign: {
-        id: `camp_opt_${Date.now()}`,
-        title: 'VIP Repeat Customer Re-Ignition: Spring Footwear & Leather Bundle',
-        theme: 'Spring Collection & Synergy Accessories',
-        targetSegment: 'Repeat & High-Value Customers (2+ purchases)',
-        targetProducts: ['Nike Air Running Shoes', 'Premium Leather Wallet'],
-        email: {
-          subjectLine: 'Exclusive VIP Access: Step Into Spring With 15% Off Your Curated Bundle 👟✨',
-          preheaderText: 'Because you loved your last purchase, we saved a private pairing just for you.',
-          headerBadge: 'VIP MEMBER EXCLUSIVE',
-          headline: 'A Handcrafted Pair Crafted Just For Your Style',
-          bodyMarkdown: `Hey {{first_name}},\n\nAs one of our most valued collectors, we wanted you to be the first to experience our new seasonal capsule.\n\nPair your **Nike Air Running Shoes** with our **Handcrafted Leather Wallet** this weekend and enjoy a private **15% savings** at checkout.\n\nUse code **VIP15REPEAT** before Sunday midnight.`,
-          callToActionText: 'Unlock My VIP Bundle →',
-          callToActionUrl: '/collections/footwear-accessories',
-          personalizedMergeTags: ['{{first_name}}', '{{last_purchased_item}}', '{{loyalty_tier}}'],
-        },
-        whatsapp: {
-          emojiHeader: '👟 VIP Exclusive from UrbanStyle Store',
-          messageText: `Hey {{first_name}}! ✨ We noticed you love our Footwear collection.\n\nBecause you're one of our top members, we've reserved a special bundle for you: Get our *Premium Leather Wallet* + *Nike Running Shoes* with an instant *15% off*!\n\n🎟️ Tap below to claim code *VIP15REPEAT* (Expires Sunday 11:59 PM).`,
-          quickReplyButtons: ['Claim 15% VIP Offer 🎁', 'View Bundle Details 👟', 'Chat with Stylist 💬'],
-          broadcastListRecommendation: 'Repeat Customers with LTV > ₹3,000 (Expected reach: 480 contacts)',
-          mediaAssetSuggestion: 'Curated 1:1 square photo of shoes beside the leather wallet with soft shadow.',
-        },
-        push: {
-          title: '👟 Private 15% Off For You, {{first_name}}!',
-          body: 'Your curated Footwear & Leather bundle is waiting. Use VIP15REPEAT before Sunday.',
-          deepLink: 'app://bundles/spring-footwear-vip',
-          bannerImageUrl: '/images/products/footwear-bundle-push.jpg',
-          icon: 'bell-ring',
-          urgencyTag: '⚡ 48 Hours Only',
-        },
-        coupon: {
-          code: 'VIP15REPEAT',
-          discountType: 'PERCENTAGE',
-          discountValue: 15,
-          minOrderAmount: 2000,
-          marginImpactExplanation: '15% discount on orders over ₹2,000 protects gross unit margins at 56.4% while generating 3.2x higher conversion velocity.',
-          expiryHours: 48,
-          oncePerCustomer: true,
-        },
-        bundle: {
-          bundleName: 'Performance & Heritage Synergy Duo',
-          primaryProduct: 'Nike Air Running Shoes',
-          pairedProduct: 'Premium Leather Wallet',
-          bundleRegularPrice: 3298,
-          bundleOfferPrice: 2803,
-          customerSavingsAmount: 495,
-          merchantMarginPercent: 57.2,
-          crossSellRationale: '42% of shoe buyers explore accessories within 45 days. Combining them into an upfront bundle lifts average basket size by ₹804.',
-        },
-        social: {
-          platform: 'INSTAGRAM',
-          postCaption: 'Weekend styling rule #1: Never compromise between comfort and craftsmanship. 👟💼\n\nFor the next 48 hours, score our coveted Footwear + Leather Everyday pairing at a special bundle price with code VIP15REPEAT.\n\nTap the tag to shop the bundle now!',
-          storyText: '⚡ Weekend Flash Drop: Pair your favourite kicks with pure full-grain leather. Swipe up to grab 15% off.',
-          hashtags: ['#UrbanStyle', '#FootwearFashion', '#EverydayCarry', '#SneakerLovers', '#CuratedBundles'],
-          suggestedCreativeType: 'Carousel Slide Post (Product 1 → Product 2 → Paired Lifestyle Shot → Customer Review)',
-          carouselSlideDescriptions: [
-            'Slide 1: Hero studio shot of Nike Air Running Shoes in motion.',
-            'Slide 2: Close-up macro texture of the full-grain leather wallet.',
-            'Slide 3: Side-by-side bundle pairing with "Save 15% Together" badge.',
-            'Slide 4: Customer testimonial: "Best shoes + wallet combination I own!"',
-          ],
-        },
-        expectedOverallRevenueLift: '+₹1,48,000 (est. 52 conversions)',
-        projectedBlendedRoas: '5.9x',
-      },
-      observations: [
-        {
-          id: 'obs_1',
-          type: 'CHANNEL_EFFICIENCY',
-          title: 'WhatsApp Conversions Outperform Email by 69% for Repeat Buyers',
-          observation: 'Your previous WhatsApp campaigns generated a 7.1% conversion rate compared to 4.2% on Email for customers with 2+ historical orders.',
-          comparisonMetric: '7.1% (WhatsApp) vs 4.2% (Email)',
-          confidenceScore: 94,
-          recommendedNextAction: 'Allocate 60% of re-engagement budget to WhatsApp direct messaging sequences.',
-        },
-        {
-          id: 'obs_2',
-          type: 'TIMING_SWEETSPOT',
-          title: 'Sunday Evening (7:00 PM – 9:00 PM) Drives Peak Purchase Intent',
-          observation: 'Campaigns dispatched on Sunday between 7:00 PM and 9:00 PM IST achieve 2.3x higher click-through rates and 38% faster checkout completion.',
-          comparisonMetric: '2.3x CTR spike on Sunday 7:30 PM',
-          confidenceScore: 91,
-          recommendedNextAction: 'Schedule multi-channel blast for Sunday 7:30 PM.',
-        },
-        {
-          id: 'obs_3',
-          type: 'OFFER_ELASTICITY',
-          title: '15% Off with ₹2,000 Min Spend Out-Profits 25% Flat Discounts',
-          observation: 'Data shows ₹2,000 min-spend thresholds preserve 56% gross margin and prevent margin erosion while maintaining identical checkout conversion.',
-          comparisonMetric: '56% Gross Margin preserved vs 38% on flat 25%',
-          confidenceScore: 89,
-          recommendedNextAction: 'Enforce ₹2,000 minimum cart requirement on promo code VIP15REPEAT.',
-        },
-      ],
-      actionPlan: [
-        {
-          priority: 'HIGH',
-          channel: 'WhatsApp Direct',
-          title: 'Broadcast VIP WhatsApp Campaign to 480 Repeat Buyers',
-          description: 'Send interactive WhatsApp message with one-tap quick replies on Sunday at 7:30 PM IST.',
-          estimatedImpact: '+₹94,000 gross revenue lift',
-        },
-        {
-          priority: 'MEDIUM',
-          channel: 'Email Newsletter',
-          title: 'Deploy Curated HTML Newsletter with Storytelling Layout',
-          description: 'Send editorial email with merge tags {{first_name}} and dynamic product recommendations.',
-          estimatedImpact: '+₹36,000 gross revenue lift',
-        },
-        {
-          priority: 'LOW',
-          channel: 'Instagram / Meta',
-          title: 'Publish 4-Slide Instagram Carousel & Story Sequence',
-          description: 'Leverage lifestyle imagery and tag the bundle directly in Instagram Shopping.',
-          estimatedImpact: '+₹18,000 brand reach & top-funnel discovery',
-        },
-      ],
-      summary: {
-        storeId: payload?.storeId || 'store_main',
-        currency: 'INR',
-        currencySymbol: '₹',
-        benchmarkPeriod: 'Previous 90 Days Historical Campaign Logs',
-        totalHistoricalCampaigns: 24,
-        topChannelByConversion: 'WhatsApp (7.1% conv)',
-        channelBenchmarks: [
-          {
-            channel: 'WHATSAPP',
-            label: 'WhatsApp Direct',
-            openRate: 78.4,
-            clickRate: 26.2,
-            conversionRate: 7.1,
-            averageOrderValue: 2450,
-            roiMultiple: '6.4x',
-            optimalDayTime: 'Sun 7:30 PM',
-            bestAudienceSegment: 'Repeat & VIP Customers',
-            historicalVolume: 3200,
-          },
-          {
-            channel: 'EMAIL',
-            label: 'Email Newsletter',
-            openRate: 31.2,
-            clickRate: 11.4,
-            conversionRate: 4.2,
-            averageOrderValue: 2180,
-            roiMultiple: '4.8x',
-            optimalDayTime: 'Tue 10:00 AM',
-            bestAudienceSegment: 'Catalog Explorers',
-            historicalVolume: 12400,
-          },
-          {
-            channel: 'SMS',
-            label: 'SMS Priority',
-            openRate: 92.1,
-            clickRate: 19.8,
-            conversionRate: 5.8,
-            averageOrderValue: 1890,
-            roiMultiple: '5.2x',
-            optimalDayTime: 'Fri 6:00 PM',
-            bestAudienceSegment: 'At-Risk & Lapsed',
-            historicalVolume: 4500,
-          },
-          {
-            channel: 'PUSH',
-            label: 'Push Notifications',
-            openRate: 44.3,
-            clickRate: 14.5,
-            conversionRate: 3.9,
-            averageOrderValue: 1720,
-            roiMultiple: '5.9x',
-            optimalDayTime: 'Sat 2:00 PM',
-            bestAudienceSegment: 'Mobile App Users',
-            historicalVolume: 8900,
-          },
-          {
-            channel: 'INSTAGRAM',
-            label: 'Instagram / Social',
-            openRate: 0,
-            clickRate: 8.2,
-            conversionRate: 2.4,
-            averageOrderValue: 1950,
-            roiMultiple: '3.6x',
-            optimalDayTime: 'Thu 8:30 PM',
-            bestAudienceSegment: 'New Prospects & Fans',
-            historicalVolume: 28000,
-          },
-        ],
-        activeObservations: [
-          {
-            id: 'obs_1',
-            type: 'CHANNEL_EFFICIENCY',
-            title: 'WhatsApp Conversions Outperform Email by 69% for Repeat Buyers',
-            observation: 'Your previous WhatsApp campaigns generated a 7.1% conversion rate compared to 4.2% on Email for customers with 2+ historical orders.',
-            comparisonMetric: '7.1% vs 4.2%',
-            confidenceScore: 94,
-            recommendedNextAction: 'Allocate 60% of re-engagement budget to WhatsApp direct messaging sequences.',
-          },
-          {
-            id: 'obs_2',
-            type: 'TIMING_SWEETSPOT',
-            title: 'Sunday Evening (7:00 PM – 9:00 PM) Drives Peak Purchase Intent',
-            observation: 'Campaigns dispatched on Sunday between 7:00 PM and 9:00 PM IST achieve 2.3x higher click-through rates and 38% faster checkout completion.',
-            comparisonMetric: '2.3x CTR spike on Sunday 7:30 PM',
-            confidenceScore: 91,
-            recommendedNextAction: 'Schedule multi-channel blast for Sunday 7:30 PM.',
-          },
-          {
-            id: 'obs_3',
-            type: 'OFFER_ELASTICITY',
-            title: '15% Off with ₹2,000 Min Spend Out-Profits 25% Flat Discounts',
-            observation: 'Data shows ₹2,000 min-spend thresholds preserve 56% gross margin and prevent margin erosion while maintaining identical checkout conversion.',
-            comparisonMetric: '56% Gross Margin preserved vs 38% on flat 25%',
-            confidenceScore: 89,
-            recommendedNextAction: 'Enforce ₹2,000 minimum cart requirement on promo code VIP15REPEAT.',
-          },
-        ],
-      },
-    };
   },
 
   async getCampaignOptimizationSummary(): Promise<CampaignOptimizationSummaryData> {
@@ -8950,160 +8114,55 @@ export const cmsService = {
       if (response.data && response.data.channelBenchmarks) {
         return response.data;
       }
+      return response.data;
     } catch (err) {
-      console.warn('Backend campaign benchmarks API notice:', err);
+      console.error('Backend campaign benchmarks API error:', err);
+      throw err;
     }
-
-    const fullResult = await this.queryCampaignOptimization();
-    return fullResult.summary;
   },
 
-  async getCommerceIntelligence(scenarioId?: string, storeId?: string): Promise<CommerceIntelligenceResponseData> {
+  async getCommerceIntelligence(
+    scenarioId?: string,
+    storeId?: string,
+    aiProvider?: 'auto' | 'gemini' | 'chatgpt'
+  ): Promise<CommerceIntelligenceResponseData> {
     try {
       const response = await apiClient.get<CommerceIntelligenceResponseData>('/ai/intelligence/orchestrate', {
-        params: { scenarioId: scenarioId || 'surge_demand_stockout', storeId },
+        params: {
+          scenarioId: scenarioId || 'surge_demand_stockout',
+          storeId,
+          aiProvider: aiProvider || 'auto',
+        },
       });
       if (response.data && response.data.activeScenario) {
         return response.data;
       }
+      return response.data;
     } catch (err) {
-      console.warn('Backend commerce intelligence API notice, utilizing local fallback engine:', err);
+      console.error('Failed to load commerce intelligence from backend:', err);
+      throw err;
     }
-
-    return {
-      architecturePrinciples: {
-        dataPipeline: [
-          'PostgreSQL / Prisma Database (Orders, Inventory, Customers, Campaigns)',
-          'Statistical & ML Computation (Holt-Winters, RFM Matrix, Channel Elasticity)',
-          'Deterministic Business Logic & Margin Guardrails',
-          'LLM Natural Language Synthesis & Multi-Channel Copywriting',
-          '5-Layer AI Safety Gateway Validation & Audit Trail',
-        ],
-        roleOfMlStatisticalModels: 'Handles actual mathematical forecasting, stockout runway prediction, cohort clustering, and price elasticity simulations.',
-        roleOfLlm: 'Acts as the strategic explainer, executive narrator, and multi-channel creative copywriter — never direct SQL executor.',
-        safetyGatewayValidation: 'Enforces strict Zod schemas, merchant RBAC permissions, and business guardrails prior to database writes.',
-      },
-      headlineOrchestration: 'AI Commerce Engine: +35% Forecast Demand → 9-Day Stockout Alert → 1,200 VIP Customers → WhatsApp/Email Channel → 15% Margin-Guarded Bundle.',
-      executiveSummary: 'By interconnecting all 5 AI modules into a unified orchestration pipeline, your store eliminates isolated decisions. Statistical forecasting feeds inventory alerts, which dynamically selects the highest-affinity 1,200 customers, crafts high-converting WhatsApp & Email assets, and protects gross margins at 56.4%.',
-      activeScenario: {
-        id: 'surge_demand_stockout',
-        name: 'Surge Demand & Proactive Stockout Monetization',
-        description: 'Seamlessly connects forecasting spikes to inventory lead times, customer cohort activation, high-converting WhatsApp campaigns, and margin-safe bundle pricing.',
-        triggerEvent: 'Forecast Model detects +35% category surge while Nike Running Shoes drops below 10-day stock threshold.',
-        expectedRevenueImpact: '+₹1,48,000 Revenue Lift',
-        expectedMarginPreservation: '56.4% Unit Margin Maintained (₹84,000 Gross Profit)',
-        riskReductionSummary: 'Zero stockout loss, zero margin cannibalization, and 6.4x blended campaign ROAS.',
-        steps: [
-          {
-            stepIndex: 1,
-            engine: 'FORECASTING',
-            title: '1. Sales Forecasting: Surge Demand Detected',
-            badge: 'Demand Surge +35%',
-            badgeColor: 'bg-blue-100 text-blue-800 border-blue-200',
-            keyMetric: 'Expected Revenue: ₹4.8L – ₹5.4L',
-            observation: 'Historical 6-month trends and seasonal velocity show category demand rising by +35% for Footwear & Seasonal Apparel over next 30 days.',
-            dataSummary: { expectedOrders: '820 – 910 orders', topCategory: 'Shoes & Footwear' },
-            actionableDecision: 'Alert Inventory & Marketing engines to prepare for accelerated sell-through velocity.',
-          },
-          {
-            stepIndex: 2,
-            engine: 'INVENTORY',
-            title: '2. Inventory Prediction: Stockout Horizon & Reorder Trigger',
-            badge: 'Stockout in ~9 Days',
-            badgeColor: 'bg-red-100 text-red-800 border-red-200',
-            keyMetric: 'Remaining Stock: 85 units (Burn: 7.8 units/day)',
-            observation: 'At accelerated sales velocity (+35%), primary SKU Nike Air Running Shoes will deplete in 9 days. Supplier lead time is 6 days.',
-            dataSummary: { criticalSku: 'Nike Air Running Shoes', recommendedReorderUnits: 140, reorderDeadline: 'October 12' },
-            actionableDecision: 'Trigger supplier PO for 140 replenishment units and plan high-margin allocation.',
-          },
-          {
-            stepIndex: 3,
-            engine: 'SEGMENTATION',
-            title: '3. Customer Segmentation: 1,200 High-Affinity Buyers Isolated',
-            badge: '1,200 High-Intent Customers',
-            badgeColor: 'bg-purple-100 text-purple-800 border-purple-200',
-            keyMetric: '480 Repeat Buyers + 720 Category Browsers',
-            observation: 'RFM Cohort segmentation isolated 1,200 verified customers with high footwear affinity who haven\'t ordered in 45+ days.',
-            dataSummary: { vipCount: 480, averageHistoricalLtv: '₹4,250', topInterest: 'Footwear & Accessories' },
-            actionableDecision: 'Direct marketing budget specifically to high-affinity repeat cohorts rather than generic broad audiences.',
-          },
-          {
-            stepIndex: 4,
-            engine: 'CAMPAIGN',
-            title: '4. Campaign Optimization: Multi-Channel Channel Selection',
-            badge: 'WhatsApp (7.1% conv) + Email (31% open)',
-            badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-            keyMetric: '7.1% WhatsApp Conv Rate vs 4.2% Email',
-            observation: 'Channel benchmark logs confirm WhatsApp drives 69% higher conversion for repeat customers. Sunday 7:30 PM is peak checkout window.',
-            dataSummary: { primaryChannel: 'WhatsApp Direct', secondaryChannel: 'Email Newsletter', optimalTiming: 'Sunday 7:30 PM IST' },
-            actionableDecision: 'Generate coordinated WhatsApp interactive blast + VIP Email narrative with promo code VIP15REPEAT.',
-          },
-          {
-            stepIndex: 5,
-            engine: 'PRICING',
-            title: '5. Pricing Insights: Margin Guard & Bundle Optimization',
-            badge: 'Protected 56.4% Gross Margin',
-            badgeColor: 'bg-amber-100 text-amber-800 border-amber-200',
-            keyMetric: '15% off with ₹2,000 threshold vs 25% flat',
-            observation: 'Elasticity simulation shows ₹2,000 min-cart requirement preserves 56.4% margin and generates 3.2x more gross profit than unconstrained 25% off.',
-            dataSummary: { code: 'VIP15REPEAT', discountValue: 15, minOrderAmount: 2000, bundlePairing: 'Running Shoes + Leather Wallet (₹2,803)' },
-            actionableDecision: 'Deploy promo with minimum cart guardrail and recommend synergistic Leather Wallet accessory pairing.',
-          },
-        ],
-      },
-      availableScenarios: [
-        {
-          id: 'surge_demand_stockout',
-          name: 'Surge Demand & Proactive Stockout Monetization',
-          tagline: 'Forecast +35% → Stockout in 9d → 1,200 VIPs → WhatsApp Blast → 15% Margin Guard',
-          impact: '+₹1.48L Revenue',
-        },
-        {
-          id: 'slow_moving_clearance',
-          name: 'Slow-Moving Inventory Smart Clearance',
-          tagline: 'Velocity Slump → 85d Runway → Price Sensitivity Cohort → Push & SMS → Dynamic Bundle',
-          impact: '94% Working Capital Freed',
-        },
-        {
-          id: 'high_margin_vip_expansion',
-          name: 'High-Margin VIP Basket Value Expansion',
-          tagline: 'AOV Trend +22% → High Stock Levels → Top 10% VIPs → WhatsApp Private Drop → 57% Margin Bundle',
-          impact: '+₹2.10L Gross Profit',
-        },
-      ],
-      forecastSnapshot: null,
-      inventorySnapshot: null,
-      segmentationSnapshot: null,
-      pricingSnapshot: null,
-      campaignSnapshot: null,
-      timestamp: new Date().toISOString(),
-    };
   },
 
-  async executeCommerceIntelligenceStrategy(scenarioId?: string, storeId?: string): Promise<CommerceIntelligenceExecuteResult> {
+  async executeCommerceIntelligenceStrategy(
+    scenarioId?: string,
+    storeId?: string,
+    aiProvider?: 'auto' | 'gemini' | 'chatgpt'
+  ): Promise<CommerceIntelligenceExecuteResult> {
     try {
       const response = await apiClient.post<CommerceIntelligenceExecuteResult>('/ai/intelligence/execute', {
         scenarioId: scenarioId || 'surge_demand_stockout',
         storeId,
+        aiProvider: aiProvider || 'auto',
       });
       if (response.data && response.data.executedActions) {
         return response.data;
       }
+      return response.data;
     } catch (err) {
-      console.warn('Backend commerce intelligence execution API notice:', err);
+      console.error('Failed to execute orchestrated commerce strategy:', err);
+      throw err;
     }
-
-    return {
-      success: true,
-      message: 'AI Commerce Engine successfully executed full multi-module strategy!',
-      executedActions: [
-        { engine: 'Sales Forecast', action: 'Registered +35% demand spike baseline in predictive cache', result: 'Target revenue set to ₹5.2L' },
-        { engine: 'Inventory Prediction', action: 'Generated Purchase Order alert for 140 replenishment units', result: 'Reorder PO queued with supplier lead time 6 days' },
-        { engine: 'Customer Segmentation', action: 'Isolated 1,200 high-affinity repeat customers cohort', result: 'Filtered 480 VIP + 720 active footwear buyers' },
-        { engine: 'Campaign Optimizer', action: 'Scheduled multi-channel WhatsApp & Email campaign', result: 'Dispatches Sunday 7:30 PM with expected 7.1% conv' },
-        { engine: 'Pricing Insights', action: 'Activated promo code VIP15REPEAT with ₹2,000 threshold', result: 'Enforced 56.4% gross margin guard in DB' },
-      ],
-    };
   },
 
   async generatePageWithAi(payload: import('@/src/types').GenerateAiPagePayload): Promise<import('@/src/types').GeneratedAiPageResult> {
@@ -9631,6 +8690,135 @@ export const cmsService = {
       blockType: requestedType,
       explanation: `Successfully synthesized a ${requestedType.replace(/_/g, ' ')} block tailored for "${prompt}" in ${tone.replace(/_/g, ' ')} tone.`,
     };
+  },
+
+  // ─── Apps & Integrations Marketplace ───────────────────────────────────────
+  async getMarketplaceApps(category?: string, search?: string): Promise<CMSMarketplaceApp[]> {
+    try {
+      const params: any = {};
+      if (category && category !== 'ALL') params.category = category;
+      if (search) params.search = search;
+      const res = await apiClient.get('/apps/marketplace', { params });
+      return res.data?.apps || [];
+    } catch (err: any) {
+      console.error('Failed to fetch marketplace apps:', err);
+      return [];
+    }
+  },
+
+  async getInstalledApps(): Promise<CMSInstalledApp[]> {
+    try {
+      const res = await apiClient.get('/apps/installed');
+      return res.data?.installations || [];
+    } catch (err: any) {
+      console.error('Failed to fetch installed apps:', err);
+      return [];
+    }
+  },
+
+  async getAppDetails(slug: string): Promise<{ app: CMSMarketplaceApp; installation?: CMSInstalledApp | null }> {
+    const res = await apiClient.get(`/apps/${slug}`);
+    return res.data;
+  },
+
+  async installApp(slug: string): Promise<{ success: boolean; message: string; installation?: any }> {
+    const res = await apiClient.post(`/apps/${slug}/install`);
+    return res.data;
+  },
+
+  async configureApp(slug: string, payload: {
+    credentials?: Record<string, any>;
+    status?: 'INSTALLED' | 'CONFIGURED' | 'ACTIVE' | 'DISABLED';
+    isPrimary?: boolean;
+    settings?: Record<string, any>;
+  }): Promise<{ success: boolean; message: string; installation?: any }> {
+    const res = await apiClient.put(`/apps/${slug}/configure`, payload);
+    return res.data;
+  },
+
+  async testAppConnection(slug: string, credentials?: Record<string, any>): Promise<{
+    success: boolean;
+    message: string;
+    simulated?: boolean;
+    timestamp?: string;
+  }> {
+    const res = await apiClient.post(`/apps/${slug}/test`, { credentials });
+    return res.data;
+  },
+
+  async uninstallApp(slug: string): Promise<{ success: boolean; message: string }> {
+    const res = await apiClient.delete(`/apps/${slug}/uninstall`);
+    return res.data;
+  },
+
+  async getAppLogs(): Promise<CMSAppActivityLog[]> {
+    try {
+      const res = await apiClient.get('/apps/logs');
+      return res.data?.logs || [];
+    } catch (err: any) {
+      console.error('Failed to fetch app activity logs:', err);
+      return [];
+    }
+  },
+
+  // ── AI Website Builder & Vercel Deployment ──────────────────────────
+  async planAiWebsite(payload: AiWebsitePlanInput): Promise<{ success: boolean; plan: AiWebsitePlan }> {
+    const res = await apiClient.post('/ai/website-builder/plan', payload);
+    return res.data;
+  },
+
+  async generateAiWebsite(payload: AiWebsitePlanInput): Promise<{ success: boolean; project: AiWebsiteProject }> {
+    const res = await apiClient.post('/ai/website-builder/generate', payload);
+    return res.data;
+  },
+
+  async iterateAiWebsite(projectId: string, instruction: string): Promise<{ success: boolean; project: AiWebsiteProject }> {
+    const res = await apiClient.post('/ai/website-builder/iterate', { projectId, instruction }, { timeout: 60000 });
+    return res.data;
+  },
+
+  async chatAiWebsite(payload: {
+    projectId?: string;
+    message: string;
+    history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+    provider?: 'gemini' | 'chatgpt';
+    brandName?: string;
+    industry?: string;
+  }): Promise<{
+    success: boolean;
+    reply: string;
+    project: AiWebsiteProject;
+    suggestedReplies: string[];
+    providerUsed: 'gemini' | 'chatgpt';
+    appliedChanges?: string[];
+  }> {
+    const res = await apiClient.post('/ai/website-builder/chat', payload, { timeout: 60000 });
+    return res.data;
+  },
+
+  async deployAiWebsiteToVercel(payload: DeployToVercelPayload): Promise<{
+    success: boolean;
+    message: string;
+    deployment: VercelDeploymentResult;
+    project: AiWebsiteProject;
+  }> {
+    const res = await apiClient.post('/ai/website-builder/deploy', payload, { timeout: 120000 });
+    return res.data;
+  },
+
+  async getVercelDeploymentStatus(deploymentId: string, token?: string): Promise<{ success: boolean; status: VercelDeploymentResult }> {
+    const query = token ? `?token=${encodeURIComponent(token)}` : '';
+    const res = await apiClient.get(`/ai/website-builder/status/${deploymentId}${query}`);
+    return res.data;
+  },
+
+  async getAiWebsiteDeployments(): Promise<VercelDeploymentResult[]> {
+    try {
+      const res = await apiClient.get('/ai/website-builder/deployments');
+      return res.data?.deployments || [];
+    } catch {
+      return [];
+    }
   },
 };
 

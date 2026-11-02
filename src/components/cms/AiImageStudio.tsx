@@ -248,6 +248,12 @@ export const AiImageStudio: React.FC = () => {
                 <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[10px] font-black tracking-wider uppercase border border-indigo-200/60 dark:border-indigo-800/60">
                   Separate Vision Engine
                 </span>
+                {studioResult?.pipelineStatus?.aiProvider === 'gemini' && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-500/10 to-violet-500/10 text-blue-700 dark:text-blue-300 text-[10px] font-black tracking-wider uppercase border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    Powered by Gemini
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Automated 5-stage pipeline: Background Removal → Image Enhancement → AI Background Synthesis → Multi-Variation Generation → Store-Ready Output.
@@ -591,6 +597,12 @@ export const AiImageStudio: React.FC = () => {
                       {activeVariation.badge}
                     </span>
                   )}
+                  {activeVariation?.aiGenerated && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-100 to-violet-100 text-blue-800 text-[10px] font-extrabold uppercase tracking-wide flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      AI Generated
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-500">
                   {activeVariation?.tagline || 'High-resolution store-ready asset'}
@@ -757,9 +769,17 @@ export const AiImageStudio: React.FC = () => {
                         <span className="text-xs font-extrabold text-slate-900 dark:text-foreground truncate">
                           {v.title}
                         </span>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 shrink-0">
-                          {v.aspectRatio}
-                        </span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {v.aiGenerated && (
+                            <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-gradient-to-r from-blue-100 to-violet-100 text-blue-700 flex items-center gap-0.5">
+                              <Sparkles className="w-2.5 h-2.5" />
+                              AI
+                            </span>
+                          )}
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">
+                            {v.aspectRatio}
+                          </span>
+                        </div>
                       </div>
                       <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
                         {v.description}

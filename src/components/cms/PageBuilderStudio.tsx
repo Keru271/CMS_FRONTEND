@@ -1,5 +1,6 @@
 'use client';
 
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useCallback, useRef, useEffect, useReducer } from 'react';
 import {
   X,
@@ -4116,20 +4117,14 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
     <div className="fixed inset-0 z-50 bg-slate-100 text-slate-900 flex flex-col select-none font-sans">
       {/* Toast Notification */}
       {toast && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold border transition-all animate-bounce ${
-            toast.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-rose-50 border-rose-200 text-rose-800'
-          }`}
-        >
-          {toast.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          ) : (
-            <AlertCircle className="w-4 h-4 text-rose-600" />
-          )}
-          <span>{toast.text}</span>
-        </div>
+        <SwipeToast
+          open={!!toast}
+          type={toast.type}
+          title={toast.type === 'success' ? 'Success' : 'Error'}
+          description={(toast as any).text || (toast as any).msg}
+          onClose={() => setToast(null)}
+          duration={4000}
+        />
       )}
 
       {/* ── TOP BAR ─────────────────────────────────────────────────── */}

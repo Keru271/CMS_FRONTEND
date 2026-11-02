@@ -24,6 +24,7 @@ import { MerchantOnboardingData } from '@/src/types';
 import { useCMS } from '@/src/context/CMSContext';
 import { useTranslation } from '@/src/context/LanguageContext';
 import { useTheme } from '@/src/context/ThemeContext';
+import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
 interface AdminHeaderProps {
   onSearch?: (query: string) => void;
@@ -302,6 +303,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         >
           <Search className="w-4 h-4" />
         </button>
+
+        {/* AI Copilot Specular Button (Customized per active page) */}
+        <PageAiSpecularButton size="sm" />
 
         {/* Add Product Button (Primary Action) */}
         {onAddProduct && (

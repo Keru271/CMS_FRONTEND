@@ -1,5 +1,6 @@
 'use client';
 
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect } from 'react';
 import { TablePagination } from '@/src/components/ui/TablePagination';
 import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
@@ -261,20 +262,14 @@ export const GiftCardManager: React.FC = () => {
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
       {/* Toast */}
       {toastMessage && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border text-sm font-bold flex items-center gap-2 animate-in slide-in-from-bottom duration-200 ${
-            toastMessage.type === 'success'
-              ? 'bg-emerald-950 text-emerald-200 border-emerald-800'
-              : 'bg-rose-950 text-rose-200 border-rose-800'
-          }`}
-        >
-          {toastMessage.type === 'success' ? (
-            <Check className="w-4 h-4 text-emerald-400" />
-          ) : (
-            <AlertCircle className="w-4 h-4 text-rose-400" />
-          )}
-          <span>{toastMessage.text}</span>
-        </div>
+        <SwipeToast
+          open={!!toastMessage}
+          type={toastMessage.type}
+          title={toastMessage.type === 'success' ? 'Success' : 'Error'}
+          description={toastMessage.text}
+          onClose={() => setToastMessage(null)}
+          duration={4000}
+        />
       )}
 
       {/* HEADER SECTION */}

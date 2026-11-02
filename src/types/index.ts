@@ -1227,6 +1227,80 @@ export interface ThreeDViewerSettings {
   materialFinish?: 'standard' | 'pbr-metallic' | 'matte' | 'wireframe' | string;
   background?: 'gradient-dark' | 'radial-slate' | 'studio-white' | 'transparent' | string;
   scale?: number;
+  dimensions?: ProductDimensions;
+}
+
+export type ThreeDProvider = 'meshy' | 'tripo';
+
+export interface ProductDimensions {
+  widthCm: number;
+  heightCm: number;
+  depthCm: number;
+}
+
+export interface ThreeDProviderInfo {
+  id: ThreeDProvider;
+  name: string;
+  description: string;
+  isDefault: boolean;
+  isConfigured: boolean;
+  recommendedImages: string;
+  outputFormats: string[];
+}
+
+export interface ARGenerationJob {
+  id: string;
+  storeId: string;
+  productId?: string | null;
+  modelName: string;
+  description?: string;
+  provider: ThreeDProvider;
+  status: 'PENDING' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | string;
+  stageIndex: number;
+  currentStageName: string;
+  progressPercent: number;
+  inputImages: string[];
+  dimensions: ProductDimensions;
+  glbUrl?: string | null;
+  usdzUrl?: string | null;
+  thumbnailUrl?: string | null;
+  polyCount?: number;
+  fileSizeBytes?: number;
+  modelId?: string | null;
+  error?: string | null;
+  createdAt: string;
+  completedAt?: string | null;
+}
+
+export type AIAngleKey = 'front' | 'back' | 'left' | 'right' | 'isometric';
+
+export interface GeneratedAIAngleItem {
+  key: AIAngleKey;
+  label: string;
+  degrees: number;
+  slotIndex: number;
+  imageUrl: string;
+  promptUsed: string;
+  seed: number;
+}
+
+export interface GenerateAIAnglesPayload {
+  productName?: string;
+  category?: string;
+  prompt?: string;
+  referenceImage?: string;
+  style?: 'studio-white' | 'neutral-grey' | 'luxury-dark';
+  seed?: number;
+  angles?: AIAngleKey[];
+}
+
+export interface GenerateAIAnglesResponse {
+  success: boolean;
+  productName: string;
+  seed: number;
+  angles: GeneratedAIAngleItem[];
+  modelUsed: string;
+  generationTimeMs: number;
 }
 
 export interface ThreeDModelData {
@@ -1246,6 +1320,8 @@ export interface ThreeDModelData {
   settingsJson?: string | null;
   metadataJson?: string | null;
   settings?: ThreeDViewerSettings;
+  dimensions?: ProductDimensions;
+  provider?: ThreeDProvider;
   createdAt: string;
   updatedAt: string;
 }
@@ -1287,6 +1363,7 @@ export interface ThreeDStudioData {
   packages: ThreeDCreditPackage[];
   models: ThreeDModelData[];
   transactions: ThreeDCreditTransaction[];
+  providers?: ThreeDProviderInfo[];
   products: {
     id: string;
     name: string;
@@ -1298,6 +1375,23 @@ export interface ThreeDStudioData {
 }
 
 // ─── Payment Gateway & Transaction Types ─────────────────────────────────────
+export interface CMSInstalledPaymentAppSummary {
+  id: string;
+  appId?: string;
+  slug: string;
+  name: string;
+  category: string;
+  description: string;
+  icon?: string | null;
+  badge?: string | null;
+  status: 'INSTALLED' | 'CONFIGURED' | 'ACTIVE' | 'DISABLED' | string;
+  isPrimary: boolean;
+  lastTestedAt?: string | null;
+  lastTestStatus?: 'SUCCESS' | 'FAILED' | null | string;
+  lastError?: string | null;
+  accountIdentifier?: string | null;
+}
+
 export interface CMSPaymentSettings {
   id: string;
   paymentStripeActive: boolean;
@@ -1305,6 +1399,7 @@ export interface CMSPaymentSettings {
   paymentPaypalActive: boolean;
   paymentCodActive: boolean;
   paymentTestMode: boolean;
+  installedPaymentApps?: CMSInstalledPaymentAppSummary[];
   razorpayKeyId?: string | null;
   razorpayKeySecretMasked?: string | null;
   razorpayWebhookSecretMasked?: string | null;
@@ -1472,9 +1567,16 @@ export interface PaymentTransactionsSummary {
   totalOrdersCount: number;
   inrVolume: number;
   usdVolume: number;
-  razorpayEstimatedSavings: number;
-  stripeInternationalVolume: number;
+  totalVolume?: number;
+  netPayouts?: number;
+  totalFees?: number;
+  settledCount?: number;
+  pendingCount?: number;
+  failedCount?: number;
+  currency?: string;
   successRatePercentage: number;
+  razorpayEstimatedSavings?: number;
+  stripeInternationalVolume?: number;
 }
 
 // ── Price Tiers & Store Billing Types ──────────────────────────────────────
@@ -2250,6 +2352,7 @@ export interface ImageStudioVariation {
   badge: string;
   tagline: string;
   promptUsed?: string;
+  aiGenerated?: boolean;
 }
 
 export interface ProcessImageStudioPayload {
@@ -2270,6 +2373,7 @@ export interface ProcessImageStudioResult {
     enhancement: string;
     backgroundGen: string;
     variationsCount: number;
+    aiProvider?: 'gemini' | 'template' | string;
   };
   productName?: string;
   category?: string;
@@ -2382,12 +2486,14 @@ export interface AiAnalyticsResult {
   rootCauses: string[];
   actionPlan: AiAnalyticsActionPlanItem[];
   calculatedMetrics: CalculatedStoreAnalytics;
+  aiProviderUsed?: string;
 }
 
 export interface AiAnalyticsQueryPayload {
   question?: string;
   timeRange?: '7d' | '30d' | '90d';
   storeId?: string;
+  aiProvider?: 'auto' | 'gemini' | 'chatgpt';
 }
 
 // ── AI Sales Forecasting Types ─────────────────────────────────────────────
@@ -2482,12 +2588,14 @@ export interface AiForecastResult {
     estimatedImpact: string;
   }>;
   calculatedForecast: CalculatedSalesForecastData;
+  aiProviderUsed?: string;
 }
 
 export interface ForecastSalesPayload {
   question?: string;
   horizon?: '30d' | '60d' | '90d';
   storeId?: string;
+  aiProvider?: 'auto' | 'gemini' | 'chatgpt';
 }
 
 // ── AI Inventory Prediction Types ──────────────────────────────────────────
@@ -2569,6 +2677,7 @@ export interface AiInventoryPredictionResult {
     estimatedCost: string;
   }>;
   summary: InventoryPredictionSummaryData;
+  aiProviderUsed?: string;
 }
 
 export interface PredictInventoryPayload {
@@ -2577,6 +2686,7 @@ export interface PredictInventoryPayload {
   supplierLeadTimeDays?: number;
   targetDaysOfCoverage?: number;
   storeId?: string;
+  aiProvider?: 'auto' | 'gemini' | 'chatgpt';
 }
 
 export interface PricingScenarioData {
@@ -2701,12 +2811,14 @@ export interface AiPricingInsightsResult {
     estimatedImpact: string;
   }>;
   summary: PricingInsightsSummaryData;
+  aiProviderUsed?: string;
 }
 
 export interface QueryPricingInsightsPayload {
   question?: string;
   productId?: string;
   storeId?: string;
+  aiProvider?: 'auto' | 'gemini' | 'chatgpt';
 }
 
 export interface PricingScenarioSimulatePayload {
@@ -2824,11 +2936,13 @@ export interface AiCustomerSegmentationResult {
     estimatedImpact: string;
   }>;
   summary: CustomerSegmentationSummaryData;
+  aiProviderUsed?: string;
 }
 
 export interface QueryCustomerSegmentationPayload {
   prompt?: string;
   storeId?: string;
+  aiProvider?: 'auto' | 'gemini' | 'chatgpt';
 }
 
 export interface CreateTargetedCampaignPayload {
@@ -2973,12 +3087,14 @@ export interface AiCampaignOptimizationResult {
     estimatedImpact: string;
   }>;
   summary: CampaignOptimizationSummaryData;
+  aiProviderUsed?: string;
 }
 
 export interface QueryCampaignOptimizationPayload {
   prompt?: string;
   storeId?: string;
   targetProduct?: string;
+  aiProvider?: 'auto' | 'gemini' | 'chatgpt';
 }
 
 // ─── UNIFIED AI COMMERCE INTELLIGENCE ENGINE ────────────────────────────────
@@ -3027,6 +3143,9 @@ export interface CommerceIntelligenceResponseData {
   segmentationSnapshot: any;
   campaignSnapshot: any;
   pricingSnapshot: any;
+  currencySymbol?: string;
+  currency?: string;
+  aiProviderUsed?: string;
   timestamp: string;
 }
 
@@ -3038,6 +3157,7 @@ export interface CommerceIntelligenceExecuteResult {
     action: string;
     result: string;
   }>;
+  aiProviderUsed?: string;
 }
 
 // ─── AI PAGE BUILDER ────────────────────────────────────────────────────────
@@ -3104,6 +3224,185 @@ export interface GeneratedAiBlockResult {
   };
   blockType: string;
   explanation: string;
+}
+
+// ─── Apps & Integrations Marketplace ─────────────────────────────────────────
+
+export interface AppConfigField {
+  key: string;
+  label: string;
+  type: 'text' | 'password' | 'number' | 'select' | 'boolean';
+  placeholder?: string;
+  description?: string;
+  required?: boolean;
+  options?: { label: string; value: string }[];
+  defaultValue?: any;
+}
+
+export interface CMSMarketplaceApp {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  description: string;
+  developer: string;
+  icon?: string;
+  badge?: string;
+  websiteUrl?: string;
+  docsUrl?: string;
+  configFields: AppConfigField[];
+  supportedEvents: string[];
+  isInstalled: boolean;
+  installationId?: string | null;
+  installationStatus?: 'NOT_INSTALLED' | 'INSTALLED' | 'CONFIGURED' | 'ACTIVE' | 'DISABLED';
+  isPrimary?: boolean;
+  lastTestedAt?: string | null;
+  lastTestStatus?: 'SUCCESS' | 'FAILED' | null;
+}
+
+export interface CMSInstalledApp {
+  id: string;
+  appId: string;
+  slug: string;
+  name: string;
+  category: string;
+  description: string;
+  icon?: string;
+  status: 'INSTALLED' | 'CONFIGURED' | 'ACTIVE' | 'DISABLED';
+  isPrimary: boolean;
+  configFields: AppConfigField[];
+  credentialsSanitized: Record<string, any>;
+  settings: Record<string, any>;
+  accountIdentifier?: string;
+  lastTestedAt?: string | null;
+  lastTestStatus?: string | null;
+  lastError?: string | null;
+  recentLogs?: any[];
+  installedAt: string;
+  updatedAt: string;
+}
+
+export interface CMSAppActivityLog {
+  id: string;
+  appSlug: string;
+  appName: string;
+  appIcon?: string;
+  channel: string;
+  eventTrigger: string;
+  status: 'DELIVERED' | 'FAILED' | 'SIMULATED';
+  recipient: string;
+  externalId?: string;
+  messageSnippet?: string;
+  errorDetails?: string;
+  createdAt: string;
+}
+
+// ==========================================
+// AI WEBSITE BUILDER & VERCEL DEPLOYMENT
+// ==========================================
+
+export interface AiWebsiteThemeTokens {
+  primary: string;
+  secondary: string;
+  accent: string;
+  background: string;
+  cardBg: string;
+  textColor: string;
+  textMuted: string;
+  border: string;
+  headingFont: string;
+  bodyFont: string;
+  borderRadius: string;
+  styleArchetype: string;
+}
+
+export interface AiWebsiteSectionSpec {
+  id: string;
+  name: string;
+  type: string;
+  title: string;
+  subtitle?: string;
+  enabled: boolean;
+}
+
+export interface AiWebsitePlanInput {
+  brandName: string;
+  industry: string;
+  description: string;
+  visualStyle?: 'luxe-dark' | 'neo-brutalist' | 'minimalist' | 'pastel-botanical' | 'cyber-tech' | 'clean-saas';
+  features?: string[];
+  primaryColor?: string;
+  accentColor?: string;
+  customPrompt?: string;
+  storeId?: string;
+}
+
+export interface AiWebsitePlan {
+  brandName: string;
+  tagline: string;
+  theme: AiWebsiteThemeTokens;
+  sections: AiWebsiteSectionSpec[];
+  features: string[];
+  summary: string;
+}
+
+export interface AiWebsiteProjectFile {
+  file: string;
+  data: string;
+  encoding?: 'utf-8' | 'base64';
+}
+
+export interface AiWebsiteProject {
+  projectId: string;
+  brandName: string;
+  tagline: string;
+  industry: string;
+  theme: AiWebsiteThemeTokens;
+  pages: Array<{
+    slug: string;
+    title: string;
+    path: string;
+    sections: AiWebsiteSectionSpec[];
+  }>;
+  files: AiWebsiteProjectFile[];
+  previewHtml: string;
+  apiConfig: {
+    apiUrl: string;
+    storeId: string;
+    activeChannels: string[];
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VercelBuildLog {
+  timestamp: string;
+  step: string;
+  message: string;
+  level: 'info' | 'success' | 'warn' | 'error';
+}
+
+export interface VercelDeploymentResult {
+  deploymentId: string;
+  projectName: string;
+  url: string;
+  alias: string[];
+  readyState: 'INITIALIZING' | 'BUILDING' | 'READY' | 'ERROR';
+  isSimulation: boolean;
+  buildLogs: VercelBuildLog[];
+  inspectUrl: string;
+  creator: {
+    username: string;
+    email: string;
+  };
+  deployedAt: string;
+}
+
+export interface DeployToVercelPayload {
+  projectId: string;
+  customVercelToken?: string;
+  customProjectName?: string;
+  teamId?: string;
 }
 
 

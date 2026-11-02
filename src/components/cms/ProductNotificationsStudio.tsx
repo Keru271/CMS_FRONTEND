@@ -1,5 +1,6 @@
 'use client';
 
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { TablePagination } from '@/src/components/ui/TablePagination';
@@ -323,20 +324,14 @@ export function ProductNotificationsStudio() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 md:p-8 space-y-8 text-slate-900 dark:text-slate-100">
       {/* Toast */}
       {toast && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-2xl border text-sm font-medium transition-all duration-300 ${
-            toast.type === 'success'
-              ? 'bg-emerald-950 border-emerald-800 text-emerald-100'
-              : toast.type === 'error'
-                ? 'bg-rose-950 border-rose-800 text-rose-100'
-                : 'bg-slate-900 border-slate-700 text-white'
-          }`}
-        >
-          {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
-          {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-400" />}
-          {toast.type === 'info' && <Sparkles className="w-5 h-5 text-blue-400" />}
-          <span>{toast.message}</span>
-        </div>
+        <SwipeToast
+          open={!!toast}
+          type={toast.type}
+          title={toast.type === 'success' ? 'Success' : 'Error'}
+          description={(toast as any).text || (toast as any).msg}
+          onClose={() => setToast(null)}
+          duration={4000}
+        />
       )}
 
       {/* Header */}

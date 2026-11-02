@@ -1,5 +1,6 @@
 'use client';
 
+import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect } from 'react';
 import { NotificationConfigData } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
@@ -180,20 +181,14 @@ export const NotificationStudio: React.FC = () => {
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Toast */}
       {toastMessage && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-xl border text-xs font-black flex items-center gap-2 ${
-            toastMessage.type === 'success'
-              ? 'bg-emerald-950/90 border-emerald-600 text-emerald-300'
-              : 'bg-rose-950/90 border-rose-600 text-rose-300'
-          }`}
-        >
-          {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          ) : (
-            <AlertCircle className="w-4 h-4 text-rose-400" />
-          )}
-          <span>{toastMessage.text}</span>
-        </div>
+        <SwipeToast
+          open={!!toastMessage}
+          type={toastMessage.type}
+          title={toastMessage.type === 'success' ? 'Success' : 'Error'}
+          description={toastMessage.text}
+          onClose={() => setToastMessage(null)}
+          duration={4000}
+        />
       )}
 
       {/* Header */}
