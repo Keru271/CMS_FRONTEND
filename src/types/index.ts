@@ -1996,6 +1996,11 @@ export interface EmailTemplateFormData {
 export interface SendTestEmailPayload {
   recipientEmail: string;
   sampleData?: Record<string, any>;
+  subject?: string;
+  previewText?: string;
+  blocks?: any[];
+  designConfig?: any;
+  storeId?: string;
 }
 
 export interface SendTestEmailResponse {
@@ -2005,6 +2010,10 @@ export interface SendTestEmailResponse {
   recipientEmail: string;
   subject: string;
   previewHtml?: string;
+  delivered?: boolean;
+  simulated?: boolean;
+  provider?: string;
+  isStoreCustom?: boolean;
 }
 
 // ─── FORM BUILDER & SUBMISSIONS TYPES ──────────────────────────────────────

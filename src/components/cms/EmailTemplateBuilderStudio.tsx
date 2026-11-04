@@ -18,6 +18,10 @@ import {
   Smartphone,
   Monitor,
   Sparkles,
+  Wand2,
+  Bot,
+  Loader2,
+  ArrowRight,
   Settings2,
   CheckCircle2,
   RotateCcw,
@@ -48,6 +52,7 @@ import {
 interface Props {
   initialTemplateId?: string;
   initialCategory?: string;
+  initialAiOpen?: boolean;
   onClose?: () => void;
 }
 
@@ -304,6 +309,7 @@ const TYPOGRAPHY_PRESETS = [
 export const EmailTemplateBuilderStudio: React.FC<Props> = ({
   initialTemplateId,
   initialCategory,
+  initialAiOpen,
   onClose,
 }) => {
   const router = useRouter();
@@ -317,8 +323,10 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
   const [viewMode, setViewMode] = useState<'builder' | 'split' | 'code'>('split');
   // Preview Mode: 'desktop' | 'mobile'
   const [previewViewport, setPreviewViewport] = useState<'desktop' | 'mobile'>('desktop');
-  // Active Tab in Sidebar: 'blocks' | 'design' | 'variables'
-  const [sidebarTab, setSidebarTab] = useState<'blocks' | 'design' | 'variables'>('blocks');
+  // Active Tab in Sidebar: 'templates' | 'blocks' | 'design' | 'variables'
+  const [sidebarTab, setSidebarTab] = useState<'templates' | 'blocks' | 'design' | 'variables'>('blocks');
+  const [templateSearch, setTemplateSearch] = useState('');
+  const [templateFilterCategory, setTemplateFilterCategory] = useState<'ALL' | 'NOTIFICATION' | 'MARKETING' | 'CUSTOM'>('ALL');
 
   // Selected Block for Editing
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
@@ -331,7 +339,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
   const [previewText, setPreviewText] = useState('');
   const [blocks, setBlocks] = useState<EmailTemplateBlock[]>([]);
   const [designConfig, setDesignConfig] = useState<EmailDesignConfig>({
-    backgroundColor: '#121212',
+    backgroundColor: '#f4f6f8',
     canvasBackgroundColor: '#ffffff',
     fontFamily:
       "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
@@ -394,6 +402,65 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
   const [sendingTest, setSendingTest] = useState(false);
   const [testResult, setTestResult] = useState<SendTestEmailResponse | null>(null);
 
+  // AI Template Generator State
+  const [showAiModal, setShowAiModal] = useState(!!initialAiOpen);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiProvider, setAiProvider] = useState<'auto' | 'gemini' | 'chatgpt'>('auto');
+  const [aiTone, setAiTone] = useState<string>('high-converting');
+  const [aiGenerating, setAiGenerating] = useState(false);
+
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim()) {
+      showNotification('error', 'Please describe the email template you want to create.');
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      const activeStoreId = cmsService.getActiveStoreId() || undefined;
+      const res = await cmsService.generateAiEmailTemplate({
+        prompt: aiPrompt.trim(),
+        provider: aiProvider,
+        tone: aiTone,
+        category,
+        storeId: activeStoreId,
+      });
+
+      if (res && res.success && res.template) {
+        const t = res.template;
+        setName(t.name || 'AI Generated Template');
+        setSubject(t.subject || 'Exclusive Update');
+        setPreviewText(t.previewText || '');
+        if (t.category) setCategory(t.category);
+        if (t.trigger !== undefined) setTrigger(t.trigger);
+        if (t.designConfig) setDesignConfig(t.designConfig);
+        if (Array.isArray(t.blocks) && t.blocks.length > 0) {
+          setBlocks(t.blocks);
+          setSelectedBlockId(t.blocks[0].id);
+        }
+
+        setShowAiModal(false);
+        const providerLabel =
+          res.providerUsed === 'gemini'
+            ? 'Google Gemini'
+            : res.providerUsed === 'chatgpt'
+            ? 'OpenAI ChatGPT'
+            : 'AI Layout Engine';
+        showNotification(
+          'success',
+          `Template created with ${providerLabel}! Customize any block below.`,
+        );
+      } else {
+        showNotification('error', 'Could not generate template. Please refine your prompt.');
+      }
+    } catch (err: any) {
+      console.error('AI generation error:', err);
+      showNotification('error', err?.message || 'Failed to generate email template with AI.');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   // Toast / Notification
   const [notification, setNotification] = useState<{
     type: 'success' | 'error';
@@ -409,7 +476,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
     if (onClose) {
       onClose();
     } else {
-      router.push('/dashboard');
+      router.push('/email-templates');
     }
   };
 
@@ -425,7 +492,9 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
       setTemplates(res.templates);
       setSampleVariables(res.sampleVariables || {});
 
-      if (res.templates.length > 0) {
+      if (initialTemplateId === '') {
+        handleNewTemplate();
+      } else if (res.templates.length > 0) {
         let match = res.templates[0];
         if (initialTemplateId) {
           match = res.templates.find((t) => t.id === initialTemplateId) || res.templates[0];
@@ -451,6 +520,10 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
     setSubject(t.subject);
     setPreviewText(t.previewText || '');
 
+    if (t.htmlContent) {
+      setCompiledHtml(t.htmlContent);
+    }
+
     const parsedBlocks: EmailTemplateBlock[] = Array.isArray(t.blocks)
       ? t.blocks
       : JSON.parse(t.blocksJson || '[]');
@@ -459,7 +532,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
     const parsedConfig: EmailDesignConfig =
       t.designConfig || JSON.parse(t.designConfigJson || '{}');
     setDesignConfig({
-      backgroundColor: parsedConfig.backgroundColor || '#121212',
+      backgroundColor: parsedConfig.backgroundColor || '#f4f6f8',
       canvasBackgroundColor: parsedConfig.canvasBackgroundColor || '#ffffff',
       fontFamily:
         parsedConfig.fontFamily ||
@@ -637,6 +710,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
 
     setSaving(true);
     try {
+      const activeStoreId = cmsService.getActiveStoreId() || undefined;
       const payload = {
         name,
         category,
@@ -646,6 +720,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
         blocksJson: JSON.stringify(blocks),
         designConfigJson: JSON.stringify(designConfig),
         isActive: true,
+        storeId: activeStoreId,
       };
 
       if (selectedTemplate?.id) {
@@ -654,6 +729,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
         setTemplates((prev) =>
           prev.map((t) => (t.id === selectedTemplate.id ? { ...t, ...res.template } : t)),
         );
+        setSelectedTemplate(res.template);
       } else {
         const res = await cmsService.createEmailTemplate(payload);
         showNotification('success', `New template "${name}" created!`);
@@ -667,7 +743,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
     }
   };
 
-  // Send Test Email
+  // Send Test Email (Sends live editor draft immediately without requiring prior save)
   const handleSendTestEmail = async () => {
     if (!testRecipient || !testRecipient.includes('@')) {
       showNotification('error', 'Please enter a valid recipient email.');
@@ -676,20 +752,49 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
 
     setSendingTest(true);
     try {
-      if (selectedTemplate?.id) {
-        const res = await cmsService.sendTestEmail(selectedTemplate.id, {
-          recipientEmail: testRecipient,
-          sampleData: sampleVariables,
-        });
-        setTestResult(res);
-        showNotification('success', `Test email dispatched to ${testRecipient}!`);
-      } else {
-        showNotification('error', 'Please save the template first before sending test emails.');
-      }
+      const activeStoreId = cmsService.getActiveStoreId() || undefined;
+      const templateId = selectedTemplate?.id || 'draft';
+      const res = await cmsService.sendTestEmail(templateId, {
+        recipientEmail: testRecipient,
+        sampleData: sampleVariables,
+        subject,
+        previewText,
+        blocks,
+        designConfig,
+        storeId: activeStoreId,
+      });
+      setTestResult(res);
+      showNotification('success', `Test email dispatched to ${testRecipient}!`);
     } catch (err: any) {
       showNotification('error', err.message || 'Failed to dispatch test email.');
     } finally {
       setSendingTest(false);
+    }
+  };
+
+  // Delete Custom Template
+  const handleDeleteTemplate = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const t = templates.find((item) => item.id === id);
+    if (!t) return;
+    if (t.isDefault) {
+      showNotification('error', 'Default official presets cannot be deleted.');
+      return;
+    }
+    if (!confirm(`Are you sure you want to delete template "${t.name}"?`)) {
+      return;
+    }
+
+    try {
+      await cmsService.deleteEmailTemplate(id);
+      showNotification('success', `Template "${t.name}" deleted successfully.`);
+      const remaining = templates.filter((item) => item.id !== id);
+      setTemplates(remaining);
+      if (selectedTemplate?.id === id && remaining.length > 0) {
+        selectTemplate(remaining[0]);
+      }
+    } catch (err: any) {
+      showNotification('error', err.message || 'Failed to delete template.');
     }
   };
 
@@ -761,7 +866,8 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
     ) {
       setLoading(true);
       try {
-        const res = await cmsService.resetEmailPresets();
+        const activeStoreId = cmsService.getActiveStoreId() || undefined;
+        const res = await cmsService.resetEmailPresets(activeStoreId);
         setTemplates(res.templates);
         if (res.templates.length > 0) {
           selectTemplate(res.templates[0]);
@@ -808,14 +914,14 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
       <header className="flex flex-wrap items-center justify-between px-5 py-2.5 bg-white border-b border-slate-200 shrink-0 gap-3 z-20 shadow-2xs">
         {/* Left: Close Button, Logo & Template Name */}
         <div className="flex items-center gap-3">
-          {/* Prominent Close Modal Button */}
+          {/* Back to Templates List */}
           <button
             onClick={handleClose}
-            title="Close Email Template Builder"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer group"
+            title="Back to Email Templates list"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-extrabold transition-all shadow-2xs cursor-pointer group"
           >
-            <X className="w-4 h-4 text-slate-500 group-hover:text-slate-900" />
-            <span className="hidden sm:inline">Close</span>
+            <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-slate-900 rotate-180 transition-transform group-hover:-translate-x-0.5" />
+            <span>Templates</span>
           </button>
 
           <div className="h-5 w-px bg-slate-200" />
@@ -851,37 +957,12 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-slate-500 px-2 font-medium">
-              <span>{templates.length} templates</span>
-              <span>&bull;</span>
-              <button
-                onClick={handleNewTemplate}
-                className="text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-0.5 font-bold cursor-pointer"
-              >
-                <Plus className="w-3 h-3" /> New Template
-              </button>
-            </div>
+            {selectedTemplate?.updatedAt ? (
+              <div className="text-[11px] text-slate-400 px-2 font-medium">
+                Last modified {new Date(selectedTemplate.updatedAt).toLocaleDateString()}
+              </div>
+            ) : null}
           </div>
-        </div>
-
-        {/* Center: Template Quick Switcher */}
-        <div className="hidden lg:flex items-center gap-2 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
-          <span className="text-xs font-bold text-slate-500">Switch:</span>
-          <select
-            value={selectedTemplate?.id || ''}
-            onChange={(e) => {
-              const match = templates.find((t) => t.id === e.target.value);
-              if (match) selectTemplate(match);
-            }}
-            className="bg-white text-xs font-bold text-slate-900 rounded-lg px-2.5 py-1 border border-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
-          >
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.isDefault ? '⭐ ' : ''}
-                {t.name} ({t.category})
-              </option>
-            ))}
-          </select>
         </div>
 
         {/* Right: Viewport Switcher, View Modes & Actions */}
@@ -948,6 +1029,16 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
               <span className="hidden sm:inline">HTML</span>
             </button>
           </div>
+
+          {/* AI Generator Button */}
+          <button
+            onClick={() => setShowAiModal(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-md shadow-indigo-500/25 transition-all cursor-pointer group active:scale-95"
+            title="Generate Email Template with Google Gemini & ChatGPT"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse group-hover:rotate-12 transition-transform" />
+            <span>Generate with AI</span>
+          </button>
 
           {/* Test Email Button */}
           <button
@@ -1031,21 +1122,32 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
         {/* ─── LEFT: BLOCK PALETTE & SETTINGS (w-72 lg:w-80) ────────────────── */}
         <aside className="w-72 lg:w-80 bg-white border-r border-slate-200 flex flex-col shrink-0 overflow-hidden shadow-2xs">
           {/* Sidebar Tab Selector */}
-          <div className="flex border-b border-slate-200 bg-slate-100 p-1.5 gap-1.5">
+          <div className="flex border-b border-slate-200 bg-slate-100 p-1.5 gap-1">
+            <button
+              onClick={() => setSidebarTab('templates')}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                sidebarTab === 'templates'
+                  ? 'bg-white text-indigo-600 shadow-2xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+              }`}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              Templates
+            </button>
             <button
               onClick={() => setSidebarTab('blocks')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`flex-1 py-1.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
                 sidebarTab === 'blocks'
                   ? 'bg-white text-indigo-600 shadow-2xs border border-slate-200'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              Blocks ({blocks.length})
+              Blocks
             </button>
             <button
               onClick={() => setSidebarTab('design')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`flex-1 py-1.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
                 sidebarTab === 'design'
                   ? 'bg-white text-indigo-600 shadow-2xs border border-slate-200'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
@@ -1056,22 +1158,173 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
             </button>
             <button
               onClick={() => setSidebarTab('variables')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`flex-1 py-1.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
                 sidebarTab === 'variables'
                   ? 'bg-white text-indigo-600 shadow-2xs border border-slate-200'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               <Tag className="w-3.5 h-3.5" />
-              Variables
+              Vars
             </button>
           </div>
 
           {/* Sidebar Content Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-thin">
+            {/* ── TAB 0: TEMPLATES DIRECTORY ── */}
+            {sidebarTab === 'templates' && (
+              <div className="space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-indigo-600" />
+                    Templates ({templates.length})
+                  </h4>
+                  <button
+                    onClick={handleNewTemplate}
+                    className="text-[11px] font-extrabold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-lg border border-indigo-200 transition cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" /> New
+                  </button>
+                </div>
+
+                {/* Search */}
+                <input
+                  type="text"
+                  placeholder="Search templates..."
+                  value={templateSearch}
+                  onChange={(e) => setTemplateSearch(e.target.value)}
+                  className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none transition font-medium"
+                />
+
+                {/* Category Filters */}
+                <div className="flex flex-wrap gap-1">
+                  {(['ALL', 'NOTIFICATION', 'MARKETING', 'CUSTOM'] as const).map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setTemplateFilterCategory(cat)}
+                      className={`text-[10px] font-black px-2 py-0.5 rounded-lg border transition cursor-pointer ${
+                        templateFilterCategory === cat
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {cat === 'ALL' ? 'All' : cat === 'NOTIFICATION' ? 'Transactional' : cat === 'MARKETING' ? 'Marketing' : 'Custom'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Templates List */}
+                <div className="space-y-1.5 max-h-[480px] overflow-y-auto pr-0.5 scrollbar-thin">
+                  {templates
+                    .filter((t) => {
+                      if (templateFilterCategory !== 'ALL' && t.category.toUpperCase() !== templateFilterCategory) {
+                        return false;
+                      }
+                      if (templateSearch.trim()) {
+                        const q = templateSearch.toLowerCase();
+                        return (
+                          t.name.toLowerCase().includes(q) ||
+                          t.subject.toLowerCase().includes(q) ||
+                          (t.trigger && t.trigger.toLowerCase().includes(q))
+                        );
+                      }
+                      return true;
+                    })
+                    .map((t) => {
+                      const isCurrent = selectedTemplate?.id === t.id;
+                      return (
+                        <div
+                          key={t.id}
+                          onClick={() => selectTemplate(t)}
+                          className={`p-2.5 rounded-xl border transition-all cursor-pointer text-left ${
+                            isCurrent
+                              ? 'bg-indigo-50/70 border-indigo-400 ring-1 ring-indigo-400 shadow-2xs'
+                              : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-1.5">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-extrabold text-xs text-slate-900 truncate">
+                                  {t.name}
+                                </span>
+                                {t.isDefault && (
+                                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                                    Official
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500 truncate mt-0.5 font-medium">
+                                {t.subject}
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded ${
+                                  t.category === 'MARKETING'
+                                    ? 'bg-purple-50 text-purple-700'
+                                    : t.category === 'NOTIFICATION'
+                                    ? 'bg-blue-50 text-blue-700'
+                                    : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {t.category}
+                                </span>
+                                {t.trigger && (
+                                  <span className="text-[9px] font-semibold text-slate-500 truncate">
+                                    ⚡ {t.trigger}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {!t.isDefault && (
+                              <button
+                                onClick={(e) => handleDeleteTemplate(t.id, e)}
+                                title="Delete Custom Template"
+                                className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer shrink-0"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
+                  <button
+                    onClick={handleResetPresets}
+                    className="text-[11px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 transition cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Restore Default Presets
+                  </button>
+                </div>
+              </div>
+            )}
             {/* ── TAB 1: BLOCKS & CANVAS TREE ── */}
             {sidebarTab === 'blocks' && (
               <>
+                {/* AI Assistant Banner */}
+                <div className="p-3 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-200/90 rounded-2xl shadow-2xs">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-black text-indigo-950">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>AI Email Designer</span>
+                    </div>
+                    <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                      Gemini + GPT
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-snug mb-2.5 font-medium">
+                    Tell AI what you want to email, and it will generate the blocks, copy & layout for you.
+                  </p>
+                  <button
+                    onClick={() => setShowAiModal(true)}
+                    className="w-full py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>Generate with AI</span>
+                  </button>
+                </div>
+
                 {/* Add Block Palette */}
                 <div>
                   <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-2.5 flex items-center gap-1.5">
@@ -2498,7 +2751,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
                 <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100 shadow-2xs">
                   <Send className="w-4 h-4" />
                 </div>
-                <h3 className="text-sm font-black text-slate-900">Send Simulated Test Email</h3>
+                <h3 className="text-sm font-black text-slate-900">Send Test Email</h3>
               </div>
               <button
                 onClick={() => {
@@ -2512,8 +2765,7 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
             </div>
 
             <p className="text-xs text-slate-500 leading-relaxed font-medium">
-              Verify how this template renders in inbox environments with sample dynamic customer,
-              order & tracking tags.
+              Verify how this template renders in inbox environments. Live editor blocks are automatically dispatched without requiring a prior save.
             </p>
 
             <div>
@@ -2530,13 +2782,24 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
             </div>
 
             {testResult && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-950 space-y-1">
-                <div className="font-bold flex items-center gap-1.5 text-emerald-800">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Test Email Simulated!
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-950 space-y-1.5">
+                <div className="font-bold flex items-center justify-between text-emerald-800">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    {testResult.delivered
+                      ? 'Test Email Delivered Live!'
+                      : testResult.simulated
+                      ? 'Test Email Simulated (Sandbox Mode)'
+                      : 'Test Email Dispatched!'}
+                  </span>
+                  {testResult.provider && (
+                    <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                      {testResult.provider}
+                    </span>
+                  )}
                 </div>
                 <div className="text-[11px] text-emerald-700 font-medium">
-                  Dispatched at {new Date(testResult.dispatchedAt).toLocaleTimeString()} to{' '}
-                  <strong className="text-emerald-950">{testResult.recipientEmail}</strong>
+                  {testResult.message || `Dispatched at ${new Date(testResult.dispatchedAt).toLocaleTimeString()} to ${testResult.recipientEmail}`}
                 </div>
               </div>
             )}
@@ -2558,6 +2821,258 @@ export const EmailTemplateBuilderStudio: React.FC<Props> = ({
               >
                 <Send className="w-3.5 h-3.5" />
                 {sendingTest ? 'Sending...' : 'Send Test Now'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── AI EMAIL TEMPLATE GENERATOR MODAL ───────────────────────── */}
+      {showAiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-slate-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 text-white rounded-2xl shadow-md shadow-indigo-500/20">
+                  <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-slate-900">
+                      AI Email Template Generator
+                    </h3>
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200">
+                      Gemini + ChatGPT
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Tell AI what kind of email you want. It will build the layout, copywriting, and blocks.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAiModal(false)}
+                disabled={aiGenerating}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors disabled:opacity-40 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* AI Engine Provider Selector */}
+            <div>
+              <label className="text-xs font-black text-slate-700 block mb-2">
+                Choose AI Engine
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {/* Auto */}
+                <button
+                  type="button"
+                  onClick={() => setAiProvider('auto')}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                    aiProvider === 'auto'
+                      ? 'bg-indigo-50/80 border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs'
+                      : 'bg-slate-50 hover:bg-slate-100 border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                      Auto (Recommended)
+                    </span>
+                    {aiProvider === 'auto' && (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-tight">
+                    Smart auto-routing between Gemini & ChatGPT
+                  </p>
+                </button>
+
+                {/* Google Gemini */}
+                <button
+                  type="button"
+                  onClick={() => setAiProvider('gemini')}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                    aiProvider === 'gemini'
+                      ? 'bg-blue-50/80 border-blue-500 ring-2 ring-blue-500/20 shadow-xs'
+                      : 'bg-slate-50 hover:bg-slate-100 border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                      <Bot className="w-3.5 h-3.5 text-blue-600" />
+                      Google Gemini
+                    </span>
+                    {aiProvider === 'gemini' && (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-tight">
+                    Gemini 2.5 Flash GenAI engine
+                  </p>
+                </button>
+
+                {/* OpenAI ChatGPT */}
+                <button
+                  type="button"
+                  onClick={() => setAiProvider('chatgpt')}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                    aiProvider === 'chatgpt'
+                      ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
+                      : 'bg-slate-50 hover:bg-slate-100 border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                      <Wand2 className="w-3.5 h-3.5 text-emerald-600" />
+                      OpenAI ChatGPT
+                    </span>
+                    {aiProvider === 'chatgpt' && (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-tight">
+                    GPT-4o-mini structured JSON model
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            {/* Tone Selector */}
+            <div>
+              <label className="text-xs font-black text-slate-700 block mb-2">
+                Tone & Aesthetic
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { id: 'high-converting', label: 'High-Converting & Bold' },
+                  { id: 'modern', label: 'Modern & Clean' },
+                  { id: 'luxury', label: 'Luxury & Editorial' },
+                  { id: 'friendly', label: 'Friendly & Casual' },
+                  { id: 'urgent', label: 'Urgent / Flash Promo' },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setAiTone(t.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                      aiTone === t.id
+                        ? 'bg-slate-900 text-white shadow-2xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Prompt Textarea */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-black text-slate-700">
+                  What should this email template be about?
+                </label>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  {aiPrompt.length} characters
+                </span>
+              </div>
+              <textarea
+                rows={4}
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="e.g. Design a high-impact Black Friday flash sale announcement for VIP members with 30% discount code BLACKFRIDAY, countdown urgency, product grid for trending winter wear, and a prominent Shop Now CTA..."
+                className="w-full bg-slate-50 hover:bg-white focus:bg-white text-xs text-slate-900 p-3.5 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 focus:outline-none transition shadow-2xs font-medium leading-relaxed resize-none"
+              />
+            </div>
+
+            {/* Quick Inspiration Pills */}
+            <div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">
+                Or click an idea to auto-fill:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  {
+                    label: '⚡ Flash Sale (30% OFF)',
+                    prompt: 'Create an urgent 48-hour flash sale email with 30% discount code FLASH30, bold hero banner, curated product showcase, and countdown urgency message.',
+                    tone: 'urgent',
+                  },
+                  {
+                    label: '🛒 Cart Recovery',
+                    prompt: 'Create an abandoned cart recovery email with 15% discount voucher COMEBACK15, customer greeting, saved items list, and a direct checkout button.',
+                    tone: 'high-converting',
+                  },
+                  {
+                    label: '🌟 VIP Welcome Series',
+                    prompt: 'Create a warm onboarding welcome email for new newsletter members with brand story, 20% first-order discount code HELLO20, and catalog highlights.',
+                    tone: 'friendly',
+                  },
+                  {
+                    label: '📦 Order Shipped',
+                    prompt: 'Create a clean delivery confirmation notification with courier tracking card, expected delivery dates, and store support details.',
+                    tone: 'modern',
+                  },
+                  {
+                    label: '⭐️ Review Request',
+                    prompt: 'Create a post-purchase review request asking customer for their honest feedback and rating, offering a 10% coupon reward for their next order.',
+                    tone: 'friendly',
+                  },
+                ].map((idea, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setAiPrompt(idea.prompt);
+                      setAiTone(idea.tone);
+                    }}
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 text-slate-600 border border-slate-200 transition-all cursor-pointer"
+                  >
+                    {idea.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Customization Guarantee Note */}
+            <div className="p-3 bg-indigo-50/70 border border-indigo-200/80 rounded-2xl text-[11px] text-indigo-900 flex items-start gap-2.5">
+              <Sparkles className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+              <p className="leading-relaxed">
+                <strong>Fully Customizable:</strong> The generated template immediately loads into this builder canvas. You can edit every block, customize texts, change colors, add products, send a test email, and save it to your store.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setShowAiModal(false)}
+                disabled={aiGenerating}
+                className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all cursor-pointer disabled:opacity-40"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAiGenerate}
+                disabled={aiGenerating || !aiPrompt.trim()}
+                className="px-5 py-2.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:to-pink-700 text-white flex items-center gap-2 shadow-lg shadow-indigo-600/25 transition-all disabled:opacity-50 cursor-pointer active:scale-95"
+              >
+                {aiGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>
+                      Generating with {aiProvider === 'gemini' ? 'Gemini' : aiProvider === 'chatgpt' ? 'ChatGPT' : 'AI'}...
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 text-amber-300" />
+                    <span>Generate Template</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

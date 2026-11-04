@@ -43,12 +43,202 @@ export interface StorefrontProject {
   brandName: string;
   tagline: string;
   industry: string;
+  templateSlug?: string;
   theme: StorefrontTheme;
   sections: StorefrontSection[];
   activePage: string;
   pages: Array<{ slug: string; title: string }>;
   updatedAt: string;
 }
+
+export interface StorefrontTemplateArchetype {
+  slug: string;
+  name: string;
+  category: string;
+  description: string;
+  badge: string;
+  previewColors: string[];
+  defaultTheme: StorefrontTheme;
+}
+
+export const STOREFRONT_ARCHETYPES: StorefrontTemplateArchetype[] = [
+  {
+    slug: 'mincom',
+    name: 'Mincom',
+    category: 'Artisan Living & Furniture',
+    description: 'Warm oak craftsmanship, modern modular grid, and refined typography.',
+    badge: 'Artisan Living',
+    previewColors: ['#1A1A1A', '#C89355', '#F5F2EC', '#2B2824'],
+    defaultTheme: {
+      primary: '#2B2824',
+      secondary: '#E8E3DA',
+      accent: '#C89355',
+      background: '#F5F2EC',
+      cardBg: '#FFFFFF',
+      textColor: '#2B2824',
+      textMuted: '#78736B',
+      border: '#E0DAD0',
+      headingFont: 'Outfit',
+      bodyFont: 'Inter',
+      borderRadius: '8px',
+      styleArchetype: 'Modern Artisan Living',
+    },
+  },
+  {
+    slug: 'luxe',
+    name: 'Luxe',
+    category: 'Haute Horlogerie & Fashion',
+    description: 'Obsidian black canvas with champagne gold metallic accents and serif typography.',
+    badge: 'Haute Luxury',
+    previewColors: ['#050608', '#D4AF37', '#0F111A', '#F8FAFC'],
+    defaultTheme: {
+      primary: '#090A0F',
+      secondary: '#161922',
+      accent: '#D4AF37',
+      background: '#050608',
+      cardBg: '#0F111A',
+      textColor: '#F8FAFC',
+      textMuted: '#94A3B8',
+      border: '#232738',
+      headingFont: 'Playfair Display',
+      bodyFont: 'Inter',
+      borderRadius: '8px',
+      styleArchetype: 'Obsidian Haute Luxe',
+    },
+  },
+  {
+    slug: 'minimal',
+    name: 'Minimal',
+    category: 'Scandinavian Aesthetics',
+    description: 'Pure clean whitespace, subtle borders, high contrast and pill geometry.',
+    badge: 'Clean Minimalist',
+    previewColors: ['#FFFFFF', '#4F46E5', '#F8FAFC', '#0F172A'],
+    defaultTheme: {
+      primary: '#0F172A',
+      secondary: '#F1F5F9',
+      accent: '#4F46E5',
+      background: '#FFFFFF',
+      cardBg: '#FFFFFF',
+      textColor: '#0F172A',
+      textMuted: '#64748B',
+      border: '#E2E8F0',
+      headingFont: 'Inter',
+      bodyFont: 'Inter',
+      borderRadius: '9999px',
+      styleArchetype: 'Minimalist Scandinavian',
+    },
+  },
+  {
+    slug: 'funo',
+    name: 'Funo',
+    category: 'Nordic Modern Decor',
+    description: 'Airy layout with warm sand tones, rounded cards, and natural lifestyle focus.',
+    badge: 'Nordic Decor',
+    previewColors: ['#FAF8F5', '#9E6B4E', '#FFFFFF', '#23201D'],
+    defaultTheme: {
+      primary: '#23201D',
+      secondary: '#EFEAE2',
+      accent: '#9E6B4E',
+      background: '#FAF8F5',
+      cardBg: '#FFFFFF',
+      textColor: '#23201D',
+      textMuted: '#7A7570',
+      border: '#E5DFD7',
+      headingFont: 'Plus Jakarta Sans',
+      bodyFont: 'Inter',
+      borderRadius: '16px',
+      styleArchetype: 'Nordic Modern Decor',
+    },
+  },
+  {
+    slug: 'pawzy',
+    name: 'Pawzy',
+    category: 'Pet Care & Organic Lifestyle',
+    description: 'Playful warm honey palette, rounded friendly cards, and organic treat badges.',
+    badge: 'Pet Care',
+    previewColors: ['#FFFDF9', '#FF9F43', '#FFFFFF', '#2D3436'],
+    defaultTheme: {
+      primary: '#2D3436',
+      secondary: '#FFF2E2',
+      accent: '#FF9F43',
+      background: '#FFFDF9',
+      cardBg: '#FFFFFF',
+      textColor: '#2D3436',
+      textMuted: '#636E72',
+      border: '#FFE5C8',
+      headingFont: 'Outfit',
+      bodyFont: 'Inter',
+      borderRadius: '20px',
+      styleArchetype: 'Organic Pet Care',
+    },
+  },
+  {
+    slug: 'fern',
+    name: 'Fern',
+    category: 'Botanical Wellness & Plants',
+    description: 'Fresh eucalyptus sage tones, clean porcelain cards, and gentle botanical vibes.',
+    badge: 'Botanical Wellness',
+    previewColors: ['#F7FAFC', '#10B981', '#FFFFFF', '#1A202C'],
+    defaultTheme: {
+      primary: '#1E293B',
+      secondary: '#E2E8F0',
+      accent: '#10B981',
+      background: '#F7FAFC',
+      cardBg: '#FFFFFF',
+      textColor: '#1A202C',
+      textMuted: '#64748B',
+      border: '#E2E8F0',
+      headingFont: 'Outfit',
+      bodyFont: 'Inter',
+      borderRadius: '16px',
+      styleArchetype: 'Botanical Wellness',
+    },
+  },
+  {
+    slug: 'techno',
+    name: 'Techno',
+    category: 'Cyber Tech & Gadgets',
+    description: 'Midnight navy canvas with electric cyan accents, glassmorphic cards and audio focus.',
+    badge: 'Cyber Tech',
+    previewColors: ['#020617', '#00E5FF', '#0B0F19', '#F8FAFC'],
+    defaultTheme: {
+      primary: '#030712',
+      secondary: '#0F172A',
+      accent: '#00E5FF',
+      background: '#020617',
+      cardBg: '#0B0F19',
+      textColor: '#F8FAFC',
+      textMuted: '#94A3B8',
+      border: '#1E293B',
+      headingFont: 'Syne',
+      bodyFont: 'Inter',
+      borderRadius: '14px',
+      styleArchetype: 'Cyberpunk Next-Gen',
+    },
+  },
+  {
+    slug: 'default',
+    name: 'Default',
+    category: 'Pulse Streetwear & Drops',
+    description: 'High-energy streetwear canvas with bold typography and high-converting CTA buttons.',
+    badge: 'Streetwear & Drops',
+    previewColors: ['#090A0F', '#6366F1', '#12141F', '#FFFFFF'],
+    defaultTheme: {
+      primary: '#090A0F',
+      secondary: '#1E1B4B',
+      accent: '#6366F1',
+      background: '#090A0F',
+      cardBg: '#12141F',
+      textColor: '#FFFFFF',
+      textMuted: '#94A3B8',
+      border: '#1E2235',
+      headingFont: 'Inter',
+      bodyFont: 'Inter',
+      borderRadius: '12px',
+      styleArchetype: 'Pulse Modern Streetwear',
+    },
+  },
+];
 
 export interface DesignPreset {
   id: string;

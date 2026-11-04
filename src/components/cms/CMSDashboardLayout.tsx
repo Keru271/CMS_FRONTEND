@@ -178,8 +178,10 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const isAuthorized = checkRouteAuthorization(pathname);
   const isFullScreenRoute =
-    pathname === '/email-templates' ||
-    pathname.startsWith('/email-templates') ||
+    pathname === '/email-templates/builder' ||
+    pathname.startsWith('/email-templates/builder') ||
+    pathname === '/email-templates/new' ||
+    pathname.startsWith('/email-templates/new') ||
     pathname === '/ai-builder' ||
     pathname.startsWith('/ai-builder');
 

@@ -275,7 +275,8 @@ export interface PromptBarProps {
   morphDuration?: number;
   squash?: number;
   tilt?: number;
-  pressScale?: number;
+  onFilesAdded?: (files: File[]) => void;
+  onAttachmentRemove?: (fileName: string, index: number) => void;
   className?: string;
   value?: string;
   onChange?: (val: string) => void;
@@ -295,6 +296,8 @@ export function PromptBar({
   onSend,
   onStop,
   onAttach,
+  onFilesAdded,
+  onAttachmentRemove,
   onDictate,
   background,
   color,
@@ -322,11 +325,11 @@ export function PromptBar({
   const rowRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const lastOpen = useRef<string | null>(null);
   const dictation = useRef(0);
-  const latest = useRef({ onSend, onStop, onAttach, onDictate, onEffortChange, onModelChange });
+  const latest = useRef({ onSend, onStop, onAttach, onFilesAdded, onAttachmentRemove, onDictate, onEffortChange, onModelChange });
 
   useEffect(() => {
     boost.current = sparkBoost;
-    latest.current = { onSend, onStop, onAttach, onDictate, onEffortChange, onModelChange };
+    latest.current = { onSend, onStop, onAttach, onFilesAdded, onAttachmentRemove, onDictate, onEffortChange, onModelChange };
   });
 
   const [internalDraft, setInternalDraft] = useState('');
@@ -384,6 +387,7 @@ export function PromptBar({
     if (droppedFiles.length > 0) {
       const names = droppedFiles.map((f) => f.name);
       setAttachments((prev) => [...prev, ...names]);
+      latest.current.onFilesAdded?.(droppedFiles);
     }
   };
 
@@ -392,18 +396,23 @@ export function PromptBar({
     if (!items) return;
 
     const fileNames: string[] = [];
+    const pastedFiles: File[] = [];
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (item.kind === 'file') {
         const file = item.getAsFile();
         if (file) {
           fileNames.push(getPastedMediaName(file.type, file.name));
+          pastedFiles.push(file);
         }
       }
     }
 
     if (fileNames.length > 0) {
       setAttachments((prev) => [...prev, ...fileNames]);
+      if (pastedFiles.length > 0) {
+        latest.current.onFilesAdded?.(pastedFiles);
+      }
     }
   };
   const [internalModelKey, setInternalModelKey] = useState(defaultModel);
@@ -902,7 +911,10 @@ export function PromptBar({
                     type="button"
                     className="prompt-bar__chip-x"
                     aria-label={`Remove ${file}`}
-                    onClick={() => setAttachments((a) => a.filter((_, j) => j !== i))}
+                    onClick={() => {
+                      setAttachments((a) => a.filter((_, j) => j !== i));
+                      latest.current.onAttachmentRemove?.(file, i);
+                    }}
                   >
                     <X className="w-2.5 h-2.5" />
                   </button>
@@ -953,6 +965,25 @@ export function PromptBar({
             title="Attach sources, catalog data (@)"
           >
             <Plus className="w-4 h-4" />
+          </button>
+
+          {/* Quick Image / Reference Attachment Tool */}
+          <button
+            type="button"
+            className="prompt-bar__tool"
+            aria-label="Attach reference image"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              closeMenus();
+              Promise.resolve(latest.current.onAttach?.('image')).then((files) => {
+                if (!files) return;
+                setAttachments((a) => [...a, ...(Array.isArray(files) ? files : [files])]);
+              });
+              focusInput();
+            }}
+            title="Attach reference image (.png, .jpg, .webp, screenshot)"
+          >
+            <ImageIcon className="w-4 h-4 text-sky-400 hover:text-sky-300" />
           </button>
 
           {/* Quick Video Attachment Tool */}

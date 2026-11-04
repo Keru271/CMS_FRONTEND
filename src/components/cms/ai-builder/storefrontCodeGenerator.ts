@@ -6,13 +6,47 @@ export interface GeneratedCodeFile {
   description: string;
 }
 
+/**
+ * Generates application files structured strictly according to the OmniStore storefront-frontend
+ * Next.js 16 App Router & multi-template architecture.
+ */
 export function generateNextjsProjectFiles(project: StorefrontProject): GeneratedCodeFile[] {
-  const { brandName, tagline, theme } = project;
+  const { brandName, tagline, theme, templateSlug = 'mincom' } = project;
+  const slug = templateSlug.toLowerCase().trim() || 'mincom';
 
   return [
     {
+      file: 'package.json',
+      description: 'Storefront Next.js 16 package manifest with React 19 and Tailwind v4',
+      data: `{
+  "name": "${brandName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-storefront",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "lucide-react": "^1.34.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
+  }
+}`,
+    },
+    {
       file: 'app/layout.tsx',
-      description: 'Root layout with Google Fonts, dynamic metadata and theme tokens',
+      description: 'Next.js 16 root layout with Google Fonts, metadata and dynamic CSS variables',
       data: `import type { Metadata } from 'next';
 import './globals.css';
 
@@ -36,12 +70,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(
             theme.headingFont
           )}:wght@400;600;700;800&family=${encodeURIComponent(
-        theme.bodyFont
-      )}:wght@300;400;500;600&display=swap"
+            theme.bodyFont
+          )}:wght@300;400;500;600&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased min-h-screen bg-[${theme.background}] text-[${theme.textColor}]">
+      <body className="antialiased min-h-screen" style={{ backgroundColor: 'var(--sf-bg)', color: 'var(--sf-text)' }}>
         {children}
       </body>
     </html>
@@ -49,190 +83,380 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }`,
     },
     {
+      file: 'app/globals.css',
+      description: 'Global CSS defining OmniStore theme variables and Tailwind v4 directives',
+      data: `@import "tailwindcss";
+
+:root {
+  --sf-primary: ${theme.primary};
+  --sf-secondary: ${theme.secondary};
+  --sf-accent: ${theme.accent};
+  --sf-bg: ${theme.background};
+  --sf-card-bg: ${theme.cardBg};
+  --sf-text: ${theme.textColor};
+  --sf-muted: ${theme.textMuted};
+  --sf-border: ${theme.border};
+  --sf-radius: ${theme.borderRadius};
+  --font-heading: "${theme.headingFont}", serif;
+  --font-body: "${theme.bodyFont}", sans-serif;
+}
+
+body {
+  background-color: var(--sf-bg);
+  color: var(--sf-text);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}`,
+    },
+    {
       file: 'app/page.tsx',
-      description: 'Main storefront landing page assembling modular sections & cart state',
-      data: `'use client';
+      description: 'Homepage dynamic route invoking resolveTemplate() matching storefront architecture',
+      data: `import { resolveTemplate } from '@/templates';
+import { getProducts } from '@/lib/api/products';
+import { getTheme } from '@/lib/api/theme';
 
-import React, { useState } from 'react';
-import { Navbar } from '@/components/Navbar';
-import { HeroSection } from '@/components/HeroSection';
-import { VideoShowcase } from '@/components/VideoShowcase';
-import { VideoReels } from '@/components/VideoReels';
-import { ProductCatalog } from '@/components/ProductCatalog';
-import { CartDrawer, CartItem } from '@/components/CartDrawer';
-import { ReviewsSection } from '@/components/ReviewsSection';
-import { Footer } from '@/components/Footer';
+export const dynamic = 'force-dynamic';
 
-export default function StorefrontPage() {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+export default async function HomePage() {
+  const activeSlug = '${slug}';
+  const { Header, HomePage: TemplateHomePage, Footer } = resolveTemplate(activeSlug);
 
-  const handleAddToCart = (product: { name: string; price: number; image: string }) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.name === product.name);
-      if (existing) {
-        return prev.map((i) => (i.name === product.name ? { ...i, qty: i.qty + 1 } : i));
-      }
-      return [...prev, { ...product, id: String(Date.now()), qty: 1 }];
-    });
-    setIsCartOpen(true);
-  };
+  const [theme, products] = await Promise.all([
+    getTheme(),
+    getProducts({ limit: 12 }),
+  ]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[${theme.background}] text-[${theme.textColor}]">
-      <Navbar
-        brandName="${brandName}"
-        cartCount={cart.reduce((s, i) => s + i.qty, 0)}
-        onOpenCart={() => setIsCartOpen(true)}
-      />
-
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--sf-bg)' }}>
+      <Header />
       <main className="flex-1">
-        <HeroSection onExplore={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })} />
-        <VideoShowcase />
-        <VideoReels />
-        <ProductCatalog onAddToCart={handleAddToCart} />
-        <ReviewsSection />
+        <TemplateHomePage theme={theme} products={products} />
       </main>
-
-      <Footer brandName="${brandName}" />
-
-      <CartDrawer
-        isOpen={isCartOpen}
-        items={cart}
-        onClose={() => setIsCartOpen(false)}
-        onUpdateQty={(name, delta) =>
-          setCart((prev) =>
-            prev
-              .map((i) => (i.name === name ? { ...i, qty: i.qty + delta } : i))
-              .filter((i) => i.qty > 0)
-          )
-        }
-      />
+      <Footer />
     </div>
   );
 }`,
     },
     {
-      file: 'components/HeroSection.tsx',
-      description: 'Cinematic hero with looped video background and trust indicators',
+      file: 'templates/index.ts',
+      description: 'Storefront dynamic template registry supporting code-split template bundles',
+      data: `import dynamic from 'next/dynamic';
+
+// Dynamic Template Chunk Resolvers
+const CurrentHeader = dynamic(() => import('./${slug}/Header'));
+const CurrentHomePage = dynamic(() => import('./${slug}/HomePage'));
+const CurrentFooter = dynamic(() => import('./${slug}/Footer'));
+const CurrentPLP = dynamic(() => import('./${slug}/PLPPage'));
+const CurrentPDP = dynamic(() => import('./${slug}/PDPPage'));
+
+export function resolveTemplate(templateSlug?: string) {
+  return {
+    Header: CurrentHeader,
+    HomePage: CurrentHomePage,
+    Footer: CurrentFooter,
+    PLPPage: CurrentPLP,
+    PDPPage: CurrentPDP,
+  };
+}`,
+    },
+    {
+      file: `templates/${slug}/Header.tsx`,
+      description: `Header component for the ${slug} storefront template`,
       data: `'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { ShoppingBag, Search, Menu, X } from 'lucide-react';
 
-export function HeroSection({ onExplore }: { onExplore: () => void }) {
-  const [isMuted, setIsMuted] = useState(true);
+export default function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <section className="relative min-h-[85vh] flex items-center justify-center text-center px-6 overflow-hidden border-b border-[${theme.border}]">
-      <video
-        autoPlay
-        loop
-        muted={isMuted}
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover opacity-35 scale-105"
-        poster="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1600&auto=format&fit=crop"
-      >
-        <source src="https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-26070-large.mp4" type="video/mp4" />
-      </video>
-
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/60 pointer-events-none" />
-
-      <div className="relative z-10 max-w-4xl mx-auto space-y-6 pt-12 pb-16">
-        <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[${theme.accent}]/20 text-[${theme.accent}] border border-[${theme.accent}]/30">
-          ✨ SS26 ATELIER COLLECTION
-        </span>
-
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-white tracking-tight leading-[1.08] font-serif">
+    <header className="sticky top-0 z-40 backdrop-blur-md border-b" style={{ backgroundColor: 'var(--sf-card-bg)', borderColor: 'var(--sf-border)' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+        <Link href="/" className="text-2xl font-bold tracking-tight uppercase" style={{ color: 'var(--sf-text)' }}>
           ${brandName}
-        </h1>
+        </Link>
 
-        <p className="text-base sm:text-xl text-zinc-300 max-w-2xl mx-auto leading-relaxed">
-          ${tagline}
-        </p>
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+          <Link href="/products" className="hover:opacity-80 transition" style={{ color: 'var(--sf-text)' }}>Collections</Link>
+          <Link href="/categories" className="hover:opacity-80 transition" style={{ color: 'var(--sf-text)' }}>Categories</Link>
+          <Link href="/story" className="hover:opacity-80 transition" style={{ color: 'var(--sf-text)' }}>Our Story</Link>
+          <Link href="/reviews" className="hover:opacity-80 transition" style={{ color: 'var(--sf-text)' }}>Reviews</Link>
+        </nav>
 
-        <div className="pt-4 flex flex-wrap justify-center gap-4">
-          <button
-            onClick={onExplore}
-            className="px-8 py-4 rounded-[${theme.borderRadius}] bg-[${theme.accent}] text-black font-bold uppercase tracking-wider shadow-2xl hover:brightness-110 transition"
-          >
-            Explore Drops
+        <div className="flex items-center gap-4">
+          <button className="p-2 rounded-full hover:bg-black/10 transition" style={{ color: 'var(--sf-text)' }}>
+            <Search className="w-5 h-5" />
           </button>
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className="px-6 py-4 rounded-[${theme.borderRadius}] bg-white/10 hover:bg-white/15 text-white font-semibold uppercase tracking-wider backdrop-blur-md transition"
-          >
-            {isMuted ? '🔇 Unmute Video' : '🔊 Sound Active'}
+          <button className="relative p-2 rounded-full hover:bg-black/10 transition" style={{ color: 'var(--sf-text)' }}>
+            <ShoppingBag className="w-5 h-5" />
+            <span className="absolute top-1 right-1 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center text-white" style={{ backgroundColor: 'var(--sf-accent)' }}>
+              2
+            </span>
+          </button>
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2">
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
-    </section>
+    </header>
   );
 }`,
     },
     {
-      file: 'components/CartDrawer.tsx',
-      description: 'Slide-over shopping cart drawer with checkout & WhatsApp integration',
+      file: `templates/${slug}/HomePage.tsx`,
+      description: `Modular landing page component assembling Hero, Featured Products & Testimonials`,
       data: `'use client';
 
 import React from 'react';
+import ProductCard from './ProductCard';
+import { Sparkles, ArrowRight, Star } from 'lucide-react';
 
-export interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  qty: number;
-}
-
-export function CartDrawer({
-  isOpen,
-  items,
-  onClose,
-  onUpdateQty,
-}: {
-  isOpen: boolean;
-  items: CartItem[];
-  onClose: () => void;
-  onUpdateQty: (name: string, delta: number) => void;
-}) {
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-
-  if (!isOpen) return null;
-
+export default function HomePage({ theme, products = [] }: { theme?: any; products?: any[] }) {
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 max-w-md w-full bg-[${theme.cardBg}] border-l border-[${theme.border}] shadow-2xl flex flex-col">
-        <div className="p-6 border-b border-[${theme.border}] flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white">Acquisition Bag ({items.length})</h3>
-          <button onClick={onClose} className="p-2 text-zinc-400 hover:text-white">✕</button>
+    <div className="space-y-16 pb-24">
+      {/* Hero Section */}
+      <section className="relative py-24 sm:py-32 px-6 text-center border-b" style={{ borderColor: 'var(--sf-border)' }}>
+        <div className="max-w-4xl mx-auto space-y-6">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold" style={{ backgroundColor: 'var(--sf-accent)20', color: 'var(--sf-accent)' }}>
+            <Sparkles className="w-3.5 h-3.5" />
+            NEW ARRIVALS NOW LIVE
+          </span>
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.08]">
+            ${brandName}
+          </h1>
+          <p className="text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: 'var(--sf-muted)' }}>
+            ${tagline}
+          </p>
+          <div className="pt-4 flex flex-wrap justify-center gap-4">
+            <a
+              href="#products"
+              className="px-8 py-4 font-bold uppercase tracking-wider text-sm transition shadow-xl"
+              style={{
+                backgroundColor: 'var(--sf-accent)',
+                color: '#000000',
+                borderRadius: 'var(--sf-radius)',
+              }}
+            >
+              Explore Collection
+            </a>
+          </div>
         </div>
+      </section>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {items.map((item) => (
-            <div key={item.name} className="flex gap-4 p-3 rounded-xl bg-white/5 border border-white/10">
-              <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
-              <div className="flex-1">
-                <h4 className="font-semibold text-sm text-white">{item.name}</h4>
-                <p className="text-xs text-[${theme.accent}] mt-0.5">$\${item.price}.00</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <button onClick={() => onUpdateQty(item.name, -1)} className="w-5 h-5 bg-white/10 text-white rounded">-</button>
-                  <span className="text-xs text-white">\${item.qty}</span>
-                  <button onClick={() => onUpdateQty(item.name, 1)} className="w-5 h-5 bg-white/10 text-white rounded">+</button>
-                </div>
-              </div>
-            </div>
+      {/* Featured Products */}
+      <section id="products" className="max-w-7xl mx-auto px-6">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold">Featured Catalog</h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--sf-muted)' }}>Curated for discerning collectors & clientele.</p>
+          </div>
+          <a href="/products" className="inline-flex items-center gap-1 text-sm font-semibold hover:underline" style={{ color: 'var(--sf-accent)' }}>
+            View All <ArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {(products.length > 0 ? products : [1, 2, 3, 4]).map((item: any, idx: number) => (
+            <ProductCard key={idx} product={item} />
           ))}
         </div>
+      </section>
 
-        <div className="p-6 border-t border-[${theme.border}] space-y-3">
-          <div className="flex justify-between text-white font-bold">
-            <span>Subtotal</span>
-            <span>$\${subtotal}.00</span>
+      {/* Verified Reviews */}
+      <section className="max-w-7xl mx-auto px-6 py-12 rounded-2xl border" style={{ backgroundColor: 'var(--sf-card-bg)', borderColor: 'var(--sf-border)' }}>
+        <div className="text-center max-w-2xl mx-auto space-y-4">
+          <div className="flex justify-center gap-1" style={{ color: 'var(--sf-accent)' }}>
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="w-5 h-5 fill-current" />
+            ))}
           </div>
-          <button className="w-full py-3.5 rounded-[${theme.borderRadius}] bg-[${theme.accent}] text-black font-bold uppercase tracking-wider shadow-lg">
-            Checkout with OmniStore →
-          </button>
+          <h3 className="text-2xl font-bold">“Exceptional craftsmanship & seamless fulfillment.”</h3>
+          <p className="text-sm" style={{ color: 'var(--sf-muted)' }}>Rated 4.96/5.0 by 1,800+ clients across the globe.</p>
+        </div>
+      </section>
+    </div>
+  );
+}`,
+    },
+    {
+      file: `templates/${slug}/ProductCard.tsx`,
+      description: `Interactive product card with image zoom, price tag and add to cart trigger`,
+      data: `'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { ShoppingBag } from 'lucide-react';
+
+export default function ProductCard({ product }: { product: any }) {
+  const isPlaceholder = typeof product === 'number';
+  const name = isPlaceholder ? \`Signature Edition #\${product}\` : product.name || 'Artisan Collection Piece';
+  const price = isPlaceholder ? 149 + product * 50 : product.price || 199;
+  const image = isPlaceholder
+    ? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop'
+    : product.imageUrl || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop';
+
+  return (
+    <div
+      className="group relative flex flex-col rounded-xl overflow-hidden border transition duration-300 hover:shadow-2xl"
+      style={{ backgroundColor: 'var(--sf-card-bg)', borderColor: 'var(--sf-border)', borderRadius: 'var(--sf-radius)' }}
+    >
+      <div className="aspect-square overflow-hidden bg-black/10">
+        <img
+          src={image}
+          alt={name}
+          className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+        />
+      </div>
+      <div className="p-4 flex-1 flex flex-col justify-between">
+        <div>
+          <h3 className="font-semibold text-sm line-clamp-1">{name}</h3>
+          <p className="text-xs mt-1 font-bold" style={{ color: 'var(--sf-accent)' }}>$\${price}.00</p>
+        </div>
+        <button
+          className="mt-3 w-full py-2 px-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition"
+          style={{ backgroundColor: 'var(--sf-accent)', color: '#000000', borderRadius: 'var(--sf-radius)' }}
+        >
+          <ShoppingBag className="w-3.5 h-3.5" />
+          Quick Add
+        </button>
+      </div>
+    </div>
+  );
+}`,
+    },
+    {
+      file: `templates/${slug}/Footer.tsx`,
+      description: `Storefront footer with brand manifesto, newsletter intake and legal links`,
+      data: `'use client';
+
+import React from 'react';
+import Link from 'next/link';
+
+export default function Footer() {
+  return (
+    <footer className="border-t py-16 px-6" style={{ backgroundColor: 'var(--sf-card-bg)', borderColor: 'var(--sf-border)' }}>
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
+        <div className="space-y-4">
+          <span className="text-xl font-bold uppercase tracking-tight">${brandName}</span>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--sf-muted)' }}>${tagline}</p>
+        </div>
+        <div>
+          <h4 className="font-semibold text-sm mb-4">Navigation</h4>
+          <ul className="space-y-2 text-sm" style={{ color: 'var(--sf-muted)' }}>
+            <li><Link href="/products" className="hover:underline">All Products</Link></li>
+            <li><Link href="/categories" className="hover:underline">Collections</Link></li>
+            <li><Link href="/story" className="hover:underline">Atelier Story</Link></li>
+          </ul>
+        </div>
+        <div>
+          <h4 className="font-semibold text-sm mb-4">Customer Care</h4>
+          <ul className="space-y-2 text-sm" style={{ color: 'var(--sf-muted)' }}>
+            <li><Link href="/shipping" className="hover:underline">Global Shipping</Link></li>
+            <li><Link href="/returns" className="hover:underline">Warranty & Returns</Link></li>
+            <li><Link href="/contact" className="hover:underline">VIP Concierge</Link></li>
+          </ul>
+        </div>
+        <div className="space-y-4">
+          <h4 className="font-semibold text-sm">Join the Dispatch</h4>
+          <p className="text-xs" style={{ color: 'var(--sf-muted)' }}>Receive VIP allocations and private collection drops.</p>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              className="px-3 py-2 text-xs rounded-lg border flex-1"
+              style={{ backgroundColor: 'var(--sf-bg)', borderColor: 'var(--sf-border)' }}
+            />
+            <button
+              className="px-4 py-2 text-xs font-bold uppercase"
+              style={{ backgroundColor: 'var(--sf-accent)', color: '#000000', borderRadius: 'var(--sf-radius)' }}
+            >
+              Join
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className="max-w-7xl mx-auto mt-12 pt-6 border-t flex flex-col sm:flex-row justify-between text-xs" style={{ borderColor: 'var(--sf-border)', color: 'var(--sf-muted)' }}>
+        <p>© {new Date().getFullYear()} ${brandName}. Powered by OmniStore Headless Engine.</p>
+        <div className="flex gap-4 mt-2 sm:mt-0">
+          <Link href="/privacy">Privacy Policy</Link>
+          <Link href="/terms">Terms of Service</Link>
+        </div>
+      </div>
+    </footer>
+  );
+}`,
+    },
+    {
+      file: `templates/${slug}/PLPPage.tsx`,
+      description: 'Product Listing Page with faceted filters and category sorting',
+      data: `'use client';
+
+import React from 'react';
+import ProductCard from './ProductCard';
+
+export default function PLPPage({ products = [] }: { products?: any[] }) {
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
+      <div>
+        <h1 className="text-3xl font-extrabold tracking-tight">Complete Store Catalog</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--sf-muted)' }}>Browse all active releases, seasonal drops, and limited editions.</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {(products.length > 0 ? products : [1, 2, 3, 4, 5, 6, 7, 8]).map((p: any, idx: number) => (
+          <ProductCard key={idx} product={p} />
+        ))}
+      </div>
+    </div>
+  );
+}`,
+    },
+    {
+      file: `templates/${slug}/PDPPage.tsx`,
+      description: 'Product Detail Page with high-res gallery and specifications',
+      data: `'use client';
+
+import React from 'react';
+import { ShoppingBag, ShieldCheck, Truck } from 'lucide-react';
+
+export default function PDPPage({ product }: { product?: any }) {
+  const name = product?.name || '${brandName} Flagship Edition';
+  const price = product?.price || 249;
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="aspect-square rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--sf-border)' }}>
+        <img
+          src={product?.imageUrl || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1000&auto=format&fit=crop'}
+          alt={name}
+          className="w-full h-full object-cover"
+        />
+      </div>
+      <div className="space-y-6 flex flex-col justify-center">
+        <h1 className="text-3xl sm:text-4xl font-bold">{name}</h1>
+        <p className="text-2xl font-extrabold" style={{ color: 'var(--sf-accent)' }}>$\${price}.00</p>
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--sf-muted)' }}>
+          Crafted with uncompromising precision. Every detail has been engineered to reflect ${brandName}'s signature standard of quality and modern craftsmanship.
+        </p>
+        <button
+          className="w-full py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl"
+          style={{ backgroundColor: 'var(--sf-accent)', color: '#000000', borderRadius: 'var(--sf-radius)' }}
+        >
+          <ShoppingBag className="w-4 h-4" />
+          Acquire Now
+        </button>
+        <div className="pt-4 border-t space-y-2 text-xs" style={{ borderColor: 'var(--sf-border)', color: 'var(--sf-muted)' }}>
+          <div className="flex items-center gap-2">
+            <Truck className="w-4 h-4 text-emerald-400" />
+            <span>Complimentary insured express delivery in 2-4 business days</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>2-Year Comprehensive Manufacturer Warranty</span>
+          </div>
         </div>
       </div>
     </div>
@@ -240,58 +464,53 @@ export function CartDrawer({
 }`,
     },
     {
-      file: 'lib/omnistore-api.ts',
-      description: 'OmniStore headless e-commerce client connector',
-      data: `// OmniStore Headless E-Commerce Client
+      file: 'lib/api/client.ts',
+      description: 'OmniStore headless e-commerce API client with automated tenant resolution',
+      data: `// OmniStore Headless E-Commerce API Client
 const API_URL = process.env.NEXT_PUBLIC_OMNISTORE_API_URL || 'http://localhost:5000/api';
 const STORE_ID = process.env.NEXT_PUBLIC_OMNISTORE_STORE_ID || 'default_store';
 
-export async function fetchStorefrontCatalog() {
-  const res = await fetch(\`\${API_URL}/products?storeId=\${STORE_ID}\`, {
-    next: { revalidate: 60 },
+export async function fetchStoreCatalog(endpoint: string, options?: RequestInit) {
+  const url = \`\${API_URL}/\${endpoint}\`;
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-store-id': STORE_ID,
+      ...(options?.headers || {}),
+    },
   });
-  if (!res.ok) throw new Error('Failed to fetch store inventory');
+  if (!res.ok) throw new Error(\`OmniStore API error: \${res.statusText}\`);
   return res.json();
 }
 
-export async function createCheckoutSession(cart: any[]) {
-  const res = await fetch(\`\${API_URL}/orders\`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-store-id': STORE_ID },
-    body: JSON.stringify({ items: cart }),
-  });
-  return res.json();
-}`,
+export const omnistoreApi = {
+  getProducts: (params?: Record<string, any>) => fetchStoreCatalog('products'),
+  getCategories: () => fetchStoreCatalog('categories'),
+  getTheme: () => fetchStoreCatalog('store/theme'),
+  createOrder: (orderData: any) =>
+    fetchStoreCatalog('orders', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    }),
+};`,
     },
     {
-      file: 'tailwind.config.ts',
-      description: 'Tailwind CSS design token configuration',
-      data: `import type { Config } from 'tailwindcss';
+      file: 'lib/sections/types.ts',
+      description: 'Section schema types supporting CMS SectionResolver rendering',
+      data: `// OmniStore CMS Section Types
+export interface SectionConfig {
+  type: 'hero' | 'featured-products' | 'banner' | 'categories' | 'testimonials' | 'video-reel' | 'newsletter';
+  config: Record<string, any>;
+}
 
-const config: Config = {
-  content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
-  darkMode: 'class',
-  theme: {
-    extend: {
-      colors: {
-        primary: '${theme.primary}',
-        secondary: '${theme.secondary}',
-        accent: '${theme.accent}',
-        background: '${theme.background}',
-        card: '${theme.cardBg}',
-        text: '${theme.textColor}',
-        muted: '${theme.textMuted}',
-        border: '${theme.border}',
-      },
-      borderRadius: {
-        custom: '${theme.borderRadius}',
-      },
-    },
-  },
-  plugins: [],
-};
-
-export default config;`,
+export interface ThemeConfig {
+  activeTemplateSlug: string;
+  primaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  homeSectionsJson?: string;
+}`,
     },
   ];
 }

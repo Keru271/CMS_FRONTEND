@@ -6448,7 +6448,9 @@ export const cmsService = {
 
   async sendTestEmail(id: string, payload: SendTestEmailPayload): Promise<SendTestEmailResponse> {
     const response = await apiClient.post<SendTestEmailResponse>(
-      `/email-templates/${id}/send-test`,
+      id && id !== 'draft' && id !== 'new'
+        ? `/email-templates/${id}/send-test`
+        : '/email-templates/send-test',
       payload,
     );
     return response.data;
@@ -6461,6 +6463,37 @@ export const cmsService = {
       message: string;
       templates: EmailTemplateData[];
     }>('/email-templates/reset-presets', { storeId });
+    return response.data;
+  },
+
+  async generateAiEmailTemplate(payload: {
+    prompt: string;
+    provider?: 'auto' | 'gemini' | 'chatgpt';
+    tone?: string;
+    category?: 'MARKETING' | 'NOTIFICATION' | 'CUSTOM';
+    storeId?: string;
+  }): Promise<{
+    success: boolean;
+    providerUsed: string;
+    modelName: string;
+    template: {
+      name: string;
+      category: 'MARKETING' | 'NOTIFICATION' | 'CUSTOM';
+      trigger: string | null;
+      subject: string;
+      previewText: string;
+      designConfig: any;
+      blocks: any[];
+    };
+    note?: string;
+  }> {
+    const response = await apiClient.post<{
+      success: boolean;
+      providerUsed: string;
+      modelName: string;
+      template: any;
+      note?: string;
+    }>('/email-templates/ai-generate', payload);
     return response.data;
   },
 
@@ -7256,7 +7289,7 @@ export const cmsService = {
     selectedStyles?: string[];
   }): Promise<import('@/src/types').ProcessImageStudioResult> {
     try {
-      const res = await apiClient.post('/api/ai/image-studio/process', params);
+      const res = await apiClient.post('/ai/image-studio/process', params);
       if (res.data && res.data.variations) {
         return res.data;
       }
@@ -7375,7 +7408,7 @@ export const cmsService = {
     isCoverImage?: boolean;
   }): Promise<{ success: boolean; message?: string }> {
     try {
-      const res = await apiClient.post('/api/ai/image-studio/save-to-product', payload);
+      const res = await apiClient.post('/ai/image-studio/save-to-product', payload);
       return res.data;
     } catch (err: any) {
       console.warn('Backend save variation notice:', err);
@@ -8784,6 +8817,9 @@ export const cmsService = {
     provider?: 'gemini' | 'chatgpt';
     brandName?: string;
     industry?: string;
+    referenceImages?: Array<{ name?: string; dataUrl: string; mimeType?: string }>;
+    currentTheme?: any;
+    currentSections?: any[];
   }): Promise<{
     success: boolean;
     reply: string;

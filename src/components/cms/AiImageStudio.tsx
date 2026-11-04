@@ -30,39 +30,6 @@ import { cmsService } from '@/src/services/cmsService';
 import { CMSProduct, ImageStudioVariation, ProcessImageStudioResult } from '@/src/types';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
 
-const SAMPLE_PRODUCTS = [
-  {
-    name: 'AeroPulse Stealth Runner',
-    category: 'Footwear',
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1000&q=80',
-    prompt: 'floating above a dark concrete architectural pedestal with subtle rim light',
-  },
-  {
-    name: 'Luxe Botanicals Glow Serum',
-    category: 'Skincare',
-    image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=1000&q=80',
-    prompt: 'placed on smooth travertine stone with water ripples and sunlit palm shadows',
-  },
-  {
-    name: 'Chronos Minimalist Watch',
-    category: 'Watches',
-    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1000&q=80',
-    prompt: 'resting on dark obsidian slab with soft gold ambient illumination',
-  },
-  {
-    name: 'Artisan Cognac Leather Tote',
-    category: 'Bags & Accessories',
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=1000&q=80',
-    prompt: 'staged in a bright Scandinavian sunlit studio with oak flooring',
-  },
-  {
-    name: 'Nova Pro Studio Wireless Headphones',
-    category: 'Audio',
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1000&q=80',
-    prompt: 'hovering over futuristic minimalist metallic ring stand with soft indigo glow',
-  },
-];
-
 const PRESET_STYLES = [
   { id: 'white', label: 'E-Commerce White', icon: '⚪', prompt: 'clean pure white backdrop with subtle floor contact shadow' },
   { id: 'pedestal', label: 'Marble Pedestal', icon: '🏛️', prompt: 'geometric white marble pedestal with warm directional spotlight' },
@@ -73,10 +40,10 @@ const PRESET_STYLES = [
 ];
 
 export const AiImageStudio: React.FC = () => {
-  // Input State
-  const [imageUrl, setImageUrl] = useState<string>(SAMPLE_PRODUCTS[0].image);
-  const [productName, setProductName] = useState<string>(SAMPLE_PRODUCTS[0].name);
-  const [productCategory, setProductCategory] = useState<string>(SAMPLE_PRODUCTS[0].category);
+  // Input State (starts clean without dummy seed data)
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [productName, setProductName] = useState<string>('');
+  const [productCategory, setProductCategory] = useState<string>('');
   const [customPrompt, setCustomPrompt] = useState<string>('');
   const [selectedPresetStyle, setSelectedPresetStyle] = useState<string>('pedestal');
 
@@ -103,15 +70,13 @@ export const AiImageStudio: React.FC = () => {
 
   useEffect(() => {
     loadProducts();
-    // Auto trigger initial pipeline run for preview
-    handleRunPipeline(SAMPLE_PRODUCTS[0].image, SAMPLE_PRODUCTS[0].name, SAMPLE_PRODUCTS[0].category);
   }, []);
 
   const loadProducts = async () => {
     try {
       const list = await cmsService.getProducts();
       setProducts(list);
-      if (list.length > 0) {
+      if (list.length > 0 && !selectedProductId) {
         setSelectedProductId(list[0].id);
       }
     } catch (err) {
@@ -124,14 +89,6 @@ export const AiImageStudio: React.FC = () => {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const handleSelectSample = (sample: typeof SAMPLE_PRODUCTS[0]) => {
-    setImageUrl(sample.image);
-    setProductName(sample.name);
-    setProductCategory(sample.category);
-    setCustomPrompt(sample.prompt);
-    handleRunPipeline(sample.image, sample.name, sample.category, sample.prompt);
-  };
-
   const handleSelectStoreProduct = (prodId: string) => {
     const prod = products.find((p) => p.id === prodId);
     if (prod) {
@@ -140,9 +97,6 @@ export const AiImageStudio: React.FC = () => {
       if (prodImg) setImageUrl(prodImg);
       setProductName(prod.name);
       setProductCategory(prod.category || prod.categoryName || 'General');
-      if (prodImg) {
-        handleRunPipeline(prodImg, prod.name, prod.category || prod.categoryName || 'General');
-      }
     }
   };
 
@@ -160,7 +114,7 @@ export const AiImageStudio: React.FC = () => {
     setIsProcessing(true);
     setPipelineStep(1);
 
-    // Simulate progressive pipeline milestones
+    // Progressive pipeline milestones for responsive UX
     const stepTimer1 = setTimeout(() => setPipelineStep(2), 600);
     const stepTimer2 = setTimeout(() => setPipelineStep(3), 1300);
     const stepTimer3 = setTimeout(() => setPipelineStep(4), 2000);
@@ -168,8 +122,8 @@ export const AiImageStudio: React.FC = () => {
     try {
       const result = await cmsService.processImageStudio({
         imageUrl: targetUrl,
-        productName: targetName,
-        productCategory: targetCat,
+        productName: targetName || 'Product',
+        productCategory: targetCat || 'General',
         customPrompt: targetPrompt,
         enhancements: {
           autoEnhance,
@@ -265,7 +219,7 @@ export const AiImageStudio: React.FC = () => {
         <div className="flex items-center gap-3 shrink-0">
           <button
             type="button"
-            disabled={isProcessing}
+            disabled={isProcessing || !imageUrl}
             onClick={() => handleRunPipeline()}
             className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-md shadow-indigo-600/20 flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
           >
@@ -358,7 +312,7 @@ export const AiImageStudio: React.FC = () => {
         <div className="lg:col-span-5 space-y-6">
           {/* 1. Image Source Selector */}
           <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5">
-            <h3 className="text-sm font-black text-slate-900 dark:text-foreground uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+            <h3 className="text-sm font-black text-slate-900 dark:text-foreground uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-border pb-3">
               <UploadCloud className="w-4 h-4 text-indigo-600" />
               <span>1. Upload Product Photo</span>
             </h3>
@@ -372,7 +326,6 @@ export const AiImageStudio: React.FC = () => {
                 currentUrl={imageUrl}
                 onUploadComplete={(url) => {
                   setImageUrl(url);
-                  handleRunPipeline(url);
                 }}
                 hint="Shoe, cosmetics, bag, watch, gadget (JPG, PNG, WebP)"
                 previewShape="square"
@@ -388,52 +341,62 @@ export const AiImageStudio: React.FC = () => {
                     type="text"
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://images.unsplash.com/..."
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-mono font-medium text-slate-800"
+                    placeholder="https://your-store.com/product.jpg"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-slate-900/40 text-xs font-mono font-medium text-slate-800 dark:text-slate-200"
                   />
                   <button
                     type="button"
+                    disabled={!imageUrl}
                     onClick={() => handleRunPipeline()}
-                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold shrink-0 cursor-pointer"
+                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold shrink-0 cursor-pointer disabled:opacity-40"
                   >
                     Load
                   </button>
                 </div>
               </div>
 
-              {/* Sample Presets */}
-              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-border">
-                <span className="text-[11px] font-bold text-slate-500 block">
-                  Quick Demo Products:
-                </span>
-                <div className="grid grid-cols-2 gap-2">
-                  {SAMPLE_PRODUCTS.slice(0, 4).map((sp) => (
-                    <button
-                      key={sp.name}
-                      type="button"
-                      onClick={() => handleSelectSample(sp)}
-                      className={`p-2 rounded-xl border text-left flex items-center gap-2 transition cursor-pointer ${
-                        imageUrl === sp.image
-                          ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 font-bold'
-                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs'
-                      }`}
-                    >
-                      <img
-                        src={sp.image}
-                        alt={sp.name}
-                        className="w-8 h-8 rounded-lg object-cover shrink-0"
-                      />
-                      <span className="text-[11px] font-medium truncate">{sp.name}</span>
-                    </button>
-                  ))}
+              {/* Quick Select from Store Catalog (Real Products, No Dummy Seed Data) */}
+              {products.filter((p) => p.image || (p.images && p.images[0])).length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-border">
+                  <span className="text-[11px] font-bold text-slate-500 block">
+                    Or select from your catalog:
+                  </span>
+                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                    {products
+                      .filter((p) => p.image || (p.images && p.images[0]))
+                      .slice(0, 6)
+                      .map((p) => {
+                        const pImg = p.image || (p.images && p.images[0]) || '';
+                        const isSelected = selectedProductId === p.id && imageUrl === pImg;
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => handleSelectStoreProduct(p.id)}
+                            className={`p-2 rounded-xl border text-left flex items-center gap-2 transition cursor-pointer ${
+                              isSelected
+                                ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 font-bold ring-1 ring-indigo-500'
+                                : 'border-slate-200 dark:border-border bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs'
+                            }`}
+                          >
+                            <img
+                              src={pImg}
+                              alt={p.name}
+                              className="w-8 h-8 rounded-lg object-cover shrink-0 bg-slate-100"
+                            />
+                            <span className="text-[11px] font-medium truncate">{p.name}</span>
+                          </button>
+                        );
+                      })}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
           {/* 2. Product Details & AI Scene Backdrops */}
           <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5">
-            <h3 className="text-sm font-black text-slate-900 dark:text-foreground uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+            <h3 className="text-sm font-black text-slate-900 dark:text-foreground uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-border pb-3">
               <Sparkles className="w-4 h-4 text-indigo-600" />
               <span>2. AI Scene & Backdrops</span>
             </h3>
@@ -441,31 +404,35 @@ export const AiImageStudio: React.FC = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-700">Product Title</label>
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    Product Title
+                  </label>
                   <input
                     type="text"
                     value={productName}
                     onChange={(e) => setProductName(e.target.value)}
                     placeholder="e.g. Leather Oxford Shoes"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-slate-900/40 text-xs font-semibold text-slate-800 dark:text-slate-200"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-slate-700">Category</label>
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    Category
+                  </label>
                   <input
                     type="text"
                     value={productCategory}
                     onChange={(e) => setProductCategory(e.target.value)}
                     placeholder="e.g. Footwear"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-slate-900/40 text-xs font-semibold text-slate-800 dark:text-slate-200"
                   />
                 </div>
               </div>
 
               {/* Preset Background Styles */}
               <div className="space-y-2">
-                <label className="block text-[11px] font-bold text-slate-700">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
                   Preset AI Background Styles
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -480,7 +447,7 @@ export const AiImageStudio: React.FC = () => {
                       className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition cursor-pointer text-xs ${
                         selectedPresetStyle === st.id
                           ? 'border-indigo-600 bg-indigo-600 text-white font-bold shadow-xs'
-                          : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                          : 'border-slate-200 dark:border-border bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                       }`}
                     >
                       <span className="text-sm">{st.icon}</span>
@@ -492,7 +459,7 @@ export const AiImageStudio: React.FC = () => {
 
               {/* Custom AI Prompt Box */}
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-bold text-slate-700">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
                   Custom AI Scene Description (Optional)
                 </label>
                 <textarea
@@ -500,18 +467,18 @@ export const AiImageStudio: React.FC = () => {
                   value={customPrompt}
                   onChange={(e) => setCustomPrompt(e.target.value)}
                   placeholder="e.g. resting on smooth wet black river stone with warm sunset illumination..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-slate-900/40 text-xs font-medium text-slate-800 dark:text-slate-200"
                 />
               </div>
 
               {/* Enhancement Sliders */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/80 dark:border-border space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                     <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-600" />
                     Image Engine Settings
                   </span>
-                  <label className="flex items-center gap-1.5 text-xs text-indigo-700 font-bold cursor-pointer">
+                  <label className="flex items-center gap-1.5 text-xs text-indigo-700 dark:text-indigo-400 font-bold cursor-pointer">
                     <input
                       type="checkbox"
                       checked={autoEnhance}
@@ -523,7 +490,7 @@ export const AiImageStudio: React.FC = () => {
                 </div>
 
                 <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between text-[11px] text-slate-600 font-semibold">
+                  <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400 font-semibold">
                     <span>Edge Sharpness</span>
                     <span>{sharpness}%</span>
                   </div>
@@ -533,10 +500,10 @@ export const AiImageStudio: React.FC = () => {
                     max="100"
                     value={sharpness}
                     onChange={(e) => setSharpness(Number(e.target.value))}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                   />
 
-                  <div className="flex items-center justify-between text-[11px] text-slate-600 font-semibold">
+                  <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400 font-semibold">
                     <span>Contact Shadow Intensity</span>
                     <span>{shadowIntensity}%</span>
                   </div>
@@ -546,7 +513,7 @@ export const AiImageStudio: React.FC = () => {
                     max="100"
                     value={shadowIntensity}
                     onChange={(e) => setShadowIntensity(Number(e.target.value))}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                   />
                 </div>
               </div>
@@ -555,20 +522,21 @@ export const AiImageStudio: React.FC = () => {
 
           {/* 3. Direct Link to Store Product */}
           <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
-            <h3 className="text-sm font-black text-slate-900 dark:text-foreground uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+            <h3 className="text-sm font-black text-slate-900 dark:text-foreground uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 dark:border-border pb-3">
               <ShoppingBag className="w-4 h-4 text-indigo-600" />
               <span>3. Target Catalog Product</span>
             </h3>
 
             <div className="space-y-2">
-              <label className="block text-[11px] font-bold text-slate-700">
+              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
                 Select Store Product to Attach Generated Images
               </label>
               <select
                 value={selectedProductId}
                 onChange={(e) => handleSelectStoreProduct(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold cursor-pointer text-slate-800"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-slate-900/40 text-xs font-semibold cursor-pointer text-slate-800 dark:text-slate-200"
               >
+                <option value="">-- Choose from your catalog (optional) --</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name} ({p.category || 'General'})
@@ -584,237 +552,378 @@ export const AiImageStudio: React.FC = () => {
 
         {/* RIGHT COLUMN: INTERACTIVE GALLERY & STORE-READY ASSETS (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Main Large Active Variation Display */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-black text-slate-900 dark:text-foreground">
-                    {activeVariation?.title || 'Selected Variation'}
-                  </h3>
-                  {activeVariation?.badge && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wide">
-                      {activeVariation.badge}
-                    </span>
-                  )}
-                  {activeVariation?.aiGenerated && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-100 to-violet-100 text-blue-800 text-[10px] font-extrabold uppercase tracking-wide flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" />
-                      AI Generated
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-slate-500">
-                  {activeVariation?.tagline || 'High-resolution store-ready asset'}
-                </p>
-              </div>
-
-              {/* View Switcher Tabs */}
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('all')}
-                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
-                    activeTab === 'all'
-                      ? 'bg-white text-indigo-600 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  Gallery View
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('compare')}
-                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 ${
-                    activeTab === 'compare'
-                      ? 'bg-white text-indigo-600 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <Split className="w-3.5 h-3.5" />
-                  <span>Before / After</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Display Canvas */}
-            {activeTab === 'all' ? (
-              <div className="relative aspect-square max-h-[460px] w-full rounded-2xl bg-slate-950/5 border border-slate-200 overflow-hidden flex items-center justify-center group">
-                <img
-                  src={activeVariation?.url || imageUrl}
-                  alt={activeVariation?.title || 'Product'}
-                  className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
-                />
-
-                {/* Floating Action Controls */}
-                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between p-3 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200 shadow-lg animate-in fade-in">
-                  <div className="text-[11px] font-bold text-slate-700">
-                    <span>{activeVariation?.width || 1200} × {activeVariation?.height || 1200} px</span>
-                    <span className="text-slate-400 ml-2">({activeVariation?.aspectRatio || '1:1'})</span>
+          {!studioResult ? (
+            /* Clean Empty / Ready State (No Dummy Data) */
+            <div className="p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-6 text-center">
+              {imageUrl ? (
+                /* Ready State with Uploaded Image Preview */
+                <div className="space-y-5">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-bold border border-indigo-200/60 dark:border-indigo-800/60">
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>Product Photo Ready</span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleCopyUrl(activeVariation?.url || imageUrl)}
-                      className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
-                      title="Copy CDN URL"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSaveToProduct(activeVariation!, false)}
-                      className="px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
-                    >
-                      <FolderPlus className="w-3.5 h-3.5" />
-                      <span>Add to Gallery</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSaveToProduct(activeVariation!, true)}
-                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-sm transition cursor-pointer flex items-center gap-1.5"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Set as Cover Image</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* Before / After Comparison Slider */
-              <div className="space-y-3">
-                <div className="relative aspect-square max-h-[460px] w-full rounded-2xl bg-slate-900 border border-slate-200 overflow-hidden select-none">
-                  {/* Background: Generated Variation */}
-                  <img
-                    src={activeVariation?.url || imageUrl}
-                    alt="After"
-                    className="absolute inset-0 w-full h-full object-contain"
-                  />
-
-                  {/* Foreground: Original Image with Clip Path */}
-                  <div
-                    className="absolute inset-0 overflow-hidden border-r-2 border-white shadow-2xl"
-                    style={{ width: `${compareSplit}%` }}
-                  >
+                  <div className="relative aspect-square max-h-[380px] max-w-[380px] mx-auto rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-border overflow-hidden flex items-center justify-center shadow-inner">
                     <img
                       src={imageUrl}
-                      alt="Before"
-                      className="absolute inset-0 w-full h-full object-contain max-w-none"
-                      style={{ width: '100%', height: '100%' }}
+                      alt={productName || 'Product photo'}
+                      className="max-h-full max-w-full object-contain p-3"
                     />
                   </div>
 
-                  {/* Badges */}
-                  <div className="absolute top-3 left-3 px-2 py-1 rounded-lg bg-black/70 text-white text-[10px] font-bold backdrop-blur-xs">
-                    Original Capture
+                  <div className="max-w-md mx-auto space-y-2">
+                    <h3 className="text-base font-black text-slate-900 dark:text-foreground">
+                      {productName || 'Ready for AI Synthesis'}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Click below to generate high-resolution marketplace white backgrounds, luxury pedestal staging, lifestyle scenes, and ad creatives powered by Gemini.
+                    </p>
                   </div>
-                  <div className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-indigo-600 text-white text-[10px] font-bold shadow-md">
-                    AI Studio Enhanced
-                  </div>
-                </div>
 
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] font-bold text-slate-500">
-                    <span>← Original Photo</span>
-                    <span>Slide to Compare</span>
-                    <span>AI Enhanced →</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={compareSplit}
-                    onChange={(e) => setCompareSplit(Number(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* All 6 Generated Variations Grid */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground flex items-center gap-2">
-                <Layers className="w-4 h-4 text-indigo-600" />
-                <span>Generated Multi-Variation Suite ({studioResult?.variations.length || 0})</span>
-              </h4>
-              <span className="text-[11px] font-bold text-slate-500">Click any asset to inspect</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {studioResult?.variations.map((v) => {
-                const isSelected = v.id === activeVariationId;
-                return (
-                  <div
-                    key={v.id}
-                    onClick={() => setActiveVariationId(v.id)}
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer space-y-2 text-left ${
-                      isSelected
-                        ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/40 ring-2 ring-indigo-500/20 shadow-sm'
-                        : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
-                    }`}
+                  <button
+                    type="button"
+                    disabled={isProcessing}
+                    onClick={() => handleRunPipeline()}
+                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-black shadow-lg shadow-indigo-600/25 flex items-center gap-2.5 mx-auto transition cursor-pointer disabled:opacity-50"
                   >
-                    <div className="aspect-square rounded-xl bg-white border border-slate-200/80 overflow-hidden flex items-center justify-center">
+                    {isProcessing ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>Synthesizing Studio...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        <span>Synthesize 5 Studio Variations</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                /* Fresh Onboarding Canvas */
+                <div className="py-8 space-y-6 max-w-lg mx-auto">
+                  <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 flex items-center justify-center mx-auto border border-indigo-200/60 dark:border-indigo-800/60 shadow-sm">
+                    <Sparkles className="w-8 h-8" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-black text-slate-900 dark:text-foreground">
+                      AI Product Photography Studio
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Upload a raw product photo or select an existing item from your catalog to synthesize professional studio-grade marketing and e-commerce assets with Gemini.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-left pt-2">
+                    {[
+                      {
+                        icon: '⚪',
+                        title: 'Marketplace White BG',
+                        desc: 'Clean #FFFFFF background with realistic contact shadow for Amazon & Google.',
+                      },
+                      {
+                        icon: '🏛️',
+                        title: 'Luxury Pedestal',
+                        desc: 'Architectural marble podium with directional studio spotlighting.',
+                      },
+                      {
+                        icon: '🌿',
+                        title: 'Lifestyle Staging',
+                        desc: 'Photorealistic real-world environment matched to your product category.',
+                      },
+                      {
+                        icon: '⚡',
+                        title: 'Ad & Social Creative',
+                        desc: 'Vibrant, high-conversion visual tuned for Instagram, Pinterest & Ads.',
+                      },
+                    ].map((feat) => (
+                      <div
+                        key={feat.title}
+                        className="p-3.5 rounded-2xl border border-slate-200/80 dark:border-border bg-slate-50/60 dark:bg-slate-900/40 space-y-1"
+                      >
+                        <div className="flex items-center gap-1.5 font-black text-xs text-slate-800 dark:text-slate-200">
+                          <span>{feat.icon}</span>
+                          <span className="truncate">{feat.title}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                          {feat.desc}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Results Available State */
+            <>
+              {/* Main Large Active Variation Display */}
+              <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-border pb-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-black text-slate-900 dark:text-foreground">
+                        {activeVariation?.title || 'Selected Variation'}
+                      </h3>
+                      {activeVariation?.badge && (
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wide">
+                          {activeVariation.badge}
+                        </span>
+                      )}
+                      {activeVariation?.aiGenerated && (
+                        <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-100 to-violet-100 text-blue-800 text-[10px] font-extrabold uppercase tracking-wide flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          AI Generated
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      {activeVariation?.tagline || 'High-resolution store-ready asset'}
+                    </p>
+                  </div>
+
+                  {/* View Switcher Tabs */}
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('all')}
+                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                        activeTab === 'all'
+                          ? 'bg-white dark:bg-card text-indigo-600 shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                      }`}
+                    >
+                      Gallery View
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('compare')}
+                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 ${
+                        activeTab === 'compare'
+                          ? 'bg-white dark:bg-card text-indigo-600 shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                      }`}
+                    >
+                      <Split className="w-3.5 h-3.5" />
+                      <span>Before / After</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Display Canvas */}
+                {activeTab === 'all' ? (
+                  <div className="relative aspect-square max-h-[460px] w-full rounded-2xl bg-slate-950/5 border border-slate-200 dark:border-border overflow-hidden flex items-center justify-center group">
+                    <img
+                      src={activeVariation?.url || imageUrl}
+                      alt={activeVariation?.title || 'Product'}
+                      className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                    />
+
+                    {/* Floating Action Controls */}
+                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between p-3 rounded-2xl bg-white/95 dark:bg-card/95 backdrop-blur-md border border-slate-200 dark:border-border shadow-lg animate-in fade-in">
+                      <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                        <span>{activeVariation?.width || 1200} × {activeVariation?.height || 1200} px</span>
+                        <span className="text-slate-400 ml-2">({activeVariation?.aspectRatio || '1:1'})</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyUrl(activeVariation?.url || imageUrl)}
+                          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition cursor-pointer"
+                          title="Copy CDN URL"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveToProduct(activeVariation!, false)}
+                          className="px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                        >
+                          <FolderPlus className="w-3.5 h-3.5" />
+                          <span>Add to Gallery</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveToProduct(activeVariation!, true)}
+                          className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-sm transition cursor-pointer flex items-center gap-1.5"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Set as Cover Image</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Before / After Comparison Slider */
+                  <div className="space-y-3">
+                    <div className="relative aspect-square max-h-[460px] w-full rounded-2xl bg-slate-900 border border-slate-200 overflow-hidden select-none">
+                      {/* Background: Generated Variation */}
                       <img
-                        src={v.url}
-                        alt={v.title}
-                        className="w-full h-full object-contain p-1"
+                        src={activeVariation?.url || imageUrl}
+                        alt="After"
+                        className="absolute inset-0 w-full h-full object-contain"
+                      />
+
+                      {/* Foreground: Original Image with Clip Path */}
+                      <div
+                        className="absolute inset-0 overflow-hidden border-r-2 border-white shadow-2xl"
+                        style={{ width: `${compareSplit}%` }}
+                      >
+                        <img
+                          src={imageUrl}
+                          alt="Before"
+                          className="absolute inset-0 w-full h-full object-contain max-w-none"
+                          style={{ width: '100%', height: '100%' }}
+                        />
+                      </div>
+
+                      {/* Badges */}
+                      <div className="absolute top-3 left-3 px-2 py-1 rounded-lg bg-black/70 text-white text-[10px] font-bold backdrop-blur-xs">
+                        Original Capture
+                      </div>
+                      <div className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-indigo-600 text-white text-[10px] font-bold shadow-md">
+                        AI Studio Enhanced
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-bold text-slate-500">
+                        <span>← Original Photo</span>
+                        <span>Slide to Compare</span>
+                        <span>AI Enhanced →</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={compareSplit}
+                        onChange={(e) => setCompareSplit(Number(e.target.value))}
+                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                       />
                     </div>
+                  </div>
+                )}
+              </div>
 
-                    <div>
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="text-xs font-extrabold text-slate-900 dark:text-foreground truncate">
-                          {v.title}
-                        </span>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {v.aiGenerated && (
-                            <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-gradient-to-r from-blue-100 to-violet-100 text-blue-700 flex items-center gap-0.5">
-                              <Sparkles className="w-2.5 h-2.5" />
-                              AI
+              {/* All 6 Generated Variations Grid */}
+              <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-indigo-600" />
+                    <span>Generated Multi-Variation Suite ({studioResult.variations.length})</span>
+                  </h4>
+                  <span className="text-[11px] font-bold text-slate-500">Click any asset to inspect</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {studioResult.variations.map((v) => {
+                    const isSelected = v.id === activeVariationId;
+                    return (
+                      <div
+                        key={v.id}
+                        onClick={() => setActiveVariationId(v.id)}
+                        className={`p-3 rounded-2xl border transition-all cursor-pointer space-y-2 text-left ${
+                          isSelected
+                            ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/40 ring-2 ring-indigo-500/20 shadow-sm'
+                            : 'border-slate-200 dark:border-border bg-slate-50 dark:bg-slate-900/40 hover:bg-white dark:hover:bg-card hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="aspect-square rounded-xl bg-white dark:bg-card border border-slate-200/80 dark:border-border overflow-hidden flex items-center justify-center">
+                          <img
+                            src={v.url}
+                            alt={v.title}
+                            className="w-full h-full object-contain p-1"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-xs font-extrabold text-slate-900 dark:text-foreground truncate">
+                              {v.title}
                             </span>
-                          )}
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">
-                            {v.aspectRatio}
-                          </span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {v.aiGenerated && (
+                                <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-gradient-to-r from-blue-100 to-violet-100 text-blue-700 flex items-center gap-0.5">
+                                  <Sparkles className="w-2.5 h-2.5" />
+                                  AI
+                                </span>
+                              )}
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                {v.aspectRatio}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                            {v.description}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-border">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSaveToProduct(v, true);
+                            }}
+                            className="text-[10px] font-bold text-indigo-600 hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>Apply Cover</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopyUrl(v.url);
+                            }}
+                            className="text-[10px] font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-0.5 cursor-pointer"
+                          >
+                            <Copy className="w-3 h-3" />
+                            <span>Copy URL</span>
+                          </button>
                         </div>
                       </div>
-                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                        {v.description}
-                      </p>
-                    </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSaveToProduct(v, true);
-                        }}
-                        className="text-[10px] font-bold text-indigo-600 hover:underline flex items-center gap-1"
-                      >
-                        <Check className="w-3 h-3" />
-                        <span>Apply Cover</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopyUrl(v.url);
-                        }}
-                        className="text-[10px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-0.5"
-                      >
-                        <Copy className="w-3 h-3" />
-                        <span>Copy URL</span>
-                      </button>
-                    </div>
+              {/* Gemini SEO & Discovery Tags */}
+              {studioResult.suggestedTags && studioResult.suggestedTags.length > 0 && (
+                <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-3">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-indigo-600" />
+                      <span>Gemini AI Discovery & SEO Tags ({studioResult.suggestedTags.length})</span>
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(studioResult.suggestedTags.join(', '));
+                        showToast('📋 Tags copied to clipboard!');
+                      }}
+                      className="text-[10px] font-bold text-indigo-600 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Copy All Tags</span>
+                    </button>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                  <div className="flex flex-wrap gap-2">
+                    {studioResult.suggestedTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium border border-slate-200/60 dark:border-slate-700"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
