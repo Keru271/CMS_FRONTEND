@@ -16,11 +16,17 @@ export interface StorefrontSection {
     | 'whatsapp_cta'
     | 'newsletter'
     | 'footer'
-    | 'custom';
+    | 'marketplace_header'
+    | 'marketplace_grid'
+    | 'lightning_deals'
+    | 'slider'
+    | 'custom'
+    | (string & {});
   title: string;
   subtitle?: string;
   enabled: boolean;
   contentJson?: Record<string, unknown>;
+  customHtml?: string;
 }
 
 export interface StorefrontTheme {
@@ -43,6 +49,14 @@ export interface StorefrontProject {
   brandName: string;
   tagline: string;
   industry: string;
+  logo?: string;
+  currency?: string;
+  currencySymbol?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  address?: string;
+  socialLinks?: Record<string, string>;
+  designStyle?: string;
   templateSlug?: string;
   theme: StorefrontTheme;
   sections: StorefrontSection[];
@@ -51,7 +65,7 @@ export interface StorefrontProject {
   updatedAt: string;
 }
 
-export interface StorefrontTemplateArchetype {
+export interface DesignArchetype {
   slug: string;
   name: string;
   category: string;
@@ -61,10 +75,34 @@ export interface StorefrontTemplateArchetype {
   defaultTheme: StorefrontTheme;
 }
 
-export const STOREFRONT_ARCHETYPES: StorefrontTemplateArchetype[] = [
+export type StorefrontTemplateArchetype = DesignArchetype;
+
+export const DESIGN_ARCHETYPES: DesignArchetype[] = [
   {
-    slug: 'mincom',
-    name: 'Mincom',
+    slug: 'luxe-dark',
+    name: 'Obsidian Haute Luxe',
+    category: 'Haute Horlogerie & High Luxury',
+    description: 'Obsidian black canvas with champagne gold metallic accents and serif typography.',
+    badge: 'Haute Luxury',
+    previewColors: ['#050608', '#D4AF37', '#0F111A', '#F8FAFC'],
+    defaultTheme: {
+      primary: '#090A0F',
+      secondary: '#161922',
+      accent: '#D4AF37',
+      background: '#050608',
+      cardBg: '#0F111A',
+      textColor: '#F8FAFC',
+      textMuted: '#94A3B8',
+      border: '#232738',
+      headingFont: 'Playfair Display',
+      bodyFont: 'Inter',
+      borderRadius: '8px',
+      styleArchetype: 'Obsidian Haute Luxe',
+    },
+  },
+  {
+    slug: 'artisan-living',
+    name: 'Modern Artisan Living',
     category: 'Artisan Living & Furniture',
     description: 'Warm oak craftsmanship, modern modular grid, and refined typography.',
     badge: 'Artisan Living',
@@ -85,30 +123,8 @@ export const STOREFRONT_ARCHETYPES: StorefrontTemplateArchetype[] = [
     },
   },
   {
-    slug: 'luxe',
-    name: 'Luxe',
-    category: 'Haute Horlogerie & Fashion',
-    description: 'Obsidian black canvas with champagne gold metallic accents and serif typography.',
-    badge: 'Haute Luxury',
-    previewColors: ['#050608', '#D4AF37', '#0F111A', '#F8FAFC'],
-    defaultTheme: {
-      primary: '#090A0F',
-      secondary: '#161922',
-      accent: '#D4AF37',
-      background: '#050608',
-      cardBg: '#0F111A',
-      textColor: '#F8FAFC',
-      textMuted: '#94A3B8',
-      border: '#232738',
-      headingFont: 'Playfair Display',
-      bodyFont: 'Inter',
-      borderRadius: '8px',
-      styleArchetype: 'Obsidian Haute Luxe',
-    },
-  },
-  {
-    slug: 'minimal',
-    name: 'Minimal',
+    slug: 'minimalist-clean',
+    name: 'Nordic Minimalist',
     category: 'Scandinavian Aesthetics',
     description: 'Pure clean whitespace, subtle borders, high contrast and pill geometry.',
     badge: 'Clean Minimalist',
@@ -129,52 +145,8 @@ export const STOREFRONT_ARCHETYPES: StorefrontTemplateArchetype[] = [
     },
   },
   {
-    slug: 'funo',
-    name: 'Funo',
-    category: 'Nordic Modern Decor',
-    description: 'Airy layout with warm sand tones, rounded cards, and natural lifestyle focus.',
-    badge: 'Nordic Decor',
-    previewColors: ['#FAF8F5', '#9E6B4E', '#FFFFFF', '#23201D'],
-    defaultTheme: {
-      primary: '#23201D',
-      secondary: '#EFEAE2',
-      accent: '#9E6B4E',
-      background: '#FAF8F5',
-      cardBg: '#FFFFFF',
-      textColor: '#23201D',
-      textMuted: '#7A7570',
-      border: '#E5DFD7',
-      headingFont: 'Plus Jakarta Sans',
-      bodyFont: 'Inter',
-      borderRadius: '16px',
-      styleArchetype: 'Nordic Modern Decor',
-    },
-  },
-  {
-    slug: 'pawzy',
-    name: 'Pawzy',
-    category: 'Pet Care & Organic Lifestyle',
-    description: 'Playful warm honey palette, rounded friendly cards, and organic treat badges.',
-    badge: 'Pet Care',
-    previewColors: ['#FFFDF9', '#FF9F43', '#FFFFFF', '#2D3436'],
-    defaultTheme: {
-      primary: '#2D3436',
-      secondary: '#FFF2E2',
-      accent: '#FF9F43',
-      background: '#FFFDF9',
-      cardBg: '#FFFFFF',
-      textColor: '#2D3436',
-      textMuted: '#636E72',
-      border: '#FFE5C8',
-      headingFont: 'Outfit',
-      bodyFont: 'Inter',
-      borderRadius: '20px',
-      styleArchetype: 'Organic Pet Care',
-    },
-  },
-  {
-    slug: 'fern',
-    name: 'Fern',
+    slug: 'botanical-wellness',
+    name: 'Botanical Wellness',
     category: 'Botanical Wellness & Plants',
     description: 'Fresh eucalyptus sage tones, clean porcelain cards, and gentle botanical vibes.',
     badge: 'Botanical Wellness',
@@ -195,9 +167,9 @@ export const STOREFRONT_ARCHETYPES: StorefrontTemplateArchetype[] = [
     },
   },
   {
-    slug: 'techno',
-    name: 'Techno',
-    category: 'Cyber Tech & Gadgets',
+    slug: 'cyber-tech',
+    name: 'Cyberpunk Next-Gen',
+    category: 'Cyber Tech & Audio',
     description: 'Midnight navy canvas with electric cyan accents, glassmorphic cards and audio focus.',
     badge: 'Cyber Tech',
     previewColors: ['#020617', '#00E5FF', '#0B0F19', '#F8FAFC'],
@@ -217,8 +189,8 @@ export const STOREFRONT_ARCHETYPES: StorefrontTemplateArchetype[] = [
     },
   },
   {
-    slug: 'default',
-    name: 'Default',
+    slug: 'bold-streetwear',
+    name: 'Pulse Streetwear',
     category: 'Pulse Streetwear & Drops',
     description: 'High-energy streetwear canvas with bold typography and high-converting CTA buttons.',
     badge: 'Streetwear & Drops',
@@ -238,7 +210,54 @@ export const STOREFRONT_ARCHETYPES: StorefrontTemplateArchetype[] = [
       styleArchetype: 'Pulse Modern Streetwear',
     },
   },
+  {
+    slug: 'warm-organic',
+    name: 'Honey & Earth Lifestyle',
+    category: 'Pet Care & Organic Lifestyle',
+    description: 'Playful warm honey palette, rounded friendly cards, and organic treat badges.',
+    badge: 'Warm Organic',
+    previewColors: ['#FFFDF9', '#FF9F43', '#FFFFFF', '#2D3436'],
+    defaultTheme: {
+      primary: '#2D3436',
+      secondary: '#FFF2E2',
+      accent: '#FF9F43',
+      background: '#FFFDF9',
+      cardBg: '#FFFFFF',
+      textColor: '#2D3436',
+      textMuted: '#636E72',
+      border: '#FFE5C8',
+      headingFont: 'Outfit',
+      bodyFont: 'Inter',
+      borderRadius: '20px',
+      styleArchetype: 'Organic Pet Care',
+    },
+  },
+  {
+    slug: 'modern-editorial',
+    name: 'Nordic Decor Atelier',
+    category: 'Nordic Modern Decor',
+    description: 'Airy layout with warm sand tones, rounded cards, and natural lifestyle focus.',
+    badge: 'Nordic Decor',
+    previewColors: ['#FAF8F5', '#9E6B4E', '#FFFFFF', '#23201D'],
+    defaultTheme: {
+      primary: '#23201D',
+      secondary: '#EFEAE2',
+      accent: '#9E6B4E',
+      background: '#FAF8F5',
+      cardBg: '#FFFFFF',
+      textColor: '#23201D',
+      textMuted: '#7A7570',
+      border: '#E5DFD7',
+      headingFont: 'Plus Jakarta Sans',
+      bodyFont: 'Inter',
+      borderRadius: '16px',
+      styleArchetype: 'Nordic Modern Decor',
+    },
+  },
 ];
+
+// Backward-compatible alias
+export const STOREFRONT_ARCHETYPES: StorefrontTemplateArchetype[] = DESIGN_ARCHETYPES;
 
 export interface DesignPreset {
   id: string;

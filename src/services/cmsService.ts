@@ -8817,9 +8817,20 @@ export const cmsService = {
     provider?: 'gemini' | 'chatgpt';
     brandName?: string;
     industry?: string;
+    storeId?: string;
     referenceImages?: Array<{ name?: string; dataUrl: string; mimeType?: string }>;
     currentTheme?: any;
     currentSections?: any[];
+    selectedElement?: {
+      sectionId?: string;
+      label?: string;
+      tagName?: string;
+      text?: string;
+      elementType?: 'image' | 'heading' | 'text' | 'button' | 'badge' | 'product' | 'section';
+      src?: string;
+      href?: string;
+      selector?: string;
+    };
   }): Promise<{
     success: boolean;
     reply: string;
@@ -8845,6 +8856,20 @@ export const cmsService = {
   async getVercelDeploymentStatus(deploymentId: string, token?: string): Promise<{ success: boolean; status: VercelDeploymentResult }> {
     const query = token ? `?token=${encodeURIComponent(token)}` : '';
     const res = await apiClient.get(`/ai/website-builder/status/${deploymentId}${query}`);
+    return res.data;
+  },
+
+  async saveAiWebsite(project: any, storeId?: string): Promise<{ success: boolean; message: string; savedAt: string; projectId: string }> {
+    const res = await apiClient.post('/ai/website-builder/save', { project, storeId });
+    return res.data;
+  },
+
+  async getSavedAiWebsite(storeId?: string, projectId?: string): Promise<{ success: boolean; project: any | null; savedAt: string | null }> {
+    const params = new URLSearchParams();
+    if (storeId) params.append('storeId', storeId);
+    if (projectId) params.append('projectId', projectId);
+    const queryString = params.toString() ? '?' + params.toString() : '';
+    const res = await apiClient.get('/ai/website-builder/saved' + queryString);
     return res.data;
   },
 

@@ -39,11 +39,16 @@ import {
   ArrowRight,
   UploadCloud,
   CheckCircle2,
+  Save,
+  Loader2,
   Coffee,
   Leaf,
   Cpu,
   Store,
   Wand2,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
@@ -61,12 +66,25 @@ import {
   DESIGN_PRESETS,
   INITIAL_SECTIONS,
   DesignPreset,
+  DESIGN_ARCHETYPES,
   STOREFRONT_ARCHETYPES,
   StorefrontTemplateArchetype,
 } from './ai-builder/storefrontTemplates';
-import { renderStorefrontHtml } from './ai-builder/storefrontRenderer';
+import { renderStorefrontHtml, enforceThemeContrast, isColorDark } from './ai-builder/storefrontRenderer';
 import { generateNextjsProjectFiles } from './ai-builder/storefrontCodeGenerator';
 import { analyzeImagePalette } from './ai-builder/storefrontImageAnalyzer';
+import { StoreSetupData, CMSProduct } from '@/src/types';
+
+const CURATED_IMAGE_PRESETS = [
+  { name: 'Coffee Atelier', url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1000&auto=format&fit=crop' },
+  { name: 'Minimal Tech', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1000&auto=format&fit=crop' },
+  { name: 'Botanical Skincare', url: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=1000&auto=format&fit=crop' },
+  { name: 'Streetwear Sneaker', url: 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=1000&auto=format&fit=crop' },
+  { name: 'Nordic Living', url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1000&auto=format&fit=crop' },
+  { name: 'Festival Mega Deals', url: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1000&auto=format&fit=crop' },
+  { name: 'Luxury Watch', url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1000&auto=format&fit=crop' },
+  { name: 'Artisan Ceramics', url: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=1000&auto=format&fit=crop' },
+];
 
 const AI_BUILDER_SOURCES: PromptSource[] = [
   {
@@ -175,7 +193,7 @@ const INSPIRATION_PROMPTS = [
     icon: Coffee,
     title: 'RoastCraft Coffee',
     category: 'Artisanal Roasters',
-    templateSlug: 'mincom',
+    designStyle: 'modern-editorial',
     prompt:
       'Build an artisanal single-origin coffee roastery called RoastCraft with warm espresso and terracotta tones, product subscription bundles, brewing guides, and customer reviews.',
   },
@@ -183,7 +201,7 @@ const INSPIRATION_PROMPTS = [
     icon: Leaf,
     title: 'Aethel Botanicals',
     category: 'Organic Skincare',
-    templateSlug: 'fern',
+    designStyle: 'botanical-wellness',
     prompt:
       'Build a Scandinavian organic skincare and serum brand called Aethel Botanicals with gentle eucalyptus sage accents, porcelain cards, and clean customer testimonials.',
   },
@@ -191,7 +209,7 @@ const INSPIRATION_PROMPTS = [
     icon: Cpu,
     title: 'Kuro Tech Outerwear',
     category: 'Cyberpunk Apparel',
-    templateSlug: 'techno',
+    designStyle: 'cyber-tech',
     prompt:
       'Build a futuristic architectural streetwear and acoustic audio store called Kuro Studio with electric cyan neon accents, dark mode glassmorphism cards, and high-top sneaker drops.',
   },
@@ -199,7 +217,7 @@ const INSPIRATION_PROMPTS = [
     icon: Store,
     title: 'Nordic Living',
     category: 'Artisan Home & Oak',
-    templateSlug: 'funo',
+    designStyle: 'artisan-living',
     prompt:
       'Build a modern Scandinavian furniture and handcrafted ceramic atelier called Nordic Atelier with airy whitespace, warm sand tones, and natural lifestyle photography.',
   },
@@ -207,7 +225,7 @@ const INSPIRATION_PROMPTS = [
     icon: Sparkles,
     title: 'Pawzy Goods',
     category: 'Conscious Pet Care',
-    templateSlug: 'pawzy',
+    designStyle: 'warm-organic',
     prompt:
       'Build a premium organic pet nutrition and lifestyle store called Pawzy Goods with warm honey badges, gourmet organic treats, and verified customer pet unboxings.',
   },
@@ -215,7 +233,7 @@ const INSPIRATION_PROMPTS = [
     icon: Zap,
     title: 'Velvet Haute',
     category: 'Haute Horlogerie',
-    templateSlug: 'luxe',
+    designStyle: 'luxe-dark',
     prompt:
       'Build a luxury Geneva mechanical watchmaking atelier called Velvet Haute with pitch-black obsidian canvas, champagne gold metallic accents, 4K macro video showcase, and VIP concierge.',
   },
@@ -231,9 +249,83 @@ export function AiWebsiteBuilderStudio({
   // Primary Storefront Project State (starts null so user is prompted first!)
   const [project, setProject] = useState<StorefrontProject | null>(null);
 
+  // Saved Storefront Drafts & Persistence State
+  const [savedProjectInfo, setSavedProjectInfo] = useState<{
+    project: StorefrontProject;
+    savedAt?: string;
+    source: 'cloud' | 'local';
+  } | null>(null);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+  const [saveFeedbackMessage, setSaveFeedbackMessage] = useState<string | null>(null);
+  const lastSavedProjectJsonRef = useRef<string>('');
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (!project) return false;
+    if (!lastSavedProjectJsonRef.current) return true;
+    return JSON.stringify(project) !== lastSavedProjectJsonRef.current;
+  }, [project]);
+
+  // Real Store Data Integration
+  const [storeSetup, setStoreSetup] = useState<StoreSetupData | null>(null);
+  const [dbProducts, setDbProducts] = useState<CMSProduct[]>([]);
+  const [dbCategories, setDbCategories] = useState<any[]>([]);
+  const [isLoadingStoreInfo, setIsLoadingStoreInfo] = useState<boolean>(true);
+
+  // Load real store setup, catalog products, and categories on mount
+  useEffect(() => {
+    let isMounted = true;
+    async function loadStoreInformation() {
+      try {
+        setIsLoadingStoreInfo(true);
+        const [setup, prods, cats, savedCloudRes] = await Promise.all([
+          cmsService.getStoreSetup().catch(() => null),
+          cmsService.getProducts().catch(() => []),
+          cmsService.getCategories().catch(() => []),
+          cmsService.getSavedAiWebsite().catch(() => null),
+        ]);
+        if (!isMounted) return;
+        if (setup) setStoreSetup(setup);
+        if (prods && Array.isArray(prods)) setDbProducts(prods);
+        if (cats && Array.isArray(cats)) setDbCategories(cats);
+
+        // Check local storage draft backup
+        let localDraft: StorefrontProject | null = null;
+        try {
+          const raw = localStorage.getItem('omnistore_ai_website_draft');
+          if (raw) localDraft = JSON.parse(raw);
+        } catch {}
+
+        if (savedCloudRes?.success && savedCloudRes?.project) {
+          setSavedProjectInfo({
+            project: savedCloudRes.project,
+            savedAt: savedCloudRes.savedAt || undefined,
+            source: 'cloud',
+          });
+        } else if (localDraft && (localDraft as any).sections) {
+          setSavedProjectInfo({
+            project: localDraft,
+            source: 'local',
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to prefetch store info for AI builder:', err);
+      } finally {
+        if (isMounted) setIsLoadingStoreInfo(false);
+      }
+    }
+    loadStoreInformation();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Initial Intake Screen State
   const [initialPromptInput, setInitialPromptInput] = useState('');
-  const [selectedTemplateSlug, setSelectedTemplateSlug] = useState('mincom');
+  const [selectedDesignStyle, setSelectedDesignStyle] = useState('artisan-living');
+  const selectedTemplateSlug = selectedDesignStyle;
+  const setSelectedTemplateSlug = setSelectedDesignStyle;
   const [isBuildingProject, setIsBuildingProject] = useState(false);
   const [buildingStep, setBuildingStep] = useState(0);
 
@@ -245,13 +337,20 @@ export function AiWebsiteBuilderStudio({
   const [activeTab, setActiveTab] = useState<'copilot' | 'sections' | 'styles' | 'pages' | 'code'>('copilot');
   const [viewportMode, setViewportMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [zoomScale, setZoomScale] = useState<number>(100);
-  const [isInspectMode, setIsInspectMode] = useState<boolean>(false);
+  const [isInspectMode, setIsInspectMode] = useState<boolean>(true);
   const [selectedElement, setSelectedElement] = useState<{
     sectionId: string;
     label: string;
     text: string;
     tagName: string;
+    elementType?: 'image' | 'heading' | 'text' | 'button' | 'badge' | 'product' | 'section';
+    src?: string;
+    href?: string;
+    selector?: string;
   } | null>(null);
+  const [elementPromptInput, setElementPromptInput] = useState<string>('');
+  const [elementDirectEditValue, setElementDirectEditValue] = useState<string>('');
+  const [elementEditMode, setElementEditMode] = useState<'prompt' | 'direct'>('prompt');
 
   // Left Sidebar Resizing State
   const [sidebarWidth, setSidebarWidth] = useState<number>(510);
@@ -276,11 +375,43 @@ export function AiWebsiteBuilderStudio({
   const [deployStep, setDeployStep] = useState(0);
   const [customProjectSlug, setCustomProjectSlug] = useState('omnistore-storefront');
 
+  // Storefront Multi-Page Navigation State (Home, Catalog, PDP, Story, Reviews)
+  const [activePage, setActivePage] = useState<string>('home');
+  const [selectedPdpProduct, setSelectedPdpProduct] = useState<any>(null);
+  const [pageHistory, setPageHistory] = useState<string[]>(['home']);
+  const [historyIndex, setHistoryIndex] = useState<number>(0);
+
+  const handleNavigatePage = useCallback((target: string, product: any = null) => {
+    setActivePage(target);
+    if (product) setSelectedPdpProduct(product);
+    setPageHistory((prev) => {
+      const nextHistory = [...prev.slice(0, historyIndex + 1), target];
+      setHistoryIndex(nextHistory.length - 1);
+      return nextHistory;
+    });
+  }, [historyIndex]);
+
+  const handleGoBack = useCallback(() => {
+    if (historyIndex > 0) {
+      const prevIdx = historyIndex - 1;
+      setHistoryIndex(prevIdx);
+      setActivePage(pageHistory[prevIdx] || 'home');
+    }
+  }, [historyIndex, pageHistory]);
+
+  const handleGoForward = useCallback(() => {
+    if (historyIndex < pageHistory.length - 1) {
+      const nextIdx = historyIndex + 1;
+      setHistoryIndex(nextIdx);
+      setActivePage(pageHistory[nextIdx] || 'home');
+    }
+  }, [historyIndex, pageHistory]);
+
   // DOM Refs
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const chatMessagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Generated Next.js project code files following storefront-frontend architecture
+  // Generated Next.js project code files with autonomous component architecture
   const projectCodeFiles = useMemo(
     () => (project ? generateNextjsProjectFiles(project) : []),
     [project]
@@ -296,9 +427,28 @@ export function AiWebsiteBuilderStudio({
             theme: project.theme,
             sections: project.sections,
             inspectMode: isInspectMode,
+            activePage,
+            selectedProduct: selectedPdpProduct,
+            logo: project.logo || storeSetup?.logo || undefined,
+            currency: project.currency || storeSetup?.currency || 'USD',
+            contactEmail: project.contactEmail || storeSetup?.contactEmail || undefined,
+            contactPhone: project.contactPhone || storeSetup?.contactPhone || undefined,
+            address:
+              project.address ||
+              [storeSetup?.addressCity, storeSetup?.addressCountry].filter(Boolean).join(', ') ||
+              undefined,
+            socialLinks:
+              project.socialLinks ||
+              (storeSetup
+                ? {
+                    facebook: storeSetup.socialFacebook || '',
+                    instagram: storeSetup.socialInstagram || '',
+                    twitter: storeSetup.socialTwitter || '',
+                  }
+                : undefined),
           })
         : '',
-    [project, isInspectMode]
+    [project, isInspectMode, activePage, selectedPdpProduct, storeSetup]
   );
 
   // Update Iframe srcDoc safely
@@ -313,7 +463,7 @@ export function AiWebsiteBuilderStudio({
     }
   }, [previewHtml, viewportMode]);
 
-  // Handle postMessage communication from sandboxed iframe (Inspect Mode)
+  // Handle postMessage communication from sandboxed iframe (Inspect Mode & Page Navigation)
   useEffect(() => {
     const handleIframeMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === 'ELEMENT_SELECTED') {
@@ -322,8 +472,22 @@ export function AiWebsiteBuilderStudio({
           label: event.data.label,
           text: event.data.text,
           tagName: event.data.tagName,
+          elementType: event.data.elementType,
+          src: event.data.src,
+          href: event.data.href,
+          selector: event.data.selector,
         });
-        setActiveTab('copilot');
+        setElementPromptInput('');
+        setElementDirectEditValue(event.data.src || event.data.text || '');
+        setElementEditMode('prompt');
+      } else if (event.data && event.data.type === 'NAVIGATE_PAGE') {
+        const targetPage = event.data.page || 'home';
+        setActivePage(targetPage);
+        if (event.data.product) {
+          setSelectedPdpProduct(event.data.product);
+        }
+        setPageHistory((prev) => [...prev, targetPage]);
+        setHistoryIndex((prev) => prev + 1);
       }
     };
 
@@ -386,6 +550,131 @@ export function AiWebsiteBuilderStudio({
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDraggingSidebar]);
+
+  // Resume a saved project draft
+  const handleResumeProject = useCallback((savedProjToLoad?: StorefrontProject) => {
+    const proj = savedProjToLoad || savedProjectInfo?.project;
+    if (!proj) return;
+    setProject(proj);
+    lastSavedProjectJsonRef.current = JSON.stringify(proj);
+    setCheckpoints([
+      {
+        id: generateId(),
+        label: 'Resumed Saved Storefront',
+        timestamp: formatTime(),
+        project: JSON.parse(JSON.stringify(proj)),
+      },
+    ]);
+    setCurrentCheckpointIndex(0);
+    const timeFormatted = savedProjectInfo?.savedAt
+      ? new Date(savedProjectInfo.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : formatTime();
+    setLastSavedTime(timeFormatted);
+    setSaveFeedbackMessage('Loaded saved storefront project!');
+    setTimeout(() => setSaveFeedbackMessage(null), 3000);
+  }, [savedProjectInfo]);
+
+  // Discard saved draft
+  const handleDiscardSavedDraft = useCallback(() => {
+    try {
+      localStorage.removeItem('omnistore_ai_website_draft');
+      if (storeSetup?.id) {
+        localStorage.removeItem(`omnistore_ai_website_draft_${storeSetup.id}`);
+      }
+    } catch {}
+    setSavedProjectInfo(null);
+    setSaveFeedbackMessage('Saved draft removed.');
+    setTimeout(() => setSaveFeedbackMessage(null), 2500);
+  }, [storeSetup?.id]);
+
+  // Explicit Save Action (Saves to Database & LocalStorage)
+  const handleSaveProject = useCallback(
+    async (customProj?: StorefrontProject, silent = false) => {
+      const targetProject = customProj || project;
+      if (!targetProject || isSaving) return;
+
+      try {
+        setIsSaving(true);
+        if (!silent) setSaveStatus('saving');
+
+        // 1. Persist immediately to localStorage
+        try {
+          const serialized = JSON.stringify(targetProject);
+          localStorage.setItem('omnistore_ai_website_draft', serialized);
+          if (storeSetup?.id) {
+            localStorage.setItem(`omnistore_ai_website_draft_${storeSetup.id}`, serialized);
+          }
+        } catch (locErr) {
+          console.warn('LocalStorage save failed:', locErr);
+        }
+
+        // 2. Persist to Backend Database
+        const res = await cmsService.saveAiWebsite(targetProject, storeSetup?.id);
+
+        lastSavedProjectJsonRef.current = JSON.stringify(targetProject);
+        const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        setLastSavedTime(timeNow);
+        setSaveStatus('saved');
+
+        if (!silent) {
+          setSaveFeedbackMessage('Storefront project saved to cloud!');
+          setTimeout(() => setSaveFeedbackMessage(null), 3000);
+        }
+
+        setTimeout(() => {
+          setSaveStatus((prev) => (prev === 'saved' ? 'idle' : prev));
+        }, 3000);
+
+        return res;
+      } catch (err: any) {
+        console.error('Failed to save project to cloud:', err);
+        setSaveStatus('error');
+        if (!silent) {
+          setSaveFeedbackMessage('Saved in local cache.');
+          setTimeout(() => setSaveFeedbackMessage(null), 3500);
+        }
+        setTimeout(() => {
+          setSaveStatus('idle');
+        }, 3500);
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [project, isSaving, storeSetup?.id]
+  );
+
+  // Keyboard shortcut Ctrl+S / Cmd+S
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        if (project) {
+          handleSaveProject();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [project, handleSaveProject]);
+
+  // Debounced Auto-Save (5 seconds after user modifications)
+  useEffect(() => {
+    if (!project || !hasUnsavedChanges || isSaving) return;
+
+    // Immediately cache in localStorage so sudden page refresh never loses anything
+    try {
+      localStorage.setItem('omnistore_ai_website_draft', JSON.stringify(project));
+      if (storeSetup?.id) {
+        localStorage.setItem(`omnistore_ai_website_draft_${storeSetup.id}`, JSON.stringify(project));
+      }
+    } catch {}
+
+    const debounceTimer = setTimeout(() => {
+      handleSaveProject(project, true);
+    }, 5000);
+
+    return () => clearTimeout(debounceTimer);
+  }, [project, hasUnsavedChanges, isSaving, handleSaveProject, storeSetup?.id]);
 
   // Add Checkpoint Helper
   const addCheckpoint = useCallback((label: string, updatedProj: StorefrontProject) => {
@@ -697,7 +986,7 @@ export function AiWebsiteBuilderStudio({
 
   /**
    * BUILD APPLICATION FROM INITIAL PROMPT
-   * Scaffolds the storefront application based on storefront-frontend folder structure
+   * Scaffolds an autonomous Next.js website with modular component architecture
    */
   const handleBuildStorefront = async (
     customPrompt?: string,
@@ -707,7 +996,7 @@ export function AiWebsiteBuilderStudio({
     const promptToUse = (customPrompt || initialPromptInput).trim();
     if (!promptToUse && (!overrideImages || overrideImages.length === 0)) return;
 
-    const slugToUse = overrideSlug || selectedTemplateSlug || 'mincom';
+    const slugToUse = overrideSlug || selectedDesignStyle || 'artisan-living';
     const imagesToUse = overrideImages || [...pendingReferenceImages];
 
     setIsBuildingProject(true);
@@ -720,22 +1009,38 @@ export function AiWebsiteBuilderStudio({
     const t4 = setTimeout(() => setBuildingStep(5), 2400);
 
     try {
-      // Find template archetype configuration
+      // Find visual style archetype configuration
       const archetype =
-        STOREFRONT_ARCHETYPES.find((a) => a.slug === slugToUse) || STOREFRONT_ARCHETYPES[0];
+        DESIGN_ARCHETYPES.find((a) => a.slug === slugToUse) || DESIGN_ARCHETYPES[0];
 
-      // Smart brand name derivation
-      let brandName = 'Artisan Craft';
-      let tagline = 'Crafted with Precision for Modern Visionaries';
-      let industry = archetype.category;
+      const lower = promptToUse.toLowerCase();
+      const isMarketplacePrompt =
+        lower.includes('amazon') ||
+        lower.includes('marketplace') ||
+        lower.includes('megamarket') ||
+        lower.includes('flipkart') ||
+        lower.includes('walmart') ||
+        lower.includes('ebay') ||
+        lower.includes('department store') ||
+        lower.includes('mega deals');
+
+      // Smart brand name derivation: prioritize connected store data when user didn't specify an explicit override
+      let brandName = storeSetup?.name || (isMarketplacePrompt ? 'MegaMarket Central' : 'Artisan Craft');
+      let tagline =
+        storeSetup?.description ||
+        (isMarketplacePrompt
+          ? "Earth's Biggest Selection of Electronics, Home, Fashion & Mega Deals"
+          : 'Crafted with Precision for Modern Visionaries');
+      let industry =
+        (storeSetup as any)?.category?.name ||
+        (isMarketplacePrompt ? 'Global E-Commerce & Marketplace' : archetype.category);
 
       const brandMatch = promptToUse.match(
         /(?:called|brand\s+name\s+is|named|brand\s+is)\s+["']?([^"'\n,.]+)["']?/i
       );
       if (brandMatch && brandMatch[1]) {
         brandName = brandMatch[1].trim();
-      } else {
-        const lower = promptToUse.toLowerCase();
+      } else if (!isMarketplacePrompt && !storeSetup?.name) {
         if (lower.includes('coffee') || lower.includes('roast')) {
           brandName = 'RoastCraft Atelier';
           tagline = 'Single-Origin Coffee & Artisanal Pastry Roasters';
@@ -797,9 +1102,18 @@ export function AiWebsiteBuilderStudio({
         }
       }
 
-      // Color overrides from prompt text if explicitly stated
-      const lower = promptToUse.toLowerCase();
-      if (!hasImageExtraction) {
+      // Marketplace default palette or color overrides
+      if (isMarketplacePrompt && !hasImageExtraction) {
+        theme.background = '#EAEDED';
+        theme.cardBg = '#FFFFFF';
+        theme.primary = '#131921';
+        theme.secondary = '#232F3E';
+        theme.textColor = '#0F172A';
+        theme.textMuted = '#565959';
+        theme.accent = '#FF9900';
+        theme.border = '#D5D9D9';
+        theme.borderRadius = '8px';
+      } else if (!hasImageExtraction) {
         if (lower.includes('dark') || lower.includes('obsidian') || lower.includes('black')) {
           theme.background = '#090A0F';
           theme.cardBg = '#12141F';
@@ -820,52 +1134,110 @@ export function AiWebsiteBuilderStudio({
         if (lower.includes('espresso') || lower.includes('terracotta') || lower.includes('amber')) theme.accent = '#C89355';
       }
 
+      // ALWAYS enforce contrast safety so text is never unreadable
+      const enforcedTheme = enforceThemeContrast(theme);
+      Object.assign(theme, enforcedTheme);
+
       // Catalog photography & hero layout based on detected industry
       let heroImage = 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=1200&auto=format&fit=crop';
       let heroLayout = 'split';
       let heroBadge = '✨ SS26 SIGNATURE COLLECTION';
-      let catalogProducts = [
-        {
-          id: 'p-1',
-          name: `${brandName} Signature Edition #1`,
-          category: industry,
-          price: 185,
-          comparePrice: 240,
-          rating: 5.0,
-          badge: 'BESTSELLER',
-          image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop',
-          description: 'Refined craftsmanship crafted with verified sustainable materials.',
-        },
-        {
-          id: 'p-2',
-          name: `${brandName} Atelier Reserve`,
-          category: industry,
-          price: 295,
-          badge: 'LIMITED ALLOCATION',
-          image: 'https://images.unsplash.com/photo-1608248597359-21699f8d55c7?w=600&auto=format&fit=crop',
-          description: 'Special release finished to exacting specifications.',
-        },
-        {
-          id: 'p-3',
-          name: `${brandName} Modern Essential`,
-          category: industry,
-          price: 140,
-          comparePrice: 175,
-          image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&auto=format&fit=crop',
-          description: 'Designed for daily luxury and enduring aesthetic balance.',
-        },
-        {
-          id: 'p-4',
-          name: `${brandName} Grand Masterwork`,
-          category: industry,
-          price: 450,
-          badge: 'EXCLUSIVE',
-          image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop',
-          description: 'Our pinnacle achievement in modern design distinction.',
-        },
-      ];
 
-      if (industry.includes('Coffee') || lower.includes('coffee') || lower.includes('roast')) {
+      // 0. MAP REAL STORE PRODUCTS IF AVAILABLE IN DATABASE
+      let realCatalogProducts: any[] = [];
+      if (dbProducts && dbProducts.length > 0) {
+        realCatalogProducts = dbProducts.slice(0, 16).map((p, idx) => {
+          let img = 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop';
+          if (Array.isArray(p.images) && p.images.length > 0) {
+            img = p.images[0];
+          } else if (p.image) {
+            img = p.image;
+          } else if (typeof (p.images as any) === 'string' && (p.images as any).trim()) {
+            try {
+              const parsed = JSON.parse(p.images as any);
+              if (Array.isArray(parsed) && parsed.length > 0) img = parsed[0];
+              else img = p.images as any;
+            } catch {
+              img = p.images as any;
+            }
+          }
+          return {
+            id: p.id || `real-p-${idx + 1}`,
+            name: p.name,
+            category: p.categoryName || (p as any).category?.name || industry,
+            price: Number(p.price) || 0,
+            comparePrice: p.compareAtPrice ? Number(p.compareAtPrice) : undefined,
+            rating: 5.0,
+            badge: idx === 0 ? 'BESTSELLER' : p.compareAtPrice ? 'SPECIAL DEAL' : undefined,
+            image: img,
+            description: p.description || `Authentic ${p.name} from our verified store collection.`,
+          };
+        });
+      }
+
+      let catalogProducts: any[] =
+        realCatalogProducts.length > 0
+          ? realCatalogProducts
+          : [
+              {
+                id: 'p-1',
+                name: `${brandName} Signature Edition #1`,
+                category: industry,
+                price: 185,
+                comparePrice: 240,
+                rating: 5.0,
+                badge: 'BESTSELLER',
+                image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop',
+                description: 'Refined craftsmanship crafted with verified sustainable materials.',
+              },
+              {
+                id: 'p-2',
+                name: `${brandName} Atelier Reserve`,
+                category: industry,
+                price: 295,
+                badge: 'LIMITED ALLOCATION',
+                image: 'https://images.unsplash.com/photo-1608248597359-21699f8d55c7?w=600&auto=format&fit=crop',
+                description: 'Special release finished to exacting specifications.',
+              },
+              {
+                id: 'p-3',
+                name: `${brandName} Modern Essential`,
+                category: industry,
+                price: 140,
+                comparePrice: 175,
+                image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&auto=format&fit=crop',
+                description: 'Designed for daily luxury and enduring aesthetic balance.',
+              },
+              {
+                id: 'p-4',
+                name: `${brandName} Grand Masterwork`,
+                category: industry,
+                price: 450,
+                badge: 'EXCLUSIVE',
+                image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop',
+                description: 'Our pinnacle achievement in modern design distinction.',
+              },
+            ];
+
+      if (realCatalogProducts.length > 0) {
+        if (realCatalogProducts[0]?.image) {
+          heroImage = realCatalogProducts[0].image;
+        }
+        if (isMarketplacePrompt) {
+          heroBadge = '⚡ GREAT FESTIVAL EDITION';
+          heroLayout = 'marketplace';
+        }
+      } else if (isMarketplacePrompt || industry.includes('Marketplace')) {
+        heroImage = 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&auto=format&fit=crop';
+        heroBadge = '⚡ GREAT FESTIVAL EDITION';
+        heroLayout = 'marketplace';
+        catalogProducts = [
+          { id: 'm-1', name: 'UltraHD 4K Smart OLED Television (55-inch)', category: 'Electronics', price: 649, comparePrice: 899, badge: '55% OFF', rating: 4.9, image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=600&auto=format&fit=crop', description: 'Quantum HDR with Dolby Vision Atmos and Alexa built-in.' },
+          { id: 'm-2', name: 'AeroPulse ANC Wireless Over-Ear Headphones', category: 'Audio', price: 149, comparePrice: 229, badge: 'DEAL OF DAY', rating: 4.8, image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop', description: 'Active Noise Cancellation with 40-hour ultra-battery life.' },
+          { id: 'm-3', name: 'Smart Digital Air Fryer XL (6.5 Qt)', category: 'Home & Kitchen', price: 79, comparePrice: 129, badge: 'BEST SELLER', rating: 4.9, image: 'https://images.unsplash.com/photo-1584269600519-112d071b35e6?w=600&auto=format&fit=crop', description: '12 one-touch cooking presets with crisp non-stick basket.' },
+          { id: 'm-4', name: 'Tactile Wireless Mechanical RGB Keyboard', category: 'Computers', price: 69, comparePrice: 119, badge: 'LIGHTNING DEAL', rating: 4.7, image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&auto=format&fit=crop', description: 'Hot-swappable switches with multi-device Bluetooth 5.2.' },
+        ];
+      } else if (industry.includes('Coffee') || lower.includes('coffee') || lower.includes('roast')) {
         heroImage = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&auto=format&fit=crop';
         heroBadge = '☕ SINGLE-ORIGIN HARVEST';
         catalogProducts = [
@@ -912,170 +1284,333 @@ export function AiWebsiteBuilderStudio({
         ];
       }
 
-      // Build tailored storefront sections matching the brand
-      const sections: StorefrontSection[] = [
-        {
-          id: 'announcement',
-          name: 'Announcement Bar',
-          type: 'announcement',
-          title: `Complimentary Insured Shipping on All ${brandName} Orders Over $150`,
-          subtitle: 'Limited Drop Edition • 24/7 Concierge Support',
-          enabled: true,
-          contentJson: {
-            badge: heroBadge.split(' ')[0] || 'FEATURED',
-            text: `Complimentary Insured Shipping on All ${brandName} Orders Over $150`,
-            ctaText: 'Explore Catalog →',
-            ctaLink: '#products',
+      // Build tailored storefront sections matching the brand and requested architecture
+      let sections: StorefrontSection[] = [];
+
+      if (isMarketplacePrompt) {
+        sections = [
+          {
+            id: 'marketplace_header',
+            name: 'Amazon Marketplace Navigation Header',
+            type: 'marketplace_header' as any,
+            title: brandName,
+            subtitle: industry,
+            enabled: true,
+            contentJson: { isMarketplace: true },
           },
-        },
-        {
-          id: 'header',
-          name: 'Storefront Navigation Header',
-          type: 'header',
-          title: brandName,
-          subtitle: industry,
-          enabled: true,
-          contentJson: {
-            logoText: brandName.toUpperCase(),
-            links: [
-              { label: 'Catalog', href: '#products' },
-              { label: 'Why Us', href: '#features' },
-              { label: 'Reviews', href: '#reviews' },
-            ],
+          {
+            id: 'hero',
+            name: 'Festival Mega Deals Banner',
+            type: 'hero',
+            title: 'Great Festival Edition — Mega Deals Live Now',
+            subtitle: 'Discover unmatched savings across electronics, home appliances, fashion, and daily essentials with up to 80% off.',
+            enabled: true,
+            contentJson: {
+              badge: 'LIMITED TIME EVENT',
+              primaryCta: 'Shop All Deals',
+              primaryLink: '#deals',
+              secondaryCta: 'Explore Best Sellers',
+              secondaryLink: '#products',
+              heroLayout: 'marketplace',
+              heroImage: heroImage,
+              isMarketplace: true,
+            },
           },
-        },
-        {
-          id: 'hero',
-          name: 'Hero Section',
-          type: 'hero',
-          title: tagline,
-          subtitle: `Welcome to ${brandName}. Handcrafted with uncompromising dedication to quality, aesthetic distinction, and timeless appeal.`,
-          enabled: true,
-          contentJson: {
-            badge: heroBadge,
-            primaryCta: 'Explore Collection',
-            primaryLink: '#products',
-            secondaryCta: 'Read Customer Reviews',
-            secondaryLink: '#reviews',
-            heroLayout: heroLayout,
-            heroImage: heroImage,
-            stats: [
-              { label: 'Happy Customers', value: '18,500+' },
-              { label: 'Fast Delivery', value: 'Global' },
-              { label: 'Satisfaction', value: '4.98 / 5.0' },
-            ],
+          {
+            id: 'marketplace_grid',
+            name: 'Amazon 4-Box Category Deals Grid',
+            type: 'marketplace_grid' as any,
+            title: 'Curated Category Deals',
+            enabled: true,
+            contentJson: { isMarketplace: true },
           },
-        },
-        {
-          id: 'products',
-          name: 'Product Showcase',
-          type: 'products',
-          title: 'Curated Catalog Drops',
-          subtitle: `Explore signature ${brandName} pieces crafted with finest sustainable materials.`,
-          enabled: true,
-          contentJson: {
-            badge: 'FEATURED DROPS',
-            products: catalogProducts,
-            categories: ['All', ...Array.from(new Set(catalogProducts.map((p) => p.category)))],
+          {
+            id: 'lightning_deals',
+            name: "Today's Lightning Deals",
+            type: 'lightning_deals' as any,
+            title: "Today's Lightning Deals",
+            enabled: true,
+            contentJson: { isMarketplace: true },
           },
-        },
-        {
-          id: 'features',
-          name: 'Brand Guarantees & Standards',
-          type: 'features',
-          title: `The ${brandName} Promise`,
-          subtitle: 'Engineered without compromise. Designed for life.',
-          enabled: true,
-          contentJson: {
-            pillars: [
-              { title: 'Conscious Craftsmanship', desc: 'Sustainably sourced with verified ethical traceability.' },
-              { title: 'Worldwide Express Delivery', desc: 'Secure insured door-to-door delivery with live tracking.' },
-              { title: '100% Satisfaction Guarantee', desc: '30-day effortless returns with zero restocking fees.' },
-              { title: 'Direct VIP Concierge', desc: 'Real human support available 24/7 on live chat and WhatsApp.' },
-            ],
+          {
+            id: 'products',
+            name: 'Featured Category Drops',
+            type: 'products',
+            title: 'Featured Category Drops',
+            subtitle: 'Handpicked verified authentic products with Prime fast delivery.',
+            enabled: true,
+            contentJson: {
+              badge: 'PRIME EXCLUSIVE',
+              products: catalogProducts,
+              categories: [
+                'All',
+                ...Array.from(
+                  new Set([
+                    ...(dbCategories?.map((c: any) => c.name) || []),
+                    ...catalogProducts.map((p) => p.category),
+                  ])
+                ),
+              ],
+            },
           },
-        },
-        {
-          id: 'reviews',
-          name: 'Verified Customer Reviews',
-          type: 'reviews',
-          title: 'Client Appraisals & Accolades',
-          subtitle: 'Over 1,850+ five-star reviews from verified buyers worldwide.',
-          enabled: true,
-          contentJson: {
-            averageRating: 4.98,
-            reviews: [
-              {
-                author: 'Eleanor Vance',
-                location: 'Zurich, Switzerland',
-                rating: 5,
-                text: `The finishing and attention to detail from ${brandName} surpasses expectations. Seamless delivery and magnificent presentation.`,
-                date: 'Yesterday',
-              },
-              {
-                author: 'Marcus Chen',
-                location: 'San Francisco, CA',
-                rating: 5,
-                text: 'From unboxing to daily use, the quality speaks for itself. Simply exceptional.',
-                date: '3 days ago',
-              },
-              {
-                author: 'Sybilla Roux',
-                location: 'Paris, France',
-                rating: 5,
-                text: 'A masterclass in modern digital commerce and artisanal craftsmanship.',
-                date: '1 week ago',
-              },
-            ],
+          {
+            id: 'features',
+            name: 'Marketplace Trust & Guarantees',
+            type: 'features',
+            title: `The ${brandName} Advantage`,
+            subtitle: 'Shop with total confidence and buyer protection on every order.',
+            enabled: true,
+            contentJson: {
+              pillars: [
+                { title: 'Prime 1-Day Free Delivery', desc: 'Fast, insured doorstep delivery with live GPS order tracking.' },
+                { title: '100% Genuine Certified', desc: 'Direct from authorized manufacturers with genuine warranty.' },
+                { title: '30-Day Effortless Returns', desc: 'Hassle-free instant return pickup with zero questions asked.' },
+                { title: '24/7 Priority Concierge', desc: 'Round-the-clock live chat, WhatsApp, and phone support.' },
+              ],
+            },
           },
-        },
-        {
-          id: 'whatsapp_cta',
-          name: 'WhatsApp Concierge',
-          type: 'whatsapp_cta',
-          title: 'Speak With Our Concierge Team',
-          subtitle: 'Instant guidance, custom recommendations, and orders via WhatsApp.',
-          enabled: true,
-          contentJson: {
-            buttonText: `Chat With ${brandName}`,
+          {
+            id: 'reviews',
+            name: 'Verified Customer Reviews',
+            type: 'reviews',
+            title: 'Customer Feedback & Ratings',
+            subtitle: 'Over 50,000+ verified customer ratings across all departments.',
+            enabled: true,
+            contentJson: {
+              averageRating: 4.92,
+              reviews: [
+                {
+                  author: 'Marcus K.',
+                  location: 'Seattle, WA',
+                  rating: 5,
+                  text: 'Lightning-fast delivery and pristine packaging. The 4K TV arrived in under 24 hours!',
+                  date: 'Yesterday',
+                },
+                {
+                  author: 'Sophia Chen',
+                  location: 'Austin, TX',
+                  rating: 5,
+                  text: 'Best prices online during this festival event. Claimed 2 lightning deals without hitch.',
+                  date: '2 days ago',
+                },
+                {
+                  author: 'Liam Davies',
+                  location: 'Chicago, IL',
+                  rating: 5,
+                  text: 'Seamless checkout and genuine authentic goods. Highly recommended marketplace!',
+                  date: '1 week ago',
+                },
+              ],
+            },
           },
-        },
-        {
-          id: 'newsletter',
-          name: 'VIP Newsletter Dispatch',
-          type: 'newsletter',
-          title: `Join The ${brandName} Dispatch`,
-          subtitle: 'Private collection drops, secret releases, and seasonal invitations directly to your inbox.',
-          enabled: true,
-          contentJson: {
-            badge: 'VIP ACCESS',
-            buttonText: 'Subscribe Now',
-            disclaimer: 'Zero spam. Unsubscribe at any time with 1-click.',
+          {
+            id: 'newsletter',
+            name: 'Deals & Savings Newsletter',
+            type: 'newsletter',
+            title: 'Never Miss a Lightning Deal',
+            subtitle: 'Sign up to receive flash deal alerts, coupons, and seasonal sales delivered daily.',
+            enabled: true,
+            contentJson: {
+              badge: 'VIP DISPATCH',
+              buttonText: 'Get Daily Deals',
+              disclaimer: 'Unsubscribe at any time with 1-click.',
+            },
           },
-        },
-        {
-          id: 'footer',
-          name: 'Storefront Footer',
-          type: 'footer',
-          title: brandName,
-          subtitle: tagline,
-          enabled: true,
-          contentJson: {
-            copyright: `© ${new Date().getFullYear()} ${brandName}. Powered by OmniStore Headless Engine.`,
+          {
+            id: 'footer',
+            name: 'Marketplace Footer',
+            type: 'footer',
+            title: brandName,
+            subtitle: tagline,
+            enabled: true,
+            contentJson: {
+              isMarketplace: true,
+              copyright: `© ${new Date().getFullYear()} ${brandName}, Inc. or its affiliates. All rights reserved.`,
+            },
           },
-        },
-      ];
+        ];
+      } else {
+        sections = [
+          {
+            id: 'announcement',
+            name: 'Announcement Bar',
+            type: 'announcement',
+            title: `Complimentary Insured Shipping on All ${brandName} Orders Over $150`,
+            subtitle: 'Limited Drop Edition • 24/7 Concierge Support',
+            enabled: true,
+            contentJson: {
+              badge: heroBadge.split(' ')[0] || 'FEATURED',
+              text: `Complimentary Insured Shipping on All ${brandName} Orders Over $150`,
+              ctaText: 'Explore Catalog →',
+              ctaLink: '#products',
+            },
+          },
+          {
+            id: 'header',
+            name: 'Storefront Navigation Header',
+            type: 'header',
+            title: brandName,
+            subtitle: industry,
+            enabled: true,
+            contentJson: {
+              logoText: brandName.toUpperCase(),
+              links: [
+                { label: 'Catalog', href: '#products' },
+                { label: 'Why Us', href: '#features' },
+                { label: 'Reviews', href: '#reviews' },
+              ],
+            },
+          },
+          {
+            id: 'hero',
+            name: 'Hero Section',
+            type: 'hero',
+            title: tagline,
+            subtitle: `Welcome to ${brandName}. Handcrafted with uncompromising dedication to quality, aesthetic distinction, and timeless appeal.`,
+            enabled: true,
+            contentJson: {
+              badge: heroBadge,
+              primaryCta: 'Explore Collection',
+              primaryLink: '#products',
+              secondaryCta: 'Read Customer Reviews',
+              secondaryLink: '#reviews',
+              heroLayout: heroLayout,
+              heroImage: heroImage,
+              stats: [
+                { label: 'Happy Customers', value: '18,500+' },
+                { label: 'Fast Delivery', value: 'Global' },
+                { label: 'Satisfaction', value: '4.98 / 5.0' },
+              ],
+            },
+          },
+          {
+            id: 'products',
+            name: 'Product Showcase',
+            type: 'products',
+            title: 'Curated Catalog Drops',
+            subtitle: `Explore signature ${brandName} pieces crafted with finest sustainable materials.`,
+            enabled: true,
+            contentJson: {
+              badge: 'FEATURED DROPS',
+              products: catalogProducts,
+              categories: [
+                'All',
+                ...Array.from(
+                  new Set([
+                    ...(dbCategories?.map((c: any) => c.name) || []),
+                    ...catalogProducts.map((p) => p.category),
+                  ])
+                ),
+              ],
+            },
+          },
+          {
+            id: 'features',
+            name: 'Brand Guarantees & Standards',
+            type: 'features',
+            title: `The ${brandName} Promise`,
+            subtitle: 'Engineered without compromise. Designed for life.',
+            enabled: true,
+            contentJson: {
+              pillars: [
+                { title: 'Conscious Craftsmanship', desc: 'Sustainably sourced with verified ethical traceability.' },
+                { title: 'Worldwide Express Delivery', desc: 'Secure insured door-to-door delivery with live tracking.' },
+                { title: '100% Satisfaction Guarantee', desc: '30-day effortless returns with zero restocking fees.' },
+                { title: 'Direct VIP Concierge', desc: 'Real human support available 24/7 on live chat and WhatsApp.' },
+              ],
+            },
+          },
+          {
+            id: 'reviews',
+            name: 'Verified Customer Reviews',
+            type: 'reviews',
+            title: 'Client Appraisals & Accolades',
+            subtitle: 'Over 1,850+ five-star reviews from verified buyers worldwide.',
+            enabled: true,
+            contentJson: {
+              averageRating: 4.98,
+              reviews: [
+                {
+                  author: 'Eleanor Vance',
+                  location: 'Zurich, Switzerland',
+                  rating: 5,
+                  text: `The finishing and attention to detail from ${brandName} surpasses expectations. Seamless delivery and magnificent presentation.`,
+                  date: 'Yesterday',
+                },
+                {
+                  author: 'Marcus Chen',
+                  location: 'San Francisco, CA',
+                  rating: 5,
+                  text: 'From unboxing to daily use, the quality speaks for itself. Simply exceptional.',
+                  date: '3 days ago',
+                },
+                {
+                  author: 'Sybilla Roux',
+                  location: 'Paris, France',
+                  rating: 5,
+                  text: 'A masterclass in modern digital commerce and artisanal craftsmanship.',
+                  date: '1 week ago',
+                },
+              ],
+            },
+          },
+          {
+            id: 'whatsapp_cta',
+            name: 'WhatsApp Concierge',
+            type: 'whatsapp_cta',
+            title: 'Speak With Our Concierge Team',
+            subtitle: 'Instant guidance, custom recommendations, and orders via WhatsApp.',
+            enabled: true,
+            contentJson: {
+              buttonText: `Chat With ${brandName}`,
+              phoneNumber: storeSetup?.contactPhone || undefined,
+            },
+          },
+          {
+            id: 'newsletter',
+            name: 'VIP Newsletter Dispatch',
+            type: 'newsletter',
+            title: `Join The ${brandName} Dispatch`,
+            subtitle: 'Private collection drops, secret releases, and seasonal invitations directly to your inbox.',
+            enabled: true,
+            contentJson: {
+              badge: 'VIP ACCESS',
+              buttonText: 'Subscribe Now',
+              disclaimer: 'Zero spam. Unsubscribe at any time with 1-click.',
+            },
+          },
+          {
+            id: 'footer',
+            name: 'Storefront Footer',
+            type: 'footer',
+            title: brandName,
+            subtitle: tagline,
+            enabled: true,
+            contentJson: {
+              copyright: `© ${new Date().getFullYear()} ${brandName}. Powered by OmniStore Headless Engine.`,
+              contactEmail: storeSetup?.contactEmail || undefined,
+              contactPhone: storeSetup?.contactPhone || undefined,
+              address:
+                [storeSetup?.addressCity, storeSetup?.addressCountry].filter(Boolean).join(', ') ||
+                undefined,
+            },
+          },
+        ];
+      }
 
       // 2. MULTIMODAL VISION DECOMPOSITION VIA BACKEND API (GEMINI / OPENAI)
       let visionAppliedSteps: string[] = [];
       if (imagesToUse.length > 0) {
         try {
           const visionRes = await cmsService.chatAiWebsite({
-            message: promptToUse || 'Decompose this reference image in detail. Extract store concept, brand name, color palette, typography, hero layout, and industry products to match.',
+            message:
+              promptToUse ||
+              'Decompose this reference image in detail. Extract store concept, brand name, color palette, typography, hero layout, and industry products to match.',
             provider: aiProvider,
             referenceImages: imagesToUse,
             currentTheme: theme,
             currentSections: sections,
+            storeId: storeSetup?.id,
           });
 
           if (visionRes && visionRes.success && visionRes.project) {
@@ -1102,32 +1637,59 @@ export function AiWebsiteBuilderStudio({
               if (th.borderRadius) theme.borderRadius = th.borderRadius;
             }
 
-            // Sync sections returned by Vision AI (including customized hero and products)
-            if (visionRes.project.pages?.[0]?.sections) {
+            // CRITICAL: Always enforce contrast after merging vision theme
+            const safeTheme = enforceThemeContrast(theme);
+            Object.assign(theme, safeTheme);
+
+            // Sync sections returned by Vision AI (including customized hero, customHtml, and products)
+            if (visionRes.project.pages?.[0]?.sections && visionRes.project.pages[0].sections.length > 0) {
               const backendSections = visionRes.project.pages[0].sections;
-              backendSections.forEach((bs: any) => {
-                const existing = sections.find((s) => s.id === bs.id);
-                if (existing) {
-                  if (bs.title) existing.title = bs.title;
-                  if (bs.subtitle) existing.subtitle = bs.subtitle;
-                  if (bs.contentJson) {
-                    existing.contentJson = {
-                      ...existing.contentJson,
-                      ...bs.contentJson,
-                    };
+              const hasMarketplaceSecs = backendSections.some(
+                (s: any) => s.id === 'marketplace_header' || s.id === 'marketplace_grid' || s.type === 'marketplace_header'
+              );
+              const hasCustomSections = backendSections.some((s: any) => s.customHtml);
+              const shouldAdoptEntireLayout =
+                imagesToUse.length > 0 || hasMarketplaceSecs || isMarketplacePrompt || hasCustomSections;
+
+              if (shouldAdoptEntireLayout) {
+                // Ensure no duplicate header and preserve exact layout ordering from vision analysis
+                sections = backendSections.map((bs: any) => ({
+                  id: bs.id || `sec-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                  name: bs.name || bs.title || 'Section',
+                  type: bs.type,
+                  title: bs.title || '',
+                  subtitle: bs.subtitle || '',
+                  enabled: bs.enabled !== false,
+                  contentJson: bs.contentJson || {},
+                  customHtml: bs.customHtml,
+                }));
+              } else {
+                backendSections.forEach((bs: any) => {
+                  const existing = sections.find((s) => s.id === bs.id || s.type === bs.id || s.type === bs.type);
+                  if (existing) {
+                    if (bs.title) existing.title = bs.title;
+                    if (bs.subtitle) existing.subtitle = bs.subtitle;
+                    if (bs.contentJson) {
+                      existing.contentJson = {
+                        ...existing.contentJson,
+                        ...bs.contentJson,
+                      };
+                    }
+                    if (bs.customHtml) existing.customHtml = bs.customHtml;
+                  } else if (bs.type) {
+                    sections.push({
+                      id: bs.id || `sec-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                      name: bs.name || bs.title || 'New Section',
+                      type: bs.type,
+                      title: bs.title || 'Featured Content',
+                      subtitle: bs.subtitle || '',
+                      enabled: true,
+                      contentJson: bs.contentJson || {},
+                      customHtml: bs.customHtml,
+                    });
                   }
-                } else if (bs.type) {
-                  sections.push({
-                    id: bs.id || `sec-${Date.now()}`,
-                    name: bs.title || bs.name || 'New Section',
-                    type: bs.type,
-                    title: bs.title || 'Featured Content',
-                    subtitle: bs.subtitle || '',
-                    enabled: true,
-                    contentJson: bs.contentJson || {},
-                  });
-                }
-              });
+                });
+              }
             }
 
             if (Array.isArray(visionRes.appliedChanges) && visionRes.appliedChanges.length > 0) {
@@ -1140,10 +1702,11 @@ export function AiWebsiteBuilderStudio({
       }
 
       const newProj: StorefrontProject = {
-        id: `${brandName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-storefront`,
+        id: `${brandName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-website`,
         brandName,
         tagline,
         industry,
+        designStyle: slugToUse,
         templateSlug: slugToUse,
         theme,
         sections,
@@ -1154,6 +1717,28 @@ export function AiWebsiteBuilderStudio({
           { slug: 'story', title: 'Atelier Story' },
           { slug: 'reviews', title: 'Reviews' },
         ],
+        logo: storeSetup?.logo || undefined,
+        currency: storeSetup?.currency || 'USD',
+        currencySymbol:
+          storeSetup?.currency === 'INR'
+            ? '₹'
+            : storeSetup?.currency === 'EUR'
+            ? '€'
+            : storeSetup?.currency === 'GBP'
+            ? '£'
+            : '$',
+        contactEmail: storeSetup?.contactEmail || undefined,
+        contactPhone: storeSetup?.contactPhone || undefined,
+        address:
+          [storeSetup?.addressCity, storeSetup?.addressCountry].filter(Boolean).join(', ') ||
+          undefined,
+        socialLinks: storeSetup
+          ? {
+              facebook: storeSetup.socialFacebook || '',
+              instagram: storeSetup.socialInstagram || '',
+              twitter: storeSetup.socialTwitter || '',
+            }
+          : undefined,
         updatedAt: new Date().toISOString(),
       };
 
@@ -1161,6 +1746,8 @@ export function AiWebsiteBuilderStudio({
       await new Promise((r) => setTimeout(r, 1600));
 
       setProject(newProj);
+      lastSavedProjectJsonRef.current = JSON.stringify(newProj);
+      handleSaveProject(newProj, true).catch(() => null);
       setCheckpoints([
         {
           id: 'init-prompt',
@@ -1172,16 +1759,22 @@ export function AiWebsiteBuilderStudio({
       setCurrentCheckpointIndex(0);
 
       // Initialize AI copilot chat
-      const chatGreetingSteps = visionAppliedSteps.length > 0
-        ? visionAppliedSteps
-        : [
-            imagesToUse.length > 0
-              ? 'Analyzed reference image visual palette & contrast hierarchy'
-              : `Parsed prompt: "${promptToUse.slice(0, 50)}..."`,
-            `Configured ${industry} catalog and responsive sections`,
-            `Applied design palette: Background ${theme.background}, Accent ${theme.accent}`,
-            `Compiled live sandboxed browser preview`,
-          ];
+      const chatGreetingSteps =
+        visionAppliedSteps.length > 0
+          ? visionAppliedSteps
+          : [
+              ...(storeSetup?.name
+                ? [
+                    `Connected live store identity: **${storeSetup.name}** (${dbProducts.length} live products, ${storeSetup.currency || 'USD'})`,
+                  ]
+                : []),
+              imagesToUse.length > 0
+                ? 'Analyzed reference image visual palette & contrast hierarchy'
+                : `Parsed prompt: "${promptToUse.slice(0, 50)}..."`,
+              `Configured ${industry} catalog and responsive layout`,
+              `Applied design palette: Background ${theme.background}, Accent ${theme.accent}, Text ${theme.textColor}`,
+              `Compiled live sandboxed browser preview`,
+            ];
 
       setChatMessages([
         {
@@ -1197,8 +1790,8 @@ export function AiWebsiteBuilderStudio({
           text: `🎉 Welcome to your new **${brandName}** storefront!\n\n${
             imagesToUse.length > 0
               ? `I've analyzed your attached reference image and styled your storefront to mirror its visual aesthetic and color palette.`
-              : `I've generated your complete application based on our Next.js 16 storefront multi-template architecture.`
-          }\n\n✨ **What was engineered:**\n• **Store Niche**: ${industry}\n• **Design Palette**: Background \`${theme.background}\`, Accent \`${theme.accent}\`, Text \`${theme.textColor}\`\n• **Typography**: Heading \`${theme.headingFont}\`, Body \`${theme.bodyFont}\`\n• **App Router files**: \`app/layout.tsx\`, \`app/page.tsx\`, \`app/globals.css\`\n• **Template components**: \`templates/${slugToUse}/Header.tsx\`, \`HomePage.tsx\`, \`ProductCard.tsx\`, \`Footer.tsx\`\n\nTake a look at the live interactive preview on the right, inspect the code in the **Code** tab, or ask me to refine any element below!`,
+              : `I've generated your custom storefront matching your exact prompt and visual reference.`
+          }\n\n✨ **What was engineered:**\n• **Store Niche**: ${industry}\n• **Design Palette**: Background \`${theme.background}\`, Accent \`${theme.accent}\`, Text \`${theme.textColor}\`\n• **Typography**: Heading \`${theme.headingFont}\`, Body \`${theme.bodyFont}\`\n• **App Router Architecture**: \`app/layout.tsx\`, \`app/page.tsx\`, \`app/globals.css\`\n• **Modular Components**: \`components/${isMarketplacePrompt ? 'MarketplaceHeader.tsx' : 'Navbar.tsx'}\`, \`components/Hero.tsx\`${isMarketplacePrompt ? ', `components/MarketplaceDealsGrid.tsx`, `components/LightningDeals.tsx`' : ''}, \`components/ProductCard.tsx\`, \`components/Footer.tsx\`\n\nTake a look at the live interactive preview on the right, inspect the code in the **Code** tab, or ask me to refine any element below!`,
           time: formatTime(),
           provider: aiProvider,
           steps: chatGreetingSteps,
@@ -1266,6 +1859,32 @@ export function AiWebsiteBuilderStudio({
 
       const lower = finalPrompt.toLowerCase();
 
+      // Detect conversational storefront page navigation intent
+      if (
+        lower.includes('product detail') ||
+        lower.includes('pdp') ||
+        lower.includes('product description') ||
+        lower.includes('single product') ||
+        lower.includes('view product')
+      ) {
+        handleNavigatePage('pdp');
+      } else if (
+        lower.includes('catalog') ||
+        lower.includes('products page') ||
+        lower.includes('listing page') ||
+        lower.includes('all products') ||
+        lower.includes('collection page') ||
+        lower.includes('shop page')
+      ) {
+        handleNavigatePage('products');
+      } else if (lower.includes('brand story') || lower.includes('story page') || lower.includes('about page') || lower.includes('heritage')) {
+        handleNavigatePage('story');
+      } else if (lower.includes('reviews page') || lower.includes('customer reviews') || lower.includes('testimonials page')) {
+        handleNavigatePage('reviews');
+      } else if (lower.includes('home page') || lower.includes('homepage') || lower.includes('landing page') || lower.includes('back to home')) {
+        handleNavigatePage('home');
+      }
+
       try {
         // Build history for backend API
         const historyForApi = chatMessages
@@ -1282,9 +1901,22 @@ export function AiWebsiteBuilderStudio({
           provider: aiProvider,
           brandName: project.brandName,
           industry: project.industry,
+          storeId: storeSetup?.id,
           referenceImages: imagesToProcess.length > 0 ? imagesToProcess : undefined,
           currentTheme: project.theme,
           currentSections: project.sections,
+          selectedElement: selectedElement
+            ? {
+                sectionId: selectedElement.sectionId,
+                label: selectedElement.label,
+                tagName: selectedElement.tagName,
+                text: selectedElement.text,
+                elementType: selectedElement.elementType,
+                src: selectedElement.src,
+                href: selectedElement.href,
+                selector: selectedElement.selector,
+              }
+            : undefined,
         });
 
         if (response && response.success) {
@@ -1298,14 +1930,41 @@ export function AiWebsiteBuilderStudio({
             if (response.project?.theme) {
               const th = response.project.theme;
               if (th.primary) updatedProj.theme.primary = th.primary;
+              if (th.secondary) updatedProj.theme.secondary = th.secondary;
               if (th.accent) updatedProj.theme.accent = th.accent;
               if (th.background) updatedProj.theme.background = th.background;
               if (th.cardBg) updatedProj.theme.cardBg = th.cardBg;
               if (th.textColor) updatedProj.theme.textColor = th.textColor;
+              if (th.textMuted) updatedProj.theme.textMuted = th.textMuted;
+              if (th.border) updatedProj.theme.border = th.border;
               if (th.headingFont) updatedProj.theme.headingFont = th.headingFont;
               if (th.bodyFont) updatedProj.theme.bodyFont = th.bodyFont;
               if (th.borderRadius) updatedProj.theme.borderRadius = th.borderRadius;
             }
+
+            // Detect Amazon / Marketplace refinement in prompt
+            const isMarketplaceChat =
+              lower.includes('amazon') ||
+              lower.includes('marketplace') ||
+              lower.includes('megamarket') ||
+              lower.includes('flipkart') ||
+              lower.includes('walmart') ||
+              lower.includes('ebay');
+
+            if (isMarketplaceChat) {
+              updatedProj.theme.background = '#EAEDED';
+              updatedProj.theme.cardBg = '#FFFFFF';
+              updatedProj.theme.primary = '#131921';
+              updatedProj.theme.secondary = '#232F3E';
+              updatedProj.theme.textColor = '#0F172A';
+              updatedProj.theme.textMuted = '#565959';
+              updatedProj.theme.accent = '#FF9900';
+              updatedProj.theme.border = '#D5D9D9';
+              updatedProj.theme.borderRadius = '8px';
+            }
+
+            // CRITICAL: Always enforce contrast so text is readable
+            updatedProj.theme = enforceThemeContrast(updatedProj.theme);
 
             // Apply brand name or tagline if specified
             if (response.project?.brandName && response.project.brandName !== 'Velvet Haute') {
@@ -1318,30 +1977,57 @@ export function AiWebsiteBuilderStudio({
             // Sync sections if returned
             if (response.project?.pages?.[0]?.sections && response.project.pages[0].sections.length > 0) {
               const backendSections = response.project.pages[0].sections;
-              backendSections.forEach((bs: any) => {
-                const existing = updatedProj.sections.find((s) => s.id === bs.id);
-                if (existing) {
-                  if (bs.title) existing.title = bs.title;
-                  if (bs.subtitle) existing.subtitle = bs.subtitle;
-                  if (bs.enabled !== undefined) existing.enabled = bs.enabled;
-                  if (bs.contentJson) {
-                    existing.contentJson = {
-                      ...existing.contentJson,
-                      ...bs.contentJson,
-                    };
+              const hasMarketplaceSecs = backendSections.some(
+                (s: any) => s.id === 'marketplace_header' || s.id === 'marketplace_grid' || s.type === 'marketplace_header'
+              );
+              const hasCustomSections = backendSections.some((s: any) => s.customHtml);
+              const shouldReplaceEntireSections =
+                imagesToProcess.length > 0 ||
+                hasMarketplaceSecs ||
+                isMarketplaceChat ||
+                hasCustomSections ||
+                backendSections.length !== updatedProj.sections.length;
+
+              if (shouldReplaceEntireSections) {
+                // Reconcile complete layout preserving customHtml and proper section ordering
+                updatedProj.sections = backendSections.map((bs: any) => ({
+                  id: bs.id || `section-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                  name: bs.name || bs.title || 'Section',
+                  type: bs.type,
+                  title: bs.title || '',
+                  subtitle: bs.subtitle || '',
+                  enabled: bs.enabled !== false,
+                  contentJson: bs.contentJson || {},
+                  customHtml: bs.customHtml,
+                }));
+              } else {
+                backendSections.forEach((bs: any) => {
+                  const existing = updatedProj.sections.find((s) => s.id === bs.id || s.type === bs.id || s.type === bs.type);
+                  if (existing) {
+                    if (bs.title) existing.title = bs.title;
+                    if (bs.subtitle) existing.subtitle = bs.subtitle;
+                    if (bs.enabled !== undefined) existing.enabled = bs.enabled;
+                    if (bs.contentJson) {
+                      existing.contentJson = {
+                        ...existing.contentJson,
+                        ...bs.contentJson,
+                      };
+                    }
+                    if (bs.customHtml) existing.customHtml = bs.customHtml;
+                  } else if (bs.type) {
+                    updatedProj.sections.push({
+                      id: bs.id || `section-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                      name: bs.name || bs.title || 'New Section',
+                      type: bs.type,
+                      title: bs.title || 'Featured Content',
+                      subtitle: bs.subtitle || '',
+                      enabled: true,
+                      contentJson: bs.contentJson || {},
+                      customHtml: bs.customHtml,
+                    });
                   }
-                } else if (bs.type) {
-                  updatedProj.sections.push({
-                    id: bs.id || `section-${Date.now()}`,
-                    name: bs.title || bs.name || 'New Section',
-                    type: bs.type,
-                    title: bs.title || 'Featured Content',
-                    subtitle: bs.subtitle || '',
-                    enabled: true,
-                    contentJson: bs.contentJson || {},
-                  });
-                }
-              });
+                });
+              }
             }
 
             if (response.project?.industry) {
@@ -1366,14 +2052,6 @@ export function AiWebsiteBuilderStudio({
               const hero = updatedProj.sections.find((s) => s.type === 'hero');
               if (hero && hero.contentJson) {
                 hero.contentJson.hasVideoBackground = true;
-              }
-            }
-
-            // Selected element direct override
-            if (selectedElement && selectedElement.sectionId) {
-              const sec = updatedProj.sections.find((s) => s.id === selectedElement.sectionId);
-              if (sec) {
-                sec.title = finalPrompt.replace(/^@[\w\s]+:\s*/, '');
               }
             }
 
@@ -1479,6 +2157,69 @@ export function AiWebsiteBuilderStudio({
       addCheckpoint,
     ]
   );
+
+  /**
+   * Directly updates the selected element on the live canvas without requiring an AI roundtrip
+   */
+  const handleApplyDirectEdit = (newValue?: string) => {
+    const val = (newValue !== undefined ? newValue : elementDirectEditValue).trim();
+    if (!val || !selectedElement || !project) return;
+
+    const updatedProj = JSON.parse(JSON.stringify(project)) as StorefrontProject;
+    const sec = updatedProj.sections.find((s) => s.id === selectedElement.sectionId);
+    if (!sec) return;
+
+    if (selectedElement.elementType === 'image') {
+      if (sec.type === 'hero' || sec.id === 'hero') {
+        sec.contentJson = { ...sec.contentJson, heroImage: val };
+      } else if (sec.contentJson?.products && Array.isArray(sec.contentJson.products)) {
+        const prod = sec.contentJson.products.find(
+          (p: any) => p.image === selectedElement.src || p.name === selectedElement.text
+        );
+        if (prod) prod.image = val;
+        else if (sec.contentJson.products[0]) sec.contentJson.products[0].image = val;
+      }
+      if (sec.customHtml && selectedElement.src) {
+        sec.customHtml = sec.customHtml.replaceAll(selectedElement.src, val);
+      }
+    } else if (selectedElement.elementType === 'heading') {
+      sec.title = val;
+      if (sec.customHtml && selectedElement.text) {
+        sec.customHtml = sec.customHtml.replaceAll(selectedElement.text, val);
+      }
+    } else if (selectedElement.elementType === 'button') {
+      sec.contentJson = { ...sec.contentJson, primaryCta: val };
+      if (sec.customHtml && selectedElement.text) {
+        sec.customHtml = sec.customHtml.replaceAll(selectedElement.text, val);
+      }
+    } else {
+      // text / paragraph / subtitle
+      if (sec.subtitle === selectedElement.text || !sec.customHtml) {
+        sec.subtitle = val;
+      }
+      if (sec.customHtml && selectedElement.text) {
+        sec.customHtml = sec.customHtml.replaceAll(selectedElement.text, val);
+      }
+    }
+
+    setProject(updatedProj);
+    addCheckpoint(`Directly updated ${selectedElement.label}`, updatedProj);
+    setSelectedElement(null);
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({ type: 'CLEAR_SELECTION' }, '*');
+    }
+    confetti({ particleCount: 20, spread: 50, origin: { y: 0.7 } });
+  };
+
+  /**
+   * Submits a targeted prompt specifically requesting AI to transform the clicked element
+   */
+  const handleCustomizeSelectedElementWithPrompt = (promptText?: string) => {
+    const p = (promptText || elementPromptInput).trim();
+    if (!p || !selectedElement) return;
+    const fullPrompt = `@${selectedElement.label} (${selectedElement.elementType || 'element'} in ${selectedElement.sectionId}): ${p}`;
+    handleSendPrompt(fullPrompt);
+  };
 
   // Deploy to Vercel Simulation
   const handleDeployToVercel = async () => {
@@ -1596,12 +2337,99 @@ export function AiWebsiteBuilderStudio({
               </p>
             </div>
 
+            {/* Connected Store Context Banner */}
+            {storeSetup && (
+              <div className="w-full bg-gradient-to-r from-emerald-950/40 via-[#101924]/60 to-indigo-950/40 border border-emerald-500/30 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs shadow-lg backdrop-blur-md">
+                <div className="flex items-center gap-3 min-w-0">
+                  {storeSetup.logo ? (
+                    <img
+                      src={storeSetup.logo}
+                      alt={storeSetup.name}
+                      className="w-10 h-10 rounded-xl object-contain bg-white/10 p-1 border border-white/20 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 font-bold text-base">
+                      {storeSetup.name?.charAt(0) || 'S'}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-white truncate">{storeSetup.name}</span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        Live Store Connected
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+                      {storeSetup.description || 'OmniStore Merchant Platform'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-300">
+                  <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-white/10 flex items-center gap-1.5">
+                    <ShoppingBag className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>{dbProducts.length} Products</span>
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-white/10 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-sky-400" />
+                    <span>{dbCategories.length || 1} Categories</span>
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-white/10 font-bold text-emerald-400">
+                    {storeSetup.currency || 'USD'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Saved Storefront Project Banner */}
+            {savedProjectInfo && (
+              <div className="w-full bg-gradient-to-r from-indigo-950/50 via-[#141829] to-purple-950/40 border border-indigo-500/40 rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 text-xs shadow-xl backdrop-blur-md">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                    <Save className="w-5 h-5 text-indigo-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-white truncate">
+                        {savedProjectInfo.project.brandName || 'Saved Storefront'}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shrink-0">
+                        {savedProjectInfo.source === 'cloud' ? 'Cloud Saved Draft' : 'Local Draft'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-300 mt-0.5 truncate">
+                      {savedProjectInfo.project.sections?.length || 0} sections configured • Template: {savedProjectInfo.project.theme?.styleArchetype || savedProjectInfo.project.templateSlug || 'Custom'}
+                      {savedProjectInfo.savedAt && ` • Saved ${new Date(savedProjectInfo.savedAt).toLocaleDateString()} at ${new Date(savedProjectInfo.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={handleDiscardSavedDraft}
+                    className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-medium text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                    title="Discard saved draft and start fresh"
+                  >
+                    Discard
+                  </button>
+                  <button
+                    onClick={() => handleResumeProject()}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Resume Saved Website</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Main Interactive Prompt Intake Card */}
             <div className="w-full bg-[#121422]/90 border border-slate-700/80 rounded-2xl shadow-2xl p-5 sm:p-6 backdrop-blur-xl relative group focus-within:border-indigo-500 transition-all duration-300">
               {/* Reference Images Staging Chip Preview */}
               {pendingReferenceImages.length > 0 && (
                 <div className="mb-3 p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center gap-2 overflow-x-auto py-0.5">
+                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5 flex-1 min-w-0">
                     <span className="text-[11px] font-bold text-sky-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
                       <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
                       Reference Images:
@@ -1616,11 +2444,11 @@ export function AiWebsiteBuilderStudio({
                           alt={img.name}
                           className="w-5 h-5 rounded object-cover border border-indigo-400/40"
                         />
-                        <span className="max-w-[130px] truncate text-[11px]">{img.name}</span>
+                        <span className="max-w-[130px] truncate text-[11px] font-medium">{img.name}</span>
                         <button
                           type="button"
                           onClick={() => setPendingReferenceImages((prev) => prev.filter((_, i) => i !== idx))}
-                          className="hover:text-red-400 p-0.5 text-zinc-400 cursor-pointer"
+                          className="hover:text-red-400 p-0.5 text-zinc-400 cursor-pointer transition"
                           title="Remove reference image"
                         >
                           <X className="w-3 h-3" />
@@ -1645,7 +2473,11 @@ export function AiWebsiteBuilderStudio({
                   }
                 }}
                 rows={3}
-                placeholder="e.g. Build an artisan coffee and pastry roastery called RoastCraft with warm espresso and terracotta tones, product subscription bundles, customer review ratings, and a 4K video banner..."
+                placeholder={
+                  storeSetup?.name
+                    ? `e.g. Build a modern storefront for ${storeSetup.name} highlighting our catalog of ${dbProducts.length} items with customer reviews, deals, and WhatsApp orders in ${storeSetup.currency || 'USD'}...`
+                    : 'e.g. Build an artisan coffee and pastry roastery called RoastCraft with warm espresso and terracotta tones, product subscription bundles, customer review ratings, and a 4K video banner...'
+                }
                 className="w-full bg-transparent resize-none outline-hidden text-sm sm:text-base text-zinc-100 placeholder:text-zinc-500 leading-relaxed font-normal"
                 autoFocus
               />
@@ -1711,6 +2543,34 @@ export function AiWebsiteBuilderStudio({
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {storeSetup?.name && (
+                  <button
+                    onClick={() => {
+                      const p = `Build an exquisite, high-converting modern storefront for ${storeSetup.name} featuring our verified inventory of ${dbProducts.length} items, customer reviews, and WhatsApp checkout in ${storeSetup.currency || 'USD'}.`;
+                      setInitialPromptInput(p);
+                      setSelectedDesignStyle('artisan-living');
+                      handleBuildStorefront(p, 'artisan-living');
+                    }}
+                    className="p-3.5 rounded-xl bg-gradient-to-br from-emerald-950/60 to-[#101626] border border-emerald-500/40 hover:border-emerald-400 hover:bg-[#141d30] transition text-left space-y-1.5 group cursor-pointer sm:col-span-2 md:col-span-3 shadow-md"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition">
+                          <Store className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="font-bold text-xs text-white group-hover:text-emerald-300 transition">
+                          Build using My Connected Store ({storeSetup.name})
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-emerald-300 font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30">
+                        Live Store Identity
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-300 line-clamp-2 leading-relaxed">
+                      Instant 1-click build binding your {dbProducts.length} active products, {storeSetup.currency || 'USD'} currency, official contact info, and store branding into this website.
+                    </p>
+                  </button>
+                )}
                 {INSPIRATION_PROMPTS.map((item, idx) => {
                   const Icon = item.icon;
                   return (
@@ -1718,8 +2578,8 @@ export function AiWebsiteBuilderStudio({
                       key={idx}
                       onClick={() => {
                         setInitialPromptInput(item.prompt);
-                        setSelectedTemplateSlug(item.templateSlug);
-                        handleBuildStorefront(item.prompt, item.templateSlug);
+                        setSelectedDesignStyle(item.designStyle);
+                        handleBuildStorefront(item.prompt, item.designStyle);
                       }}
                       className="p-3.5 rounded-xl bg-[#10121C]/80 border border-slate-800/80 hover:border-indigo-500/60 hover:bg-[#151726] transition text-left space-y-1.5 group cursor-pointer"
                     >
@@ -1732,8 +2592,8 @@ export function AiWebsiteBuilderStudio({
                             {item.title}
                           </span>
                         </div>
-                        <span className="text-[10px] text-zinc-400 font-mono">
-                          {item.templateSlug}
+                        <span className="text-[10px] text-indigo-400/90 font-medium px-1.5 py-0.5 rounded bg-indigo-500/10">
+                          {item.category}
                         </span>
                       </div>
                       <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
@@ -1745,23 +2605,23 @@ export function AiWebsiteBuilderStudio({
               </div>
             </div>
 
-            {/* Storefront Template Architecture Selector */}
+            {/* Design Aesthetic & Visual Direction Selector */}
             <div className="w-full space-y-3 pt-2">
               <div className="flex items-center justify-between text-xs text-zinc-400 px-1">
                 <span className="font-semibold uppercase tracking-wider text-[11px] text-zinc-400">
-                  Select Base Storefront Template Architecture:
+                  Select Visual Style & Brand Design Direction:
                 </span>
                 <span className="text-[11px] text-indigo-400 font-medium">
-                  {STOREFRONT_ARCHETYPES.length} Available in storefront-frontend
+                  {DESIGN_ARCHETYPES.length} Curated Visual Styles
                 </span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {STOREFRONT_ARCHETYPES.map((arch) => {
-                  const isSelected = selectedTemplateSlug === arch.slug;
+                {DESIGN_ARCHETYPES.map((arch) => {
+                  const isSelected = selectedDesignStyle === arch.slug;
                   return (
                     <button
                       key={arch.slug}
-                      onClick={() => setSelectedTemplateSlug(arch.slug)}
+                      onClick={() => setSelectedDesignStyle(arch.slug)}
                       className={`p-3 rounded-xl text-left border transition cursor-pointer relative space-y-1.5 ${
                         isSelected
                           ? 'bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-500/30'
@@ -1891,7 +2751,7 @@ export function AiWebsiteBuilderStudio({
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50" />
                 <span className="font-bold text-sm text-white tracking-tight font-serif">{project.brandName}</span>
                 <span className="hidden md:inline px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  {project.templateSlug || 'mincom'}
+                  {project.theme.styleArchetype || project.designStyle || 'Custom Style'}
                 </span>
                 <button
                   onClick={() => setProject(null)}
@@ -1899,7 +2759,7 @@ export function AiWebsiteBuilderStudio({
                   title="Start over with a new prompt"
                 >
                   <RotateCcw className="w-3 h-3 text-indigo-400" />
-                  <span>New Storefront</span>
+                  <span>New Website</span>
                 </button>
               </div>
 
@@ -2001,6 +2861,48 @@ export function AiWebsiteBuilderStudio({
                 </button>
               </div>
 
+              {/* Save Project Button */}
+              <button
+                onClick={() => handleSaveProject()}
+                disabled={isSaving}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer border ${
+                  saveStatus === 'saved'
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                    : saveStatus === 'saving'
+                    ? 'bg-indigo-600/30 border-indigo-500/40 text-indigo-200'
+                    : hasUnsavedChanges
+                    ? 'bg-indigo-600 hover:bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-600/20'
+                    : 'bg-white/5 border-white/10 text-zinc-300 hover:text-white hover:bg-white/10'
+                }`}
+                title="Save storefront project to cloud database (Ctrl+S)"
+              >
+                {saveStatus === 'saving' ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-300" />
+                ) : saveStatus === 'saved' ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <Save className="w-3.5 h-3.5" />
+                )}
+                <span>
+                  {saveStatus === 'saving'
+                    ? 'Saving...'
+                    : saveStatus === 'saved'
+                    ? 'Saved'
+                    : hasUnsavedChanges
+                    ? 'Save Changes'
+                    : 'Save'}
+                </span>
+                {hasUnsavedChanges && saveStatus !== 'saving' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" title="Unsaved changes" />
+                )}
+              </button>
+
+              {lastSavedTime && (
+                <span className="hidden xl:inline text-[11px] text-zinc-400 font-mono">
+                  Saved {lastSavedTime}
+                </span>
+              )}
+
               {/* Action Buttons: Export Code & Deploy */}
               <button
                 onClick={handleDownloadCode}
@@ -2067,6 +2969,18 @@ export function AiWebsiteBuilderStudio({
                 </button>
 
                 <button
+                  onClick={() => setActiveTab('pages')}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg font-semibold transition cursor-pointer border-b-2 ${
+                    activeTab === 'pages'
+                      ? 'border-indigo-500 text-white bg-[#0F111A]'
+                      : 'border-transparent text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Pages (5)</span>
+                </button>
+
+                <button
                   onClick={() => setActiveTab('code')}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg font-semibold transition cursor-pointer border-b-2 ${
                     activeTab === 'code'
@@ -2093,7 +3007,12 @@ export function AiWebsiteBuilderStudio({
                         </span>
                       </div>
                       <button
-                        onClick={() => setSelectedElement(null)}
+                        onClick={() => {
+                          setSelectedElement(null);
+                          if (iframeRef.current?.contentWindow) {
+                            iframeRef.current.contentWindow.postMessage({ type: 'CLEAR_SELECTION' }, '*');
+                          }
+                        }}
                         className="p-1 hover:text-white cursor-pointer"
                         title="Clear selection"
                       >
@@ -2207,8 +3126,8 @@ export function AiWebsiteBuilderStudio({
                   <div className="p-3 border-t border-slate-800 bg-[#090A0F] shrink-0">
                     {/* Reference Image Staging Bar */}
                     {pendingReferenceImages.length > 0 && (
-                      <div className="mb-2.5 p-2 rounded-xl bg-indigo-950/40 border border-indigo-500/40 flex items-center justify-between gap-3 text-xs">
-                        <div className="flex items-center gap-2 overflow-x-auto py-0.5">
+                      <div className="mb-2.5 p-2 px-2.5 rounded-xl bg-indigo-950/40 border border-indigo-500/40 flex items-center justify-between gap-2.5 text-xs">
+                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5 flex-1 min-w-0">
                           <span className="text-[11px] font-bold text-sky-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
                             <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
                             Reference:
@@ -2216,18 +3135,18 @@ export function AiWebsiteBuilderStudio({
                           {pendingReferenceImages.map((img, idx) => (
                             <div
                               key={idx}
-                              className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/60 border border-indigo-500/40 text-indigo-200 shrink-0"
+                              className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-black/60 border border-indigo-500/40 text-indigo-200 shrink-0"
                             >
                               <img
                                 src={img.dataUrl}
                                 alt={img.name}
                                 className="w-5 h-5 rounded object-cover border border-indigo-400/40"
                               />
-                              <span className="max-w-[130px] truncate text-[11px]">{img.name}</span>
+                              <span className="max-w-[110px] sm:max-w-[140px] truncate text-[11px] font-medium">{img.name}</span>
                               <button
                                 type="button"
                                 onClick={() => setPendingReferenceImages((prev) => prev.filter((_, i) => i !== idx))}
-                                className="hover:text-red-400 p-0.5 text-zinc-400 cursor-pointer"
+                                className="hover:text-red-400 p-0.5 text-zinc-400 cursor-pointer transition"
                                 title="Remove reference image"
                               >
                                 <X className="w-3 h-3" />
@@ -2235,7 +3154,7 @@ export function AiWebsiteBuilderStudio({
                             </div>
                           ))}
                         </div>
-                        <span className="text-[10px] text-zinc-400 shrink-0 hidden sm:inline">
+                        <span className="text-[10px] text-zinc-400 shrink-0 hidden xl:inline">
                           Multimodal AI will mirror palette & layout on send
                         </span>
                       </div>
@@ -2264,7 +3183,7 @@ export function AiWebsiteBuilderStudio({
                       onSend={(text, meta) => {
                         let fullPrompt = text;
                         if (selectedElement) {
-                          fullPrompt = `@${selectedElement.label}: ${fullPrompt}`;
+                          fullPrompt = `@${selectedElement.label} (${selectedElement.elementType || 'element'} in ${selectedElement.sectionId}): ${fullPrompt}`;
                         }
                         if (meta.attachments && meta.attachments.length > 0) {
                           const videoAssets = meta.attachments.filter(isVideoAsset);
@@ -2524,11 +3443,151 @@ export function AiWebsiteBuilderStudio({
                 </div>
               )}
 
-              {/* TAB 4: CODE VIEWER (Strictly following storefront-frontend architecture) */}
+              {/* TAB 4: STOREFRONT PAGES (Multi-Page Inspector & Studio) */}
+              {activeTab === 'pages' && (
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs bg-[#0F111A]">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <div>
+                      <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-blue-400" /> Storefront Pages
+                      </h3>
+                      <p className="text-[11px] text-zinc-400 mt-0.5">
+                        Inspect, test, and customize every page of your storefront
+                      </p>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                      5 Routes
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {[
+                      {
+                        id: 'home',
+                        title: 'Home Page',
+                        route: '/',
+                        badge: 'Landing',
+                        desc: 'Modular storefront hero, deals grid, featured collections & dynamic sections.',
+                        icon: Store,
+                        iconColor: 'text-indigo-400',
+                        suggestedPrompt: 'Refine the homepage: make the hero CTA bolder and add a customer trust banner above products.',
+                      },
+                      {
+                        id: 'products',
+                        title: 'Product Catalog (PLP)',
+                        route: '/products',
+                        badge: 'Catalog',
+                        desc: 'Full product listing with live search filters, category pills, price tags, and quick-add.',
+                        icon: ShoppingBag,
+                        iconColor: 'text-amber-400',
+                        suggestedPrompt: 'Customize the product listing page: add more category filters and show stock badges.',
+                      },
+                      {
+                        id: 'pdp',
+                        title: 'Product Description (PDP)',
+                        route: '/products/[id]',
+                        badge: 'PDP / Buy Box',
+                        desc: 'High-converting buy box with multi-angle gallery, color/size swatches, quantity stepper, WhatsApp order & tabs.',
+                        icon: Sparkles,
+                        iconColor: 'text-purple-400',
+                        suggestedPrompt: 'Enhance the product detail page: emphasize the 2-year warranty and free shipping badge.',
+                      },
+                      {
+                        id: 'story',
+                        title: 'Brand Story & Atelier',
+                        route: '/story',
+                        badge: 'Heritage',
+                        desc: 'Editorial brand heritage narrative, craftsmanship philosophy, and company timeline.',
+                        icon: Leaf,
+                        iconColor: 'text-emerald-400',
+                        suggestedPrompt: 'Enhance the brand story page with modern founder quotes and sustainable craft values.',
+                      },
+                      {
+                        id: 'reviews',
+                        title: 'Customer Reviews & Proof',
+                        route: '/reviews',
+                        badge: 'Social Proof',
+                        desc: 'Verified buyer testimonials, 5-star rating breakdown, and customer community wall.',
+                        icon: Star,
+                        iconColor: 'text-yellow-400',
+                        suggestedPrompt: 'Add verified buyer badges and photo upload encouragement to the customer reviews page.',
+                      },
+                    ].map((pg) => {
+                      const Icon = pg.icon;
+                      const isCurrent = activePage === pg.id;
+                      return (
+                        <div
+                          key={pg.id}
+                          className={`p-3.5 rounded-xl border transition-all ${
+                            isCurrent
+                              ? 'bg-blue-950/25 border-blue-500/60 ring-1 ring-blue-500/30'
+                              : 'bg-[#12131D] border-slate-800 hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-black/40 border border-slate-800 flex items-center justify-center shrink-0">
+                                <Icon className={`w-4 h-4 ${pg.iconColor}`} />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-white text-xs">{pg.title}</span>
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-zinc-800 text-zinc-300">
+                                    {pg.route}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-zinc-500">{pg.badge}</span>
+                              </div>
+                            </div>
+
+                            {isCurrent ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                                <Check className="w-3 h-3" /> Previewing
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <p className="text-[11px] text-zinc-400 leading-relaxed mb-3">
+                            {pg.desc}
+                          </p>
+
+                          <div className="flex items-center gap-2 pt-2 border-t border-slate-800/60">
+                            <button
+                              onClick={() => handleNavigatePage(pg.id)}
+                              className={`flex-1 py-1.5 px-2.5 rounded-lg text-[11px] font-medium transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                                isCurrent
+                                  ? 'bg-blue-600 text-white font-semibold shadow-md shadow-blue-600/30'
+                                  : 'bg-slate-800/80 text-zinc-300 hover:bg-slate-700 hover:text-white'
+                              }`}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              {isCurrent ? 'Viewing in Canvas' : 'Preview Page'}
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setActiveTab('copilot');
+                                setChatInput(pg.suggestedPrompt);
+                              }}
+                              className="py-1.5 px-2.5 rounded-lg text-[11px] font-medium bg-indigo-950/40 text-indigo-300 border border-indigo-800/40 hover:bg-indigo-900/50 hover:text-white transition cursor-pointer flex items-center gap-1"
+                              title="Ask AI to customize this page"
+                            >
+                              <Sparkles className="w-3 h-3 text-indigo-400" />
+                              <span>AI Edit</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 5: CODE VIEWER (Autonomous Next.js 16 Web Project) */}
               {activeTab === 'code' && (
                 <div className="flex-1 flex flex-col min-h-0 bg-[#0A0B10]">
                   {/* File Selector Tabs */}
-                  <div className="flex items-center gap-1 overflow-x-auto p-2 bg-[#08090D] border-b border-slate-800 text-[11px]">
+                  <div className="flex items-center gap-1 overflow-x-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden p-2 bg-[#08090D] border-b border-slate-800 text-[11px]">
                     {projectCodeFiles.map((file, idx) => (
                       <button
                         key={file.file}
@@ -2600,20 +3659,81 @@ export function AiWebsiteBuilderStudio({
                     viewportMode !== 'desktop' ? 'my-auto ring-8 ring-black/40' : 'h-full w-full'
                   }`}
                 >
-                  {/* Mock Browser Topbar */}
-                  <div className="h-8 bg-[#0D0E15] border-b border-slate-800 px-3 flex items-center justify-between shrink-0 select-none">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                  {/* Mock Browser Topbar with Multi-Page Navigation */}
+                  <div className="h-9 bg-[#0D0E15] border-b border-slate-800 px-3 flex items-center justify-between shrink-0 select-none gap-2">
+                    {/* Left: Window controls + Back / Forward history */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1.5 mr-1">
+                        <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                      </div>
+
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          onClick={handleGoBack}
+                          disabled={historyIndex <= 0}
+                          className="p-1 rounded hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-25 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition"
+                          title="Back"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={handleGoForward}
+                          disabled={historyIndex >= pageHistory.length - 1}
+                          className="p-1 rounded hover:bg-white/10 text-zinc-400 hover:text-white disabled:opacity-25 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition"
+                          title="Forward"
+                        >
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2 px-3 py-0.5 rounded-md bg-black/40 border border-slate-800 text-[10px] font-mono text-zinc-400 max-w-[280px] truncate">
-                      <span className="text-emerald-400">https://</span>
-                      <span className="truncate">{project.brandName.toLowerCase().replace(/[^a-z0-9]/g, '-')}.omnistore.shop</span>
+                    {/* Center: Address Bar + Interactive Route Switcher */}
+                    <div className="flex-1 max-w-md flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/50 border border-slate-800 text-[11px] font-mono text-zinc-300">
+                      <span className="text-emerald-400 text-[10px]">https://</span>
+                      <span className="text-zinc-400 truncate hidden sm:inline">
+                        {project.brandName.toLowerCase().replace(/[^a-z0-9]/g, '-')}.omnistore.shop
+                      </span>
+
+                      {/* Interactive Route Dropdown */}
+                      <select
+                        value={activePage}
+                        onChange={(e) => handleNavigatePage(e.target.value)}
+                        className="bg-indigo-950/70 text-indigo-300 border border-indigo-500/40 rounded px-1.5 py-0.5 text-[10px] font-semibold focus:outline-none cursor-pointer ml-auto"
+                      >
+                        <option value="home">/ (Home)</option>
+                        <option value="products">/products (Catalog / PLP)</option>
+                        <option value="pdp">/products/[id] (Product Details / PDP)</option>
+                        <option value="story">/story (Brand Story)</option>
+                        <option value="reviews">/reviews (Customer Reviews)</option>
+                      </select>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-zinc-400">
+                    {/* Right: Quick Page Switch Pills + Refresh */}
+                    <div className="flex items-center gap-1.5 text-zinc-400 shrink-0">
+                      <div className="hidden xl:flex items-center gap-1 mr-1">
+                        {[
+                          { id: 'home', label: 'Home' },
+                          { id: 'products', label: 'Catalog' },
+                          { id: 'pdp', label: 'PDP' },
+                          { id: 'story', label: 'Story' },
+                          { id: 'reviews', label: 'Reviews' },
+                        ].map((p) => (
+                          <button
+                            key={p.id}
+                            onClick={() => handleNavigatePage(p.id)}
+                            className={`px-2 py-0.5 rounded text-[10px] font-medium transition cursor-pointer ${
+                              activePage === p.id
+                                ? 'bg-indigo-600 text-white font-semibold'
+                                : 'bg-slate-900/60 text-zinc-400 hover:text-white hover:bg-slate-800'
+                            }`}
+                          >
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+
                       <button
                         onClick={() => {
                           if (iframeRef.current && previewHtml) {
@@ -2627,7 +3747,7 @@ export function AiWebsiteBuilderStudio({
                             }
                           }
                         }}
-                        className="p-1 hover:text-white cursor-pointer"
+                        className="p-1 hover:text-white cursor-pointer rounded hover:bg-white/5 transition"
                         title="Reload preview"
                       >
                         <RefreshCw className="w-3 h-3" />
@@ -2636,12 +3756,265 @@ export function AiWebsiteBuilderStudio({
                   </div>
 
                   {/* Sandboxed Iframe */}
-                  <iframe
-                    ref={iframeRef}
-                    title="Live Storefront Preview"
-                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                    className="w-full flex-1 border-0 bg-transparent"
-                  />
+                  <div className="relative flex-1 flex flex-col min-h-0 overflow-hidden">
+                    <iframe
+                      ref={iframeRef}
+                      title="Live Storefront Preview"
+                      sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                      className="w-full flex-1 border-0 bg-transparent"
+                    />
+
+                    {/* Hint badge when inspect mode is active and nothing is selected yet */}
+                    {isInspectMode && !selectedElement && (
+                      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                        <div className="px-3.5 py-1.5 rounded-full bg-black/80 border border-cyan-500/40 text-cyan-300 text-xs font-medium flex items-center gap-2 shadow-xl backdrop-blur-md animate-in fade-in">
+                          <Crosshair className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                          <span>Click any image, headline, text, or button to customize with AI</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── FLOATING CLICK-TO-CUSTOMIZE DOCK ── */}
+                    {selectedElement && (
+                      <div className="absolute bottom-4 left-4 right-4 z-40 bg-[#0F111C]/95 border border-cyan-500/60 rounded-2xl shadow-2xl p-4 backdrop-blur-xl animate-in slide-in-from-bottom-3 duration-200 text-white space-y-3">
+                        {/* Top Bar: Target Info + Mode Switcher + Close */}
+                        <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-2.5">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {selectedElement.elementType === 'image' && selectedElement.src ? (
+                              <img
+                                src={selectedElement.src}
+                                alt="selected"
+                                className="w-8 h-8 rounded-lg object-cover border border-cyan-500/40 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-300 shrink-0">
+                                {selectedElement.elementType === 'image' ? (
+                                  <ImageIcon className="w-4 h-4" />
+                                ) : selectedElement.elementType === 'heading' ||
+                                  selectedElement.elementType === 'text' ? (
+                                  <FileText className="w-4 h-4" />
+                                ) : (
+                                  <MousePointer className="w-4 h-4" />
+                                )}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-xs text-white truncate">
+                                  {selectedElement.label}
+                                </span>
+                                <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                  {selectedElement.elementType || 'Element'}
+                                </span>
+                              </div>
+                              {selectedElement.text && selectedElement.elementType !== 'image' && (
+                                <p className="text-[11px] text-zinc-400 truncate mt-0.5 max-w-md">
+                                  "{selectedElement.text}"
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Mode Switcher & Close */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex items-center bg-black/60 p-0.5 rounded-lg border border-slate-800 text-[11px]">
+                              <button
+                                type="button"
+                                onClick={() => setElementEditMode('prompt')}
+                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition cursor-pointer ${
+                                  elementEditMode === 'prompt'
+                                    ? 'bg-indigo-600 text-white font-semibold shadow-xs'
+                                    : 'text-zinc-400 hover:text-white'
+                                }`}
+                              >
+                                <Sparkles className="w-3 h-3 text-amber-400" />
+                                <span>Prompt AI</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setElementEditMode('direct')}
+                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition cursor-pointer ${
+                                  elementEditMode === 'direct'
+                                    ? 'bg-cyan-600 text-black font-semibold shadow-xs'
+                                    : 'text-zinc-400 hover:text-white'
+                                }`}
+                              >
+                                <Wand2 className="w-3 h-3 text-cyan-300" />
+                                <span>Direct Edit</span>
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedElement(null);
+                                if (iframeRef.current?.contentWindow) {
+                                  iframeRef.current.contentWindow.postMessage(
+                                    { type: 'CLEAR_SELECTION' },
+                                    '*'
+                                  );
+                                }
+                              }}
+                              className="p-1 text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition cursor-pointer"
+                              title="Deselect element"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Mode 1: Prompt AI to Change This Element */}
+                        {elementEditMode === 'prompt' && (
+                          <div className="space-y-2.5">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={elementPromptInput}
+                                onChange={(e) => setElementPromptInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleCustomizeSelectedElementWithPrompt();
+                                  }
+                                }}
+                                placeholder={
+                                  selectedElement.elementType === 'image'
+                                    ? 'e.g. Change image to a luxury pour-over coffee bar with warm moody lighting...'
+                                    : selectedElement.elementType === 'button'
+                                    ? 'e.g. Make button electric cyan with text "Explore Exclusive Deals"...'
+                                    : 'e.g. Rewrite headline to be more punchy and emphasize limited festival offer...'
+                                }
+                                className="flex-1 bg-black/60 border border-slate-700 focus:border-cyan-400 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-zinc-500 outline-none transition"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleCustomizeSelectedElementWithPrompt()}
+                                disabled={!elementPromptInput.trim() || isChatLoading}
+                                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed shrink-0"
+                              >
+                                <Sparkles className="w-3.5 h-3.5" />
+                                <span>Change with AI</span>
+                              </button>
+                            </div>
+
+                            {/* Quick Suggestion Chips */}
+                            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-[11px]">
+                              <span className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wider shrink-0">
+                                Suggestions:
+                              </span>
+                              {(selectedElement.elementType === 'image'
+                                ? [
+                                    'Make it cinematic & moody lighting',
+                                    'Replace with minimalist studio photo',
+                                    'Vibrant lifestyle product shot',
+                                    'Luxury dark aesthetic photo',
+                                  ]
+                                : selectedElement.elementType === 'button'
+                                ? [
+                                    'Change text to "Explore Collection"',
+                                    'Make button glow with primary accent',
+                                    'Change text to "Claim 50% Off Today"',
+                                  ]
+                                : [
+                                    'Make it punchier & shorter',
+                                    'Rewrite with luxury & prestigious tone',
+                                    'Add limited-time festival urgency',
+                                    'Highlight verified 5-star customer ratings',
+                                  ]
+                              ).map((chip, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => {
+                                    setElementPromptInput(chip);
+                                    handleCustomizeSelectedElementWithPrompt(chip);
+                                  }}
+                                  className="px-2 py-0.5 rounded-full bg-white/5 hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-500/50 text-zinc-300 hover:text-cyan-200 transition shrink-0 cursor-pointer"
+                                >
+                                  ✨ {chip}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Mode 2: Quick Direct Edit (Instant local apply) */}
+                        {elementEditMode === 'direct' && (
+                          <div className="space-y-2.5">
+                            {selectedElement.elementType === 'image' ? (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={elementDirectEditValue}
+                                    onChange={(e) => setElementDirectEditValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleApplyDirectEdit();
+                                      }
+                                    }}
+                                    placeholder="Paste image URL (https://...)"
+                                    className="flex-1 bg-black/60 border border-slate-700 focus:border-cyan-400 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-zinc-500 outline-none transition"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleApplyDirectEdit()}
+                                    disabled={!elementDirectEditValue.trim()}
+                                    className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-black font-bold text-xs shadow-lg transition cursor-pointer shrink-0"
+                                  >
+                                    Apply Image
+                                  </button>
+                                </div>
+
+                                {/* Curated Presets */}
+                                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-[11px]">
+                                  <span className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wider shrink-0">
+                                    Presets:
+                                  </span>
+                                  {CURATED_IMAGE_PRESETS.map((p, idx) => (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => handleApplyDirectEdit(p.url)}
+                                      className="px-2 py-0.5 rounded-full bg-white/5 hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-500/50 text-zinc-300 hover:text-cyan-200 transition shrink-0 cursor-pointer"
+                                    >
+                                      📷 {p.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={elementDirectEditValue}
+                                  onChange={(e) => setElementDirectEditValue(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleApplyDirectEdit();
+                                    }
+                                  }}
+                                  placeholder={`Enter new ${selectedElement.label.toLowerCase()} text...`}
+                                  className="flex-1 bg-black/60 border border-slate-700 focus:border-cyan-400 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-zinc-500 outline-none transition"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleApplyDirectEdit()}
+                                  disabled={!elementDirectEditValue.trim()}
+                                  className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-black font-bold text-xs shadow-lg transition cursor-pointer shrink-0"
+                                >
+                                  Apply Text
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -2669,7 +4042,7 @@ export function AiWebsiteBuilderStudio({
             </div>
 
             <p className="text-xs text-zinc-400 leading-relaxed">
-              OmniStore will package your Next.js 16 storefront application files and deploy them directly
+              OmniStore will package your autonomous Next.js 16 website application files and deploy them directly
               to Vercel's global edge network with custom domain support.
             </p>
 
@@ -2724,6 +4097,14 @@ export function AiWebsiteBuilderStudio({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Save Feedback Floating Notification */}
+      {saveFeedbackMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-900/95 border border-slate-700 text-white shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span className="text-xs font-semibold">{saveFeedbackMessage}</span>
         </div>
       )}
     </div>
