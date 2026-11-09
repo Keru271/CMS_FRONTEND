@@ -119,6 +119,19 @@ export function AiStoreBuilderModal({
       };
 
       const result = await cmsService.generateStoreBlueprint(payload);
+      
+      // Ensure result has brand even on frontend fallback
+      if (result && !result.brand) {
+        result.brand = {
+          name: storeName.trim() || 'My Store',
+          tagline: 'Refined Living & Handcrafted Excellence',
+          description: textToUse,
+          suggestedSlug: (storeName.trim() || 'my-store').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          currency: currency || 'INR',
+          country: country || 'India',
+        };
+      }
+
       clearInterval(interval);
       setCurrentStepIndex(GENERATION_STEPS.length - 1);
       setTimeout(() => {
@@ -381,10 +394,10 @@ export function AiStoreBuilderModal({
                         <span className="text-xs font-mono font-bold px-2 py-0.5 bg-black text-white rounded uppercase tracking-wider">
                           Blueprint Ready
                         </span>
-                        <h3 className="text-base font-bold text-zinc-950">{blueprint.brand.name}</h3>
+                        <h3 className="text-base font-bold text-zinc-950">{blueprint.brand?.name || storeName || 'My Store'}</h3>
                       </div>
-                      <p className="text-xs text-zinc-600 italic">"{blueprint.brand.tagline}"</p>
-                      <p className="text-xs text-zinc-500 line-clamp-1">{blueprint.brand.description}</p>
+                      <p className="text-xs text-zinc-600 italic">"{blueprint.brand?.tagline || 'Refined Living & Handcrafted Excellence'}"</p>
+                      <p className="text-xs text-zinc-500 line-clamp-1">{blueprint.brand?.description || prompt}</p>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -545,7 +558,7 @@ export function AiStoreBuilderModal({
                             <div key={idx} className="flex items-center justify-between text-xs text-zinc-700">
                               <span className="truncate max-w-[160px] text-zinc-950 font-medium">{p.name}</span>
                               <span className="font-semibold text-black font-mono">
-                                {getCurrencySymbol(blueprint.brand.currency)}{p.price}
+                                {getCurrencySymbol(blueprint.brand?.currency || currency)}{p.price}
                               </span>
                             </div>
                           ))}
@@ -669,7 +682,7 @@ export function AiStoreBuilderModal({
                             <div className="flex items-center justify-between">
                               <h5 className="text-xs font-bold text-zinc-950 truncate">{prod.name}</h5>
                               <span className="text-xs font-bold text-black font-mono flex-shrink-0">
-                                {getCurrencySymbol(blueprint.brand.currency)}{prod.price}
+                                {getCurrencySymbol(blueprint.brand?.currency || currency)}{prod.price}
                               </span>
                             </div>
                             <p className="text-[11px] text-zinc-600 line-clamp-2 leading-relaxed">{prod.description}</p>
@@ -722,7 +735,7 @@ export function AiStoreBuilderModal({
                           Search Preview
                         </span>
                         <div className="p-4 bg-white border border-zinc-200 rounded-2xl space-y-1 shadow-xs">
-                          <span className="text-xs text-zinc-500 font-mono block">https://{blueprint.brand.suggestedSlug}.omnistore.internal</span>
+                          <span className="text-xs text-zinc-500 font-mono block">https://{blueprint.brand?.suggestedSlug || 'store'}.omnistore.internal</span>
                           <h4 className="text-sm font-semibold text-blue-600 hover:underline cursor-pointer">
                             {blueprint.seo.siteTitle}
                           </h4>

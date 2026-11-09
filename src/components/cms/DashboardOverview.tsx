@@ -25,8 +25,8 @@ import {
   Clock,
   ExternalLink,
   Inbox,
-  MessageSquare,
   Sparkles,
+  MessageSquare,
 } from 'lucide-react';
 import { DashboardStats, CMSOrder, CMSProduct, OrderStatus } from '@/src/types';
 import { usePlanAccess } from '@/src/hooks/usePlanAccess';
@@ -219,18 +219,18 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
   // Onboarding progress from real stats
   const onboarding = stats.onboardingProgress || {
-    percentage: stats.totalProducts > 0 ? 80 : 50,
+    percentage: 0,
     items: [
-      { id: '1', label: 'Store Information', completed: true, actionUrl: '/store-setup' },
+      { id: '1', label: 'Store information', completed: false, actionUrl: '/store-setup' },
       {
         id: '2',
         label: 'Add products',
         completed: (stats.totalProducts || 0) > 0,
         actionUrl: '/products',
       },
-      { id: '3', label: 'Choose template', completed: true, actionUrl: '/themes' },
-      { id: '4', label: 'Configure payment', completed: true, actionUrl: '/payments' },
-      { id: '5', label: 'Configure shipping', completed: true, actionUrl: '/shipping' },
+      { id: '3', label: 'Choose template', completed: false, actionUrl: '/themes' },
+      { id: '4', label: 'Configure payment', completed: false, actionUrl: '/payments' },
+      { id: '5', label: 'Configure shipping', completed: false, actionUrl: '/shipping' },
       { id: '6', label: 'Connect domain', completed: false, actionUrl: '/domains' },
       { id: '7', label: 'Launch store', completed: false, actionUrl: '/store-setup' },
     ],
@@ -259,11 +259,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <button
                 key={i}
                 onClick={qa.action}
-                className={`px-3.5 py-2 rounded-xl text-xs font-sans font-semibold transition-all shadow-xs cursor-pointer ${
-                  qa.isPrimary
-                    ? 'bg-sky-600 hover:bg-sky-500 text-white dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] dark:text-[#121212]'
-                    : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 dark:bg-[#1E1E1E] dark:hover:bg-[#121212] dark:text-white dark:border-[#2C2C2E]'
-                }`}
+                className={`px-3.5 py-2 rounded-xl text-xs font-sans font-semibold transition-all shadow-xs cursor-pointer ${qa.isPrimary
+                  ? 'bg-sky-600 hover:bg-sky-500 text-white dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] dark:text-[#121212]'
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 dark:bg-[#1E1E1E] dark:hover:bg-[#121212] dark:text-white dark:border-[#2C2C2E]'
+                  }`}
               >
                 {qa.label}
               </button>
@@ -435,11 +434,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <div
               key={item.id}
               onClick={() => item.actionUrl && router.push(item.actionUrl)}
-              className={`p-2.5 rounded-xl border text-xs font-sans flex flex-col justify-between space-y-2 cursor-pointer transition-colors ${
-                item.completed
-                  ? 'bg-emerald-50/70 dark:bg-[#121212] border-emerald-200 dark:border-[#2C2C2E] text-slate-800 dark:text-white'
-                  : 'bg-slate-50 dark:bg-[#161616] border-slate-200 dark:border-[#2C2C2E] text-slate-500 dark:text-[#98989D] hover:bg-slate-100 dark:hover:bg-[#121212]'
-              }`}
+              className={`p-2.5 rounded-xl border text-xs font-sans flex flex-col justify-between space-y-2 cursor-pointer transition-colors ${item.completed
+                ? 'bg-emerald-50/70 dark:bg-[#121212] border-emerald-200 dark:border-[#2C2C2E] text-slate-800 dark:text-white'
+                : 'bg-slate-50 dark:bg-[#161616] border-slate-200 dark:border-[#2C2C2E] text-slate-500 dark:text-[#98989D] hover:bg-slate-100 dark:hover:bg-[#121212]'
+                }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-slate-500 dark:text-[#98989D]">
@@ -474,21 +472,19 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <div className="flex items-center rounded-xl border border-slate-200 dark:border-[#2C2C2E] bg-slate-100 dark:bg-[#1E1E1E] p-1 text-xs font-sans font-medium text-slate-700 dark:text-white">
               <button
                 onClick={() => setCurrencySymbol('₹')}
-                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                  currencySymbol === '₹'
-                    ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] shadow-xs font-bold'
-                    : 'hover:bg-slate-200/60 dark:hover:bg-[#121212]'
-                }`}
+                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${currencySymbol === '₹'
+                  ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] shadow-xs font-bold'
+                  : 'hover:bg-slate-200/60 dark:hover:bg-[#121212]'
+                  }`}
               >
                 ₹ INR
               </button>
               <button
                 onClick={() => setCurrencySymbol('$')}
-                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                  currencySymbol === '$'
-                    ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] shadow-xs font-bold'
-                    : 'hover:bg-slate-200/60 dark:hover:bg-[#121212]'
-                }`}
+                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${currencySymbol === '$'
+                  ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] shadow-xs font-bold'
+                  : 'hover:bg-slate-200/60 dark:hover:bg-[#121212]'
+                  }`}
               >
                 $ USD
               </button>
@@ -657,41 +653,37 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-[#121212] rounded-xl border border-slate-200 dark:border-[#2C2C2E] text-xs font-sans font-medium overflow-x-auto no-scrollbar max-w-full">
             <button
               onClick={() => setChartMetric('revenue')}
-              className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 cursor-pointer ${
-                chartMetric === 'revenue'
-                  ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
-                  : 'text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white'
-              }`}
+              className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 cursor-pointer ${chartMetric === 'revenue'
+                ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
+                : 'text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white'
+                }`}
             >
               Revenue
             </button>
             <button
               onClick={() => setChartMetric('orders')}
-              className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 cursor-pointer ${
-                chartMetric === 'orders'
-                  ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
-                  : 'text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white'
-              }`}
+              className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 cursor-pointer ${chartMetric === 'orders'
+                ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
+                : 'text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white'
+                }`}
             >
               Orders
             </button>
             <button
               onClick={() => setChartMetric('items')}
-              className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 cursor-pointer ${
-                chartMetric === 'items'
-                  ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
-                  : 'text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white'
-              }`}
+              className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 cursor-pointer ${chartMetric === 'items'
+                ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
+                : 'text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white'
+                }`}
             >
               Items Sold
             </button>
             <button
               onClick={() => setChartMetric('aov')}
-              className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 cursor-pointer ${
-                chartMetric === 'aov'
-                  ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
-                  : 'text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white'
-              }`}
+              className={`px-3.5 py-1.5 rounded-lg transition-colors shrink-0 cursor-pointer ${chartMetric === 'aov'
+                ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
+                : 'text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white'
+                }`}
             >
               Avg Order Value
             </button>
@@ -812,65 +804,64 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 {recentOrders
                   .slice((ordersPage - 1) * ordersPageSize, ordersPage * ordersPageSize)
                   .map((ord) => (
-                  <tr key={ord.id} className="hover:bg-slate-50 dark:hover:bg-[#121212]/60 transition-colors">
-                    <td className="py-3.5 px-3 font-mono font-bold text-slate-900 dark:text-white">
-                      {ord.orderNumber}
-                    </td>
-                    <td className="py-3.5 px-3">
-                      <span className="font-sans font-semibold text-slate-900 dark:text-white block">
-                        {ord.customerName}
-                      </span>
-                      <span className="text-[10px] font-sans text-slate-400 dark:text-[#98989D] block">
-                        {ord.customerEmail}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-3 font-mono font-bold text-slate-900 dark:text-white">
-                      {fmtCurrency(ord.totalAmount)}
-                    </td>
-                    <td className="py-3.5 px-3">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                          ord.paymentStatus === 'paid' || ord.paymentStatus === 'PAID'
+                    <tr key={ord.id} className="hover:bg-slate-50 dark:hover:bg-[#121212]/60 transition-colors">
+                      <td className="py-3.5 px-3 font-mono font-bold text-slate-900 dark:text-white">
+                        {ord.orderNumber}
+                      </td>
+                      <td className="py-3.5 px-3">
+                        <span className="font-sans font-semibold text-slate-900 dark:text-white block">
+                          {ord.customerName}
+                        </span>
+                        <span className="text-[10px] font-sans text-slate-400 dark:text-[#98989D] block">
+                          {ord.customerEmail}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-3 font-mono font-bold text-slate-900 dark:text-white">
+                        {fmtCurrency(ord.totalAmount)}
+                      </td>
+                      <td className="py-3.5 px-3">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${ord.paymentStatus === 'paid' || ord.paymentStatus === 'PAID'
                             ? 'bg-emerald-50 dark:bg-[#32D74B]/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-[#32D74B]/30'
                             : 'bg-amber-50 text-amber-800 border border-amber-200'
-                        }`}
-                      >
-                        {ord.paymentStatus}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-3">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-white text-slate-800 dark:text-[#1E1E1E] uppercase">
-                        {ord.orderStatus}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={onNavigateOrders}
-                          className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-[#2C2C2E] hover:bg-slate-100 dark:hover:bg-white dark:hover:text-[#1E1E1E] text-slate-700 dark:text-white text-[11px] font-medium transition-colors cursor-pointer"
+                            }`}
                         >
-                          View
-                        </button>
-                        <button
-                          onClick={() =>
-                            onUpdateOrderStatus && onUpdateOrderStatus(ord.id, 'processing')
-                          }
-                          className="px-2 py-1 rounded-lg border border-slate-200 dark:border-[#2C2C2E] hover:bg-slate-100 dark:hover:bg-white dark:hover:text-[#1E1E1E] text-slate-700 dark:text-white text-[11px] font-medium transition-colors cursor-pointer"
-                        >
-                          Process
-                        </button>
-                        <button
-                          onClick={() =>
-                            onUpdateOrderStatus && onUpdateOrderStatus(ord.id, 'shipped')
-                          }
-                          className="px-2 py-1 rounded-lg border border-slate-200 dark:border-[#2C2C2E] hover:bg-slate-100 dark:hover:bg-white dark:hover:text-[#1E1E1E] text-slate-700 dark:text-white text-[11px] font-medium transition-colors cursor-pointer"
-                        >
-                          Ship
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {ord.paymentStatus}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-3">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-white text-slate-800 dark:text-[#1E1E1E] uppercase">
+                          {ord.orderStatus}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={onNavigateOrders}
+                            className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-[#2C2C2E] hover:bg-slate-100 dark:hover:bg-white dark:hover:text-[#1E1E1E] text-slate-700 dark:text-white text-[11px] font-medium transition-colors cursor-pointer"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() =>
+                              onUpdateOrderStatus && onUpdateOrderStatus(ord.id, 'processing')
+                            }
+                            className="px-2 py-1 rounded-lg border border-slate-200 dark:border-[#2C2C2E] hover:bg-slate-100 dark:hover:bg-white dark:hover:text-[#1E1E1E] text-slate-700 dark:text-white text-[11px] font-medium transition-colors cursor-pointer"
+                          >
+                            Process
+                          </button>
+                          <button
+                            onClick={() =>
+                              onUpdateOrderStatus && onUpdateOrderStatus(ord.id, 'shipped')
+                            }
+                            className="px-2 py-1 rounded-lg border border-slate-200 dark:border-[#2C2C2E] hover:bg-slate-100 dark:hover:bg-white dark:hover:text-[#1E1E1E] text-slate-700 dark:text-white text-[11px] font-medium transition-colors cursor-pointer"
+                          >
+                            Ship
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
             <TablePagination
@@ -1046,7 +1037,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               Top Customers
             </span>
             {!stats.customerAnalytics?.topCustomers ||
-            stats.customerAnalytics.topCustomers.length === 0 ? (
+              stats.customerAnalytics.topCustomers.length === 0 ? (
               <div className="p-4 rounded-xl border border-slate-200 dark:border-[#2C2C2E] bg-slate-50 dark:bg-[#121212] text-center text-xs font-sans text-slate-500 dark:text-[#98989D]">
                 No customer purchase records recorded yet.
               </div>
@@ -1087,31 +1078,28 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#121212] p-1 rounded-xl border border-slate-200 dark:border-[#2C2C2E] text-xs font-sans font-medium">
               <button
                 onClick={() => setTopProductSort('revenue')}
-                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
-                  topProductSort === 'revenue'
-                    ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
-                    : 'text-slate-600 dark:text-[#98989D]'
-                }`}
+                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${topProductSort === 'revenue'
+                  ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-[#98989D]'
+                  }`}
               >
                 Revenue
               </button>
               <button
                 onClick={() => setTopProductSort('sales')}
-                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
-                  topProductSort === 'sales'
-                    ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
-                    : 'text-slate-600 dark:text-[#98989D]'
-                }`}
+                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${topProductSort === 'sales'
+                  ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-[#98989D]'
+                  }`}
               >
                 Sales
               </button>
               <button
                 onClick={() => setTopProductSort('orders')}
-                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
-                  topProductSort === 'orders'
-                    ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
-                    : 'text-slate-600 dark:text-[#98989D]'
-                }`}
+                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${topProductSort === 'orders'
+                  ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-[#98989D]'
+                  }`}
               >
                 Orders
               </button>
@@ -1361,10 +1349,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           {/* Payment Method Progress Bars OR Alt Text */}
           <div className="space-y-3 pt-2 text-xs font-sans">
             {!stats.paymentMetrics?.breakdown ||
-            (stats.paymentMetrics.breakdown.razorpay === 0 &&
-              stats.paymentMetrics.breakdown.stripe === 0 &&
-              stats.paymentMetrics.breakdown.upi === 0 &&
-              stats.paymentMetrics.breakdown.cod === 0) ? (
+              (stats.paymentMetrics.breakdown.razorpay === 0 &&
+                stats.paymentMetrics.breakdown.stripe === 0 &&
+                stats.paymentMetrics.breakdown.upi === 0 &&
+                stats.paymentMetrics.breakdown.cod === 0) ? (
               <div className="p-4 rounded-xl border border-slate-200 dark:border-[#2C2C2E] bg-slate-50 dark:bg-[#121212] text-center text-slate-500 dark:text-[#98989D]">
                 No payment method transactions recorded yet.
               </div>

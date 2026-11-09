@@ -359,7 +359,7 @@ export function parseProductImages(imagesRaw?: string | string[] | null): string
     try {
       const parsed = JSON.parse(trimmed);
       if (Array.isArray(parsed)) return parsed.map(String).map((s) => s.trim()).filter(Boolean);
-    } catch {}
+    } catch { }
   }
   return trimmed
     .split(",")
@@ -542,7 +542,19 @@ export const cmsService = {
       },
 
       onboardingProgress: {
-        percentage: productsMemoryState.length > 0 ? 80 : 50,
+        percentage: Math.round(
+          ([
+            true,
+            productsMemoryState.length > 0,
+            true,
+            true,
+            true,
+            false,
+            false,
+          ].filter(Boolean).length /
+            7) *
+          100
+        ),
         items: [
           {
             id: '1',
@@ -655,17 +667,17 @@ export const cmsService = {
             categoryName: p.categoryName || 'General',
             categories: p.categoryName
               ? p.categoryName
-                  .split(',')
-                  .map((s: string) => s.trim())
-                  .filter(Boolean)
+                .split(',')
+                .map((s: string) => s.trim())
+                .filter(Boolean)
               : ['General'],
             brandName: p.brandName || 'Store Brand',
             collectionName: p.collectionName || '',
             collections: p.collectionName
               ? p.collectionName
-                  .split(',')
-                  .map((s: string) => s.trim())
-                  .filter(Boolean)
+                .split(',')
+                .map((s: string) => s.trim())
+                .filter(Boolean)
               : [],
             status: p.status || 'ACTIVE',
             image: parseProductImages(p.images)[0] || p.ogImage || '',
@@ -673,12 +685,12 @@ export const cmsService = {
             tags: p.tags ? p.tags.split(',').map((t: string) => t.trim()) : [],
             variants: p.variantsJson
               ? (() => {
-                  try {
-                    return JSON.parse(p.variantsJson);
-                  } catch {
-                    return [];
-                  }
-                })()
+                try {
+                  return JSON.parse(p.variantsJson);
+                } catch {
+                  return [];
+                }
+              })()
               : [],
             variantsJson: p.variantsJson || null,
             metaTitle: p.metaTitle || p.seoTitle || p.name || '',
@@ -803,17 +815,17 @@ export const cmsService = {
           categoryName: p.categoryName || 'General',
           categories: p.categoryName
             ? p.categoryName
-                .split(',')
-                .map((s: string) => s.trim())
-                .filter(Boolean)
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter(Boolean)
             : formData.categories || ['General'],
           brandName: p.brandName || 'Store Brand',
           collectionName: p.collectionName || '',
           collections: p.collectionName
             ? p.collectionName
-                .split(',')
-                .map((s: string) => s.trim())
-                .filter(Boolean)
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter(Boolean)
             : formData.collections || [],
           status: p.status || 'ACTIVE',
           image:
@@ -823,17 +835,17 @@ export const cmsService = {
             parseProductImages(p.images).length > 0
               ? parseProductImages(p.images)
               : [
-                  'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
-                ],
+                'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+              ],
           tags: p.tags ? p.tags.split(',').map((t: string) => t.trim()) : [],
           variants: p.variantsJson
             ? (() => {
-                try {
-                  return JSON.parse(p.variantsJson);
-                } catch {
-                  return [];
-                }
-              })()
+              try {
+                return JSON.parse(p.variantsJson);
+              } catch {
+                return [];
+              }
+            })()
             : formData.variants || [],
           variantsJson:
             p.variantsJson || (formData.variants ? JSON.stringify(formData.variants) : null),
@@ -900,7 +912,7 @@ export const cmsService = {
         'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
       images: formData.images || [
         formData.image ||
-          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
       ],
       tags: formData.tags
         ? Array.isArray(formData.tags)
@@ -1010,17 +1022,17 @@ export const cmsService = {
           categoryName: p.categoryName || 'General',
           categories: p.categoryName
             ? p.categoryName
-                .split(',')
-                .map((s: string) => s.trim())
-                .filter(Boolean)
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter(Boolean)
             : formData.categories || ['General'],
           brandName: p.brandName || 'Store Brand',
           collectionName: p.collectionName || '',
           collections: p.collectionName
             ? p.collectionName
-                .split(',')
-                .map((s: string) => s.trim())
-                .filter(Boolean)
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter(Boolean)
             : formData.collections || [],
           status: p.status || 'ACTIVE',
           image:
@@ -1030,17 +1042,17 @@ export const cmsService = {
             parseProductImages(p.images).length > 0
               ? parseProductImages(p.images)
               : [
-                  'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
-                ],
+                'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+              ],
           tags: p.tags ? p.tags.split(',').map((t: string) => t.trim()) : [],
           variants: p.variantsJson
             ? (() => {
-                try {
-                  return JSON.parse(p.variantsJson);
-                } catch {
-                  return [];
-                }
-              })()
+              try {
+                return JSON.parse(p.variantsJson);
+              } catch {
+                return [];
+              }
+            })()
             : formData.variants || [],
           variantsJson:
             p.variantsJson || (formData.variants ? JSON.stringify(formData.variants) : null),
@@ -1111,8 +1123,8 @@ export const cmsService = {
           productsMemoryState[index].image,
         images: formData.images || [
           formData.image ||
-            productsMemoryState[index].image ||
-            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+          productsMemoryState[index].image ||
+          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
         ],
         tags: formData.tags
           ? Array.isArray(formData.tags)
@@ -1645,19 +1657,19 @@ export const cmsService = {
                     };
                   });
                 }
-              } catch {}
+              } catch { }
             }
             let shippingAddress: any = null;
             if (o.shippingAddressJson) {
               try {
                 shippingAddress = JSON.parse(o.shippingAddressJson);
-              } catch {}
+              } catch { }
             }
             let notes: any[] = [];
             if (o.notesJson) {
               try {
                 notes = JSON.parse(o.notesJson);
-              } catch {}
+              } catch { }
             }
 
             return {
@@ -1681,16 +1693,16 @@ export const cmsService = {
                 items.length > 0
                   ? items
                   : [
-                      {
-                        productId: 'prod-1',
-                        productName: 'Ordered Item',
-                        name: 'Ordered Item',
-                        quantity: 1,
-                        unitPrice: Number(o.totalAmount || 0),
-                        price: Number(o.totalAmount || 0),
-                        subtotal: Number(o.totalAmount || 0),
-                      },
-                    ],
+                    {
+                      productId: 'prod-1',
+                      productName: 'Ordered Item',
+                      name: 'Ordered Item',
+                      quantity: 1,
+                      unitPrice: Number(o.totalAmount || 0),
+                      price: Number(o.totalAmount || 0),
+                      subtotal: Number(o.totalAmount || 0),
+                    },
+                  ],
               shippingAddress: shippingAddress || {
                 street: '124 Market St',
                 city: 'San Francisco',
@@ -1920,13 +1932,13 @@ export const cmsService = {
             if (c.addressJson) {
               try {
                 address = JSON.parse(c.addressJson);
-              } catch {}
+              } catch { }
             }
             let notes: any[] = [];
             if (c.notesJson) {
               try {
                 notes = JSON.parse(c.notesJson);
-              } catch {}
+              } catch { }
             }
             let tags: string[] = [];
             if (c.tags) {
@@ -2105,7 +2117,7 @@ export const cmsService = {
             if (d.targetIdsJson) {
               try {
                 targetIds = JSON.parse(d.targetIdsJson);
-              } catch {}
+              } catch { }
             }
             let targetCustomers: string[] = [];
             if (d.targetCustomerJson) {
@@ -2219,7 +2231,7 @@ export const cmsService = {
         if (d.targetIdsJson) {
           try {
             targetIds = JSON.parse(d.targetIdsJson);
-          } catch {}
+          } catch { }
         }
         let targetCustomers: string[] = [];
         if (d.targetCustomerJson) {
@@ -2370,7 +2382,7 @@ export const cmsService = {
             if (r.hsnSacJson) {
               try {
                 hsnSacCodes = JSON.parse(r.hsnSacJson);
-              } catch {}
+              } catch { }
             }
 
             return {
@@ -2425,7 +2437,7 @@ export const cmsService = {
         if (r.hsnSacJson) {
           try {
             hsnSacCodes = JSON.parse(r.hsnSacJson);
-          } catch {}
+          } catch { }
         }
         const created: CMSTaxRegion = {
           id: r.id,
@@ -2531,7 +2543,7 @@ export const cmsService = {
           _inMemoryMerchantSession = JSON.parse(stored);
           return _inMemoryMerchantSession;
         }
-      } catch {}
+      } catch { }
     }
     return null;
   },
@@ -2547,7 +2559,7 @@ export const cmsService = {
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('merchant_session', JSON.stringify(session));
-      } catch {}
+      } catch { }
     }
   },
 
@@ -2559,10 +2571,10 @@ export const cmsService = {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('active_store_id');
         localStorage.removeItem('merchant_session');
-      } catch {}
+      } catch { }
       try {
         sessionStorage.clear();
-      } catch {}
+      } catch { }
     }
   },
 
@@ -2603,12 +2615,12 @@ export const cmsService = {
       merchant: { ...merchant, email: merchant.email, storeId: createdStoreId },
       store: createdStoreId
         ? {
-            id: createdStoreId,
-            slug: merchant.email.split('@')[0],
-            storeName: `${fullName || 'My'}'s Store`,
-            currency: 'INR',
-            status: 'ACTIVE',
-          }
+          id: createdStoreId,
+          slug: merchant.email.split('@')[0],
+          storeName: `${fullName || 'My'}'s Store`,
+          currency: 'INR',
+          status: 'ACTIVE',
+        }
         : undefined,
     });
 
@@ -2675,6 +2687,31 @@ export const cmsService = {
     let permissions =
       isStoreOwner || userRole === 'ADMIN'
         ? {
+          canManageProducts: true,
+          canManageInventory: true,
+          canManageOrders: true,
+          canManageCustomers: true,
+          canManageThemes: true,
+          canManageSettings: true,
+          canManagePayments: true,
+          canManageLogistics: true,
+          canManageAnalytics: true,
+          canManage3DModels: true,
+        }
+        : activeMembership
+          ? {
+            canManageProducts: !!activeMembership.canManageProducts,
+            canManageInventory: !!activeMembership.canManageInventory,
+            canManageOrders: !!activeMembership.canManageOrders,
+            canManageCustomers: !!activeMembership.canManageCustomers,
+            canManageThemes: !!activeMembership.canManageThemes,
+            canManageSettings: !!activeMembership.canManageSettings,
+            canManagePayments: !!activeMembership.canManagePayments,
+            canManageLogistics: !!activeMembership.canManageLogistics,
+            canManageAnalytics: !!activeMembership.canManageAnalytics,
+            canManage3DModels: activeMembership.canManage3DModels !== false,
+          }
+          : {
             canManageProducts: true,
             canManageInventory: true,
             canManageOrders: true,
@@ -2682,35 +2719,10 @@ export const cmsService = {
             canManageThemes: true,
             canManageSettings: true,
             canManagePayments: true,
-            canManageLogistics: true,
+            canManageLogistics: false,
             canManageAnalytics: true,
             canManage3DModels: true,
-          }
-        : activeMembership
-          ? {
-              canManageProducts: !!activeMembership.canManageProducts,
-              canManageInventory: !!activeMembership.canManageInventory,
-              canManageOrders: !!activeMembership.canManageOrders,
-              canManageCustomers: !!activeMembership.canManageCustomers,
-              canManageThemes: !!activeMembership.canManageThemes,
-              canManageSettings: !!activeMembership.canManageSettings,
-              canManagePayments: !!activeMembership.canManagePayments,
-              canManageLogistics: !!activeMembership.canManageLogistics,
-              canManageAnalytics: !!activeMembership.canManageAnalytics,
-              canManage3DModels: activeMembership.canManage3DModels !== false,
-            }
-          : {
-              canManageProducts: true,
-              canManageInventory: true,
-              canManageOrders: true,
-              canManageCustomers: true,
-              canManageThemes: true,
-              canManageSettings: true,
-              canManagePayments: true,
-              canManageLogistics: false,
-              canManageAnalytics: true,
-              canManage3DModels: true,
-            };
+          };
 
     const merchantUser: MerchantUser = {
       firstName,
@@ -2727,18 +2739,18 @@ export const cmsService = {
     const storeInfo =
       backendUser?.stores && backendUser.stores.length > 0
         ? {
-            id: backendUser.stores[0].id,
-            storeName: backendUser.stores[0].name,
-            currency: backendUser.stores[0].currency || 'INR',
-          }
+          id: backendUser.stores[0].id,
+          storeName: backendUser.stores[0].name,
+          currency: backendUser.stores[0].currency || 'INR',
+        }
         : createdStoreId
           ? {
-              id: createdStoreId,
-              slug: merchantUser.email.split('@')[0],
-              storeName: `${firstName}'s Store`,
-              currency: 'INR',
-              status: 'ACTIVE',
-            }
+            id: createdStoreId,
+            slug: merchantUser.email.split('@')[0],
+            storeName: `${firstName}'s Store`,
+            currency: 'INR',
+            status: 'ACTIVE',
+          }
           : undefined;
 
     this.saveMerchantSession({
@@ -2875,39 +2887,39 @@ export const cmsService = {
     let permissions =
       isStoreOwner || userRole === 'ADMIN'
         ? {
-            canManageProducts: true,
-            canManageInventory: true,
-            canManageOrders: true,
-            canManageCustomers: true,
-            canManageThemes: true,
-            canManageSettings: true,
-            canManagePayments: true,
-            canManageLogistics: true,
-            canManageAnalytics: true,
-          }
+          canManageProducts: true,
+          canManageInventory: true,
+          canManageOrders: true,
+          canManageCustomers: true,
+          canManageThemes: true,
+          canManageSettings: true,
+          canManagePayments: true,
+          canManageLogistics: true,
+          canManageAnalytics: true,
+        }
         : activeMembership
           ? {
-              canManageProducts: !!activeMembership.canManageProducts,
-              canManageInventory: !!activeMembership.canManageInventory,
-              canManageOrders: !!activeMembership.canManageOrders,
-              canManageCustomers: !!activeMembership.canManageCustomers,
-              canManageThemes: !!activeMembership.canManageThemes,
-              canManageSettings: !!activeMembership.canManageSettings,
-              canManagePayments: !!activeMembership.canManagePayments,
-              canManageLogistics: !!activeMembership.canManageLogistics,
-              canManageAnalytics: !!activeMembership.canManageAnalytics,
-            }
+            canManageProducts: !!activeMembership.canManageProducts,
+            canManageInventory: !!activeMembership.canManageInventory,
+            canManageOrders: !!activeMembership.canManageOrders,
+            canManageCustomers: !!activeMembership.canManageCustomers,
+            canManageThemes: !!activeMembership.canManageThemes,
+            canManageSettings: !!activeMembership.canManageSettings,
+            canManagePayments: !!activeMembership.canManagePayments,
+            canManageLogistics: !!activeMembership.canManageLogistics,
+            canManageAnalytics: !!activeMembership.canManageAnalytics,
+          }
           : {
-              canManageProducts: !!(backendUser as any).permissionsProducts,
-              canManageInventory: !!(backendUser as any).permissionsProducts,
-              canManageOrders: !!(backendUser as any).permissionsOrders,
-              canManageCustomers: !!(backendUser as any).permissionsCustomers,
-              canManageThemes: !!(backendUser as any).permissionsThemes,
-              canManageSettings: !!(backendUser as any).permissionsSettings,
-              canManagePayments: !!(backendUser as any).permissionsPayments,
-              canManageLogistics: false,
-              canManageAnalytics: !!(backendUser as any).permissionsAnalytics,
-            };
+            canManageProducts: !!(backendUser as any).permissionsProducts,
+            canManageInventory: !!(backendUser as any).permissionsProducts,
+            canManageOrders: !!(backendUser as any).permissionsOrders,
+            canManageCustomers: !!(backendUser as any).permissionsCustomers,
+            canManageThemes: !!(backendUser as any).permissionsThemes,
+            canManageSettings: !!(backendUser as any).permissionsSettings,
+            canManagePayments: !!(backendUser as any).permissionsPayments,
+            canManageLogistics: false,
+            canManageAnalytics: !!(backendUser as any).permissionsAnalytics,
+          };
 
     const merchantUser: MerchantUser = {
       firstName,
@@ -2922,8 +2934,8 @@ export const cmsService = {
     const resolvedStoreId =
       (backendUser.stores && backendUser.stores.length > 0 ? backendUser.stores[0].id : null) ||
       (backendUser.storeMemberships &&
-      backendUser.storeMemberships.length > 0 &&
-      backendUser.storeMemberships[0].store
+        backendUser.storeMemberships.length > 0 &&
+        backendUser.storeMemberships[0].store
         ? backendUser.storeMemberships[0].store.id
         : null) ||
       null;
@@ -2938,22 +2950,22 @@ export const cmsService = {
       existingSession?.store ||
       (backendUser.stores && backendUser.stores.length > 0
         ? {
-            id: backendUser.stores[0].id,
-            storeName: backendUser.stores[0].name,
-            currency: backendUser.stores[0].currency || 'USD',
-          }
+          id: backendUser.stores[0].id,
+          storeName: backendUser.stores[0].name,
+          currency: backendUser.stores[0].currency || 'USD',
+        }
         : backendUser.storeMemberships &&
-            backendUser.storeMemberships.length > 0 &&
-            backendUser.storeMemberships[0].store
+          backendUser.storeMemberships.length > 0 &&
+          backendUser.storeMemberships[0].store
           ? {
-              id: backendUser.storeMemberships[0].store.id,
-              storeName: backendUser.storeMemberships[0].store.name,
-              currency: backendUser.storeMemberships[0].store.currency || 'USD',
-            }
+            id: backendUser.storeMemberships[0].store.id,
+            storeName: backendUser.storeMemberships[0].store.name,
+            currency: backendUser.storeMemberships[0].store.currency || 'USD',
+          }
           : {
-              storeName: 'OmniStore Flagship',
-              currency: 'USD',
-            });
+            storeName: 'OmniStore Flagship',
+            currency: 'USD',
+          });
 
     this.saveMerchantSession({
       ...(existingSession || {}),
@@ -3046,8 +3058,8 @@ export const cmsService = {
     const resolvedStoreId =
       (backendUser.stores && backendUser.stores.length > 0 ? backendUser.stores[0].id : null) ||
       (backendUser.storeMemberships &&
-      backendUser.storeMemberships.length > 0 &&
-      backendUser.storeMemberships[0].store
+        backendUser.storeMemberships.length > 0 &&
+        backendUser.storeMemberships[0].store
         ? backendUser.storeMemberships[0].store.id
         : null) ||
       null;
@@ -3062,22 +3074,22 @@ export const cmsService = {
       existingSession?.store ||
       (backendUser.stores && backendUser.stores.length > 0
         ? {
-            id: backendUser.stores[0].id,
-            storeName: backendUser.stores[0].name,
-            currency: backendUser.stores[0].currency || 'USD',
-          }
+          id: backendUser.stores[0].id,
+          storeName: backendUser.stores[0].name,
+          currency: backendUser.stores[0].currency || 'USD',
+        }
         : backendUser.storeMemberships &&
-            backendUser.storeMemberships.length > 0 &&
-            backendUser.storeMemberships[0].store
+          backendUser.storeMemberships.length > 0 &&
+          backendUser.storeMemberships[0].store
           ? {
-              id: backendUser.storeMemberships[0].store.id,
-              storeName: backendUser.storeMemberships[0].store.name,
-              currency: backendUser.storeMemberships[0].store.currency || 'USD',
-            }
+            id: backendUser.storeMemberships[0].store.id,
+            storeName: backendUser.storeMemberships[0].store.name,
+            currency: backendUser.storeMemberships[0].store.currency || 'USD',
+          }
           : {
-              storeName: 'OmniStore Flagship',
-              currency: 'USD',
-            });
+            storeName: 'OmniStore Flagship',
+            currency: 'USD',
+          });
 
     this.saveMerchantSession({
       ...(existingSession || {}),
