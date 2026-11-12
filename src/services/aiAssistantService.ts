@@ -1793,4 +1793,3 @@ class AIAssistantService {
 
 export const aiAssistantService = new AIAssistantService();
 
-));

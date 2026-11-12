@@ -1345,4 +1345,3 @@ export const PageManager: React.FC = () => {
   );
 };
 
-}
