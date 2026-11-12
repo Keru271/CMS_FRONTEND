@@ -8826,7 +8826,7 @@ export const cmsService = {
     projectId?: string;
     message: string;
     history?: Array<{ role: 'user' | 'assistant'; content: string }>;
-    provider?: 'gemini' | 'chatgpt';
+    provider?: 'auto' | 'gemini' | 'chatgpt';
     brandName?: string;
     industry?: string;
     storeId?: string;
@@ -8848,7 +8848,7 @@ export const cmsService = {
     reply: string;
     project: AiWebsiteProject;
     suggestedReplies: string[];
-    providerUsed: 'gemini' | 'chatgpt';
+    providerUsed: 'auto' | 'gemini' | 'chatgpt';
     appliedChanges?: string[];
   }> {
     const res = await apiClient.post('/ai/website-builder/chat', payload, { timeout: 60000 });
@@ -8894,7 +8894,6 @@ export const cmsService = {
     }
   },
 };
-
 
 
 

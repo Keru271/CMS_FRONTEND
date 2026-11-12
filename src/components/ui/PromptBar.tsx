@@ -165,10 +165,7 @@ export const DEFAULT_STORE_COMMANDS: PromptCommand[] = [
 ];
 
 export const DEFAULT_STORE_MODELS: PromptModel[] = [
-  { key: 'gemini-flash', name: 'Gemini 2.5 Flash', tag: 'Fast' },
-  { key: 'gemini-pro', name: 'Gemini 1.5 Pro', tag: 'Flagship' },
-  { key: 'claude-35', name: 'Claude 3.5 Sonnet', tag: 'Smart' },
-  { key: 'gpt-4o', name: 'GPT-4o Omni', tag: 'Creative' },
+  { key: 'auto', name: 'Claude → Gemini → ChatGPT', tag: 'Automatic fallback' },
 ];
 
 export const DEFAULT_EFFORTS = ['Low', 'Medium', 'High', 'Extra', 'Max'];
@@ -288,7 +285,7 @@ const parseToken = (draft: string) => {
     sources = DEFAULT_STORE_SOURCES,
     commands = DEFAULT_STORE_COMMANDS,
     models = DEFAULT_STORE_MODELS,
-    defaultModel = 'gemini-flash',
+    defaultModel = 'auto',
     onModelChange,
     efforts = DEFAULT_EFFORTS,
     defaultEffort = 'High',

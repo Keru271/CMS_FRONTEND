@@ -438,11 +438,7 @@ export const CMSChatbot: React.FC = () => {
     });
   }, []);
 
-  const handleSendMessage = async (
-    customText?: string,
-    selectedModelName?: string,
-    effortLevel?: string
-  ) => {
+  const handleSendMessage = async (customText?: string) => {
     const textToSend = (customText || inputValue).trim();
     if (!textToSend || isTyping) return;
 
@@ -498,7 +494,7 @@ export const CMSChatbot: React.FC = () => {
         }),
         actions: response.actions,
         form: detectedForm,
-        model: selectedModelName || response.model || 'Gemini 2.5 Flash',
+        model: response.model || 'Claude → Gemini → ChatGPT',
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -515,7 +511,7 @@ export const CMSChatbot: React.FC = () => {
             hour: '2-digit',
             minute: '2-digit',
           }),
-          model: selectedModelName || 'Gemini 2.5 Flash',
+          model: 'Claude → Gemini → ChatGPT',
         },
       ]);
     } finally {
@@ -1301,7 +1297,7 @@ export const CMSChatbot: React.FC = () => {
                       if (meta.attachments && meta.attachments.length > 0) {
                         fullPrompt += `\n[Attached files: ${meta.attachments.join(', ')}]`;
                       }
-                      handleSendMessage(fullPrompt, meta.model?.name, meta.effort);
+                      handleSendMessage(fullPrompt);
                     }}
                     onStop={() => setIsTyping(false)}
                     onDictate={handleDictate}

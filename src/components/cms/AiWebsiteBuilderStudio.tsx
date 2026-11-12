@@ -154,9 +154,7 @@ const AI_BUILDER_COMMANDS: PromptCommand[] = [
 ];
 
 const AI_BUILDER_MODELS: PromptModel[] = [
-  { key: 'gemini', name: 'Gemini 2.0 Flash', tag: 'Fast & Live' },
-  { key: 'chatgpt', name: 'OpenAI ChatGPT 4o', tag: 'Creative' },
-  { key: 'claude', name: 'Claude 3.5 Sonnet', tag: 'Architecture' },
+  { key: 'auto', name: 'Claude → Gemini → ChatGPT', tag: 'Automatic fallback' },
 ];
 
 export interface ReferenceImageItem {
@@ -170,7 +168,7 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   text: string;
   time: string;
-  provider?: 'gemini' | 'chatgpt';
+  provider?: 'gemini' | 'chatgpt' | 'auto';
   steps?: string[];
   suggestedReplies?: string[];
   appliedChanges?: string[];
@@ -359,7 +357,7 @@ export function AiWebsiteBuilderStudio({
   const dragStartWidthRef = useRef<number>(510);
 
   // Conversational AI State
-  const [aiProvider, setAiProvider] = useState<'gemini' | 'chatgpt'>('gemini');
+  const [aiProvider, setAiProvider] = useState<'auto'>('auto');
   const [chatInput, setChatInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [pendingReferenceImages, setPendingReferenceImages] = useState<ReferenceImageItem[]>([]);
@@ -2293,30 +2291,8 @@ export function AiWebsiteBuilderStudio({
               </div>
             </div>
 
-            {/* AI Provider Switcher */}
-            <div className="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-slate-800 text-xs">
-              <button
-                onClick={() => setAiProvider('gemini')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition cursor-pointer ${
-                  aiProvider === 'gemini'
-                    ? 'bg-indigo-600 text-white font-semibold shadow-md'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <Bot className="w-3.5 h-3.5" />
-                <span>Gemini 2.0 Flash</span>
-              </button>
-              <button
-                onClick={() => setAiProvider('chatgpt')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition cursor-pointer ${
-                  aiProvider === 'chatgpt'
-                    ? 'bg-indigo-600 text-white font-semibold shadow-md'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span>ChatGPT 4o</span>
-              </button>
+            <div className="rounded-xl border border-slate-800 bg-black/40 px-3 py-2 text-xs text-zinc-300">
+              AI provider order: <span className="font-semibold text-white">Claude → Gemini → ChatGPT</span>
             </div>
           </header>
 
@@ -3175,9 +3151,7 @@ export function AiWebsiteBuilderStudio({
                       models={AI_BUILDER_MODELS}
                       defaultModel={aiProvider}
                       onModelChange={(m) => {
-                        if (m.key === 'gemini' || m.key === 'chatgpt') {
-                          setAiProvider(m.key);
-                        }
+                        if (m.key === 'auto') setAiProvider('auto');
                       }}
                       busy={isChatLoading}
                       onSend={(text, meta) => {
@@ -3205,7 +3179,7 @@ export function AiWebsiteBuilderStudio({
                     <div className="flex justify-between items-center mt-2 px-1 text-[11px] text-zinc-500">
                       <span className="flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                        <span>Engine: {aiProvider === 'gemini' ? 'Google Gemini 2.0 Flash' : 'ChatGPT 4o'}</span>
+                        <span>Engine: Claude → Gemini → ChatGPT fallback</span>
                       </span>
                       <span>Press Enter ↵ to send</span>
                     </div>

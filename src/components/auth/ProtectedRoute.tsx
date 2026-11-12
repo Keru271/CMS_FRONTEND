@@ -55,8 +55,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     }
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
-        <div className="w-9 h-9 border-4 border-sage-primary border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-semibold text-sage-muted animate-pulse">
+        <div className="w-9 h-9 border-4 border-slate-900 dark:border-[#00E5FF] border-t-transparent rounded-full animate-spin" />
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 animate-pulse">
           Verifying Authentication...
         </span>
       </div>
@@ -67,8 +67,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   if (isPublic && authStatus.hasToken) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
-        <div className="w-9 h-9 border-4 border-sage-primary border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-semibold text-sage-muted">
+        <div className="w-9 h-9 border-4 border-slate-900 dark:border-[#00E5FF] border-t-transparent rounded-full animate-spin" />
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
           Already logged in. Redirecting to Dashboard...
         </span>
       </div>
@@ -84,8 +84,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   if (!isPublic && !authStatus.hasToken) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
-        <div className="w-9 h-9 border-4 border-sage-primary border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-semibold text-sage-muted animate-pulse">
+        <div className="w-9 h-9 border-4 border-slate-900 dark:border-[#00E5FF] border-t-transparent rounded-full animate-spin" />
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 animate-pulse">
           Redirecting to Login...
         </span>
       </div>

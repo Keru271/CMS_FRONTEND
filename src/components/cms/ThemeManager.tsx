@@ -1911,8 +1911,8 @@ export const ThemeManager: React.FC = () => {
         />
       )}
       <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm relative overflow-hidden space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
+        <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-6">
+          <div className="space-y-3 flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-extrabold text-[11px] uppercase tracking-wider border border-indigo-200/80 dark:border-indigo-800/60">
                 Multi-Template Architecture
@@ -1922,33 +1922,37 @@ export const ThemeManager: React.FC = () => {
                 Active Theme: {activeTemplate?.name || 'Nova Tech'}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground flex items-center gap-3">
-              <Palette className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-              <span>Theme Studio & Template Publisher</span>
-            </h1>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800/60 flex items-center justify-center shrink-0 shadow-xs">
+                <Palette className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-foreground">
+                Theme Studio & Template Publisher
+              </h1>
+            </div>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
               Preview all storefront layout templates, test responsive viewports (Desktop, Tablet,
               Mobile), and customize color palettes, typography, and header/footer configurations in
               real-time.
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap shrink-0">
             <PageAiSpecularButton size="md" />
             <button
               type="button"
               onClick={() => setIsAiBuilderOpen(true)}
-              className="px-5 py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 text-xs font-black border border-indigo-200/80 dark:border-indigo-800/60 flex items-center gap-2 transition-all cursor-pointer transform active:scale-95 shadow-xs"
+              className="px-4 py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 text-xs font-black border border-indigo-200/80 dark:border-indigo-800/60 flex items-center gap-2 transition-all cursor-pointer transform active:scale-95 shadow-xs"
             >
               <Wand2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-pulse" />
-              <span>AI Store Builder 🪄</span>
+              <span>AI Store Builder</span>
             </button>
             <button
               type="button"
               onClick={() => setIsHomepageStudioOpen(true)}
-              className="px-5 py-2.5 rounded-2xl bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200/80 dark:border-border flex items-center gap-2 transition-all cursor-pointer transform active:scale-95 shadow-xs"
+              className="px-4 py-2.5 rounded-2xl bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200/80 dark:border-border flex items-center gap-2 transition-all cursor-pointer transform active:scale-95 shadow-xs"
             >
               <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>Customize Homepage (Studio) ↗</span>
+              <span>Customize Homepage ↗</span>
             </button>
             {isDirty && initialConfig && (
               <button
@@ -1963,7 +1967,7 @@ export const ThemeManager: React.FC = () => {
               type="button"
               onClick={handleSaveTheme}
               disabled={isSaving}
-              className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer transform active:scale-95"
+              className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer transform active:scale-95"
             >
               {isSaving ? (
                 <>
@@ -1983,19 +1987,19 @@ export const ThemeManager: React.FC = () => {
           {[
             {
               id: 'templates',
-              label: '1. Select & Preview All Templates',
+              label: '1. Templates & Preview',
               icon: Layout,
             },
             {
               id: 'sections',
-              label: '2. Homepage Customizer & Sections',
+              label: '2. Homepage & Sections',
               icon: Layers,
             },
             { id: 'colors', label: '3. Color Scheme', icon: Palette },
             { id: 'typography', label: '4. Typography & Fonts', icon: Type },
             {
               id: 'headerFooter',
-              label: '5. Header & Footer Config',
+              label: '5. Header & Footer',
               icon: Sliders,
             },
           ].map((tab) => {
@@ -2006,7 +2010,7 @@ export const ThemeManager: React.FC = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
                   isActive
                     ? 'bg-white dark:bg-card text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/80 dark:border-border'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground hover:bg-white/60 dark:hover:bg-accent/60 border border-transparent'

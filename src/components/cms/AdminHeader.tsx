@@ -110,23 +110,23 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   );
 
   return (
-    <header className="px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-[#2C2C2E]">
+    <header className="px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2 lg:gap-3 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-[#2C2C2E] min-w-0">
       {/* Left Store Selector Dropdown */}
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0" ref={storeMenuRef}>
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0" ref={storeMenuRef}>
         {/* Mobile Menu Drawer Toggle Button */}
         <button
           onClick={onToggleMobileSidebar}
-          className="p-1.5 rounded-xl border border-slate-200 dark:border-[#2C2C2E] bg-slate-50 dark:bg-[#1E1E1E] text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white md:hidden transition-colors cursor-pointer"
+          className="p-1.5 rounded-xl border border-slate-200 dark:border-[#2C2C2E] bg-slate-50 dark:bg-[#1E1E1E] text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white md:hidden transition-colors cursor-pointer shrink-0"
           aria-label="Open Navigation Drawer"
         >
           <Menu className="w-5 h-5" />
         </button>
 
         {/* Store Selector Pill */}
-        <div className="relative">
+        <div className="relative shrink-0">
           <button
             onClick={() => setIsStoreMenuOpen(!isStoreMenuOpen)}
-            className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-800 dark:text-white hover:border-sky-500 dark:hover:border-[#00E5FF]/60 transition-all text-xs font-semibold max-w-[180px] sm:max-w-xs truncate cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-800 dark:text-white hover:border-sky-500 dark:hover:border-[#00E5FF]/60 transition-all text-xs font-semibold max-w-[120px] sm:max-w-[160px] md:max-w-[190px] lg:max-w-[220px] truncate cursor-pointer shadow-2xs"
           >
             <div
               className={`w-2 h-2 rounded-full shrink-0 animate-pulse ${
@@ -232,28 +232,28 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         {/* Store Lifecycle Stage Indicator & Action */}
         {!isStoreLive ? (
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold">
+            <span className="hidden 2xl:inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
               Pending
             </span>
             <button
               onClick={() => setIsGoLiveModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all cursor-pointer shrink-0"
               title="Inspect Launch Readiness Checklist & Go Live"
             >
-              <Rocket className="w-3.5 h-3.5" />
-              <span>Go Live</span>
+              <Rocket className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">Go Live</span>
             </button>
           </div>
         ) : (
           <div className="hidden sm:flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => setIsGoLiveModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 text-[11px] font-bold transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 text-[11px] font-bold transition-colors cursor-pointer shrink-0"
               title="Store is LIVE. Click to inspect readiness checklist or pause."
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Stage: Live</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span className="hidden md:inline">Stage: </span><span>Live</span>
             </button>
           </div>
         )}
@@ -262,7 +262,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         {(activeStore as any)?.maintenanceMode && (
           <button
             onClick={() => router.push('/store-setup')}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[11px] font-bold cursor-pointer hover:bg-amber-500/20 transition shrink-0"
+            className="hidden 2xl:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[11px] font-bold cursor-pointer hover:bg-amber-500/20 transition shrink-0"
             title="Store is currently in Maintenance Mode. Click to configure."
           >
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -272,61 +272,64 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       </div>
 
       {/* Right Controls & User Profile */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Apple Spotlight Search Trigger (Desktop) */}
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Apple Spotlight Search Trigger (Desktop lg+) */}
         <button
           onClick={onOpenSpotlight}
           type="button"
-          className="hidden sm:flex items-center justify-between gap-3 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] hover:border-indigo-400 dark:hover:border-indigo-500 rounded-xl px-3 py-1.5 text-xs text-slate-500 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer shadow-2xs group w-48 md:w-56 lg:w-64"
+          className="hidden lg:flex items-center justify-between gap-2 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] hover:border-indigo-400 dark:hover:border-indigo-500 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs text-slate-500 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer shadow-2xs group w-32 xl:w-48 2xl:w-60 shrink-0"
           title="Search (Ctrl+F or ⌘F)"
         >
-          <div className="flex items-center gap-2 truncate">
+          <div className="flex items-center gap-1.5 truncate">
             <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors shrink-0" />
             <span className="truncate text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200">
-              Search everywhere...
+              Search...
             </span>
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
-            <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-[#2C2C2E] text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-2xs">
+            <kbd className="hidden xl:inline-block px-1.5 py-0.5 rounded bg-white dark:bg-[#2C2C2E] text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-2xs">
               Ctrl+F
             </kbd>
           </div>
         </button>
 
-        {/* Mobile Spotlight Search Trigger Button */}
+        {/* Spotlight Search Trigger Button (Compact < lg) */}
         <button
           onClick={onOpenSpotlight}
           type="button"
-          className="sm:hidden p-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
-          title="Search"
+          className="lg:hidden p-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer shadow-2xs shrink-0"
+          title="Search (Ctrl+F)"
           aria-label="Open Search"
         >
-          <Search className="w-4 h-4" />
+          <Search className="w-4 h-4 shrink-0" />
         </button>
 
         {/* AI Copilot Specular Button (Customized per active page) */}
-        <PageAiSpecularButton size="sm" />
+        <div className="shrink-0">
+          <PageAiSpecularButton size="sm" />
+        </div>
 
         {/* Add Product Button (Primary Action) */}
         {onAddProduct && (
           <button
             onClick={onAddProduct}
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 dark:bg-[#00E5FF] dark:hover:bg-[#00b4cc] text-white dark:text-[#121212] font-bold text-xs transition-all shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 dark:bg-[#00E5FF] dark:hover:bg-[#00b4cc] text-white dark:text-[#121212] font-bold text-xs transition-all shadow-xs cursor-pointer shrink-0"
+            title="Add Product"
           >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add Product</span>
+            <Plus className="w-4 h-4 shrink-0" />
+            <span className="hidden xl:inline">Add Product</span>
           </button>
         )}
 
         {/* Language Selector */}
-        <div className="relative" ref={langMenuRef}>
+        <div className="relative shrink-0" ref={langMenuRef}>
           <button
             onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-            className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-700 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all text-xs font-medium flex items-center gap-1 cursor-pointer shadow-2xs"
+            className="p-1.5 sm:px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-700 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all text-xs font-medium flex items-center gap-1 cursor-pointer shadow-2xs"
             title="Language"
           >
-            <Globe className="w-4 h-4" />
-            <span className="hidden sm:inline uppercase text-[11px] font-bold">
+            <Globe className="w-4 h-4 shrink-0" />
+            <span className="hidden 2xl:inline uppercase text-[11px] font-bold">
               {currentLanguageOption?.code || 'EN'}
             </span>
           </button>
@@ -362,33 +365,33 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         {/* Theme Mode Toggle (Light / Dark) */}
         <button
           onClick={toggleTheme}
-          className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-700 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all text-xs font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs"
+          className="p-1.5 sm:px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-700 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all text-xs font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0"
           title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           aria-label="Toggle Theme Mode"
         >
           {isDark ? (
             <>
               <Sun className="w-4 h-4 text-amber-400 shrink-0" />
-              <span className="hidden sm:inline text-[11px] font-semibold">Light</span>
+              <span className="hidden 2xl:inline text-[11px] font-semibold">Light</span>
             </>
           ) : (
             <>
               <Moon className="w-4 h-4 text-sky-600 dark:text-[#00E5FF] shrink-0" />
-              <span className="hidden sm:inline text-[11px] font-semibold">Dark</span>
+              <span className="hidden 2xl:inline text-[11px] font-semibold">Dark</span>
             </>
           )}
         </button>
 
         {/* User Profile Menu */}
-        <div className="relative" ref={userMenuRef}>
+        <div className="relative shrink-0" ref={userMenuRef}>
           <button
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className="flex items-center gap-2 p-1 sm:px-2 sm:py-1 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-800 dark:text-white hover:border-sky-500 dark:hover:border-[#00E5FF]/60 transition-all cursor-pointer shadow-2xs"
+            className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-800 dark:text-white hover:border-sky-500 dark:hover:border-[#00E5FF]/60 transition-all cursor-pointer shadow-2xs"
           >
-            <div className="w-6 h-6 rounded-lg bg-sky-100 dark:bg-[#00E5FF]/20 border border-sky-300 dark:border-[#00E5FF]/40 text-sky-700 dark:text-[#00E5FF] flex items-center justify-center font-mono font-bold text-xs">
+            <div className="w-6 h-6 rounded-lg bg-sky-100 dark:bg-[#00E5FF]/20 border border-sky-300 dark:border-[#00E5FF]/40 text-sky-700 dark:text-[#00E5FF] flex items-center justify-center font-mono font-bold text-xs shrink-0">
               {(merchantData?.merchant?.firstName || 'M')[0].toUpperCase()}
             </div>
-            <span className="hidden md:inline text-xs font-semibold max-w-[90px] truncate">
+            <span className="hidden xl:inline text-xs font-semibold max-w-[90px] truncate">
               {merchantData?.merchant?.firstName || 'Merchant'}
             </span>
           </button>
