@@ -15,7 +15,7 @@ export class PaymentProcessor {
     }
     return {
       success: true,
-      transactionId: `txn_${req.id}_${Date.now()}`
+      transactionId: 'txn_' + req.id + '_' + Date.now()
     };
   }
 }
