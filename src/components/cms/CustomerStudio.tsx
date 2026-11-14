@@ -266,8 +266,8 @@ export const CustomerStudio: React.FC = () => {
         />
       )}
 
-      {/* Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm relative overflow-hidden">
+      {/* Header Banner - Updated to light mode design specs */} 
+      <div className="p-6 sm:p-8 rounded-3xl bg-[#FFFFFF] border border-[#2C2C2E]/20 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
