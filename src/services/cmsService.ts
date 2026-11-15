@@ -8812,6 +8812,30 @@ export const cmsService = {
     return res.data;
   },
 
+  // ── Readdy AI: Create New Design from Prompt / UI Ideas ───────────────
+  async createDesignFromPrompt(payload: {
+    prompt: string;
+    brandName?: string;
+    industry?: string;
+    visualStyle?: string;
+    storeId?: string;
+    referenceImages?: Array<{ name?: string; dataUrl: string; mimeType?: string }>;
+  }): Promise<{
+    success: boolean;
+    brandName: string;
+    tagline: string;
+    category: string;
+    theme: any;
+    templateConfig: any;
+    sections: any[];
+    reply: string;
+    suggestedReplies: string[];
+    appliedChanges: string[];
+  }> {
+    const res = await apiClient.post('/ai/website-builder/create-from-prompt', payload, { timeout: 60000 });
+    return res.data;
+  },
+
   async generateAiWebsite(payload: AiWebsitePlanInput): Promise<{ success: boolean; project: AiWebsiteProject }> {
     const res = await apiClient.post('/ai/website-builder/generate', payload);
     return res.data;
@@ -8894,6 +8918,8 @@ export const cmsService = {
     }
   },
 };
+
+export default cmsService;
 
 
 

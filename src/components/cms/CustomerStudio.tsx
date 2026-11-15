@@ -34,6 +34,7 @@ import {
   Clock,
   ShieldCheck,
   Check,
+  Calendar,
 } from 'lucide-react';
 
 export const CustomerStudio: React.FC = () => {
@@ -186,33 +187,38 @@ export const CustomerStudio: React.FC = () => {
     e.preventDefault();
     try {
       setIsSaving(true);
-      const tagsArray = addFormData.tags
+      const tagsArray = (addFormData.tags || '')
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean);
 
       const created = await cmsService.createCustomer({
-        name: addFormData.name,
-        email: addFormData.email,
-        phone: addFormData.phone,
+        name: addFormData.name.trim(),
+        email: addFormData.email.trim(),
+        phone: addFormData.phone?.trim() || undefined,
         group: addFormData.group,
-        tags: tagsArray,
+        tags: tagsArray.length > 0 ? tagsArray : ['New-Customer'],
         acceptsMarketing: addFormData.acceptsMarketing,
         address: {
-          name: addFormData.name,
-          street: addFormData.street || '123 Main Street',
-          city: addFormData.city || 'New York',
-          state: addFormData.state || 'NY',
-          zip: addFormData.zip || '10001',
-          country: addFormData.country || 'United States',
+          name: addFormData.name.trim(),
+          street: addFormData.street?.trim() || '123 Main Street',
+          city: addFormData.city?.trim() || 'New York',
+          state: addFormData.state?.trim() || 'NY',
+          zip: addFormData.zip?.trim() || '10001',
+          country: addFormData.country?.trim() || 'United States',
         },
       });
 
       showToast(`Customer "${created.name}" created successfully!`, 'success');
       setIsAddModalOpen(false);
+      setCustomers((prev) => [created, ...prev.filter((c) => c.id !== created.id)]);
       await loadData();
     } catch (err: any) {
-      showToast(err.message || 'Failed to create customer.', 'error');
+      const errorMsg =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to create customer.';
+      showToast(errorMsg, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -553,37 +559,68 @@ export const CustomerStudio: React.FC = () => {
 
       {/* CUSTOMER PROFILE DRAWER / MODAL */}
       {isProfileOpen && selectedCustomer && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden my-4 sm:my-8 max-h-[92vh] flex flex-col">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden my-4 sm:my-8 max-h-[92vh] flex flex-col">
             {/* Top Header */}
-            <div className="p-4 sm:p-6 bg-slate-900 text-white flex items-center justify-between gap-3 shrink-0">
-              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/30 border-b border-slate-200/80 dark:border-border flex items-center justify-between gap-4 shrink-0">
+              <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
                 <img
                   src={
                     selectedCustomer.avatarUrl ||
                     `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedCustomer.email}`
                   }
                   alt={selectedCustomer.name}
-                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-indigo-500 shrink-0"
+                  className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl object-cover border border-slate-200/80 dark:border-border bg-white shadow-xs p-0.5 shrink-0"
                 />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-black text-lg sm:text-xl text-white truncate">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h3 className="font-black text-lg sm:text-xl text-slate-900 dark:text-foreground truncate tracking-tight">
                       {selectedCustomer.name}
                     </h3>
-                    <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase shrink-0">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide border shrink-0 ${
+                        selectedCustomer.group === 'VIP'
+                          ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60'
+                          : selectedCustomer.group === 'NEW'
+                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/60'
+                            : selectedCustomer.group === 'WHOLESALE'
+                              ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/60'
+                              : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/60'
+                      }`}
+                    >
                       {selectedCustomer.group}
                     </span>
+                    {selectedCustomer.tags && selectedCustomer.tags.length > 0 && (
+                      <div className="hidden sm:flex items-center gap-1">
+                        {selectedCustomer.tags.map((t) => (
+                          <span
+                            key={t}
+                            className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300 text-[10px] font-bold"
+                          >
+                            #{t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-slate-400 font-mono truncate">
-                    {selectedCustomer.email} • Joined {selectedCustomer.createdAt}
-                  </p>
+                  <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-medium flex-wrap">
+                    <span className="flex items-center gap-1.5 font-mono text-[11px] text-slate-600 dark:text-slate-300">
+                      <Mail className="w-3.5 h-3.5 text-slate-400" />
+                      {selectedCustomer.email}
+                    </span>
+                    <span className="text-slate-300 dark:text-slate-600">•</span>
+                    <span className="flex items-center gap-1.5 text-[11px]">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                      Joined {selectedCustomer.createdAt}
+                    </span>
+                  </div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsProfileOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white shrink-0"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-accent transition-colors shrink-0 cursor-pointer"
+                title="Close"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -593,111 +630,144 @@ export const CustomerStudio: React.FC = () => {
             <div className="p-4 sm:p-6 space-y-6 overflow-y-auto">
               {/* KPI STAT CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] font-extrabold text-indigo-900 uppercase tracking-wider block">
+                <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs flex items-center justify-between">
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                       Lifetime Spend (LTV)
                     </span>
-                    <span className="text-xl font-black text-indigo-700 block">
+                    <span className="text-2xl font-black text-slate-900 dark:text-foreground font-mono block">
                       {currencySymbol}
                       {selectedCustomer.totalSpent.toFixed(2)}
                     </span>
                   </div>
-                  <DollarSign className="w-8 h-8 text-indigo-400" />
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/60 flex items-center justify-center shrink-0">
+                    <DollarSign className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                  </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] font-extrabold text-emerald-900 uppercase tracking-wider block">
+                <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs flex items-center justify-between">
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                       Total Orders
                     </span>
-                    <span className="text-xl font-black text-emerald-700 block">
-                      {selectedCustomer.totalOrders} Orders
+                    <span className="text-2xl font-black text-slate-900 dark:text-foreground font-mono block">
+                      {selectedCustomer.totalOrders} <span className="text-xs font-bold text-slate-400 font-sans">Orders</span>
                     </span>
                   </div>
-                  <ShoppingBag className="w-8 h-8 text-emerald-400" />
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
+                    <ShoppingBag className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                  </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] font-extrabold text-amber-900 uppercase tracking-wider block">
+                <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs flex items-center justify-between">
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                       Average Order Value
                     </span>
-                    <span className="text-xl font-black text-amber-700 block">
+                    <span className="text-2xl font-black text-slate-900 dark:text-foreground font-mono block">
                       {currencySymbol}
                       {selectedCustomer.totalOrders > 0
                         ? (selectedCustomer.totalSpent / selectedCustomer.totalOrders).toFixed(2)
                         : '0.00'}
                     </span>
                   </div>
-                  <Sparkles className="w-8 h-8 text-amber-400" />
+                  <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-100 dark:border-amber-800/60 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                  </div>
                 </div>
               </div>
 
               {/* GRID: ADDRESS & MARKETING CONSENT */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Primary Address */}
-                <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
-                    <MapPin className="w-4 h-4 text-indigo-600" />
-                    <span>Primary Shipping Address</span>
-                  </h4>
-                  <div className="space-y-1 text-xs text-slate-700 font-semibold">
-                    <span className="font-extrabold text-slate-900 block">
+                <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs space-y-4">
+                  <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-border">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/60 flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground">
+                        Primary Shipping Address
+                      </h4>
+                      <p className="text-[11px] text-slate-400">Default dispatch destination</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-foreground block">
                       {selectedCustomer.address?.name || selectedCustomer.name}
                     </span>
-                    <span className="text-slate-500 block">
+                    <span className="block text-slate-600 dark:text-slate-400">
                       {selectedCustomer.address?.street || '123 Main Street'}
                     </span>
-                    <span className="text-slate-500 block">
+                    <span className="block text-slate-600 dark:text-slate-400">
                       {selectedCustomer.address?.city || 'New York'},{' '}
                       {selectedCustomer.address?.state || 'NY'}{' '}
                       {selectedCustomer.address?.zip || '10001'}
                     </span>
-                    <span className="text-slate-500 block">
+                    <span className="block text-slate-600 dark:text-slate-400">
                       {selectedCustomer.address?.country || 'United States'}
                     </span>
-                    <span className="text-slate-400 font-mono text-[11px] block pt-1">
-                      Phone: {selectedCustomer.phone || 'N/A'}
-                    </span>
+                    <div className="pt-2 mt-2 border-t border-slate-100 dark:border-border flex items-center gap-2 text-slate-500 font-mono text-[11px]">
+                      <Phone className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{selectedCustomer.phone || 'Phone not provided'}</span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Marketing Consent Controls */}
-                <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
-                    <Mail className="w-4 h-4 text-indigo-600" />
-                    <span>Marketing Subscription Consent</span>
-                  </h4>
+                <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs space-y-4">
+                  <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-border">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/60 flex items-center justify-center shrink-0">
+                      <Mail className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground">
+                        Marketing Subscription Consent
+                      </h4>
+                      <p className="text-[11px] text-slate-400">GDPR & CAN-SPAM communication preferences</p>
+                    </div>
+                  </div>
 
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border">
-                      <span className="text-xs font-extrabold text-slate-800">
-                        Email Marketing Campaign Subscribed
-                      </span>
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 dark:bg-accent/40 border border-slate-200/80 dark:border-border transition-colors">
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-extrabold text-slate-900 dark:text-foreground block">
+                          Email Marketing Campaigns
+                        </span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                          Newsletters, flash sales & promos
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => handleToggleConsent('EMAIL')}
-                        className={`px-3 py-1 rounded-full text-xs font-black ${selectedCustomer.acceptsMarketing
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-200 text-slate-600'
-                          }`}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer border ${
+                          selectedCustomer.acceptsMarketing
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-300'
+                            : 'bg-slate-100 dark:bg-card border-slate-200 dark:border-border text-slate-600 dark:text-slate-400 hover:bg-slate-200/70'
+                        }`}
                       >
                         {selectedCustomer.acceptsMarketing ? '✓ Opted-In' : 'Unsubscribed'}
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border">
-                      <span className="text-xs font-extrabold text-slate-800">
-                        SMS Direct Marketing Consent
-                      </span>
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 dark:bg-accent/40 border border-slate-200/80 dark:border-border transition-colors">
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-extrabold text-slate-900 dark:text-foreground block">
+                          SMS Direct Marketing
+                        </span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                          Order notifications & SMS alerts
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => handleToggleConsent('SMS')}
-                        className={`px-3 py-1 rounded-full text-xs font-black ${selectedCustomer.acceptsSMSMarketing
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-200 text-slate-600'
-                          }`}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer border ${
+                          selectedCustomer.acceptsSMSMarketing
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-300'
+                            : 'bg-slate-100 dark:bg-card border-slate-200 dark:border-border text-slate-600 dark:text-slate-400 hover:bg-slate-200/70'
+                        }`}
                       >
                         {selectedCustomer.acceptsSMSMarketing ? '✓ Opted-In' : 'Unsubscribed'}
                       </button>
@@ -707,38 +777,56 @@ export const CustomerStudio: React.FC = () => {
               </div>
 
               {/* ORDER HISTORY TIMELINE */}
-              <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
-                  <ShoppingBag className="w-4 h-4 text-indigo-600" />
-                  <span>
-                    Customer Order History (
-                    {orders.filter((o) => o.customerEmail === selectedCustomer.email).length}{' '}
-                    Orders)
+              <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-border">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/60 flex items-center justify-center shrink-0">
+                      <ShoppingBag className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground">
+                        Customer Order History
+                      </h4>
+                      <p className="text-[11px] text-slate-400">
+                        {orders.filter((o) => o.customerEmail === selectedCustomer.email).length} lifetime orders placed
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 text-[10px] font-extrabold border border-slate-200/80 dark:border-border">
+                    {orders.filter((o) => o.customerEmail === selectedCustomer.email).length} Orders
                   </span>
-                </h4>
+                </div>
 
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-slate-100 dark:divide-border">
                   {orders.filter((o) => o.customerEmail === selectedCustomer.email).length === 0 ? (
-                    <p className="py-4 text-xs text-slate-400 italic text-center">
-                      No order records linked to {selectedCustomer.email}.
-                    </p>
+                    <div className="py-8 text-center space-y-2">
+                      <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-accent flex items-center justify-center mx-auto text-slate-400">
+                        <ShoppingBag className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 font-bold">
+                        No order records linked to {selectedCustomer.email}.
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        New orders matching this customer email will automatically appear in this timeline.
+                      </p>
+                    </div>
                   ) : (
                     orders
                       .filter((o) => o.customerEmail === selectedCustomer.email)
                       .map((ord) => (
-                        <div key={ord.id} className="py-3 flex items-center justify-between gap-4">
+                        <div key={ord.id} className="py-3.5 flex items-center justify-between gap-4">
                           <div>
-                            <span className="font-mono font-extrabold text-xs text-indigo-600 block">
+                            <span className="font-mono font-extrabold text-xs text-indigo-600 dark:text-indigo-400 block">
                               #{ord.orderNumber}
                             </span>
                             <span className="text-[11px] text-slate-400 block">
                               {ord.createdAt}
                             </span>
                           </div>
-                          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-extrabold text-[10px] uppercase text-slate-700">
+                          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-accent font-extrabold text-[10px] uppercase text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-border">
                             {ord.orderStatus}
                           </span>
-                          <span className="font-black text-xs text-slate-900 font-mono">
+                          <span className="font-black text-xs text-slate-900 dark:text-foreground font-mono">
                             {ord.currency === 'INR'
                               ? '₹'
                               : ord.currency === 'EUR'
@@ -755,11 +843,18 @@ export const CustomerStudio: React.FC = () => {
               </div>
 
               {/* INTERNAL CUSTOMER NOTES TIMELINE */}
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2">
-                  <Clock className="w-4 h-4 text-indigo-600" />
-                  <span>Internal Customer Notes & Staff Log</span>
-                </h4>
+              <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs space-y-4">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-border">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/60 flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-foreground">
+                      Internal Customer Notes & Staff Log
+                    </h4>
+                    <p className="text-[11px] text-slate-400">Private internal CRM logs visible only to team</p>
+                  </div>
+                </div>
 
                 <form onSubmit={handleAddNote} className="flex gap-2">
                   <input
@@ -767,33 +862,33 @@ export const CustomerStudio: React.FC = () => {
                     value={noteInput}
                     onChange={(e) => setNoteInput(e.target.value)}
                     placeholder="Add CRM note or special customer preference..."
-                    className="flex-1 px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium"
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-medium text-slate-900 dark:text-foreground placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
                   />
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold flex items-center gap-1 shrink-0"
+                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold flex items-center gap-1.5 shrink-0 transition-colors shadow-xs cursor-pointer active:scale-95"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Add Note</span>
                   </button>
                 </form>
 
-                <div className="space-y-2 pt-2">
+                <div className="space-y-2 pt-1">
                   {selectedCustomer.notes && selectedCustomer.notes.length > 0 ? (
                     selectedCustomer.notes.map((n) => (
                       <div
                         key={n.id}
-                        className="p-3 rounded-xl bg-white border border-slate-200 space-y-1"
+                        className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-accent/40 border border-slate-200/80 dark:border-border space-y-1"
                       >
                         <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
-                          <span className="text-indigo-600 font-extrabold">{n.author}</span>
+                          <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">{n.author}</span>
                           <span>{n.createdAt}</span>
                         </div>
-                        <p className="text-xs text-slate-800 font-medium">{n.text}</p>
+                        <p className="text-xs text-slate-800 dark:text-slate-200 font-medium">{n.text}</p>
                       </div>
                     ))
                   ) : (
-                    <p className="text-xs text-slate-400 italic">
+                    <p className="text-xs text-slate-400 italic py-2 text-center">
                       No internal staff notes recorded yet.
                     </p>
                   )}
@@ -806,14 +901,17 @@ export const CustomerStudio: React.FC = () => {
 
       {/* EDIT GROUP & TAGS MODAL */}
       {isEditModalOpen && selectedCustomer && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-              <h3 className="font-black text-lg">Edit Customer Group & Tags</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/40 border-b border-slate-200/80 dark:border-border flex items-center justify-between">
+              <div>
+                <h3 className="font-black text-lg text-slate-900 dark:text-foreground">Edit Customer Group & Tags</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Update segment categorization for {selectedCustomer.name}</p>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-accent transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -821,13 +919,13 @@ export const CustomerStudio: React.FC = () => {
 
             <form onSubmit={handleSaveGroupAndTags} className="p-6 space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                   Customer Group Segment
                 </label>
                 <select
                   value={editGroup}
                   onChange={(e) => setEditGroup(e.target.value as CustomerGroup)}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-bold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="NEW">NEW CUSTOMER</option>
                   <option value="RETURNING">RETURNING CUSTOMER</option>
@@ -837,7 +935,7 @@ export const CustomerStudio: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                   Customer Tags (comma-separated)
                 </label>
                 <input
@@ -845,22 +943,22 @@ export const CustomerStudio: React.FC = () => {
                   value={editTagsInput}
                   onChange={(e) => setEditTagsInput(e.target.value)}
                   placeholder="VIP, High-Value, Tax-Exempt, EU-Customer"
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-semibold"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-semibold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-border">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold"
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md"
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow transition-all cursor-pointer"
                 >
                   Save Changes
                 </button>
@@ -872,14 +970,17 @@ export const CustomerStudio: React.FC = () => {
 
       {/* ADD CUSTOMER MODAL */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden my-8">
-            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-              <h3 className="font-black text-lg">Add New Customer</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden my-8">
+            <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/40 border-b border-slate-200/80 dark:border-border flex items-center justify-between">
+              <div>
+                <h3 className="font-black text-lg text-slate-900 dark:text-foreground">Add New Customer</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Register customer profile and contact details</p>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-accent transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -888,48 +989,48 @@ export const CustomerStudio: React.FC = () => {
             <form onSubmit={handleCreateCustomer} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Full Name *</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Full Name *</label>
                   <input
                     type="text"
                     required
                     value={addFormData.name}
                     onChange={(e) => setAddFormData({ ...addFormData, name: e.target.value })}
                     placeholder="Jane Doe"
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-bold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Email Address *</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Email Address *</label>
                   <input
                     type="email"
                     required
                     value={addFormData.email}
                     onChange={(e) => setAddFormData({ ...addFormData, email: e.target.value })}
                     placeholder="jane@example.com"
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-bold text-indigo-600"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Phone Number</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Phone Number</label>
                   <input
                     type="text"
                     value={addFormData.phone}
                     onChange={(e) => setAddFormData({ ...addFormData, phone: e.target.value })}
                     placeholder="+1 (555) 000-0000"
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-semibold"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-semibold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700">Customer Group</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Customer Group</label>
                   <select
                     value={addFormData.group}
                     onChange={(e) =>
                       setAddFormData({ ...addFormData, group: e.target.value as CustomerGroup })
                     }
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-bold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="NEW">New Customer</option>
                     <option value="RETURNING">Returning Customer</option>
@@ -940,30 +1041,96 @@ export const CustomerStudio: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Street Address</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Street Address</label>
                 <input
                   type="text"
                   value={addFormData.street}
                   onChange={(e) => setAddFormData({ ...addFormData, street: e.target.value })}
                   placeholder="742 Evergreen Terrace"
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-semibold"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-semibold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">City</label>
+                  <input
+                    type="text"
+                    value={addFormData.city}
+                    onChange={(e) => setAddFormData({ ...addFormData, city: e.target.value })}
+                    placeholder="New York"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-semibold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">State / Province</label>
+                  <input
+                    type="text"
+                    value={addFormData.state}
+                    onChange={(e) => setAddFormData({ ...addFormData, state: e.target.value })}
+                    placeholder="NY"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-semibold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Zip / Postal Code</label>
+                  <input
+                    type="text"
+                    value={addFormData.zip}
+                    onChange={(e) => setAddFormData({ ...addFormData, zip: e.target.value })}
+                    placeholder="10001"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-semibold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Tags (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={addFormData.tags}
+                    onChange={(e) => setAddFormData({ ...addFormData, tags: e.target.value })}
+                    placeholder="VIP, Retail, Direct"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-semibold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 pt-1">
+                <input
+                  type="checkbox"
+                  id="addAcceptsMarketing"
+                  checked={addFormData.acceptsMarketing}
+                  onChange={(e) => setAddFormData({ ...addFormData, acceptsMarketing: e.target.checked })}
+                  className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                />
+                <label htmlFor="addAcceptsMarketing" className="text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                  Customer accepts promotional email & marketing communication
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-border">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold"
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md"
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
                 >
-                  Create Customer
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <span>Create Customer</span>
+                  )}
                 </button>
               </div>
             </form>

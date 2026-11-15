@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -156,6 +156,63 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [activeFlyoutId, setActiveFlyoutId] = useState<string | null>(null);
   const [flyoutCoords, setFlyoutCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const flyoutCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Resizable sidebar width with localStorage persistence
+  const [sidebarWidth, setSidebarWidth] = useState<number>(260);
+  const [isResizing, setIsResizing] = useState<boolean>(false);
+  const isResizingRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    try {
+      const savedWidth = localStorage.getItem('omnistore_sidebar_width');
+      if (savedWidth) {
+        const parsed = parseInt(savedWidth, 10);
+        if (!isNaN(parsed) && parsed >= 200 && parsed <= 500) {
+          setSidebarWidth(parsed);
+        }
+      }
+    } catch {}
+  }, []);
+
+  const startResizing = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isResizingRef.current = true;
+    setIsResizing(true);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!isResizingRef.current) return;
+      const newWidth = Math.min(Math.max(moveEvent.clientX, 200), 500);
+      setSidebarWidth(newWidth);
+    };
+
+    const onMouseUp = (upEvent: MouseEvent) => {
+      if (!isResizingRef.current) return;
+      isResizingRef.current = false;
+      setIsResizing(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+
+      const finalWidth = Math.min(Math.max(upEvent.clientX, 200), 500);
+      try {
+        localStorage.setItem('omnistore_sidebar_width', String(finalWidth));
+      } catch {}
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }, []);
+
+  const resetSidebarWidth = useCallback(() => {
+    setSidebarWidth(260);
+    try {
+      localStorage.setItem('omnistore_sidebar_width', '260');
+    } catch {}
+  }, []);
 
   // Top-level direct menus
   const directNavItems: NavItem[] = [
@@ -1042,11 +1099,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       <aside
-        className={`bg-white dark:bg-[#121212] border-r border-slate-200 dark:border-[#2C2C2E] h-screen max-h-screen flex flex-col transition-all duration-300 p-3 sm:p-4 pb-safe ${
+        style={{
+          width: collapsed ? undefined : (mobileOpen ? undefined : `${sidebarWidth}px`),
+        }}
+        className={`relative bg-white dark:bg-[#121212] border-r border-slate-200 dark:border-[#2C2C2E] h-screen max-h-screen flex flex-col ${
+          isResizing ? 'select-none' : 'transition-[width] duration-150'
+        } p-3 sm:p-4 pb-safe ${
           mobileOpen
             ? 'fixed inset-y-0 left-0 w-72 sm:w-80 max-w-[85vw] shadow-2xl bg-white dark:bg-[#121212] z-50 animate-in slide-in-from-left duration-200'
-            : 'hidden md:flex sticky top-0 z-20'
-        } ${collapsed ? 'md:w-20' : 'md:w-64'}`}
+            : 'hidden md:flex sticky top-0 z-20 shrink-0'
+        } ${collapsed ? 'md:w-20' : ''}`}
       >
         {/* Top Brand Header */}
         <div className="flex items-center justify-between px-2 pt-1 h-10 shrink-0 mb-3">
@@ -1408,6 +1470,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
               );
             })}
+          </div>
+        )}
+
+        {/* Resize Handle on Right Border */}
+        {!collapsed && !mobileOpen && (
+          <div
+            onMouseDown={startResizing}
+            onDoubleClick={resetSidebarWidth}
+            className={`absolute top-0 right-0 bottom-0 w-2 -mr-1 cursor-col-resize z-30 group flex items-center justify-center transition-colors ${
+              isResizing ? 'bg-sky-500/20 dark:bg-[#00E5FF]/20' : 'hover:bg-sky-500/10 dark:hover:bg-[#00E5FF]/10'
+            }`}
+            title="Drag to resize sidebar • Double-click to reset"
+          >
+            <div
+              className={`w-0.5 h-8 rounded-full transition-all ${
+                isResizing
+                  ? 'bg-sky-500 dark:bg-[#00E5FF] h-16'
+                  : 'bg-transparent group-hover:bg-slate-400 dark:group-hover:bg-slate-500'
+              }`}
+            />
           </div>
         )}
       </aside>

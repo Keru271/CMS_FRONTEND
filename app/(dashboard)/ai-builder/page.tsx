@@ -5,10 +5,8 @@ import { AiWebsiteBuilderStudio } from '@/src/components/cms/AiWebsiteBuilderStu
 
 export default function AiWebsiteBuilderPage() {
   return (
-    <div className="min-h-screen w-full bg-slate-50 dark:bg-[#121212] p-4 sm:p-6 lg:p-8">
-      <div className="w-full mx-auto">
-        <AiWebsiteBuilderStudio isFullscreenStandalone={false} />
-      </div>
+    <div className="w-full h-full min-h-screen overflow-hidden">
+      <AiWebsiteBuilderStudio isFullscreenStandalone={true} />
     </div>
   );
 }

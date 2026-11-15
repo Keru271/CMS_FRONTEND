@@ -1,7 +1,32 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { cmsService } from '@/src/services/cmsService';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// Local storage helpers to avoid circular dependency with cmsService
+function getActiveStoreId(): string | null {
+  if (typeof window !== 'undefined') {
+    try {
+      return localStorage.getItem('active_store_id') || null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function clearMerchantSession(): void {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('active_store_id');
+      localStorage.removeItem('merchant_session');
+      sessionStorage.clear();
+    } catch {}
+  }
+}
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_CMS_API_URL ||
+  'http://localhost:5000/api';
 
 // Create Axios Instance
 export const apiClient: AxiosInstance = axios.create({
@@ -22,8 +47,8 @@ apiClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
 
-      // Automatically resolve active store ID from cmsService in-memory state
-      const resolvedStoreId = cmsService.getActiveStoreId();
+      // Automatically resolve active store ID
+      const resolvedStoreId = getActiveStoreId();
 
       // Placeholder IDs that should never be sent to the backend
       const INVALID_STORE_IDS = new Set([
@@ -82,7 +107,7 @@ apiClient.interceptors.response.use(
             !currentPath.includes('/store-setup') &&
             !currentPath.includes('/setup')
           ) {
-            cmsService.clearMerchantSession();
+            clearMerchantSession();
             window.location.href = '/login';
           }
         }
@@ -90,7 +115,7 @@ apiClient.interceptors.response.use(
         // If /users/me returns 404, the stored JWT belongs to a deleted/reset user account
         if (error.config?.url?.includes('/users/me') && typeof window !== 'undefined') {
           console.warn('User profile deleted or reset in database. Clearing stale auth token...');
-          cmsService.clearMerchantSession();
+          clearMerchantSession();
           const currentPath = window.location.pathname;
           if (
             !currentPath.includes('/login') &&

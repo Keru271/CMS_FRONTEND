@@ -151,8 +151,12 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
       setInitialData(updated);
       showToast('Store Setup settings saved successfully!', 'success');
       if (onSaved) onSaved(updated);
-    } catch (err) {
-      showToast('Failed to save Store Setup parameters.', 'error');
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to save Store Setup parameters.';
+      showToast(msg, 'error');
     } finally {
       setIsSaving(false);
     }
