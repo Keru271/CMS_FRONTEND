@@ -1,10 +1,12 @@
 'use client';
+import { getStorefrontUrl } from '@/src/utils/storefront';
 
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect, useRef } from 'react';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
 import { StoreSetupData, StoreTemplate } from '@/src/types';
-import { cmsService } from '@/src/services/cmsService';
+import { cmsService, TEMPLATE_PREVIEW_FALLBACKS } from '@/src/services/cmsService';
+import { useCMSContext } from '@/src/context/CMSContext';
 import { VendorSmtpSettings } from './VendorSmtpSettings';
 import {
   Store,
@@ -44,13 +46,83 @@ import {
   Layers,
 } from 'lucide-react';
 
+function TemplateThumbnail({
+  src,
+  alt,
+  slug,
+  accentColor,
+}: {
+  src?: string | null;
+  alt: string;
+  slug: string;
+  accentColor?: string;
+}) {
+  const normSlug = (slug || '').toLowerCase();
+  const fallbackUrl =
+    TEMPLATE_PREVIEW_FALLBACKS[normSlug] ||
+    TEMPLATE_PREVIEW_FALLBACKS[normSlug.replace('-theme', '').replace('-template', '')] ||
+    TEMPLATE_PREVIEW_FALLBACKS.default;
+
+  const [imgSrc, setImgSrc] = useState<string>(src && src.trim() !== '' ? src : fallbackUrl);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setImgSrc(src && src.trim() !== '' ? src : fallbackUrl);
+    setHasError(false);
+  }, [src, slug, fallbackUrl]);
+
+  if (hasError) {
+    return (
+      <div
+        className="w-full h-full flex flex-col items-center justify-center p-6 text-center select-none"
+        style={{
+          background: `linear-gradient(135deg, ${accentColor || '#3B82F6'}22 0%, #0F172A 100%)`,
+        }}
+      >
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg mb-2"
+          style={{ backgroundColor: accentColor || '#3B82F6' }}
+        >
+          <Palette className="w-6 h-6 text-white" />
+        </div>
+        <span className="font-extrabold text-white text-sm tracking-wide">{alt}</span>
+        <span className="text-[10px] font-mono text-slate-300 mt-1 uppercase tracking-wider">
+          Storefront Layout • {slug}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={imgSrc}
+      alt={alt}
+      onError={() => {
+        if (imgSrc !== fallbackUrl) {
+          setImgSrc(fallbackUrl);
+        } else {
+          setHasError(true);
+        }
+      }}
+      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+    />
+  );
+}
+
 interface StoreSetupProps {
   onSaved?: (data: StoreSetupData) => void;
 }
 
 export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
+  const { activeStore } = useCMSContext();
   const [formData, setFormData] = useState<StoreSetupData | null>(null);
   const [initialData, setInitialData] = useState<StoreSetupData | null>(null);
+  const currentStoreTarget = {
+    slug: formData?.slug || activeStore?.slug,
+    customDomain: formData?.customDomain || activeStore?.customDomain,
+    id: activeStore?.id,
+  };
+  const publicStorefrontUrl = getStorefrontUrl(currentStoreTarget);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [templates, setTemplates] = useState<StoreTemplate[]>([]);
@@ -64,13 +136,10 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
     type: 'success' | 'error';
   } | null>(null);
   const [isVerifyingDomain, setIsVerifyingDomain] = useState(false);
-  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
     loadStoreSetup();
-  }, []);
+  }, [activeStore?.id]);
 
   const loadStoreSetup = async () => {
     setIsLoading(true);
@@ -80,8 +149,19 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
         cmsService.getStoreSetup(),
         cmsService.getStoreTemplates().catch(() => []),
       ]);
-      setFormData(data);
-      setInitialData(data);
+      const activeSlug =
+        data.activeTemplateSlug ||
+        activeStore?.activeTemplateSlug ||
+        cmsService.getMerchantSession()?.store?.activeTemplateSlug ||
+        cmsService.getMerchantSession()?.selectedTemplate?.slug ||
+        (tmpls[0]?.slug ?? 'funo');
+
+      const mergedData: StoreSetupData = {
+        ...data,
+        activeTemplateSlug: activeSlug,
+      };
+      setFormData(mergedData);
+      setInitialData(mergedData);
       setTemplates(tmpls);
     } catch (err) {
       console.error('Failed to load store setup:', err);
@@ -91,17 +171,35 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
     }
   };
 
+  const handleSelectTemplate = (templateSlug: string) => {
+    if (!formData) return;
+    handleChange('activeTemplateSlug', templateSlug);
+    showToast(`Template "${templateSlug}" selected! Click "Save Store Setup" or "Activate Now" to apply.`, 'success');
+  };
+
   const handleApplyTemplate = async (templateSlug: string) => {
     if (!formData) return;
     setApplyingTemplateSlug(templateSlug);
     try {
-      handleChange('activeTemplateSlug', templateSlug);
       const nextData: StoreSetupData = { ...formData, activeTemplateSlug: templateSlug };
-      const saved = await cmsService.updateStoreSetup(nextData);
-      setFormData(saved);
-      setInitialData(saved);
+      setFormData(nextData);
+
+      const [saved] = await Promise.all([
+        cmsService.updateStoreSetup(nextData),
+        cmsService.publishTemplate(templateSlug).catch((err) => {
+          console.warn('Backend publishTemplate notice:', err);
+          return null;
+        }),
+      ]);
+
+      const finalData: StoreSetupData = {
+        ...saved,
+        activeTemplateSlug: templateSlug,
+      };
+      setFormData(finalData);
+      setInitialData(finalData);
       showToast(`Activated template: ${templateSlug}`, 'success');
-      if (onSaved) onSaved(saved);
+      if (onSaved) onSaved(finalData);
     } catch (err: any) {
       console.error('Failed to apply template:', err);
       showToast(err?.message || 'Failed to apply template', 'error');
@@ -147,10 +245,17 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
     setIsSaving(true);
     try {
       const updated = await cmsService.updateStoreSetup(formData);
-      setFormData(updated);
-      setInitialData(updated);
+      const finalUpdated: StoreSetupData = {
+        ...updated,
+        activeTemplateSlug: formData.activeTemplateSlug || updated.activeTemplateSlug,
+      };
+      setFormData(finalUpdated);
+      setInitialData(finalUpdated);
+      if (formData.activeTemplateSlug) {
+        await cmsService.publishTemplate(formData.activeTemplateSlug).catch(() => {});
+      }
       showToast('Store Setup settings saved successfully!', 'success');
-      if (onSaved) onSaved(updated);
+      if (onSaved) onSaved(finalUpdated);
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
@@ -864,14 +969,14 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
                   Platform Default Subdomain
                 </span>
                 <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-accent border border-slate-200/80">
-                  <span className="font-mono text-xs font-bold text-slate-800 dark:text-foreground">
-                    https://{formData.slug || 'store'}.omnistore.com
+                  <span className="font-mono text-xs font-bold text-slate-800 dark:text-foreground truncate max-w-[280px]">
+                    {publicStorefrontUrl}
                   </span>
                   <a
-                    href={`https://${formData.slug || 'store'}.omnistore.com`}
+                    href={publicStorefrontUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-card text-slate-600 text-xs flex items-center gap-1 font-bold"
+                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-card text-slate-600 text-xs flex items-center gap-1 font-bold shrink-0"
                   >
                     <span>Visit</span>
                     <ExternalLink className="w-3 h-3" />
@@ -1390,8 +1495,8 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
                 <button
                   type="button"
                   onClick={() => {
-                    const sfUrl = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
-                    window.open(`${sfUrl}/maintenance`, '_blank');
+                    const sfUrl = getStorefrontUrl(currentStoreTarget, '/maintenance');
+                    window.open(sfUrl, '_blank');
                   }}
                   className="w-full px-4 py-2.5 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-800 dark:text-amber-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
                 >
@@ -1492,37 +1597,47 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {templates.map((tmpl) => {
-                  const tmplSlug = tmpl.slug || tmpl.id || '';
-                  const isActive =
-                    (formData?.activeTemplateSlug || '').toLowerCase() === tmplSlug.toLowerCase();
-                  const isApplying = applyingTemplateSlug === tmplSlug;
+                  const tmplSlug = (tmpl.slug || tmpl.id || '').toLowerCase();
+                  const currentActiveSlug = (formData?.activeTemplateSlug || '').toLowerCase();
+                  const savedActiveSlug = (initialData?.activeTemplateSlug || '').toLowerCase();
+
+                  const isSelected = currentActiveSlug === tmplSlug;
+                  const isSavedActive = savedActiveSlug === tmplSlug && isSelected;
+                  const isApplying = applyingTemplateSlug === (tmpl.slug || tmpl.id);
 
                   return (
                     <div
                       key={tmpl.id || tmpl.slug}
-                      className={`group rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between bg-white dark:bg-card ${
-                        isActive
-                          ? 'border-indigo-600 ring-2 ring-indigo-600/30 shadow-xl bg-indigo-50/10'
+                      onClick={() => handleSelectTemplate(tmpl.slug || tmpl.id)}
+                      className={`group rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between bg-white dark:bg-card cursor-pointer ${
+                        isSelected
+                          ? 'border-indigo-600 ring-2 ring-indigo-600/30 shadow-xl bg-indigo-50/10 dark:bg-indigo-950/20'
                           : 'border-slate-200/80 dark:border-border hover:border-indigo-300 hover:shadow-lg'
                       }`}
                     >
                       <div className="space-y-4">
                         {/* Thumbnail image with badges */}
                         <div className="relative h-48 w-full overflow-hidden bg-slate-100 dark:bg-accent">
-                          <img
+                          <TemplateThumbnail
                             src={tmpl.previewImage}
                             alt={tmpl.name}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            slug={tmplSlug}
+                            accentColor={tmpl.accentColor}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-70 group-hover:opacity-40 transition-opacity" />
 
                           {/* Floating Top Badges */}
                           <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              {isActive ? (
+                              {isSavedActive ? (
                                 <span className="px-2.5 py-1 rounded-full bg-emerald-500 text-white font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-md">
                                   <CheckCircle2 className="w-3 h-3" />
                                   <span>Active Layout</span>
+                                </span>
+                              ) : isSelected ? (
+                                <span className="px-2.5 py-1 rounded-full bg-indigo-600 text-white font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-md animate-pulse">
+                                  <Sparkles className="w-3 h-3" />
+                                  <span>Selected</span>
                                 </span>
                               ) : tmpl.badge ? (
                                 <span className="px-2.5 py-0.5 rounded-full bg-slate-900/90 text-white font-extrabold text-[10px] uppercase tracking-wider backdrop-blur-xs">
@@ -1551,6 +1666,7 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
                               href={tmpl.demoUrl}
                               target="_blank"
                               rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
                               className="absolute bottom-3 right-3 px-2.5 py-1 rounded-xl bg-black/60 hover:bg-black/90 text-white text-[10px] font-bold backdrop-blur-xs flex items-center gap-1 transition"
                             >
                               <span>Demo</span>
@@ -1604,24 +1720,24 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
 
                       {/* Card Footer Actions */}
                       <div className="p-5 pt-0 flex items-center gap-2">
-                        {isActive ? (
-                          <div className="w-full py-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs text-center flex items-center justify-center gap-1.5">
+                        {isSavedActive ? (
+                          <div className="w-full py-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs text-center flex items-center justify-center gap-1.5 shadow-xs">
                             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                             <span>Current Storefront Template</span>
                           </div>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => handleChange('activeTemplateSlug', tmplSlug)}
-                              className="flex-1 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-800 dark:text-slate-200 font-bold text-xs transition cursor-pointer"
-                            >
-                              Select Template
-                            </button>
+                        ) : isSelected ? (
+                          <div className="w-full flex items-center gap-2">
+                            <div className="flex-1 py-2.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 font-extrabold text-xs text-center flex items-center justify-center gap-1.5 shadow-xs">
+                              <Check className="w-4 h-4 text-indigo-600" />
+                              <span>Selected</span>
+                            </div>
                             <button
                               type="button"
                               disabled={isApplying}
-                              onClick={() => handleApplyTemplate(tmplSlug)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApplyTemplate(tmpl.slug || tmpl.id);
+                              }}
                               className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-xs hover:shadow transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shrink-0"
                             >
                               {isApplying ? (
@@ -1631,7 +1747,36 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
                               )}
                               <span>Activate Now</span>
                             </button>
-                          </>
+                          </div>
+                        ) : (
+                          <div className="w-full flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectTemplate(tmpl.slug || tmpl.id);
+                              }}
+                              className="flex-1 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-800 dark:text-slate-200 font-bold text-xs transition cursor-pointer"
+                            >
+                              Select Template
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isApplying}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApplyTemplate(tmpl.slug || tmpl.id);
+                              }}
+                              className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-xs hover:shadow transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shrink-0"
+                            >
+                              {isApplying ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Sparkles className="w-3.5 h-3.5" />
+                              )}
+                              <span>Activate Now</span>
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>

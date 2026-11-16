@@ -84,7 +84,7 @@ export async function setupAuthenticatedSession(
         localStorage.setItem('active_store_id', storeId);
       }
       localStorage.setItem(
-        'wendr_cms_cookie_consent',
+        'miordr_cms_cookie_consent',
         JSON.stringify({
           necessary: true,
           analytics: true,

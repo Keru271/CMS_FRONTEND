@@ -632,7 +632,7 @@ export const VendorSmtpSettings: React.FC<VendorSmtpSettingsProps> = ({ storeId,
               onChange={(e) =>
                 setSmtpConfig((prev) => ({ ...prev, smtpFromName: e.target.value }))
               }
-              placeholder="e.g. Wendr Store Flagship or Sarah's Boutique"
+              placeholder="e.g. Miordr Store Flagship or Sarah's Boutique"
               className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-bold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
             />
             <p className="text-[10px] text-slate-400">

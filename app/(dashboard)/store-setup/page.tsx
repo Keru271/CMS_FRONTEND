@@ -22,7 +22,15 @@ function StoreSetupContent() {
           status: merchantData.store?.status || 'ACTIVE',
           supportEmail: updated.contactEmail || merchantData.store?.supportEmail || '',
           supportPhone: updated.contactPhone || merchantData.store?.supportPhone || '',
+          activeTemplateSlug: updated.activeTemplateSlug || merchantData.store?.activeTemplateSlug,
         },
+        ...(updated.activeTemplateSlug ? {
+          selectedTemplate: {
+            ...merchantData.selectedTemplate,
+            id: updated.activeTemplateSlug,
+            slug: updated.activeTemplateSlug,
+          } as any,
+        } : {}),
       });
     }
   };

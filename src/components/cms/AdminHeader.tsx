@@ -1,4 +1,5 @@
 'use client';
+import { getStorefrontUrl } from '@/src/utils/storefront';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -67,7 +68,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
   const currentStoreName = activeStore?.name || merchantData?.store?.storeName || 'My Store';
   const currentCurrency = activeStore?.currency || merchantData?.store?.currency || 'USD';
-  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
+  const liveStorefrontUrl = getStorefrontUrl(activeStore);
 
   const currentStage = (activeStore?.status || storeStatus || 'PENDING').toUpperCase();
   const isStoreLive = currentStage === 'ACTIVE' || currentStage === 'LIVE';
@@ -216,7 +217,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               {/* Storefront Link */}
               <div className="p-2 pt-2 border-t border-slate-200 dark:border-[#2C2C2E]">
                 <a
-                  href={`${STOREFRONT_URL}?storeSlug=${activeStore?.slug || ''}`}
+                  href={liveStorefrontUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-[#2C2C2E] text-xs text-slate-600 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white hover:border-sky-500 dark:hover:border-[#00E5FF] transition-all"

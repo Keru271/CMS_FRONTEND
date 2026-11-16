@@ -1,4 +1,7 @@
 'use client';
+import { useCMSContext } from '@/src/context/CMSContext';
+import { getStorefrontUrl, formatStorefrontDisplay } from '@/src/utils/storefront';
+
 
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect } from 'react';
@@ -34,6 +37,8 @@ import {
 } from 'lucide-react';
 
 export const PageManager: React.FC = () => {
+  const { activeStore } = useCMSContext();
+  const getPageStoreUrl = (slug: string) => getStorefrontUrl(activeStore, slug);
   const [pages, setPages] = useState<CMSPageData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,7 +53,7 @@ export const PageManager: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
+  
 
   // Page Builder States
   const [isPageBuilderOpen, setIsPageBuilderOpen] = useState(false);
@@ -463,7 +468,7 @@ export const PageManager: React.FC = () => {
                       <div className="flex items-center gap-1">
                         <span>{page.slug}</span>
                         <a
-                          href={`${STOREFRONT_URL}${page.slug.startsWith('/') ? page.slug : '/' + page.slug}`}
+                          href={getPageStoreUrl(page.slug)}
                           target="_blank"
                           rel="noreferrer"
                           className="text-slate-400 hover:text-indigo-600 transition"
@@ -775,8 +780,7 @@ export const PageManager: React.FC = () => {
                       {formData.metaTitle || formData.title || 'Page Title'}
                     </span>
                     <span className="text-[11px] font-mono text-emerald-700 block">
-                      {STOREFRONT_URL}
-                      {formData.slug.startsWith('/') ? formData.slug : '/' + formData.slug}
+                      {getPageStoreUrl(formData.slug)}
                     </span>
                     <p className="text-[11px] text-slate-600 line-clamp-2">
                       {formData.metaDescription || 'No meta description configured yet.'}
@@ -822,7 +826,7 @@ export const PageManager: React.FC = () => {
         (() => {
           const rawSlug = previewPage.slug || '';
           const pageRoute = rawSlug.startsWith('/') ? rawSlug : `/${rawSlug}`;
-          const liveUrl = `${STOREFRONT_URL}${pageRoute}`;
+          const liveUrl = getPageStoreUrl(pageRoute);
 
           const renderMockContent = (content: string) => {
             if (!content)
@@ -1014,8 +1018,7 @@ export const PageManager: React.FC = () => {
                     <div className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-0.5 text-[10px] font-mono text-slate-500 truncate flex items-center gap-1.5">
                       <span className="text-emerald-500">🔒</span>
                       <span className="truncate">
-                        {STOREFRONT_URL.replace(/^https?:\/\//, '')}
-                        {pageRoute}
+                        {formatStorefrontDisplay(liveUrl)}
                       </span>
                     </div>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-600 uppercase">

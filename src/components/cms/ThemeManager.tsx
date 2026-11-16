@@ -1,4 +1,7 @@
 'use client';
+import { useCMSContext } from '@/src/context/CMSContext';
+import { getStorefrontUrl, formatStorefrontDisplay } from '@/src/utils/storefront';
+
 import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
@@ -737,6 +740,7 @@ const isTemplateUnlocked = (userPlan: string, requiredTier?: string | null) => {
 };
 
 export const ThemeManager: React.FC = () => {
+  const { activeStore } = useCMSContext();
   const { plan: userPlan } = usePlanAccess();
   const [templates, setTemplates] = useState<StoreTemplate[]>([]);
 
@@ -769,7 +773,8 @@ export const ThemeManager: React.FC = () => {
   const [isHomepageStudioOpen, setIsHomepageStudioOpen] = useState(false);
   const [isAiBuilderOpen, setIsAiBuilderOpen] = useState(false);
 
-  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
+  const getThemePreviewUrl = (path: string, previewTemplate?: string) =>
+    getStorefrontUrl(activeStore, path, previewTemplate ? { previewTemplate } : undefined);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -2673,12 +2678,12 @@ export const ThemeManager: React.FC = () => {
                         <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                       </div>
                       <div className="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-0.5 text-[10px] font-mono text-slate-300 truncate max-w-xs sm:max-w-sm">
-                        🔒 {STOREFRONT_URL.replace(/^https?:\/\//, '')}{previewPage === 'home' ? '' : previewPage === 'plp' ? '/products' : previewPage === 'pdp' ? '/products' : '/cart'}?previewTemplate={themeConfig.activeTemplateSlug || activeTemplate?.slug || 'default'}
+                        🔒 {formatStorefrontDisplay(getThemePreviewUrl(previewPage === 'home' ? '' : previewPage === 'plp' ? '/products' : previewPage === 'pdp' ? '/products' : '/cart', themeConfig.activeTemplateSlug || activeTemplate?.slug || 'default'))}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <a
-                        href={`${STOREFRONT_URL}${previewPage === 'home' ? '' : previewPage === 'plp' ? '/products' : previewPage === 'pdp' ? '/products' : '/cart'}?previewTemplate=${themeConfig.activeTemplateSlug || activeTemplate?.slug || 'default'}`}
+                        href={getThemePreviewUrl(previewPage === 'home' ? '' : previewPage === 'plp' ? '/products' : previewPage === 'pdp' ? '/products' : '/cart', themeConfig.activeTemplateSlug || activeTemplate?.slug || 'default')}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black flex items-center gap-1 transition"
@@ -2691,7 +2696,7 @@ export const ThemeManager: React.FC = () => {
                   <iframe
                     ref={iframeRef}
                     key={`${themeConfig.activeTemplateSlug || 'default'}-${previewPage}`}
-                    src={`${STOREFRONT_URL}${previewPage === 'home' ? '' : previewPage === 'plp' ? '/products' : previewPage === 'pdp' ? '/products' : '/cart'}?previewTemplate=${themeConfig.activeTemplateSlug || activeTemplate?.slug || 'default'}`}
+                    src={getThemePreviewUrl(previewPage === 'home' ? '' : previewPage === 'plp' ? '/products' : previewPage === 'pdp' ? '/products' : '/cart', themeConfig.activeTemplateSlug || activeTemplate?.slug || 'default')}
                     onLoad={() => {
                       if (themeConfig) {
                         const currentSlug = themeConfig.activeTemplateSlug || 'mincom';
@@ -2784,7 +2789,7 @@ export const ThemeManager: React.FC = () => {
             <div className="flex items-center gap-2">
               {/* Open in new tab */}
               <a
-                href={`${STOREFRONT_URL}${livePreviewPage}?previewTemplate=${livePreviewTemplate.slug || livePreviewTemplate.id}`}
+                href={getThemePreviewUrl(livePreviewPage, livePreviewTemplate.slug || livePreviewTemplate.id)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold border border-slate-700 transition"
@@ -2833,14 +2838,12 @@ export const ThemeManager: React.FC = () => {
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                 </div>
                 <div className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-0.5 text-[10px] font-mono text-slate-500 truncate">
-                  🔒 {STOREFRONT_URL.replace(/^https?:\/\//, '')}
-                  {livePreviewPage}?previewTemplate=
-                  {livePreviewTemplate.slug || livePreviewTemplate.id}
+                  🔒 {formatStorefrontDisplay(getThemePreviewUrl(livePreviewPage, livePreviewTemplate.slug || livePreviewTemplate.id))}
                 </div>
               </div>
               <iframe
                 key={`${livePreviewTemplate.id}-${livePreviewPage}`}
-                src={`${STOREFRONT_URL}${livePreviewPage}?previewTemplate=${livePreviewTemplate.slug || livePreviewTemplate.id}`}
+                src={getThemePreviewUrl(livePreviewPage, livePreviewTemplate.slug || livePreviewTemplate.id)}
                 className="w-full border-0"
                 style={{ height: 'calc(100% - 36px)' }}
                 title={`${livePreviewTemplate.name} live preview`}

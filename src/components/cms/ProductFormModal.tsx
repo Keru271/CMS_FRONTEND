@@ -1,4 +1,5 @@
 'use client';
+import { getStorefrontUrl, formatStorefrontDisplay } from '@/src/utils/storefront';
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@heroui/react';
@@ -74,13 +75,13 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   initialProduct,
   categories,
 }) => {
-  const { merchantData, currencySymbol = '₹' } = useCMSContext();
+  const { activeStore, merchantData, currencySymbol = '₹' } = useCMSContext();
   const isEditing = !!initialProduct;
 
   const storeName = merchantData?.store?.storeName || 'OmniStore';
-  const storeDomain =
-    (merchantData?.store as any)?.customDomain ||
-    `${merchantData?.store?.slug || 'my-store'}.omnistore.com`;
+  const storeDomain = formatStorefrontDisplay(
+    getStorefrontUrl(activeStore || merchantData?.store),
+  );
 
   const userRole = (merchantData?.merchant?.role || 'OWNER').toUpperCase();
   const userPermissions = merchantData?.merchant?.permissions || null;

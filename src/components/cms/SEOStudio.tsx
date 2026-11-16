@@ -1,4 +1,5 @@
 'use client';
+import { getStorefrontUrl, formatStorefrontDisplay } from '@/src/utils/storefront';
 import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
 import React, { useState, useEffect } from 'react';
@@ -46,7 +47,7 @@ import { useCMSContext } from '@/src/context/CMSContext';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
 
 export const SEOStudio: React.FC = () => {
-  const { merchantData, currencySymbol = '₹' } = useCMSContext();
+  const { activeStore, merchantData, currencySymbol = '₹' } = useCMSContext();
   const [activeTab, setActiveTab] = useState<
     'GLOBAL' | 'OPEN_GRAPH' | 'PREVIEW' | 'ROBOTS' | 'SCHEMA' | 'PRODUCTS' | 'KEYWORDS' | 'RICH_RESULTS'
   >('GLOBAL');
@@ -113,9 +114,9 @@ export const SEOStudio: React.FC = () => {
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
   const storeName = merchantData?.store?.storeName || 'OmniStore';
-  const storeDomain =
-    (merchantData?.store as any)?.customDomain ||
-    `${(merchantData?.store as any)?.slug || 'my-store'}.omnistore.com`;
+  const storeDomain = formatStorefrontDisplay(
+    getStorefrontUrl(activeStore || merchantData?.store),
+  );
 
   useEffect(() => {
     loadSeoData();

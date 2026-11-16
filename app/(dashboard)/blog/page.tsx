@@ -1,4 +1,7 @@
 'use client';
+import { useCMS } from '@/src/context/CMSContext';
+import { getStorefrontUrl } from '@/src/utils/storefront';
+
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -28,8 +31,7 @@ import {
 import { BlogPost, BlogPostInput, CMSProduct } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 
-const STOREFRONT_URL =
-  process.env.NEXT_PUBLIC_STOREFRONT_URL || 'https://serene-croissant-868f08.netlify.app';
+
 
 // Helper to convert ISO or Date to local YYYY-MM-DDTHH:mm string for datetime-local input without timezone shift
 const toLocalDatetimeString = (dateInput?: string | Date | null): string => {
@@ -40,6 +42,7 @@ const toLocalDatetimeString = (dateInput?: string | Date | null): string => {
 };
 
 export default function BlogManagementPage() {
+  const { activeStore } = useCMS();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [products, setProducts] = useState<CMSProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -666,7 +669,7 @@ To maximize longevity, adhere to recommended care practices and avoid abrasive c
                 {/* Actions Footer */}
                 <div className="px-5 py-3.5 bg-slate-50/70 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                   <a
-                    href={`${STOREFRONT_URL}/blog/${post.slug}`}
+                    href={getStorefrontUrl(activeStore, `/blog/${post.slug}`)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1"

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   CircleDollarSign,
   RefreshCw,
@@ -12,6 +12,12 @@ import {
   Package,
   TrendingUp,
   ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  BarChart2,
+  CheckCircle2,
+  DollarSign,
+  Target,
 } from 'lucide-react';
 import { cmsService } from '@/src/services/cmsService';
 import {
@@ -32,6 +38,8 @@ export const AiPricingInsights: React.FC<AiPricingInsightsProps> = ({ onSwitchTo
   const [simulatedPrice, setSimulatedPrice] = useState<number>(0);
   const [simulationResult, setSimulationResult] = useState<PricingScenarioData | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [showFullDiagnosis, setShowFullDiagnosis] = useState(false);
+  const [hoveredPoint, setHoveredPoint] = useState<{ price: number; profit: number; volume: number; label?: string } | null>(null);
 
   const fetchInsights = useCallback(
     async (
@@ -144,9 +152,84 @@ export const AiPricingInsights: React.FC<AiPricingInsightsProps> = ({ onSwitchTo
 
   // Dynamic slider bounds based on real product price
   const basePrice = primaryProd?.currentPrice || 1000;
-  const sliderMin = Math.max(10, Math.round(basePrice * 0.6 / 10) * 10);
-  const sliderMax = Math.round(basePrice * 1.5 / 10) * 10;
+  const sliderMin = Math.max(10, Math.round((basePrice * 0.6) / 10) * 10);
+  const sliderMax = Math.round((basePrice * 1.5) / 10) * 10;
   const sliderStep = basePrice > 1000 ? 50 : basePrice > 100 ? 5 : 1;
+
+  // ─── ELASTICITY & PROFIT CURVE CHART DATA ──────────────────────────────
+  const curveData = useMemo(() => {
+    if (!primaryProd) return [];
+    const cost = primaryProd.costPrice || Math.round(basePrice * 0.5);
+    const baseUnits = primaryProd.currentMonthlyUnits || 50;
+    const elasticity = -1.2; // Typical retail price elasticity of demand
+    const points: Array<{ price: number; profit: number; volume: number; label?: string; isSweetSpot?: boolean; isCurrent?: boolean }> = [];
+
+    const steps = 14;
+    const priceDelta = (sliderMax - sliderMin) / steps;
+
+    for (let i = 0; i <= steps; i++) {
+      const p = Math.round(sliderMin + i * priceDelta);
+      const priceChangePct = (p - basePrice) / basePrice;
+      const volChangePct = priceChangePct * elasticity;
+      const volume = Math.max(1, Math.round(baseUnits * (1 + volChangePct)));
+      const unitMargin = p - cost;
+      const profit = Math.max(0, volume * unitMargin);
+
+      points.push({ price: p, profit, volume });
+    }
+
+    // Find sweet spot (max profit)
+    let maxProfit = -1;
+    let maxIdx = 0;
+    points.forEach((pt, idx) => {
+      if (pt.profit > maxProfit) {
+        maxProfit = pt.profit;
+        maxIdx = idx;
+      }
+    });
+
+    if (points[maxIdx]) {
+      points[maxIdx].isSweetSpot = true;
+      points[maxIdx].label = 'Profit Sweet Spot';
+    }
+
+    return points;
+  }, [primaryProd, basePrice, sliderMin, sliderMax]);
+
+  // SVG Chart Geometry
+  const chartWidth = 840;
+  const chartHeight = 220;
+  const padding = { top: 25, right: 30, bottom: 35, left: 60 };
+  const innerWidth = chartWidth - padding.left - padding.right;
+  const innerHeight = chartHeight - padding.top - padding.bottom;
+
+  const chartScale = useMemo(() => {
+    if (curveData.length === 0) return { maxProfit: 1, minProfit: 0, coords: [] };
+    const maxProfit = Math.max(...curveData.map((d) => d.profit), 100) * 1.1;
+    const minProfit = 0;
+
+    const coords = curveData.map((d, i) => {
+      const x = padding.left + (i / Math.max(1, curveData.length - 1)) * innerWidth;
+      const y = padding.top + innerHeight - ((d.profit - minProfit) / Math.max(1, maxProfit - minProfit)) * innerHeight;
+      return { x, y, data: d };
+    });
+
+    return { maxProfit, minProfit, coords };
+  }, [curveData, innerWidth, innerHeight, padding.left, padding.top]);
+
+  const profitLinePath = useMemo(() => {
+    if (chartScale.coords.length === 0) return '';
+    return chartScale.coords.reduce((acc, curr, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${curr.x.toFixed(1)},${curr.y.toFixed(1)}`, '');
+  }, [chartScale.coords]);
+
+  const profitAreaPath = useMemo(() => {
+    if (chartScale.coords.length === 0) return '';
+    const top = profitLinePath;
+    const bottomY = padding.top + innerHeight;
+    const lastX = chartScale.coords[chartScale.coords.length - 1].x.toFixed(1);
+    const firstX = chartScale.coords[0].x.toFixed(1);
+    return `${top} L ${lastX},${bottomY} L ${firstX},${bottomY} Z`;
+  }, [chartScale.coords, profitLinePath, innerHeight, padding.top]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -160,7 +243,7 @@ export const AiPricingInsights: React.FC<AiPricingInsightsProps> = ({ onSwitchTo
             <h1 className="text-xl font-bold text-slate-900 dark:text-white">AI Pricing & Profit Elasticity Insights</h1>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Evaluates real catalog margins, conversion elasticity, and profit-maximizing scenarios synthesized by Google Gemini & ChatGPT.
+            Real catalog profit elasticity curves, sweet-spot margin optimization, and bundle uplift models.
           </p>
         </div>
 
@@ -265,30 +348,199 @@ export const AiPricingInsights: React.FC<AiPricingInsightsProps> = ({ onSwitchTo
         )}
       </div>
 
-      {/* ─── PRICE CHANGE DIAGNOSTIC CARD ─────────────────────────────────── */}
+      {/* ─── CONDENSED PRICE CHANGE DIAGNOSTIC CARD ───────────────────────── */}
       {primaryProd && (
-        <div className="p-5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+        <div className="p-5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs shadow-xs">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-              Elasticity Diagnostic: {primaryProd.productName}
-            </span>
-            <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
-              Current Retail Price: {currencySymbol}{primaryProd.currentPrice.toLocaleString()} (Cost: {currencySymbol}{primaryProd.costPrice.toLocaleString()})
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                Elasticity Diagnostic: {primaryProd.productName}
+              </span>
+              <span className="text-[10px] px-2 py-0.2 rounded-full bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-300 border border-amber-200 font-bold">
+                {primaryProd.currentMarginPercent}% Margin
+              </span>
+            </div>
+            <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
+              Current Price: {currencySymbol}{primaryProd.currentPrice.toLocaleString()} • Unit Cost: {currencySymbol}{primaryProd.costPrice.toLocaleString()}
             </p>
-            <p className="text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">
-              {primaryProd.priceChangeHistory?.diagnosis ||
-                `Baseline monthly run rate is ~${primaryProd.currentMonthlyUnits} units generating ${currencySymbol}${primaryProd.currentMonthlyProfit.toLocaleString()} gross profit.`}
+            <p className="text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+              Baseline monthly run rate is ~{primaryProd.currentMonthlyUnits} units generating {currencySymbol}{primaryProd.currentMonthlyProfit.toLocaleString()} gross profit.
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-amber-200 dark:border-amber-800 text-center">
-              <span className="text-[10px] text-slate-400 block">Unit Margin</span>
-              <span className="font-bold text-slate-900 dark:text-white text-sm">{primaryProd.currentMarginPercent}%</span>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-amber-200 dark:border-amber-800 text-center min-w-[70px]">
+              <span className="text-[9px] text-slate-400 block font-semibold">UNIT PROFIT</span>
+              <span className="font-bold text-slate-900 dark:text-white text-xs">
+                {currencySymbol}{(primaryProd.currentPrice - primaryProd.costPrice).toLocaleString()}
+              </span>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-amber-200 dark:border-amber-800 text-center">
-              <span className="text-[10px] text-slate-400 block">Monthly Units</span>
-              <span className="font-bold text-slate-900 dark:text-white text-sm">{primaryProd.currentMonthlyUnits}</span>
+            <div className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-amber-200 dark:border-amber-800 text-center min-w-[70px]">
+              <span className="text-[9px] text-slate-400 block font-semibold">RUN-RATE</span>
+              <span className="font-bold text-slate-900 dark:text-white text-xs">{primaryProd.currentMonthlyUnits} units</span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── VISUAL CHART: PROFIT ELASTICITY & SWEET SPOT CURVE ───────────── */}
+      {primaryProd && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <BarChart2 className="w-4 h-4 text-emerald-600" />
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Price Elasticity & Gross Profit Optimization Curve
+                </h2>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Visualizes trade-off between retail price, demand volume drop-off, and peak gross profit
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 text-[11px] text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                Sweet Spot Peak
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-0.5 bg-emerald-600" />
+                Projected Profit ({currencySymbol})
+              </span>
+            </div>
+          </div>
+
+          {/* Responsive SVG Chart */}
+          <div className="relative w-full overflow-hidden">
+            <svg
+              viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+              className="w-full h-auto select-none"
+              onMouseLeave={() => setHoveredPoint(null)}
+            >
+              <defs>
+                <linearGradient id="profitGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+
+              {/* Grid Lines */}
+              {[0, 0.33, 0.66, 1].map((ratio, i) => {
+                const y = padding.top + innerHeight * (1 - ratio);
+                const val = chartScale.minProfit + ratio * (chartScale.maxProfit - chartScale.minProfit);
+                return (
+                  <g key={i}>
+                    <line
+                      x1={padding.left}
+                      y1={y}
+                      x2={chartWidth - padding.right}
+                      y2={y}
+                      stroke="currentColor"
+                      className="text-slate-100 dark:text-slate-800"
+                      strokeDasharray="3 3"
+                    />
+                    <text
+                      x={padding.left - 8}
+                      y={y + 3}
+                      textAnchor="end"
+                      className="text-[9px] fill-slate-400 font-mono"
+                    >
+                      {currencySymbol}{Math.round(val >= 1000 ? val / 1000 : val)}{val >= 1000 ? 'k' : ''}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* Profit Area */}
+              {profitAreaPath && <path d={profitAreaPath} fill="url(#profitGrad)" />}
+
+              {/* Profit Line */}
+              {profitLinePath && (
+                <path
+                  d={profitLinePath}
+                  fill="none"
+                  stroke="#10b981"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              )}
+
+              {/* Interactive Points */}
+              {chartScale.coords.map((c, i) => {
+                const isSelected = hoveredPoint?.price === c.data.price;
+                const isSweet = c.data.isSweetSpot;
+                const isSimulated = Math.abs(simulatedPrice - c.data.price) < (sliderMax - sliderMin) / 16;
+
+                return (
+                  <g key={i} className="cursor-pointer" onClick={() => handleSimulate(c.data.price)}>
+                    <circle
+                      cx={c.x}
+                      cy={c.y}
+                      r="12"
+                      fill="transparent"
+                      onMouseEnter={() => setHoveredPoint(c.data)}
+                    />
+                    {isSweet && (
+                      <circle
+                        cx={c.x}
+                        cy={c.y}
+                        r="9"
+                        fill="#10b981"
+                        fillOpacity="0.2"
+                        className="animate-ping"
+                      />
+                    )}
+                    <circle
+                      cx={c.x}
+                      cy={c.y}
+                      r={isSweet ? '6' : isSelected || isSimulated ? '5' : '3'}
+                      className={`${
+                        isSweet
+                          ? 'fill-emerald-500 stroke-white dark:stroke-slate-900'
+                          : isSimulated
+                          ? 'fill-indigo-600 stroke-white dark:stroke-slate-900'
+                          : 'fill-emerald-600 stroke-white dark:stroke-slate-900'
+                      }`}
+                      strokeWidth="2"
+                    />
+                  </g>
+                );
+              })}
+
+              {/* X-axis labels */}
+              {chartScale.coords
+                .filter((_, i) => i % 3 === 0 || i === chartScale.coords.length - 1)
+                .map((c, i) => (
+                  <text
+                    key={i}
+                    x={c.x}
+                    y={chartHeight - 10}
+                    textAnchor="middle"
+                    className="text-[9px] fill-slate-400 font-medium"
+                  >
+                    {currencySymbol}{c.data.price.toLocaleString()}
+                  </text>
+                ))}
+            </svg>
+
+            {/* Hover Tooltip */}
+            {hoveredPoint && (
+              <div className="absolute top-2 right-4 bg-slate-900/95 text-white dark:bg-white/95 dark:text-slate-900 px-3.5 py-2 rounded-xl shadow-lg border border-slate-700 dark:border-slate-200 text-xs pointer-events-none transition-all flex items-center gap-3">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-emerald-400 dark:text-emerald-600 block">
+                    {hoveredPoint.label || `Price: ${currencySymbol}${hoveredPoint.price.toLocaleString()}`}
+                  </span>
+                  <span className="font-extrabold text-sm">
+                    {currencySymbol}{hoveredPoint.profit.toLocaleString()} Profit
+                  </span>
+                </div>
+                <div className="pl-3 border-l border-slate-700 dark:border-slate-300 text-[11px]">
+                  <span>Volume: <strong className="font-bold">{hoveredPoint.volume} units</strong></span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -344,10 +596,6 @@ export const AiPricingInsights: React.FC<AiPricingInsightsProps> = ({ onSwitchTo
                       </strong>
                     </div>
                   </div>
-
-                  <p className="text-[11px] text-slate-500 italic leading-relaxed">
-                    Assumption: {sc.assumptions?.rationale || 'Standard price elasticity curve'}
-                  </p>
                 </div>
 
                 <button
@@ -464,7 +712,7 @@ export const AiPricingInsights: React.FC<AiPricingInsightsProps> = ({ onSwitchTo
         </div>
       )}
 
-      {/* ─── DYNAMIC CROSS-SELL BUNDLES (FROM REAL CATALOG) ───────────────── */}
+      {/* ─── DYNAMIC CROSS-SELL BUNDLES ──────────────────────────────────── */}
       {data?.summary?.bundleRecommendations && data.summary.bundleRecommendations.length > 0 && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
           <div className="flex items-center gap-2">

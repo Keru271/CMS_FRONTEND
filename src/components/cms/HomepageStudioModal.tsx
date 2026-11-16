@@ -1,4 +1,7 @@
 'use client';
+import { useCMSContext } from '@/src/context/CMSContext';
+import { getStorefrontUrl, formatStorefrontDisplay } from '@/src/utils/storefront';
+
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -22,8 +25,7 @@ import {
 import { HomepageSection, CMSForm, ThemeConfigData } from '@/src/types';
 import { HomepageSectionsCustomizer } from './HomepageSectionsCustomizer';
 
-const STOREFRONT_URL =
-  process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
+
 
 interface Props {
   isOpen: boolean;
@@ -56,6 +58,8 @@ export const HomepageStudioModal: React.FC<Props> = ({
   onSave,
   isSaving = false,
 }) => {
+  const { activeStore } = useCMSContext();
+  const previewUrl = getStorefrontUrl(activeStore, '/', { previewTemplate: templateSlug });
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [viewMode, setViewMode] = useState<'split' | 'canvas' | 'controls'>('split');
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(
@@ -438,7 +442,7 @@ export const HomepageStudioModal: React.FC<Props> = ({
                   </div>
                   <div className="bg-[#121212] border border-[#2C2C2E] rounded-lg px-3 py-0.5 text-[11px] font-mono text-[#98989D] truncate max-w-xs sm:max-w-md flex items-center gap-1.5">
                     <span className="text-[#32D74B]">🔒</span>
-                    <span className="truncate">{STOREFRONT_URL}/?previewTemplate={templateSlug}</span>
+                    <span className="truncate">{formatStorefrontDisplay(previewUrl)}</span>
                   </div>
                 </div>
 
@@ -447,7 +451,7 @@ export const HomepageStudioModal: React.FC<Props> = ({
                     Click block to highlight & edit
                   </span>
                   <a
-                    href={`${STOREFRONT_URL}/?previewTemplate=${templateSlug}`}
+                    href={previewUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-2.5 py-1 rounded-lg bg-[#00E5FF] hover:bg-[#38e1ff] text-[#121212] text-[10px] font-bold flex items-center gap-1 transition shadow-xs"
@@ -463,7 +467,7 @@ export const HomepageStudioModal: React.FC<Props> = ({
                 <iframe
                   ref={iframeRef}
                   key={`studio-preview-${templateSlug}-${iframeKey}`}
-                  src={`${STOREFRONT_URL}/?previewTemplate=${templateSlug}`}
+                  src={previewUrl}
                   onLoad={() => {
                     postSyncToIframe();
                     if (selectedSectionId) {

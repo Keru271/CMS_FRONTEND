@@ -1542,7 +1542,7 @@ class AIAssistantService {
       return {
         content:
           `💳 **Setting Up Payment Gateways:**\n\n` +
-          `Wendr CMS supports multiple payment providers:\n` +
+          `Miordr CMS supports multiple payment providers:\n` +
           `- **Stripe:** Direct credit/debit card processing, Apple Pay, Google Pay.\n` +
           `- **Razorpay / PayPal:** Fast one-touch international checkouts.\n` +
           `- **Cash on Delivery (COD):** Set minimum order thresholds and extra verification if required.\n\n` +

@@ -1,4 +1,5 @@
 'use client';
+import { getStorefrontUrl } from '@/src/utils/storefront';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -58,7 +59,7 @@ export const GoLiveModal: React.FC<GoLiveModalProps> = ({
   const [isCelebrationStep, setIsCelebrationStep] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
-  const STOREFRONT_BASE = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
+  
 
   // Fetch live readiness checklist whenever modal opens
   useEffect(() => {
@@ -88,8 +89,9 @@ export const GoLiveModal: React.FC<GoLiveModalProps> = ({
 
   if (!isOpen) return null;
 
-  const storeSlug = readiness?.storeSlug || activeStore?.slug || '';
-  const liveStorefrontUrl = `${STOREFRONT_BASE}?storeSlug=${storeSlug}`;
+  const liveStorefrontUrl = getStorefrontUrl(
+    activeStore || (readiness?.storeSlug ? { slug: readiness.storeSlug } : null),
+  );
 
   const handleCopyUrl = async () => {
     try {

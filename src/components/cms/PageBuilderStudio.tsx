@@ -1,4 +1,7 @@
 'use client';
+import { useCMSContext } from '@/src/context/CMSContext';
+import { getStorefrontUrl } from '@/src/utils/storefront';
+
 
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useCallback, useRef, useEffect, useReducer } from 'react';
@@ -3807,7 +3810,7 @@ function BlockPreview({
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
+
 
 export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
   initialPage,
@@ -3815,6 +3818,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
   onClose,
   onSaved,
 }) => {
+  const { activeStore } = useCMSContext();
   const [pageTitle, setPageTitle] = useState(initialPage?.title || 'New Page');
   const [pageSlug, setPageSlug] = useState(initialPage?.slug || '/pages/new-page');
   const [pageType, setPageType] = useState(initialPage?.pageType || 'CUSTOM');
@@ -4231,7 +4235,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
             <span className="hidden sm:inline">AI Page</span>
           </button>
           <a
-            href={`${STOREFRONT_URL}${pageRoute}`}
+            href={getStorefrontUrl(activeStore, pageRoute)}
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-emerald-700 hover:text-emerald-800 text-xs font-bold border border-slate-200 transition"

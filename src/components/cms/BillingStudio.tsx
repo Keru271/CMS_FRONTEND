@@ -875,7 +875,7 @@ export const BillingStudio: React.FC = () => {
               Active Tier Fee:
             </span>
             <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-600 text-white shadow-xs">
-              {subscription?.planTransactionFeePercent ?? 2.0}% / order
+              {subscription?.planTransactionFeePercent ?? 0.0}% / order
             </span>
           </div>
         </div>
@@ -893,16 +893,16 @@ export const BillingStudio: React.FC = () => {
               <span className="text-xs font-black text-slate-900 dark:text-foreground">
                 Free Starter Pack
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-300">
-                Free Forever
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200">
+                0% Fee
               </span>
             </div>
             <div className="mt-3">
-              <span className="text-2xl font-black text-slate-900 dark:text-foreground">2.0%</span>
-              <span className="text-xs text-slate-400 ml-1">platform fee / order</span>
+              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">0.0%</span>
+              <span className="text-xs text-slate-400 ml-1">zero platform fee</span>
             </div>
             <p className="text-[11px] text-slate-500 mt-2">
-              No monthly subscription cost. Platform fee is automatically calculated at checkout.
+              No monthly subscription cost and zero platform transaction fee on orders.
             </p>
           </div>
 
@@ -927,7 +927,7 @@ export const BillingStudio: React.FC = () => {
               <span className="text-xs text-slate-400 ml-1">reduced fee / order</span>
             </div>
             <p className="text-[11px] text-slate-500 mt-2">
-              75% fee savings compared to Starter. Includes custom domains and marketing automation.
+              Ultra-low 0.5% transaction fee. Includes custom domains and marketing automation.
             </p>
           </div>
 

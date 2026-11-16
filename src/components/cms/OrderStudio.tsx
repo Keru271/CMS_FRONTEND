@@ -391,8 +391,8 @@ export const OrderStudio: React.FC = () => {
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 shrink-0 ${isActive
-                    ? `${tab.color} shadow-md scale-102`
-                    : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                  ? `${tab.color} shadow-md scale-102`
+                  : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
                   }`}
               >
                 <span>{tab.label}</span>
@@ -483,10 +483,10 @@ export const OrderStudio: React.FC = () => {
                         <td className="py-4 px-6">
                           <span
                             className={`px-2.5 py-1 rounded-full font-black text-[10px] uppercase ${payUpper === 'PAID'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : payUpper === 'PENDING'
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : 'bg-rose-100 text-rose-800'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : payUpper === 'PENDING'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-rose-100 text-rose-800'
                               }`}
                           >
                             {payUpper}
@@ -495,18 +495,18 @@ export const OrderStudio: React.FC = () => {
                         <td className="py-4 px-6">
                           <span
                             className={`px-2.5 py-1 rounded-full font-black text-[10px] uppercase flex items-center gap-1 w-max ${statusUpper === 'DELIVERED'
-                                ? 'bg-emerald-500 text-white'
-                                : statusUpper === 'SHIPPED'
-                                  ? 'bg-purple-600 text-white'
-                                  : statusUpper === 'PROCESSING'
-                                    ? 'bg-indigo-600 text-white'
-                                    : statusUpper === 'CONFIRMED'
-                                      ? 'bg-blue-600 text-white'
-                                      : statusUpper === 'CANCELLED'
-                                        ? 'bg-rose-600 text-white'
-                                        : statusUpper === 'REFUNDED'
-                                          ? 'bg-slate-700 text-white'
-                                          : 'bg-amber-500 text-white'
+                              ? 'bg-emerald-500 text-white'
+                              : statusUpper === 'SHIPPED'
+                                ? 'bg-purple-600 text-white'
+                                : statusUpper === 'PROCESSING'
+                                  ? 'bg-indigo-600 text-white'
+                                  : statusUpper === 'CONFIRMED'
+                                    ? 'bg-blue-600 text-white'
+                                    : statusUpper === 'CANCELLED'
+                                      ? 'bg-rose-600 text-white'
+                                      : statusUpper === 'REFUNDED'
+                                        ? 'bg-slate-700 text-white'
+                                        : 'bg-amber-500 text-white'
                               }`}
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -801,25 +801,29 @@ export const OrderStudio: React.FC = () => {
                   </div>
 
                   {/* Platform Fee Settlement Breakdown */}
-                  <div className="mt-3 pt-3 border-t border-dashed border-indigo-200 bg-indigo-50/60 -mx-5 px-5 py-3 rounded-b-2xl space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <div className="flex items-center gap-1.5 text-slate-600 font-semibold">
-                        <span>⚡ Platform Fee</span>
-                        <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-indigo-100 text-indigo-700 uppercase">
-                          {selectedOrder.platformFeePercent ?? 2.0}% Tier Rate
+                  {selectedOrder.platformFeeAmount !== undefined &&
+                    selectedOrder.platformFeeAmount !== null &&
+                    selectedOrder.platformFeeAmount > 0 ? (
+                    <div className="mt-3 pt-3 border-t border-dashed border-indigo-200 bg-indigo-50/60 -mx-5 px-5 py-3 rounded-b-2xl space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <div className="flex items-center gap-1.5 text-slate-600 font-semibold">
+                          <span>⚡ Platform Fee</span>
+                          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-indigo-100 text-indigo-700 uppercase">
+                            {selectedOrder.platformFeePercent ?? 0.0}% Tier Rate
+                          </span>
+                        </div>
+                        <span className="font-mono font-bold text-rose-600">
+                          - {formatPrice(selectedOrder.platformFeeAmount, selectedOrder.currency)}
                         </span>
                       </div>
-                      <span className="font-mono font-bold text-rose-600">
-                        - {formatPrice(selectedOrder.platformFeeAmount ?? (selectedOrder.totalAmount * (selectedOrder.platformFeePercent ?? 2.0)) / 100, selectedOrder.currency)}
-                      </span>
+                      <div className="flex items-center justify-between text-xs font-black text-emerald-700 pt-1 border-t border-indigo-100">
+                        <span>💵 Net Merchant Payout:</span>
+                        <span className="font-mono">
+                          {formatPrice(selectedOrder.netMerchantAmount ?? selectedOrder.totalAmount, selectedOrder.currency)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-xs font-black text-emerald-700 pt-1 border-t border-indigo-100">
-                      <span>💵 Net Merchant Payout:</span>
-                      <span className="font-mono">
-                        {formatPrice(selectedOrder.netMerchantAmount ?? (selectedOrder.totalAmount - (selectedOrder.platformFeeAmount ?? (selectedOrder.totalAmount * (selectedOrder.platformFeePercent ?? 2.0)) / 100)), selectedOrder.currency)}
-                      </span>
-                    </div>
-                  </div>
+                  ) : null}
                 </div>
               </div>
 

@@ -19,17 +19,14 @@ import {
   Globe,
   TrendingUp,
   FileText,
-  Sparkles,
   Mic,
   Plus,
   Check,
-  ChevronDown,
   X,
   HelpCircle,
   Package,
   ShoppingBag,
   FolderTree,
-  Bot,
   Video,
   ImageIcon,
 } from 'lucide-react';
@@ -1002,50 +999,7 @@ const parseToken = (draft: string) => {
               <Video className="w-4 h-4 text-purple-400 hover:text-purple-300" />
             </button>
 
-            {/* Model Selector Pill */}
-            {models.length > 0 ? (
-              <button
-                type="button"
-                className="prompt-bar__pick"
-                aria-label="Choose model"
-                aria-expanded={modelOpen}
-                data-on={modelOpen ? '' : undefined}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  setPlusOpen(false);
-                  setEffortOpen(false);
-                  setActive(Math.max(0, models.indexOf(model)));
-                  setModelOpen((v) => !v);
-                  focusInput();
-                }}
-              >
-                <Bot className="w-3.5 h-3.5 text-sky-500 dark:text-[#00E5FF]" />
-                <span>{model.name}</span>
-                <ChevronDown className="w-3 h-3 opacity-60" />
-              </button>
-            ) : null}
 
-            {/* Reasoning / Effort Selector */}
-            {efforts.length > 0 ? (
-              <button
-                type="button"
-                className="prompt-bar__pick"
-                aria-label="Choose reasoning effort"
-                aria-expanded={effortOpen}
-                data-on={effortOpen ? '' : undefined}
-                data-max={maxed ? '' : undefined}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  setPlusOpen(false);
-                  setModelOpen(false);
-                  setEffortOpen((v) => !v);
-                  focusInput();
-                }}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-                <span>{level}</span>
-              </button>
-            ) : null}
 
             <span className="prompt-bar__spacer" />
 

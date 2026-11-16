@@ -32,7 +32,7 @@ export const TIER_CONFIGS: Record<SubscriptionPlanTier, TierConfig> = {
     reviewModeration: false,
     advancedAnalytics: false,
     exportAnalytics: false,
-    transactionFeePercent: 2.0,
+    transactionFeePercent: 0.0,
   },
   GROWTH: {
     id: 'GROWTH',

@@ -507,6 +507,9 @@ export interface StoreDetails {
   status?: string;
   supportEmail?: string;
   supportPhone?: string;
+  activeTemplateSlug?: string | null;
+  customDomain?: string | null;
+  domainStatus?: string;
 }
 
 export interface StoreSetupData {
@@ -722,6 +725,8 @@ export interface CMSStore {
   description?: string | null;
   logoUrl?: string | null;
   activeTemplateSlug?: string | null;
+  customDomain?: string | null;
+  domainStatus?: string | null;
   template?: {
     name: string;
     slug: string;

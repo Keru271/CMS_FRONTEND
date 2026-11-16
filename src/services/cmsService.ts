@@ -215,6 +215,27 @@ export const DEFAULT_STORE_CATEGORIES: StoreIndustryCategory[] = [
   },
 ];
 
+export const TEMPLATE_PREVIEW_FALLBACKS: Record<string, string> = {
+  funo: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80',
+  default: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=800&q=80',
+  demo: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=800&q=80',
+  fern: 'https://images.unsplash.com/photo-1545241047-6083a3684587?auto=format&fit=crop&w=800&q=80',
+  furniture: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80',
+  luxury: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80',
+  luxe: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80',
+  'velvet-luxury': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80',
+  'nova-tech': 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
+  nova: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
+  minimal: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80',
+  mincom: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80',
+  pawzy: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=800&q=80',
+  techno: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
+  'pulse-streetwear': 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80',
+  'artisan-craft': 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
+  'botanica-wellness': 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=800&q=80',
+  northvale: 'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=800&q=80',
+};
+
 export const STORE_TEMPLATES: StoreTemplate[] = [
   {
     id: 'funo',
@@ -3136,13 +3157,19 @@ export const cmsService = {
             features = tmpl.features;
           }
 
+          const tmplSlug = (tmpl.slug || tmpl.id || '').toLowerCase();
+          const fallbackImg =
+            TEMPLATE_PREVIEW_FALLBACKS[tmplSlug] ||
+            TEMPLATE_PREVIEW_FALLBACKS[tmplSlug.replace('-theme', '').replace('-template', '')] ||
+            TEMPLATE_PREVIEW_FALLBACKS.default;
+
           return {
             id: tmpl.id || tmpl.slug,
-            slug: tmpl.slug,
+            slug: tmpl.slug || tmpl.id,
             name: tmpl.name,
             tagline: tmpl.tagline || '',
             description: tmpl.description || '',
-            previewImage: tmpl.previewImage || '',
+            previewImage: tmpl.previewImage && tmpl.previewImage.trim() !== '' ? tmpl.previewImage : fallbackImg,
             demoUrl: tmpl.demoUrl || tmpl.urlLink || null,
             requiredTier: tmpl.requiredTier || 'ALL',
             accentColor: tmpl.accentColor || '#3B82F6',
@@ -3151,10 +3178,10 @@ export const cmsService = {
           };
         });
       }
-      return [];
+      return STORE_TEMPLATES;
     } catch (err) {
       console.warn('Backend templates API notice (zero or unavailable templates):', err);
-      return [];
+      return STORE_TEMPLATES;
     }
   },
 
@@ -3299,9 +3326,20 @@ export const cmsService = {
       try {
         const response = await apiClient.get<StoreSetupData>('/stores/setup');
         if (response.data && response.data.name) {
-          _cachedStoreSetup = response.data;
+          const session = this.getMerchantSession();
+          const activeSlug =
+            response.data.activeTemplateSlug ||
+            _inMemoryStoreSetup?.activeTemplateSlug ||
+            session?.store?.activeTemplateSlug ||
+            session?.selectedTemplate?.slug ||
+            'funo';
+          const merged: StoreSetupData = {
+            ...response.data,
+            activeTemplateSlug: activeSlug,
+          };
+          _cachedStoreSetup = merged;
           _lastStoreSetupFetch = Date.now();
-          return response.data;
+          return merged;
         }
       } catch (err) {
         console.warn('Backend store setup API notice, using fallback state:', err);
@@ -3345,6 +3383,10 @@ export const cmsService = {
         currency: session?.store?.currency || 'USD',
         language: 'en-US',
         timezone: 'America/New_York',
+        activeTemplateSlug:
+          session?.store?.activeTemplateSlug ||
+          session?.selectedTemplate?.slug ||
+          'funo',
       };
 
       _inMemoryStoreSetup = defaultData;
@@ -3362,7 +3404,10 @@ export const cmsService = {
     try {
       const response = await apiClient.put<StoreSetupData>('/stores/setup', data);
       if (response.data && response.data.name) {
-        result = response.data;
+        result = {
+          ...response.data,
+          activeTemplateSlug: response.data.activeTemplateSlug || data.activeTemplateSlug,
+        };
       }
     } catch (err) {
       console.warn('Backend store setup update notice, persisting locally:', err);
@@ -3377,6 +3422,9 @@ export const cmsService = {
     if (session && session.store) {
       session.store.storeName = result.name;
       session.store.currency = result.currency;
+      if (result.activeTemplateSlug) {
+        session.store.activeTemplateSlug = result.activeTemplateSlug;
+      }
       if (result.contactEmail) session.store.supportEmail = result.contactEmail;
       if (result.contactPhone) session.store.supportPhone = result.contactPhone;
       this.saveMerchantSession(session);
@@ -5352,7 +5400,7 @@ export const cmsService = {
             priceMonthlyUsd: 0,
             priceAnnualInr: 0,
             priceAnnualUsd: 0,
-            transactionFeePercent: 2.0,
+            transactionFeePercent: 0.0,
             maxProducts: 50,
             maxStaff: 2,
             customDomain: false,
@@ -5366,7 +5414,7 @@ export const cmsService = {
               'Standard Storefront Themes',
               'Indian PIN Code & Shipping Resolver',
               'Basic Sales Reports',
-              '2.0% Platform Transaction Fee',
+              'Zero Platform Transaction Fee (0%)',
             ],
           },
           {

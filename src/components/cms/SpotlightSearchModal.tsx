@@ -1,4 +1,6 @@
 'use client';
+import { getStorefrontUrl, formatStorefrontDisplay } from '@/src/utils/storefront';
+
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -91,7 +93,7 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const listContainerRef = useRef<HTMLDivElement>(null);
 
-  const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001';
+  const liveStorefrontUrl = getStorefrontUrl(activeStore);
 
   // Smooth mount and unmount animation lifecycle
   useEffect(() => {
@@ -605,12 +607,12 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
       {
         id: 'act-view-storefront',
         title: 'Open Live Storefront in New Tab',
-        subtitle: `Preview active store: ${activeStore?.name || 'Storefront'} (${STOREFRONT_URL})`,
+        subtitle: `Preview active store: ${activeStore?.name || 'Storefront'} (${formatStorefrontDisplay(liveStorefrontUrl)})`,
         icon: ExternalLink,
         badge: 'Preview',
         keywords: ['live store', 'open site', 'preview', 'website'],
         action: () => {
-          window.open(STOREFRONT_URL, '_blank');
+          window.open(liveStorefrontUrl, '_blank');
           onClose();
         },
       },
@@ -630,7 +632,7 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
     });
 
     return items;
-  }, [products, customersList, merchantData, activeStore, isDark, toggleTheme, openAddProductModal, router, onClose, STOREFRONT_URL]);
+  }, [products, customersList, merchantData, activeStore, isDark, toggleTheme, openAddProductModal, router, onClose, liveStorefrontUrl]);
 
   // Filter items by search query & category tab
   const filteredItems = useMemo(() => {

@@ -253,6 +253,9 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             status: currentStatus,
             supportEmail: user.email,
             supportPhone: user.mobileNumber,
+            customDomain: currentActiveStore.customDomain || null,
+            domainStatus: currentActiveStore.domainStatus || undefined,
+            activeTemplateSlug: currentActiveStore.activeTemplateSlug || null,
           },
           selectedTemplate: (activeTmpl || session?.selectedTemplate) as any,
         };

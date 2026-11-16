@@ -22,7 +22,7 @@ export interface CookiePreferences {
   timestamp: string;
 }
 
-const STORAGE_KEY = 'wendr_cms_cookie_consent';
+const STORAGE_KEY = 'miordr_cms_cookie_consent';
 
 export function CookieConsent() {
   const [mounted, setMounted] = useState(false);
@@ -57,7 +57,7 @@ export function CookieConsent() {
     setPreferences(finalData);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(finalData));
-    } catch {}
+    } catch { }
     setIsOpen(false);
     setShowPreferences(false);
   };
@@ -170,7 +170,7 @@ export function CookieConsent() {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white">Cookie Preferences</h3>
-                  <p className="text-xs text-[#999]">Manage which cookies Wendr CMS may store</p>
+                  <p className="text-xs text-[#999]">Manage which cookies Miordr CMS may store</p>
                 </div>
               </div>
               <button

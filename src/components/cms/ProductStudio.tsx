@@ -65,7 +65,6 @@ import {
   ChevronDown,
   CheckSquare,
   Square,
-  BellRing,
   ExternalLink,
 } from 'lucide-react';
 
@@ -1014,14 +1013,6 @@ export const ProductStudio: React.FC = () => {
               <Download className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span>Export Excel</span>
             </button>
-
-            <a
-              href="/products/notifications"
-              className="px-4 py-2.5 rounded-2xl bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-bold border border-amber-200/80 dark:border-amber-800/60 flex items-center gap-2 transition-all shadow-xs"
-            >
-              <BellRing className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>Back-in-Stock Alerts</span>
-            </a>
 
             <button
               type="button"

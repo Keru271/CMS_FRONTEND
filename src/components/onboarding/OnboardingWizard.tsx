@@ -275,10 +275,16 @@ export const OnboardingWizard: React.FC = () => {
         addressState: formData.addressState.trim(),
         addressCountry: formData.addressCountry.trim(),
         logo: formData.logoUrl || null,
+        activeTemplateSlug: formData.theme || 'funo',
       };
 
       // 2. Persist store configuration to backend database
       const savedStore = await cmsService.updateStoreSetup(storePayload);
+      if (formData.theme) {
+        await cmsService.publishTemplate(formData.theme).catch((err) => {
+          console.warn('Backend publishTemplate notice during onboarding:', err);
+        });
+      }
 
       // 3. Persist onboarding completion status directly into the database
       await cmsService.completeOnboarding();

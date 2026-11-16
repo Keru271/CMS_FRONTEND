@@ -34,7 +34,7 @@ export function StitchPublishModal({
   screensCount,
   templateSlug,
 }: StitchPublishModalProps) {
-  const [storeDomain, setStoreDomain] = useState<string>('aurafit.wendr.store');
+  const [storeDomain, setStoreDomain] = useState<string>('aurafit.miordr.store');
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const [isPublished, setIsPublished] = useState<boolean>(false);
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -131,7 +131,7 @@ export function StitchPublishModal({
                     value={storeDomain}
                     onChange={(e) => setStoreDomain(e.target.value)}
                     className="flex-1 py-2.5 pr-3 bg-transparent text-slate-900 dark:text-white font-mono text-xs focus:outline-none"
-                    placeholder="my-store.wendr.store"
+                    placeholder="my-store.miordr.store"
                   />
                 </div>
               </div>
