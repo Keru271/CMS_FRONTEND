@@ -23,10 +23,18 @@ function clearMerchantSession(): void {
   }
 }
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.NEXT_PUBLIC_CMS_API_URL ||
-  'http://localhost:5000/api';
+// Clean and resolve base API URL, ensuring /api suffix without trailing slashes
+function resolveApiBaseUrl(): string {
+  const envUrl =
+    process.env.NEXT_PUBLIC_CMS_API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://localhost:5000/api';
+
+  const clean = envUrl.trim().replace(/\/+$/, '');
+  return clean.endsWith('/api') ? clean : `${clean}/api`;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 // Create Axios Instance
 export const apiClient: AxiosInstance = axios.create({
