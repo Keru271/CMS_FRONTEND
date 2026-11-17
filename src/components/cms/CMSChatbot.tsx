@@ -1006,14 +1006,14 @@ export const CMSChatbot: React.FC = () => {
         >
           {/* Main Modal Box: Single-column chat layout */}
           <div
-            className={`relative w-[92vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] max-w-[1100px] h-[90vh] max-h-[960px] bg-white border border-slate-200/90 shadow-2xl rounded-2xl md:rounded-3xl flex flex-col overflow-hidden transition-all duration-250 ease-out transform ${
+            className={`relative w-[92vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] max-w-[1100px] h-[90vh] max-h-[960px] bg-white dark:bg-[#1E1E1E] border border-slate-200/90 dark:border-[#2C2C2E] shadow-2xl rounded-2xl md:rounded-3xl flex flex-col overflow-hidden transition-all duration-250 ease-out transform ${
               isAnimating
                 ? 'scale-100 opacity-100 translate-y-0 shadow-2xl'
                 : 'scale-95 opacity-0 translate-y-3 shadow-none'
             }`}
           >
             {/* Modal Header Bar */}
-            <div className="px-5 py-3.5 bg-white text-slate-900 flex items-center justify-between gap-3 shrink-0 border-b border-slate-200/90">
+            <div className="px-5 py-3.5 bg-white dark:bg-[#1E1E1E] text-slate-900 dark:text-white flex items-center justify-between gap-3 shrink-0 border-b border-slate-200/90 dark:border-[#2C2C2E]">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-[#00E5FF] shrink-0 shadow-sm">
                   <Bot className="w-5 h-5" />
@@ -1023,7 +1023,7 @@ export const CMSChatbot: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <h2
                       id="ai-assistant-modal-title"
-                      className="font-sans font-bold text-sm text-slate-900 truncate flex items-center gap-1.5"
+                      className="font-sans font-bold text-sm text-slate-900 dark:text-white truncate flex items-center gap-1.5"
                     >
                       <Sparkles className="w-4 h-4 text-cyan-600" /> AI Store Assistant
                     </h2>
@@ -1060,7 +1060,7 @@ export const CMSChatbot: React.FC = () => {
               <div className="flex items-center gap-1.5 text-slate-500">
                 <button
                   onClick={() => setSoundEnabled(!soundEnabled)}
-                  className="p-2 rounded-xl hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="p-2 rounded-xl hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#2C2C2E] text-slate-500 dark:text-slate-400 transition-colors cursor-pointer"
                   title={soundEnabled ? 'Mute Audio Chimes' : 'Enable Audio Chimes'}
                   aria-label="Toggle Sound"
                 >
@@ -1069,7 +1069,7 @@ export const CMSChatbot: React.FC = () => {
 
                 <button
                   onClick={handleClearChat}
-                  className="p-2 rounded-xl hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="p-2 rounded-xl hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#2C2C2E] text-slate-500 dark:text-slate-400 transition-colors cursor-pointer"
                   title="Clear Chat History"
                   aria-label="Clear chat"
                 >
@@ -1090,9 +1090,9 @@ export const CMSChatbot: React.FC = () => {
             </div>
 
             {/* Modal Body: Full Width Chat Area */}
-            <div className="flex-1 flex flex-col min-w-0 bg-white overflow-hidden">
+            <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#121212] overflow-hidden">
                 {/* Horizontal Quick Prompt Chips Strip */}
-                <div className="px-4 py-2.5 bg-slate-50/90 border-b border-slate-200/90 overflow-x-auto flex items-center gap-2 shrink-0 scrollbar-none">
+                <div className="px-4 py-2.5 bg-slate-50/90 dark:bg-[#161616] border-b border-slate-200/90 dark:border-[#2C2C2E] overflow-x-auto flex items-center gap-2 shrink-0 scrollbar-none">
                   <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1 pl-0.5">
                     <Sparkles className="w-3 h-3 text-cyan-600" /> Prompts:
                   </span>
@@ -1100,7 +1100,7 @@ export const CMSChatbot: React.FC = () => {
                     <button
                       key={i}
                       onClick={() => handleSendMessage(sug)}
-                      className="px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-800 text-xs font-medium font-sans hover:border-slate-400 hover:bg-slate-100/80 hover:shadow-xs shrink-0 transition-all cursor-pointer whitespace-nowrap"
+                      className="px-3 py-1 rounded-full bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2C2C2E] text-slate-800 dark:text-slate-200 text-xs font-medium font-sans hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-100/80 dark:hover:bg-[#252525] hover:shadow-xs shrink-0 transition-all cursor-pointer whitespace-nowrap"
                     >
                       {sug}
                     </button>
@@ -1108,7 +1108,7 @@ export const CMSChatbot: React.FC = () => {
                 </div>
 
                 {/* Chat Message Stream */}
-                <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 bg-slate-50/30">
+                <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 bg-slate-50/30 dark:bg-[#121212]">
                   {messages.map((msg, index) => {
                     const formToRender =
                       msg.form ||
@@ -1139,38 +1139,11 @@ export const CMSChatbot: React.FC = () => {
                         <div
                           className={`p-4 sm:p-4.5 rounded-2xl shadow-xs relative ${
                             msg.sender === 'user'
-                              ? 'bg-white border border-slate-300 text-slate-900 rounded-br-xs'
-                              : 'bg-white border border-slate-200/90 text-slate-900 rounded-bl-xs'
+                              ? 'bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-slate-900 dark:text-white rounded-br-xs'
+                              : 'bg-white dark:bg-[#1E1E1E] border border-slate-200/90 dark:border-[#2C2C2E] text-slate-900 dark:text-white rounded-bl-xs'
                           }`}
                         >
-                          {/* Testing model indicator badge */}
-                          {msg.sender === 'assistant' && msg.model && (
-                            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100 text-[10px] text-slate-400 font-sans">
-                              <span className="flex items-center gap-1 font-semibold text-slate-500 uppercase tracking-wider text-[9px]">
-                                <Sparkles className="w-3 h-3 text-cyan-600" /> Response Source
-                              </span>
-                              <span
-                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border ${
-                                  msg.model.toLowerCase().includes('gemini')
-                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                    : msg.model.toLowerCase().includes('chatgpt') || msg.model.toLowerCase().includes('openai')
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                    : 'bg-amber-50 text-amber-700 border-amber-200'
-                                }`}
-                              >
-                                <span
-                                  className={`w-1.5 h-1.5 rounded-full ${
-                                    msg.model.toLowerCase().includes('gemini')
-                                      ? 'bg-blue-500 animate-pulse'
-                                      : msg.model.toLowerCase().includes('chatgpt') || msg.model.toLowerCase().includes('openai')
-                                      ? 'bg-emerald-500 animate-pulse'
-                                      : 'bg-amber-500'
-                                  }`}
-                                />
-                                <span>{msg.model}</span>
-                              </span>
-                            </div>
-                          )}
+
 
                           {/* Message content */}
                           <div className="space-y-1 text-slate-900 font-sans">{renderFormattedContent(msg.content)}</div>
@@ -1225,11 +1198,7 @@ export const CMSChatbot: React.FC = () => {
                       {/* Metadata & Copy action */}
                       <div className="flex items-center gap-2.5 mt-1 px-1 text-[11px] text-slate-400 font-sans">
                         <span>{msg.timestamp}</span>
-                        {msg.sender === 'assistant' && msg.model && (
-                          <span className="text-[10px] font-mono font-medium text-slate-400">
-                            • {msg.model}
-                          </span>
-                        )}
+
                         <button
                           onClick={() => handleCopyMessage(msg.id, msg.content)}
                           className="opacity-0 group-hover:opacity-100 hover:text-slate-900 transition-all cursor-pointer"
@@ -1254,7 +1223,7 @@ export const CMSChatbot: React.FC = () => {
                       <div className="w-7 h-7 rounded-xl bg-slate-900 text-[#00E5FF] flex items-center justify-center shrink-0 mb-1 shadow-xs">
                         <Bot className="w-4 h-4" />
                       </div>
-                      <div className="px-4 py-3 rounded-2xl bg-white border border-slate-200/90 rounded-bl-xs flex items-center gap-1.5 shadow-xs">
+                      <div className="px-4 py-3 rounded-2xl bg-white dark:bg-[#1E1E1E] border border-slate-200/90 dark:border-[#2C2C2E] rounded-bl-xs flex items-center gap-1.5 shadow-xs">
                         <span className="w-2 h-2 rounded-full bg-cyan-600 animate-bounce [animation-delay:-0.3s]" />
                         <span className="w-2 h-2 rounded-full bg-cyan-600 animate-bounce [animation-delay:-0.15s]" />
                         <span className="w-2 h-2 rounded-full bg-cyan-600 animate-bounce" />

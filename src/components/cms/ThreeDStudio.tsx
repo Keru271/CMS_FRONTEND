@@ -1,5 +1,4 @@
 'use client';
-import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect } from 'react';
@@ -593,7 +592,6 @@ export const ThreeDStudio: React.FC = () => {
             </div>
 
             <div className="flex sm:flex-col gap-2 shrink-0">
-              <PageAiSpecularButton size="md" />
                 <button
                 type="button"
                 onClick={() => setIsBuyModalOpen(true)}

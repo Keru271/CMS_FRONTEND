@@ -65,6 +65,8 @@ export interface CMSOrder {
   subtotalAmount?: number;
   taxAmount?: number;
   shippingAmount?: number;
+  discountAmount?: number | null;
+  couponCode?: string | null;
   currency?: string;
   paymentStatus: PaymentStatus | string;
   orderStatus: OrderStatus | string;
@@ -1548,6 +1550,9 @@ export interface PaymentTransactionData {
   paymentMethod: string;
   status: 'SUCCESS' | 'PENDING' | 'FAILED' | 'REFUNDED' | string;
   amount: number;
+  subtotalAmount?: number | null;
+  discountAmount?: number | null;
+  couponCode?: string | null;
   currency: string;
   gatewayFee: number;
   netAmount: number;
@@ -1614,6 +1619,9 @@ export interface StoreBillingInvoiceData {
   tierName: string;
   billingCycle: 'MONTHLY' | 'ANNUAL' | 'ONE_TIME' | 'LIFETIME' | string;
   amount: number;
+  subtotalAmount?: number | null;
+  discountAmount?: number | null;
+  couponCode?: string | null;
   currency: string;
   paymentMethod: string;
   paymentStatus: 'PAID' | 'PENDING' | 'FAILED' | string;
@@ -3417,6 +3425,28 @@ export interface DeployToVercelPayload {
   customVercelToken?: string;
   customProjectName?: string;
   teamId?: string;
+}
+
+export type CMSLiveNotificationType =
+  | 'CUSTOMER_REGISTERED'
+  | 'ORDER_CREATED'
+  | 'REFUND_INITIATED'
+  | 'ORDER_CANCELLED'
+  | 'LOW_STOCK'
+  | 'REVIEW_SUBMITTED'
+  | 'ALERT';
+
+export interface CMSLiveNotification {
+  id: string;
+  storeId: string;
+  type: CMSLiveNotificationType | string;
+  title: string;
+  message: string;
+  link?: string | null;
+  metadata?: string | null;
+  isRead: boolean;
+  createdAt: string;
+  readAt?: string | null;
 }
 
 

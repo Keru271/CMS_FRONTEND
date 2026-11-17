@@ -427,11 +427,10 @@ export const DiscountStudio: React.FC = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 ${
-                  isActive
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md'
-                    : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-                }`}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 ${isActive
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md'
+                  : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                  }`}
               >
                 <IconComp className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
@@ -487,126 +486,124 @@ export const DiscountStudio: React.FC = () => {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredDiscounts
-                .slice((discountPage - 1) * discountPageSize, discountPage * discountPageSize)
-                .map((disc) => {
-                const isCoupon = disc.method === 'COUPON_CODE';
-                const isExpired = disc.status === 'EXPIRED';
+                {filteredDiscounts
+                  .slice((discountPage - 1) * discountPageSize, discountPage * discountPageSize)
+                  .map((disc) => {
+                    const isCoupon = disc.method === 'COUPON_CODE';
+                    const isExpired = disc.status === 'EXPIRED';
 
-                return (
-                  <div
-                    key={disc.id}
-                    className={`p-5 rounded-3xl border bg-white dark:bg-card shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 ${
-                      isExpired
-                        ? 'border-slate-200 opacity-60'
-                        : 'border-slate-200/80 dark:border-border'
-                    }`}
-                  >
-                    <div className="space-y-3">
-                      {/* Header Pill */}
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`px-3 py-1 rounded-full font-black text-[10px] uppercase flex items-center gap-1 ${
-                            isCoupon
-                              ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300'
-                              : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                    return (
+                      <div
+                        key={disc.id}
+                        className={`p-5 rounded-3xl border bg-white dark:bg-card shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 ${isExpired
+                          ? 'border-slate-200 opacity-60'
+                          : 'border-slate-200/80 dark:border-border'
                           }`}
-                        >
-                          {isCoupon ? <Ticket className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
-                          <span>{isCoupon ? 'Coupon Code' : 'Automatic'}</span>
-                        </span>
-
-                        {isCoupon && disc.code && (
-                          <span className="font-mono font-black text-xs px-2.5 py-1 rounded-xl bg-slate-900 text-amber-400 tracking-wider">
-                            {disc.code}
-                          </span>
-                        )}
-                      </div>
-
-                      <div>
-                        <h3 className="font-black text-base text-slate-900 dark:text-foreground">
-                          {disc.title}
-                        </h3>
-                        <div className="flex items-center gap-2 pt-1">
-                          <span className="font-extrabold text-xs text-indigo-600 dark:text-indigo-400">
-                            {disc.discountType === 'PERCENTAGE' && `${disc.value}% OFF`}
-                            {disc.discountType === 'FIXED_AMOUNT' &&
-                              `${currencySymbol}${disc.value.toFixed(2)} OFF`}
-                            {disc.discountType === 'FREE_SHIPPING' && 'Free Express Shipping'}
-                            {disc.discountType === 'BUY_X_GET_Y' &&
-                              `Buy ${disc.buyQuantity || 2} Get ${disc.getQuantity || 1} ${disc.getDiscountPercent && disc.getDiscountPercent < 100 ? `at ${disc.getDiscountPercent}% OFF` : 'Free'}`}
-                          </span>
-                          {disc.minOrderAmount ? (
-                            <span className="text-[10px] font-bold text-slate-500">
-                              (Min {currencySymbol}
-                              {disc.minOrderAmount.toFixed(2)} spend)
+                      >
+                        <div className="space-y-3">
+                          {/* Header Pill */}
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={`px-3 py-1 rounded-full font-black text-[10px] uppercase flex items-center gap-1 ${isCoupon
+                                ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300'
+                                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                }`}
+                            >
+                              {isCoupon ? <Ticket className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
+                              <span>{isCoupon ? 'Coupon Code' : 'Automatic'}</span>
                             </span>
-                          ) : null}
+
+                            {isCoupon && disc.code && (
+                              <span className="font-mono font-black text-xs px-2.5 py-1 rounded-xl bg-slate-900 text-amber-400 tracking-wider">
+                                {disc.code}
+                              </span>
+                            )}
+                          </div>
+
+                          <div>
+                            <h3 className="font-black text-base text-slate-900 dark:text-foreground">
+                              {disc.title}
+                            </h3>
+                            <div className="flex items-center gap-2 pt-1">
+                              <span className="font-extrabold text-xs text-indigo-600 dark:text-indigo-400">
+                                {disc.discountType === 'PERCENTAGE' && `${disc.value}% OFF`}
+                                {disc.discountType === 'FIXED_AMOUNT' &&
+                                  `${currencySymbol}${disc.value.toFixed(2)} OFF`}
+                                {disc.discountType === 'FREE_SHIPPING' && 'Free Express Shipping'}
+                                {disc.discountType === 'BUY_X_GET_Y' &&
+                                  `Buy ${disc.buyQuantity || 2} Get ${disc.getQuantity || 1} ${disc.getDiscountPercent && disc.getDiscountPercent < 100 ? `at ${disc.getDiscountPercent}% OFF` : 'Free'}`}
+                              </span>
+                              {disc.minOrderAmount ? (
+                                <span className="text-[10px] font-bold text-slate-500">
+                                  (Min {currencySymbol}
+                                  {disc.minOrderAmount.toFixed(2)} spend)
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          {/* Meta Specs */}
+                          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-accent space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                            <div className="flex justify-between">
+                              <span>Redemptions Used:</span>
+                              <span className="font-bold text-slate-900 dark:text-foreground">
+                                {disc.usageCount} {disc.usageLimit ? `/ ${disc.usageLimit}` : 'uses'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-[11px] text-slate-500">
+                              <span>Active Schedule:</span>
+                              <span>
+                                {disc.startDate} {disc.endDate ? `to ${disc.endDate}` : '(No Expiry)'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Bar */}
+                        <div className="pt-3 border-t border-slate-100 dark:border-border flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditModal(disc)}
+                            className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-accent hover:bg-slate-200 text-slate-800 dark:text-foreground text-xs font-bold flex items-center gap-1"
+                          >
+                            <Edit2 className="w-3.5 h-3.5 text-indigo-600" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteDiscount(disc.id)}
+                            className="p-1.5 rounded-xl bg-slate-100 dark:bg-accent text-rose-500 hover:bg-rose-50"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
+                    );
+                  })}
+              </div>
 
-                      {/* Meta Specs */}
-                      <div className="p-3 rounded-2xl bg-slate-50 dark:bg-accent space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                        <div className="flex justify-between">
-                          <span>Redemptions Used:</span>
-                          <span className="font-bold text-slate-900 dark:text-foreground">
-                            {disc.usageCount} {disc.usageLimit ? `/ ${disc.usageLimit}` : 'uses'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-[11px] text-slate-500">
-                          <span>Active Schedule:</span>
-                          <span>
-                            {disc.startDate} {disc.endDate ? `to ${disc.endDate}` : '(No Expiry)'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Bar */}
-                    <div className="pt-3 border-t border-slate-100 dark:border-border flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditModal(disc)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-accent hover:bg-slate-200 text-slate-800 dark:text-foreground text-xs font-bold flex items-center gap-1"
-                      >
-                        <Edit2 className="w-3.5 h-3.5 text-indigo-600" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteDiscount(disc.id)}
-                        className="p-1.5 rounded-xl bg-slate-100 dark:bg-accent text-rose-500 hover:bg-rose-50"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Pagination */}
-            <TablePagination
-              currentPage={discountPage}
-              totalItems={filteredDiscounts.length}
-              pageSize={discountPageSize}
-              onPageChange={(p) => setDiscountPage(p)}
-              onPageSizeChange={(s) => { setDiscountPageSize(s); setDiscountPage(1); }}
-              itemName="discounts"
-            />
-          </>
+              {/* Pagination */}
+              <TablePagination
+                currentPage={discountPage}
+                totalItems={filteredDiscounts.length}
+                pageSize={discountPageSize}
+                onPageChange={(p) => setDiscountPage(p)}
+                onPageSizeChange={(s) => { setDiscountPageSize(s); setDiscountPage(1); }}
+                itemName="discounts"
+              />
+            </>
           )}
         </div>
 
         {/* RIGHT COLUMN: REAL-TIME CHECKOUT CART SIMULATOR */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-xl space-y-5 sticky top-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
+          <div className="p-6 rounded-3xl bg-white dark:bg-card text-slate-900 dark:text-white border border-slate-200 dark:border-border shadow-xl space-y-5 sticky top-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-3">
+              <span className="text-xs font-black uppercase tracking-wider text-amber-500 dark:text-amber-400 flex items-center gap-2">
                 <Calculator className="w-4 h-4" />
                 <span>Real-Time Cart Simulator</span>
               </span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 text-[10px] font-bold">
                 Live Evaluator
               </span>
             </div>
@@ -614,7 +611,7 @@ export const DiscountStudio: React.FC = () => {
             {/* SIMULATED CART INPUTS */}
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-300">
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300">
                   Simulated Cart Subtotal ({currencySymbol})
                 </label>
                 <input
@@ -622,12 +619,12 @@ export const DiscountStudio: React.FC = () => {
                   step="5"
                   value={testCartSubtotal}
                   onChange={(e) => setTestCartSubtotal(parseFloat(e.target.value) || 0)}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-800 bg-slate-950 text-white font-mono font-black text-sm"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-[#161616] text-slate-900 dark:text-white font-mono font-black text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-300">
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300">
                   Enter Coupon Code to Test
                 </label>
                 <div className="flex gap-2">
@@ -636,24 +633,24 @@ export const DiscountStudio: React.FC = () => {
                     value={testPromoCodeInput}
                     onChange={(e) => setTestPromoCodeInput(e.target.value)}
                     placeholder="e.g. SUMMER2026"
-                    className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-800 bg-slate-950 text-amber-400 font-mono font-black text-xs tracking-wider uppercase"
+                    className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-[#161616] text-amber-600 dark:text-amber-400 font-mono font-black text-xs tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
             </div>
 
             {/* EVALUATOR OUTPUT RESULT CARD */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#161616] border border-slate-200 dark:border-border space-y-3">
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between text-slate-400">
+                <div className="flex justify-between text-slate-500 dark:text-slate-400">
                   <span>Cart Subtotal:</span>
-                  <span className="font-bold text-white">
+                  <span className="font-bold text-slate-900 dark:text-white">
                     {currencySymbol}
                     {testCartSubtotal.toFixed(2)}
                   </span>
                 </div>
 
-                <div className="flex justify-between text-emerald-400 font-bold">
+                <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
                   <span>Discount Savings:</span>
                   <span>
                     -{currencySymbol}
@@ -661,16 +658,16 @@ export const DiscountStudio: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="flex justify-between font-black text-sm text-white pt-2 border-t border-slate-800">
+                <div className="flex justify-between font-black text-sm text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-border">
                   <span>Final Order Total:</span>
-                  <span className="text-amber-400">
+                  <span className="text-amber-600 dark:text-amber-400">
                     {currencySymbol}
                     {Math.max(0, testCartSubtotal - simResult.savings).toFixed(2)}
                   </span>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-[11px] font-semibold text-slate-300">
+              <div className="p-3 rounded-xl bg-white dark:bg-card border border-slate-200 dark:border-border text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                 {simResult.message}
               </div>
             </div>
@@ -720,11 +717,10 @@ export const DiscountStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, method: 'COUPON_CODE' })}
-                    className={`p-3.5 rounded-2xl border text-left space-y-0.5 transition-all ${
-                      formData.method === 'COUPON_CODE'
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-md'
-                        : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
-                    }`}
+                    className={`p-3.5 rounded-2xl border text-left space-y-0.5 transition-all ${formData.method === 'COUPON_CODE'
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                      : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                      }`}
                   >
                     <span className="font-extrabold text-xs flex items-center gap-1.5">
                       <Ticket className="w-3.5 h-3.5 text-amber-400" />
@@ -738,11 +734,10 @@ export const DiscountStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, method: 'AUTOMATIC' })}
-                    className={`p-3.5 rounded-2xl border text-left space-y-0.5 transition-all ${
-                      formData.method === 'AUTOMATIC'
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                        : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
-                    }`}
+                    className={`p-3.5 rounded-2xl border text-left space-y-0.5 transition-all ${formData.method === 'AUTOMATIC'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                      : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                      }`}
                   >
                     <span className="font-extrabold text-xs flex items-center gap-1.5">
                       <Zap className="w-3.5 h-3.5" />
@@ -815,11 +810,10 @@ export const DiscountStudio: React.FC = () => {
                         onClick={() =>
                           setFormData({ ...formData, discountType: item.type as DiscountType })
                         }
-                        className={`p-3 rounded-2xl border text-center space-y-1 transition-all ${
-                          isSel
-                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                            : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
-                        }`}
+                        className={`p-3 rounded-2xl border text-center space-y-1 transition-all ${isSel
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                          : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                          }`}
                       >
                         <IconC className="w-4 h-4 mx-auto" />
                         <span className="font-extrabold text-xs block">{item.label}</span>
@@ -1010,11 +1004,10 @@ export const DiscountStudio: React.FC = () => {
                           return (
                             <label
                               key={prod.id}
-                              className={`flex items-center justify-between p-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
-                                isSelected
-                                  ? 'bg-indigo-50 border-indigo-500 text-indigo-950 dark:bg-indigo-950/60 dark:text-white'
-                                  : 'bg-slate-50 dark:bg-accent border-slate-200 dark:border-border text-slate-700 dark:text-slate-300 hover:bg-slate-100'
-                              }`}
+                              className={`flex items-center justify-between p-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${isSelected
+                                ? 'bg-indigo-50 border-indigo-500 text-indigo-950 dark:bg-indigo-950/60 dark:text-white'
+                                : 'bg-slate-50 dark:bg-accent border-slate-200 dark:border-border text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+                                }`}
                             >
                               <div className="flex items-center gap-2.5">
                                 <input
@@ -1081,11 +1074,10 @@ export const DiscountStudio: React.FC = () => {
                           return (
                             <label
                               key={coll.id}
-                              className={`flex items-center justify-between p-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
-                                isSelected
-                                  ? 'bg-amber-50 border-amber-500 text-amber-950 dark:bg-amber-950/60 dark:text-white'
-                                  : 'bg-slate-50 dark:bg-accent border-slate-200 dark:border-border text-slate-700 dark:text-slate-300 hover:bg-slate-100'
-                              }`}
+                              className={`flex items-center justify-between p-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${isSelected
+                                ? 'bg-amber-50 border-amber-500 text-amber-950 dark:bg-amber-950/60 dark:text-white'
+                                : 'bg-slate-50 dark:bg-accent border-slate-200 dark:border-border text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+                                }`}
                             >
                               <div className="flex items-center gap-2.5">
                                 <input
@@ -1142,11 +1134,10 @@ export const DiscountStudio: React.FC = () => {
                         return (
                           <label
                             key={grp}
-                            className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all ${
-                              isSelected
-                                ? 'bg-emerald-100 border-emerald-500 text-emerald-900 dark:bg-emerald-900/60 dark:text-white'
-                                : 'bg-slate-50 dark:bg-accent border-slate-200 dark:border-border text-slate-700 dark:text-slate-300'
-                            }`}
+                            className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all ${isSelected
+                              ? 'bg-emerald-100 border-emerald-500 text-emerald-900 dark:bg-emerald-900/60 dark:text-white'
+                              : 'bg-slate-50 dark:bg-accent border-slate-200 dark:border-border text-slate-700 dark:text-slate-300'
+                              }`}
                           >
                             <input
                               type="checkbox"

@@ -1,12 +1,12 @@
 'use client';
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
-import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
 import React, { useState, useEffect } from 'react';
 import { TablePagination } from '@/src/components/ui/TablePagination';
 import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import { CMSOrder, OrderStatus, PaymentStatus, OrderNote } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
+import { OrderStudioSkeleton } from '@/src/components/ui/Skeleton';
 import {
   ShoppingBag,
   Search,
@@ -29,6 +29,7 @@ import {
   Send,
   ExternalLink,
   Download,
+  Tag,
 } from 'lucide-react';
 
 export const OrderStudio: React.FC = () => {
@@ -265,14 +266,7 @@ export const OrderStudio: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[350px] gap-3">
-        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-slate-500 animate-pulse">
-          Loading Orders Suite...
-        </span>
-      </div>
-    );
+    return <OrderStudioSkeleton />;
   }
 
   return (
@@ -313,7 +307,6 @@ export const OrderStudio: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <PageAiSpecularButton size="md" />
 
             <button
               type="button"
@@ -479,6 +472,13 @@ export const OrderStudio: React.FC = () => {
                           <span className="text-[10px] font-normal text-slate-400">
                             {o.currency || storeCurrency}
                           </span>
+                          {o.couponCode && (
+                            <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800/60 w-max">
+                              <Tag className="w-2.5 h-2.5 shrink-0" />
+                              <span>{o.couponCode}</span>
+                              {o.discountAmount ? <span>(-{formatPrice(o.discountAmount, o.currency)})</span> : null}
+                            </div>
+                          )}
                         </td>
                         <td className="py-4 px-6">
                           <span
@@ -778,6 +778,17 @@ export const OrderStudio: React.FC = () => {
                       )}
                     </span>
                   </div>
+                  {((selectedOrder.discountAmount && selectedOrder.discountAmount > 0) || selectedOrder.couponCode) && (
+                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-800/40">
+                      <span className="flex items-center gap-1.5">
+                        <Tag className="w-3.5 h-3.5" />
+                        <span>Coupon Discount {selectedOrder.couponCode ? `(${selectedOrder.couponCode})` : ''}:</span>
+                      </span>
+                      <span className="font-bold">
+                        -{formatPrice(selectedOrder.discountAmount || 0, selectedOrder.currency)}
+                      </span>
+                    </div>
+                  )}
                   {selectedOrder.shippingAmount !== undefined && (
                     <div className="flex justify-between">
                       <span className="text-slate-500">Shipping:</span>
@@ -1176,6 +1187,30 @@ export const OrderStudio: React.FC = () => {
                       )}
                     </span>
                   </div>
+                  {((selectedOrder.discountAmount && selectedOrder.discountAmount > 0) || selectedOrder.couponCode) && (
+                    <div className="flex justify-between text-emerald-600 font-semibold">
+                      <span>Discount {selectedOrder.couponCode ? `(${selectedOrder.couponCode})` : ''}:</span>
+                      <span className="font-bold">
+                        -{formatPrice(selectedOrder.discountAmount || 0, selectedOrder.currency)}
+                      </span>
+                    </div>
+                  )}
+                  {selectedOrder.shippingAmount !== undefined && (
+                    <div className="flex justify-between">
+                      <span>Shipping:</span>
+                      <span className="font-bold">
+                        {formatPrice(selectedOrder.shippingAmount || 0, selectedOrder.currency)}
+                      </span>
+                    </div>
+                  )}
+                  {selectedOrder.taxAmount !== undefined && (
+                    <div className="flex justify-between">
+                      <span>Tax:</span>
+                      <span className="font-bold">
+                        {formatPrice(selectedOrder.taxAmount || 0, selectedOrder.currency)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-black text-sm text-slate-900 pt-2 border-t">
                     <span>Grand Total:</span>
                     <span className="text-indigo-600 font-mono">

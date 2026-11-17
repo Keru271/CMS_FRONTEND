@@ -1,7 +1,6 @@
 'use client';
 
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
-import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 import React, { useState, useEffect, useRef } from 'react';
 import { TablePagination } from '@/src/components/ui/TablePagination';
 import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
@@ -24,6 +23,7 @@ import { PlanLockOverlay } from '@/src/components/cms/PlanLockOverlay';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { getCurrencySymbol } from '@/src/lib/currency';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
+import { ProductStudioSkeleton } from '@/src/components/ui/Skeleton';
 import {
   Package,
   Plus,
@@ -165,6 +165,7 @@ export const ProductStudio: React.FC = () => {
     name: '',
     slug: '',
     icon: '📦',
+    image: '',
     description: '',
   });
   const [isSavingQuickCategory, setIsSavingQuickCategory] = useState(false);
@@ -219,8 +220,10 @@ export const ProductStudio: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Variant Matrix Generator State
+  // Variant Matrix Generator & Display State
   const [showMatrixBuilder, setShowMatrixBuilder] = useState(false);
+  const [showAdvancedVariantFields, setShowAdvancedVariantFields] = useState(false);
+  const [expandedVariantId, setExpandedVariantId] = useState<string | null>(null);
   const [option1Name, setOption1Name] = useState('Size');
   const [option1Values, setOption1Values] = useState('S, M, L, XL');
   const [option2Name, setOption2Name] = useState('Color');
@@ -610,6 +613,7 @@ export const ProductStudio: React.FC = () => {
         name: quickCategoryData.name.trim(),
         slug: generatedSlug,
         icon: quickCategoryData.icon || '📦',
+        image: quickCategoryData.image || '',
         description: quickCategoryData.description || '',
       };
       await cmsService.createCategory(payload);
@@ -626,7 +630,7 @@ export const ProductStudio: React.FC = () => {
         category: nextCats[0] || payload.name,
       });
       setIsQuickCategoryModalOpen(false);
-      setQuickCategoryData({ name: '', slug: '', icon: '📦', description: '' });
+      setQuickCategoryData({ name: '', slug: '', icon: '📦', image: '', description: '' });
       showToast(`Category "${payload.name}" created and added to product!`, 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to create category.', 'error');
@@ -940,14 +944,7 @@ export const ProductStudio: React.FC = () => {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-slate-500 animate-pulse">
-          Loading Product Studio...
-        </span>
-      </div>
-    );
+    return <ProductStudioSkeleton />;
   }
 
   return (
@@ -989,7 +986,6 @@ export const ProductStudio: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <PageAiSpecularButton size="md" />
           <button
               type="button"
               onClick={() => {
@@ -1647,52 +1643,100 @@ export const ProductStudio: React.FC = () => {
 
               {/* 2. Pricing & Cost Profit Margin Calculation */}
               <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-5">
-                <h3 className="text-sm font-black text-slate-900 dark:text-foreground uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <DollarSign className="w-4 h-4 text-emerald-600" />
-                  <span>Pricing, Costs & Profit Margins</span>
-                </h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-slate-100 dark:border-border pb-3">
+                  <h3 className="text-sm font-black text-slate-900 dark:text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-emerald-600" />
+                    <span>Pricing, Profit & Margin</span>
+                  </h3>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Set customer checkout price and track your unit profit
+                  </span>
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  {/* Selling Price */}
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Selling Price ({currencySymbol}) <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-black text-slate-900"
-                    />
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                        Selling Price ({currencySymbol}) <span className="text-rose-500">*</span>
+                      </label>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 dark:text-emerald-400 px-1.5 py-0.5 rounded">
+                        Customer pays
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs pointer-events-none">
+                        {currencySymbol}
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        placeholder="99.00"
+                        className="w-full pl-8 pr-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-black text-slate-900 dark:text-foreground focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-emerald-500/20"
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      The actual price charged to customer at checkout.
+                    </p>
                   </div>
 
+                  {/* Original / Strike-through Price */}
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Compare-at Price ({currencySymbol})
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={formData.compareAtPrice || ''}
-                      onChange={(e) => setFormData({ ...formData, compareAtPrice: e.target.value })}
-                      placeholder="e.g. 249.99"
-                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
-                    />
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                        Original / MRP Price ({currencySymbol})
+                      </label>
+                      <span className="text-[10px] font-bold text-slate-600 bg-slate-100 dark:bg-accent dark:text-slate-300 px-1.5 py-0.5 rounded line-through">
+                        Strikethrough
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs pointer-events-none">
+                        {currencySymbol}
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={formData.compareAtPrice || ''}
+                        onChange={(e) => setFormData({ ...formData, compareAtPrice: e.target.value })}
+                        placeholder="e.g. 149.00"
+                        className="w-full pl-8 pr-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-bold text-slate-900 dark:text-foreground focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-indigo-500/20"
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Shown crossed out (e.g. <span className="line-through">{currencySymbol}149.00</span>) to show savings.
+                    </p>
                   </div>
 
+                  {/* Cost per item */}
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Cost Price ({currencySymbol})
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={formData.costPrice || ''}
-                      onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
-                      placeholder="e.g. 85.00"
-                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
-                    />
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                        Cost per Item ({currencySymbol})
+                      </label>
+                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-400 px-1.5 py-0.5 rounded">
+                        Hidden from buyers
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs pointer-events-none">
+                        {currencySymbol}
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={formData.costPrice || ''}
+                        onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                        placeholder="e.g. 45.00"
+                        className="w-full pl-8 pr-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-bold text-slate-900 dark:text-foreground focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-amber-500/20"
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      What you paid to make/buy this. Used for profit calculation.
+                    </p>
                   </div>
                 </div>
 
@@ -1778,25 +1822,25 @@ export const ProductStudio: React.FC = () => {
                 </div>
               </div>
 
-              {/* 4. Product Variants & Multi-SKU Flow (N-Variants with distinct Price and Quantity) */}
-              <div className="p-6 rounded-3xl bg-white dark:bg-card border border-indigo-200/80 dark:border-border shadow-sm space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              {/* 4. Product Variants & Multi-SKU Manager (Simplified & Responsive) */}
+              <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-card border border-indigo-200/80 dark:border-border shadow-sm space-y-5">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-border pb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
                       <Layers className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-sm font-black text-slate-900 dark:text-foreground uppercase tracking-wider">
-                          Product Variants & Multi-SKU Manager
+                          Product Variants & Multi-SKU
                         </h3>
-                        <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-black">
-                          {formData.variants?.length || 0} Variants
+                        <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 text-[10px] font-black">
+                          {formData.variants?.length || 0} {formData.variants?.length === 1 ? 'Variant' : 'Variants'}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500">
-                        Configure n number of variants with individual prices, compare prices, cost
-                        prices, SKUs, and stock quantities.
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Set individual prices, SKUs, and stock quantities per variant option.
                       </p>
                     </div>
                   </div>
@@ -1805,15 +1849,19 @@ export const ProductStudio: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowMatrixBuilder(!showMatrixBuilder)}
-                      className="px-3.5 py-2 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/70 text-indigo-700 text-xs font-bold flex items-center gap-1.5 transition"
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                        showMatrixBuilder
+                          ? 'border-indigo-300 bg-indigo-100/70 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-200'
+                          : 'border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/50 dark:bg-indigo-950/40 hover:bg-indigo-100/70 text-indigo-700 dark:text-indigo-300'
+                      }`}
                     >
                       <Wand2 className="w-3.5 h-3.5" />
-                      <span>{showMatrixBuilder ? 'Hide Generator' : 'Matrix Generator'}</span>
+                      <span>{showMatrixBuilder ? 'Hide Generator' : 'Combinations Matrix'}</span>
                     </button>
                     <button
                       type="button"
                       onClick={handleAddSingleVariant}
-                      className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+                      className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer active:scale-95"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add Variant</span>
@@ -1821,103 +1869,163 @@ export const ProductStudio: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Matrix Generator Drawer / Panel */}
+                {/* Matrix Generator Drawer / Panel with 1-Click Presets */}
                 {showMatrixBuilder && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50/40 border border-indigo-100 space-y-4 animate-in fade-in slide-in-from-top-2 duration-150">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
-                        <Wand2 className="w-4 h-4 text-indigo-600" />
-                        Quick Combinations Matrix Generator
-                      </span>
-                      <span className="text-[11px] text-indigo-600 font-medium">
-                        Auto-crosses Option 1 × Option 2
-                      </span>
+                  <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 space-y-4 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100/60 dark:border-indigo-900/40 pb-3">
+                      <div>
+                        <span className="text-xs font-black uppercase tracking-wider text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+                          <Wand2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                          Quick Combinations Matrix Generator
+                        </span>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          Auto-crosses Option 1 × Option 2 to instantly generate all product SKUs.
+                        </p>
+                      </div>
+
+                      {/* 1-Click Presets */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Presets:</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOption1Name('Size');
+                            setOption1Values('S, M, L, XL');
+                            setOption2Name('Color');
+                            setOption2Values('Black, Navy, Silver');
+                          }}
+                          className="px-2 py-0.5 rounded-lg bg-white dark:bg-card border border-indigo-200 dark:border-border text-[10px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 transition cursor-pointer"
+                        >
+                          Size × Color
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOption1Name('Size');
+                            setOption1Values('US 7, US 8, US 9, US 10, US 11');
+                            setOption2Name('');
+                            setOption2Values('');
+                          }}
+                          className="px-2 py-0.5 rounded-lg bg-white dark:bg-card border border-indigo-200 dark:border-border text-[10px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 transition cursor-pointer"
+                        >
+                          Shoe Sizes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOption1Name('Pack');
+                            setOption1Values('1-Pack, 2-Pack, 3-Pack, 5-Pack');
+                            setOption2Name('');
+                            setOption2Values('');
+                          }}
+                          className="px-2 py-0.5 rounded-lg bg-white dark:bg-card border border-indigo-200 dark:border-border text-[10px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 transition cursor-pointer"
+                        >
+                          Bundle Packs
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-700">
-                          Option 1 Name (e.g. Size)
-                        </label>
+                      <div className="p-3.5 rounded-xl bg-white dark:bg-card border border-slate-200/80 dark:border-border space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                            Option 1 Name
+                          </label>
+                          <span className="text-[10px] text-slate-400">e.g. Size</span>
+                        </div>
                         <input
                           type="text"
                           value={option1Name}
                           onChange={(e) => setOption1Name(e.target.value)}
-                          placeholder="Size"
-                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold"
+                          placeholder="Option Name (e.g. Size)"
+                          className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-bold text-slate-900 dark:text-foreground"
                         />
+                        <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                          Values (comma-separated)
+                        </label>
                         <input
                           type="text"
                           value={option1Values}
                           onChange={(e) => setOption1Values(e.target.value)}
                           placeholder="S, M, L, XL"
-                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium"
+                          className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-medium text-slate-800 dark:text-foreground"
                         />
-                        <span className="text-[10px] text-slate-400">Comma-separated values</span>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-bold text-slate-700">
-                          Option 2 Name (e.g. Color)
-                        </label>
+                      <div className="p-3.5 rounded-xl bg-white dark:bg-card border border-slate-200/80 dark:border-border space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                            Option 2 Name <span className="text-slate-400 font-normal">(Optional)</span>
+                          </label>
+                          <span className="text-[10px] text-slate-400">e.g. Color</span>
+                        </div>
                         <input
                           type="text"
                           value={option2Name}
                           onChange={(e) => setOption2Name(e.target.value)}
-                          placeholder="Color"
-                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold"
+                          placeholder="Option Name (e.g. Color)"
+                          className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-bold text-slate-900 dark:text-foreground"
                         />
+                        <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                          Values (comma-separated)
+                        </label>
                         <input
                           type="text"
                           value={option2Values}
                           onChange={(e) => setOption2Values(e.target.value)}
                           placeholder="Black, Navy, Silver"
-                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium"
+                          className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-medium text-slate-800 dark:text-foreground"
                         />
-                        <span className="text-[10px] text-slate-400">Comma-separated values</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-2 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowMatrixBuilder(false)}
-                        className="px-3.5 py-1.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 text-xs font-bold"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleGenerateVariantMatrix}
-                        className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Generate Combinations
-                      </button>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                        {(() => {
+                          const c1 = option1Values.split(',').filter((v) => v.trim()).length;
+                          const c2 = option2Values.split(',').filter((v) => v.trim()).length;
+                          const total = c1 > 0 && c2 > 0 ? c1 * c2 : c1;
+                          return total > 0 ? `Will create ${total} variants` : 'Enter values above';
+                        })()}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowMatrixBuilder(false)}
+                          className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-border text-slate-600 dark:text-slate-300 bg-white dark:bg-card hover:bg-slate-50 text-xs font-bold cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleGenerateVariantMatrix}
+                          className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Generate Combinations</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {/* Variants List or Empty State */}
                 {formData.variants && formData.variants.length > 0 ? (
-                  <div className="space-y-4">
-                    {/* Summary Bar & Batch Helpers */}
-                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <span className="text-slate-500 font-medium">Total Stock:</span>{' '}
-                          <span className="font-black text-slate-900">
-                            {formData.variants.reduce(
-                              (acc, curr) => acc + (Number(curr.inventory) || 0),
-                              0,
-                            )}{' '}
-                            units
+                  <div className="space-y-3">
+                    {/* Compact Summary & Bulk Actions Toolbar */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-card border border-slate-200/80 dark:border-border flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-200">
+                          <Boxes className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                          <span>Total Stock:</span>
+                          <span className="px-2 py-0.5 rounded-lg bg-white dark:bg-accent border border-slate-200 dark:border-border font-black text-slate-900 dark:text-foreground">
+                            {formData.variants.reduce((acc, curr) => acc + (Number(curr.inventory) || 0), 0)} units
                           </span>
                         </div>
-                        <div className="hidden sm:block text-slate-300">|</div>
-                        <div>
-                          <span className="text-slate-500 font-medium">Price Span:</span>{' '}
-                          <span className="font-black text-slate-900">
+                        <div className="hidden sm:block text-slate-300 dark:text-slate-700">•</div>
+                        <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-200">
+                          <span>Price Range:</span>
+                          <span className="px-2 py-0.5 rounded-lg bg-white dark:bg-accent border border-slate-200 dark:border-border font-black text-slate-900 dark:text-foreground">
                             {(() => {
                               const prices = formData.variants.map((v) => Number(v.price) || 0);
                               const min = Math.min(...prices);
@@ -1930,206 +2038,331 @@ export const ProductStudio: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => setShowAdvancedVariantFields(!showAdvancedVariantFields)}
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                            showAdvancedVariantFields
+                              ? 'bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300'
+                              : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 dark:bg-accent dark:border-border dark:text-slate-200'
+                          }`}
+                          title="Toggle Original Price, Cost to You, and Image columns"
+                        >
+                          <Sliders className="w-3.5 h-3.5" />
+                          <span>{showAdvancedVariantFields ? 'Compact View' : 'Cost & Original Price Fields'}</span>
+                        </button>
                         <button
                           type="button"
                           onClick={handleApplyPriceToAllVariants}
                           title="Copy main selling price to all variants"
-                          className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-bold transition"
+                          className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 dark:bg-accent dark:border-border dark:text-slate-200 text-xs font-bold transition cursor-pointer"
                         >
-                          Apply Base Price to All
+                          Apply Base Price
                         </button>
                         <button
                           type="button"
                           onClick={handleApplyStockToAllVariants}
                           title="Distribute main stock evenly"
-                          className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-[11px] font-bold transition"
+                          className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 dark:bg-accent dark:border-border dark:text-slate-200 text-xs font-bold transition cursor-pointer"
                         >
                           Distribute Stock
                         </button>
                       </div>
                     </div>
 
-                    {/* Table of Variants */}
-                    <div className="border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
-                      <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+                    {/* Table of Variants - Spacious, Readable & Non-Cramped */}
+                    <div className="border border-slate-200/80 dark:border-border rounded-2xl overflow-hidden shadow-xs bg-white dark:bg-card">
+                      <div className="overflow-x-auto max-h-[520px] overflow-y-auto">
                         <table className="w-full text-left text-xs border-collapse">
-                          <thead className="bg-slate-100/80 text-slate-600 uppercase text-[10px] font-black tracking-wider sticky top-0 z-10 border-b border-slate-200">
+                          <thead className="bg-slate-100/90 dark:bg-accent/80 text-slate-600 dark:text-slate-300 uppercase text-[10px] font-black tracking-wider sticky top-0 z-10 border-b border-slate-200 dark:border-border">
                             <tr>
-                              <th className="p-3 w-44">Variant Name</th>
-                              <th className="p-3 w-36">SKU</th>
-                              <th className="p-3 w-28">Price ({currencySymbol})</th>
-                              <th className="p-3 w-28">Compare ({currencySymbol})</th>
-                              <th className="p-3 w-28">Cost ({currencySymbol})</th>
-                              <th className="p-3 w-36">Stock (Qty)</th>
-                              <th className="p-3 w-36">Image URL</th>
-                              <th className="p-3 w-20 text-right">Actions</th>
+                              <th className="py-3 px-3.5 min-w-[180px]">Variant Option</th>
+                              <th className="py-3 px-3 min-w-[140px]">SKU</th>
+                              <th className="py-3 px-3 min-w-[120px]">Price ({currencySymbol})</th>
+                              {showAdvancedVariantFields && (
+                                <>
+                                  <th className="py-3 px-3 min-w-[130px]">Original Price ({currencySymbol})</th>
+                                  <th className="py-3 px-3 min-w-[130px]">Cost to You ({currencySymbol})</th>
+                                  <th className="py-3 px-3 min-w-[160px]">Image URL</th>
+                                </>
+                              )}
+                              <th className="py-3 px-3 min-w-[130px]">Stock (Qty)</th>
+                              <th className="py-3 px-3 w-28 text-right">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 bg-white">
+                          <tbody className="divide-y divide-slate-100 dark:divide-border">
                             {formData.variants.map((variant, idx) => {
                               const qty = Number(variant.inventory) || 0;
+                              const isExpanded = expandedVariantId === variant.id;
                               return (
-                                <tr
-                                  key={variant.id || idx}
-                                  className="hover:bg-slate-50/80 transition-colors"
-                                >
-                                  {/* Variant Name */}
-                                  <td className="p-2.5">
-                                    <input
-                                      type="text"
-                                      required
-                                      value={variant.name}
-                                      onChange={(e) =>
-                                        handleUpdateVariantField(variant.id, 'name', e.target.value)
-                                      }
-                                      placeholder="e.g. Small / Red"
-                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-bold text-slate-900 focus:bg-white"
-                                    />
-                                  </td>
-
-                                  {/* SKU */}
-                                  <td className="p-2.5">
-                                    <input
-                                      type="text"
-                                      required
-                                      value={variant.sku}
-                                      onChange={(e) =>
-                                        handleUpdateVariantField(variant.id, 'sku', e.target.value)
-                                      }
-                                      placeholder="SKU"
-                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-mono font-bold text-slate-700 focus:bg-white"
-                                    />
-                                  </td>
-
-                                  {/* Price */}
-                                  <td className="p-2.5">
-                                    <input
-                                      type="number"
-                                      step="0.01"
-                                      required
-                                      value={variant.price}
-                                      onChange={(e) =>
-                                        handleUpdateVariantField(
-                                          variant.id,
-                                          'price',
-                                          parseFloat(e.target.value) || 0,
-                                        )
-                                      }
-                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-black text-slate-900 focus:bg-white"
-                                    />
-                                  </td>
-
-                                  {/* Compare At Price */}
-                                  <td className="p-2.5">
-                                    <input
-                                      type="number"
-                                      step="0.01"
-                                      value={variant.compareAtPrice ?? ''}
-                                      onChange={(e) =>
-                                        handleUpdateVariantField(
-                                          variant.id,
-                                          'compareAtPrice',
-                                          e.target.value ? parseFloat(e.target.value) : null,
-                                        )
-                                      }
-                                      placeholder="Optional"
-                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-medium text-slate-600 focus:bg-white"
-                                    />
-                                  </td>
-
-                                  {/* Cost Price */}
-                                  <td className="p-2.5">
-                                    <input
-                                      type="number"
-                                      step="0.01"
-                                      value={variant.costPrice ?? ''}
-                                      onChange={(e) =>
-                                        handleUpdateVariantField(
-                                          variant.id,
-                                          'costPrice',
-                                          e.target.value ? parseFloat(e.target.value) : null,
-                                        )
-                                      }
-                                      placeholder="Cost"
-                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-medium text-slate-600 focus:bg-white"
-                                    />
-                                  </td>
-
-                                  {/* Inventory Qty & Live Status Badge */}
-                                  <td className="p-2.5">
-                                    <div className="space-y-1">
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        required
-                                        value={variant.inventory}
-                                        onChange={(e) =>
-                                          handleUpdateVariantField(
-                                            variant.id,
-                                            'inventory',
-                                            parseInt(e.target.value, 10) || 0,
-                                          )
-                                        }
-                                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs font-bold text-slate-900 focus:bg-white"
-                                      />
-                                      <div>
-                                        {qty <= 0 ? (
-                                          <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 text-[9px] font-bold">
-                                            Out of stock
-                                          </span>
-                                        ) : qty <= 5 ? (
-                                          <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[9px] font-bold">
-                                            Low stock ({qty})
-                                          </span>
-                                        ) : (
-                                          <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[9px] font-bold">
-                                            In stock ({qty})
-                                          </span>
-                                        )}
+                                <React.Fragment key={variant.id || idx}>
+                                  <tr className="hover:bg-slate-50/80 dark:hover:bg-accent/40 transition-colors">
+                                    {/* Variant Name */}
+                                    <td className="py-2.5 px-3.5">
+                                      <div className="flex items-center gap-2">
+                                        <input
+                                          type="text"
+                                          required
+                                          value={variant.name}
+                                          onChange={(e) =>
+                                            handleUpdateVariantField(variant.id, 'name', e.target.value)
+                                          }
+                                          placeholder="e.g. Small / Red"
+                                          className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-bold text-slate-900 dark:text-foreground focus:bg-white dark:focus:bg-card focus:ring-1 focus:ring-indigo-500"
+                                        />
                                       </div>
-                                    </div>
-                                  </td>
+                                    </td>
 
-                                  {/* Image URL */}
-                                  <td className="p-2.5">
-                                    <input
-                                      type="text"
-                                      value={variant.image || ''}
-                                      onChange={(e) =>
-                                        handleUpdateVariantField(
-                                          variant.id,
-                                          'image',
-                                          e.target.value,
-                                        )
-                                      }
-                                      placeholder="https://..."
-                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-[11px] font-mono text-slate-500 focus:bg-white"
-                                    />
-                                  </td>
+                                    {/* SKU */}
+                                    <td className="py-2.5 px-3">
+                                      <input
+                                        type="text"
+                                        required
+                                        value={variant.sku}
+                                        onChange={(e) =>
+                                          handleUpdateVariantField(variant.id, 'sku', e.target.value)
+                                        }
+                                        placeholder="SKU-CODE"
+                                        className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-mono font-bold text-slate-700 dark:text-slate-300 focus:bg-white dark:focus:bg-card"
+                                      />
+                                    </td>
 
-                                  {/* Actions */}
-                                  <td className="p-2.5 text-right">
-                                    <div className="flex items-center justify-end gap-1">
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDuplicateVariant(variant)}
-                                        title="Duplicate variant"
-                                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                                      >
-                                        <Copy className="w-3.5 h-3.5" />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDeleteVariant(variant.id)}
-                                        title="Delete variant"
-                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
+                                    {/* Price */}
+                                    <td className="py-2.5 px-3">
+                                      <div className="relative">
+                                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs pointer-events-none">
+                                          {currencySymbol}
+                                        </span>
+                                        <input
+                                          type="number"
+                                          step="0.01"
+                                          required
+                                          value={variant.price}
+                                          onChange={(e) =>
+                                            handleUpdateVariantField(
+                                              variant.id,
+                                              'price',
+                                              parseFloat(e.target.value) || 0,
+                                            )
+                                          }
+                                          className="w-full pl-6 pr-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-black text-slate-900 dark:text-foreground focus:bg-white dark:focus:bg-card"
+                                        />
+                                      </div>
+                                    </td>
+
+                                    {/* Optional Advanced Columns */}
+                                    {showAdvancedVariantFields && (
+                                      <>
+                                        {/* Compare At Price */}
+                                        <td className="py-2.5 px-3">
+                                          <div className="relative">
+                                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs pointer-events-none">
+                                              {currencySymbol}
+                                            </span>
+                                            <input
+                                              type="number"
+                                              step="0.01"
+                                              value={variant.compareAtPrice ?? ''}
+                                              onChange={(e) =>
+                                                handleUpdateVariantField(
+                                                  variant.id,
+                                                  'compareAtPrice',
+                                                  e.target.value ? parseFloat(e.target.value) : null,
+                                                )
+                                              }
+                                              placeholder="Was"
+                                              className="w-full pl-6 pr-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-medium text-slate-600 dark:text-slate-300 focus:bg-white dark:focus:bg-card"
+                                            />
+                                          </div>
+                                        </td>
+
+                                        {/* Cost Price */}
+                                        <td className="py-2.5 px-3">
+                                          <div className="relative">
+                                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs pointer-events-none">
+                                              {currencySymbol}
+                                            </span>
+                                            <input
+                                              type="number"
+                                              step="0.01"
+                                              value={variant.costPrice ?? ''}
+                                              onChange={(e) =>
+                                                handleUpdateVariantField(
+                                                  variant.id,
+                                                  'costPrice',
+                                                  e.target.value ? parseFloat(e.target.value) : null,
+                                                )
+                                              }
+                                              placeholder="Cost"
+                                              className="w-full pl-6 pr-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-medium text-slate-600 dark:text-slate-300 focus:bg-white dark:focus:bg-card"
+                                            />
+                                          </div>
+                                        </td>
+
+                                        {/* Image URL */}
+                                        <td className="py-2.5 px-3">
+                                          <input
+                                            type="text"
+                                            value={variant.image || ''}
+                                            onChange={(e) =>
+                                              handleUpdateVariantField(
+                                                variant.id,
+                                                'image',
+                                                e.target.value,
+                                              )
+                                            }
+                                            placeholder="https://..."
+                                            className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-[11px] font-mono text-slate-600 dark:text-slate-400 focus:bg-white dark:focus:bg-card"
+                                          />
+                                        </td>
+                                      </>
+                                    )}
+
+                                    {/* Inventory Qty & Status Badge */}
+                                    <td className="py-2.5 px-3">
+                                      <div className="flex items-center gap-2">
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          required
+                                          value={variant.inventory}
+                                          onChange={(e) =>
+                                            handleUpdateVariantField(
+                                              variant.id,
+                                              'inventory',
+                                              parseInt(e.target.value, 10) || 0,
+                                            )
+                                          }
+                                          className="w-20 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-background text-xs font-bold text-slate-900 dark:text-foreground focus:bg-white dark:focus:bg-card"
+                                        />
+                                        <span
+                                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold whitespace-nowrap ${
+                                            qty <= 0
+                                              ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400'
+                                              : qty <= 5
+                                                ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
+                                                : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'
+                                          }`}
+                                        >
+                                          {qty <= 0 ? 'Out of stock' : `${qty} in stock`}
+                                        </span>
+                                      </div>
+                                    </td>
+
+                                    {/* Actions */}
+                                    <td className="py-2.5 px-3 text-right">
+                                      <div className="flex items-center justify-end gap-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => setExpandedVariantId(isExpanded ? null : variant.id)}
+                                          title={isExpanded ? 'Collapse extra details' : 'Edit extra details (Cost, Compare, Image)'}
+                                          className={`p-1.5 rounded-lg transition cursor-pointer ${
+                                            isExpanded
+                                              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                                              : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-accent'
+                                          }`}
+                                        >
+                                          <ChevronDown
+                                            className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                                              isExpanded ? 'rotate-180 text-indigo-600' : ''
+                                            }`}
+                                          />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDuplicateVariant(variant)}
+                                          title="Duplicate variant"
+                                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 rounded-lg transition cursor-pointer"
+                                        >
+                                          <Copy className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteVariant(variant.id)}
+                                          title="Delete variant"
+                                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 rounded-lg transition cursor-pointer"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+
+                                  {/* Inline Quick Details Row when Chevron Expanded */}
+                                  {isExpanded && !showAdvancedVariantFields && (
+                                    <tr className="bg-indigo-50/30 dark:bg-indigo-950/20 border-b border-indigo-100/60 dark:border-indigo-900/40">
+                                      <td colSpan={5} className="p-3.5">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                          <div>
+                                            <div className="flex items-center justify-between mb-1">
+                                              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                                                Original Price ({currencySymbol})
+                                              </label>
+                                              <span className="text-[9px] text-slate-400 line-through">Strikethrough</span>
+                                            </div>
+                                            <input
+                                              type="number"
+                                              step="0.01"
+                                              value={variant.compareAtPrice ?? ''}
+                                              onChange={(e) =>
+                                                handleUpdateVariantField(
+                                                  variant.id,
+                                                  'compareAtPrice',
+                                                  e.target.value ? parseFloat(e.target.value) : null,
+                                                )
+                                              }
+                                              placeholder="e.g. 149.00"
+                                              className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-medium"
+                                            />
+                                            <span className="text-[10px] text-slate-400 block mt-0.5">Shown crossed out for discount</span>
+                                          </div>
+                                          <div>
+                                            <div className="flex items-center justify-between mb-1">
+                                              <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                                                Cost to You ({currencySymbol})
+                                              </label>
+                                              <span className="text-[9px] text-amber-600 dark:text-amber-400 font-medium">Hidden</span>
+                                            </div>
+                                            <input
+                                              type="number"
+                                              step="0.01"
+                                              value={variant.costPrice ?? ''}
+                                              onChange={(e) =>
+                                                handleUpdateVariantField(
+                                                  variant.id,
+                                                  'costPrice',
+                                                  e.target.value ? parseFloat(e.target.value) : null,
+                                                )
+                                              }
+                                              placeholder="e.g. 45.00"
+                                              className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-medium"
+                                            />
+                                            <span className="text-[10px] text-slate-400 block mt-0.5">Your purchase cost (private)</span>
+                                          </div>
+                                          <div>
+                                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                                              Variant Image URL
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={variant.image || ''}
+                                              onChange={(e) =>
+                                                handleUpdateVariantField(
+                                                  variant.id,
+                                                  'image',
+                                                  e.target.value,
+                                                )
+                                              }
+                                              placeholder="https://..."
+                                              className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-mono"
+                                            />
+                                          </div>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )}
+                                </React.Fragment>
                               );
                             })}
                           </tbody>
@@ -2138,8 +2371,9 @@ export const ProductStudio: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="py-8 px-4 rounded-2xl border-2 border-dashed border-slate-200 text-center space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+                  /* Clean, Minimal Empty State */
+                  <div className="py-8 px-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-border text-center space-y-3 bg-slate-50/50 dark:bg-card/50">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
                       <Layers className="w-6 h-6" />
                     </div>
                     <div>
@@ -2147,26 +2381,26 @@ export const ProductStudio: React.FC = () => {
                         Single SKU Product (No Variants Defined)
                       </h4>
                       <p className="text-xs text-slate-400 max-w-md mx-auto mt-0.5">
-                        This product currently has one flat price ({currencySymbol}
-                        {formData.price || 0}) and stock quantity ({formData.inventory || 0} units).
+                        This product currently sells with one flat price ({currencySymbol}
+                        {formData.price || 0}) and stock count ({formData.inventory || 0} units).
                       </p>
                     </div>
-                    <div className="flex items-center justify-center gap-3 pt-1">
+                    <div className="flex items-center justify-center gap-2.5 pt-1 flex-wrap">
                       <button
                         type="button"
                         onClick={() => setShowMatrixBuilder(true)}
-                        className="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center gap-1.5 transition"
+                        className="px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
                       >
                         <Wand2 className="w-3.5 h-3.5" />
-                        <span>Generate Options Matrix (Size / Color)</span>
+                        <span>Generate Options (Size & Color)</span>
                       </button>
                       <button
                         type="button"
                         onClick={handleAddSingleVariant}
-                        className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition"
+                        className="px-4 py-2 rounded-xl border border-slate-300 dark:border-border hover:bg-slate-50 dark:hover:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Add Custom Variant</span>
+                        <span>Add First Variant</span>
                       </button>
                     </div>
                   </div>
@@ -2220,7 +2454,7 @@ export const ProductStudio: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        setQuickCategoryData({ name: '', slug: '', icon: '📦', description: '' });
+                        setQuickCategoryData({ name: '', slug: '', icon: '📦', image: '', description: '' });
                         setIsQuickCategoryModalOpen(true);
                       }}
                       className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1 hover:underline cursor-pointer"
@@ -2861,109 +3095,149 @@ export const ProductStudio: React.FC = () => {
 
       {/* ─── INLINE QUICK CREATE MODAL: CATEGORY ─── */}
       {isQuickCategoryModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                  <FolderPlus className="w-4 h-4" />
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-card border border-slate-200/90 dark:border-border rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-border flex items-center justify-between bg-slate-50/60 dark:bg-accent/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-center shadow-xs">
+                  <FolderPlus className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">
+                  <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-foreground">
                     Quick Add Category
                   </h3>
-                  <p className="text-[11px] text-slate-400">
-                    Creates and assigns to current product
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Creates and assigns category to current product
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsQuickCategoryModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-accent transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveQuickCategory} className="space-y-4">
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                  Category Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Wireless Audio"
-                  value={quickCategoryData.name}
-                  onChange={(e) => {
-                    const nameVal = e.target.value;
-                    const slugVal = nameVal
-                      .toLowerCase()
-                      .trim()
-                      .replace(/[^a-z0-9]+/g, '-');
-                    setQuickCategoryData({ ...quickCategoryData, name: nameVal, slug: slugVal });
-                  }}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-bold"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-2 space-y-1">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                    URL Slug
+            {/* Modal Form */}
+            <form onSubmit={handleSaveQuickCategory} className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-5 sm:p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
+                {/* Category Name */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Category Name <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
-                    value={quickCategoryData.slug}
-                    onChange={(e) =>
-                      setQuickCategoryData({ ...quickCategoryData, slug: e.target.value })
-                    }
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
+                    required
+                    placeholder="e.g. Wireless Audio"
+                    value={quickCategoryData.name}
+                    onChange={(e) => {
+                      const nameVal = e.target.value;
+                      const slugVal = nameVal
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[^a-z0-9]+/g, '-');
+                      setQuickCategoryData({ ...quickCategoryData, name: nameVal, slug: slugVal });
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-bold text-slate-900 dark:text-foreground placeholder:text-slate-400 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                    Icon
+
+                {/* Slug & Icon Grid */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2 space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                      URL Slug
+                    </label>
+                    <input
+                      type="text"
+                      value={quickCategoryData.slug}
+                      onChange={(e) =>
+                        setQuickCategoryData({ ...quickCategoryData, slug: e.target.value })
+                      }
+                      placeholder="wireless-audio"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                      Icon Emoji
+                    </label>
+                    <input
+                      type="text"
+                      value={quickCategoryData.icon}
+                      onChange={(e) =>
+                        setQuickCategoryData({ ...quickCategoryData, icon: e.target.value })
+                      }
+                      placeholder="📦"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs text-center font-bold text-slate-900 dark:text-foreground focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Category Image Drag & Drop Feature */}
+                <div className="space-y-2 pt-1">
+                  <DragDropUpload
+                    folder="categories"
+                    fileType="CATEGORY_IMAGE"
+                    label="Category Image (Drag & Drop)"
+                    currentUrl={quickCategoryData.image || undefined}
+                    onUploadComplete={(url) =>
+                      setQuickCategoryData((prev) => ({ ...prev, image: url }))
+                    }
+                    hint="Upload cover or thumbnail image (PNG, JPG, WebP max 5MB)"
+                    previewShape="rect"
+                    maxSizeMB={5}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                      Or paste image URL directly
+                    </label>
+                    <input
+                      type="url"
+                      value={quickCategoryData.image}
+                      onChange={(e) =>
+                        setQuickCategoryData({ ...quickCategoryData, image: e.target.value })
+                      }
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-mono font-medium text-slate-700 dark:text-slate-300 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Description (Optional)
                   </label>
-                  <input
-                    type="text"
-                    value={quickCategoryData.icon}
+                  <textarea
+                    rows={2}
+                    value={quickCategoryData.description}
                     onChange={(e) =>
-                      setQuickCategoryData({ ...quickCategoryData, icon: e.target.value })
+                      setQuickCategoryData({ ...quickCategoryData, description: e.target.value })
                     }
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs text-center font-bold"
+                    placeholder="Brief summary of product category..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-medium text-slate-900 dark:text-foreground placeholder:text-slate-400 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                  Description (Optional)
-                </label>
-                <textarea
-                  rows={2}
-                  value={quickCategoryData.description}
-                  onChange={(e) =>
-                    setQuickCategoryData({ ...quickCategoryData, description: e.target.value })
-                  }
-                  placeholder="Brief summary of category..."
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t">
+              {/* Modal Footer */}
+              <div className="p-4 sm:p-5 bg-slate-50/80 dark:bg-accent/20 border-t border-slate-100 dark:border-border flex items-center justify-end gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsQuickCategoryModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-accent transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingQuickCategory}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm shadow-indigo-600/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isSavingQuickCategory ? (
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -2980,93 +3254,149 @@ export const ProductStudio: React.FC = () => {
 
       {/* ─── INLINE QUICK CREATE MODAL: BRAND ─── */}
       {isQuickBrandModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                  <Building2 className="w-4 h-4" />
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-card border border-slate-200/90 dark:border-border rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-border flex items-center justify-between bg-slate-50/60 dark:bg-accent/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/60 flex items-center justify-center shadow-xs">
+                  <Building2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">
+                  <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-foreground">
                     Quick Add Brand
                   </h3>
-                  <p className="text-[11px] text-slate-400">
-                    Creates and assigns to current product
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Creates and assigns manufacturer brand to current product
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsQuickBrandModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-accent transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveQuickBrand} className="space-y-4">
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                  Brand Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Lumix Crafted"
-                  value={quickBrandData.name}
-                  onChange={(e) => {
-                    const nameVal = e.target.value;
-                    const slugVal = nameVal
-                      .toLowerCase()
-                      .trim()
-                      .replace(/[^a-z0-9]+/g, '-');
-                    setQuickBrandData({ ...quickBrandData, name: nameVal, slug: slugVal });
-                  }}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-bold"
-                />
+            {/* Modal Form */}
+            <form onSubmit={handleSaveQuickBrand} className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-5 sm:p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
+                {/* Brand Name */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Brand Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Lumix Crafted"
+                    value={quickBrandData.name}
+                    onChange={(e) => {
+                      const nameVal = e.target.value;
+                      const slugVal = nameVal
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[^a-z0-9]+/g, '-');
+                      setQuickBrandData({ ...quickBrandData, name: nameVal, slug: slugVal });
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-bold text-slate-900 dark:text-foreground placeholder:text-slate-400 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  />
+                </div>
+
+                {/* Slug & Website Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                      Brand Handle Slug
+                    </label>
+                    <input
+                      type="text"
+                      value={quickBrandData.slug}
+                      onChange={(e) =>
+                        setQuickBrandData({ ...quickBrandData, slug: e.target.value })
+                      }
+                      placeholder="lumix-crafted"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-mono font-bold text-blue-600 dark:text-blue-400 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                      Official Website (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={quickBrandData.website}
+                      onChange={(e) =>
+                        setQuickBrandData({ ...quickBrandData, website: e.target.value })
+                      }
+                      placeholder="https://brand.com"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-mono text-slate-700 dark:text-slate-300 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Brand Logo Drag & Drop Feature */}
+                <div className="space-y-2 pt-1">
+                  <DragDropUpload
+                    folder="brands"
+                    fileType="LOGO"
+                    label="Brand Logo (Drag & Drop)"
+                    currentUrl={quickBrandData.logo || undefined}
+                    onUploadComplete={(url) =>
+                      setQuickBrandData((prev) => ({ ...prev, logo: url }))
+                    }
+                    hint="Upload brand logo badge (SVG, PNG, JPG max 5MB)"
+                    previewShape="square"
+                    maxSizeMB={5}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                      Or paste logo URL directly
+                    </label>
+                    <input
+                      type="url"
+                      value={quickBrandData.logo}
+                      onChange={(e) =>
+                        setQuickBrandData({ ...quickBrandData, logo: e.target.value })
+                      }
+                      placeholder="https://..."
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-mono font-medium text-slate-700 dark:text-slate-300 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={quickBrandData.description}
+                    onChange={(e) =>
+                      setQuickBrandData({ ...quickBrandData, description: e.target.value })
+                    }
+                    placeholder="Short brand bio and manufacturing story..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-medium text-slate-900 dark:text-foreground placeholder:text-slate-400 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                  Brand Logo URL (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={quickBrandData.logo}
-                  onChange={(e) => setQuickBrandData({ ...quickBrandData, logo: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                  Official Website (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={quickBrandData.website}
-                  onChange={(e) =>
-                    setQuickBrandData({ ...quickBrandData, website: e.target.value })
-                  }
-                  placeholder="https://brand.com"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t">
+              {/* Modal Footer */}
+              <div className="p-4 sm:p-5 bg-slate-50/80 dark:bg-accent/20 border-t border-slate-100 dark:border-border flex items-center justify-end gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsQuickBrandModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-accent transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingQuickBrand}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-600/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isSavingQuickBrand ? (
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -3083,118 +3413,157 @@ export const ProductStudio: React.FC = () => {
 
       {/* ─── INLINE QUICK CREATE MODAL: COLLECTION ─── */}
       {isQuickCollectionModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                  <BookmarkPlus className="w-4 h-4" />
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-card border border-slate-200/90 dark:border-border rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-border flex items-center justify-between bg-slate-50/60 dark:bg-accent/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/60 flex items-center justify-center shadow-xs">
+                  <BookmarkPlus className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-foreground">
+                  <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-foreground">
                     Quick Add Collection
                   </h3>
-                  <p className="text-[11px] text-slate-400">
-                    Creates and assigns to current product
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Creates and assigns curated collection to current product
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsQuickCollectionModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-accent transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveQuickCollection} className="space-y-4">
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                  Collection Title *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Summer Essentials 2026"
-                  value={quickCollectionData.name}
-                  onChange={(e) => {
-                    const nameVal = e.target.value;
-                    const slugVal = nameVal
-                      .toLowerCase()
-                      .trim()
-                      .replace(/[^a-z0-9]+/g, '-');
-                    setQuickCollectionData({
-                      ...quickCollectionData,
-                      name: nameVal,
-                      slug: slugVal,
-                    });
-                  }}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-bold"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                    URL Slug
+            {/* Modal Form */}
+            <form onSubmit={handleSaveQuickCollection} className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-5 sm:p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
+                {/* Collection Title */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Collection Title <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
-                    value={quickCollectionData.slug}
-                    onChange={(e) =>
-                      setQuickCollectionData({ ...quickCollectionData, slug: e.target.value })
-                    }
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                    Type
-                  </label>
-                  <select
-                    value={quickCollectionData.type}
-                    onChange={(e) =>
+                    required
+                    placeholder="e.g. Summer Essentials 2026"
+                    value={quickCollectionData.name}
+                    onChange={(e) => {
+                      const nameVal = e.target.value;
+                      const slugVal = nameVal
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[^a-z0-9]+/g, '-');
                       setQuickCollectionData({
                         ...quickCollectionData,
-                        type: e.target.value as 'MANUAL' | 'AUTOMATIC',
-                      })
+                        name: nameVal,
+                        slug: slugVal,
+                      });
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-bold text-slate-900 dark:text-foreground placeholder:text-slate-400 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                  />
+                </div>
+
+                {/* Slug & Type Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                      URL Slug
+                    </label>
+                    <input
+                      type="text"
+                      value={quickCollectionData.slug}
+                      onChange={(e) =>
+                        setQuickCollectionData({ ...quickCollectionData, slug: e.target.value })
+                      }
+                      placeholder="summer-essentials-2026"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-mono font-bold text-purple-600 dark:text-purple-400 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                      Collection Type
+                    </label>
+                    <select
+                      value={quickCollectionData.type}
+                      onChange={(e) =>
+                        setQuickCollectionData({
+                          ...quickCollectionData,
+                          type: e.target.value as 'MANUAL' | 'AUTOMATIC',
+                        })
+                      }
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-bold text-slate-900 dark:text-foreground focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all cursor-pointer"
+                    >
+                      <option value="MANUAL">Manual Curation</option>
+                      <option value="AUTOMATIC">Automated Rules</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Collection Cover Image Drag & Drop Feature */}
+                <div className="space-y-2 pt-1">
+                  <DragDropUpload
+                    folder="collections"
+                    fileType="COLLECTION_IMAGE"
+                    label="Collection Cover Image (Drag & Drop)"
+                    currentUrl={quickCollectionData.image || undefined}
+                    onUploadComplete={(url) =>
+                      setQuickCollectionData((prev) => ({ ...prev, image: url }))
                     }
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-bold"
-                  >
-                    <option value="MANUAL">Manual</option>
-                    <option value="AUTOMATIC">Automated</option>
-                  </select>
+                    hint="Upload curated collection banner (PNG, JPG, WebP max 5MB)"
+                    previewShape="rect"
+                    maxSizeMB={5}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                      Or paste image URL directly
+                    </label>
+                    <input
+                      type="url"
+                      value={quickCollectionData.image}
+                      onChange={(e) =>
+                        setQuickCollectionData({ ...quickCollectionData, image: e.target.value })
+                      }
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-mono font-medium text-slate-700 dark:text-slate-300 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-purple-500/20 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={quickCollectionData.description}
+                    onChange={(e) =>
+                      setQuickCollectionData({ ...quickCollectionData, description: e.target.value })
+                    }
+                    placeholder="Describe this curated collection..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50/70 dark:bg-background text-xs font-medium text-slate-900 dark:text-foreground placeholder:text-slate-400 focus:bg-white dark:focus:bg-card focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                  />
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
-                  Cover Image URL (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={quickCollectionData.image}
-                  onChange={(e) =>
-                    setQuickCollectionData({ ...quickCollectionData, image: e.target.value })
-                  }
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 dark:bg-accent/40 text-xs font-mono"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t">
+              {/* Modal Footer */}
+              <div className="p-4 sm:p-5 bg-slate-50/80 dark:bg-accent/20 border-t border-slate-100 dark:border-border flex items-center justify-end gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsQuickCollectionModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-accent transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingQuickCollection}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm shadow-purple-600/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isSavingQuickCollection ? (
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />

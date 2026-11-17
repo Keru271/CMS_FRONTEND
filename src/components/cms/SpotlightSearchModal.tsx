@@ -83,7 +83,7 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
     activeStore,
   } = useCMSContext();
 
-  const [isMounted, setIsMounted] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
@@ -92,48 +92,54 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listContainerRef = useRef<HTMLDivElement>(null);
+  const customersFetchedRef = useRef(false);
 
   const liveStorefrontUrl = getStorefrontUrl(activeStore);
 
-  // Smooth mount and unmount animation lifecycle
+  // Ultra-smooth mount and hardware-accelerated transition lifecycle
   useEffect(() => {
     if (isOpen) {
-      setIsMounted(true);
+      setHasMounted(true);
       setSearchQuery('');
       setSelectedIndex(0);
       setActiveCategory('ALL');
-      const frame = requestAnimationFrame(() => {
+
+      // RequestAnimationFrame starts CSS transition cleanly on the GPU compositor
+      const animFrame = requestAnimationFrame(() => {
         setIsVisible(true);
-        inputRef.current?.focus();
       });
-      return () => cancelAnimationFrame(frame);
+
+      // Defer focus by 40ms to avoid keyboard layout recalculation during opening frames
+      const focusTimer = setTimeout(() => {
+        inputRef.current?.focus({ preventScroll: true });
+      }, 40);
+
+      // Lazy-fetch sample customers only once in background
+      if (!customersFetchedRef.current) {
+        customersFetchedRef.current = true;
+        cmsService.getCustomers().then((res: any) => {
+          if (Array.isArray(res)) {
+            setCustomersList(res);
+          } else if (res && Array.isArray(res.customers)) {
+            setCustomersList(res.customers);
+          }
+        }).catch(() => {});
+      }
+
+      return () => {
+        cancelAnimationFrame(animFrame);
+        clearTimeout(focusTimer);
+      };
     } else {
       setIsVisible(false);
-      const timer = setTimeout(() => {
-        setIsMounted(false);
-      }, 200);
-      return () => clearTimeout(timer);
     }
   }, [isOpen]);
-
-  // Fetch sample customers for spotlight index once mounted
-  useEffect(() => {
-    if (isMounted) {
-      cmsService.getCustomers().then((res: any) => {
-        if (Array.isArray(res)) {
-          setCustomersList(res);
-        } else if (res && Array.isArray(res.customers)) {
-          setCustomersList(res.customers);
-        }
-      }).catch(() => {});
-    }
-  }, [isMounted]);
 
   const handleDismiss = () => {
     setIsVisible(false);
     setTimeout(() => {
       onClose();
-    }, 180);
+    }, 150);
   };
 
   const executeAction = (action: () => void) => {
@@ -141,7 +147,7 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
     setTimeout(() => {
       action();
       onClose();
-    }, 120);
+    }, 80);
   };
 
   // Build the complete index of search items
@@ -656,7 +662,7 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
     });
   }, [allItems, searchQuery, activeCategory]);
 
-  // Group filtered items by category
+  // Group filtered items by category with initial-state throttling for 0ms lag
   const groupedItems = useMemo(() => {
     const groups: { category: string; items: SpotlightItem[] }[] = [];
     const categoriesOrder: SpotlightItem['category'][] = [
@@ -667,15 +673,22 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
       'Customers & Team',
     ];
 
+    const isInitialEmpty = !searchQuery.trim() && activeCategory === 'ALL';
+
     categoriesOrder.forEach((cat) => {
-      const itemsInCat = filteredItems.filter((it) => it.category === cat);
+      let itemsInCat = filteredItems.filter((it) => it.category === cat);
       if (itemsInCat.length > 0) {
+        if (isInitialEmpty) {
+          // Cap each section during initial open to render under 1ms
+          const limit = cat === 'Quick Actions' ? 6 : cat === 'Navigation' ? 8 : 4;
+          itemsInCat = itemsInCat.slice(0, limit);
+        }
         groups.push({ category: cat, items: itemsInCat });
       }
     });
 
     return groups;
-  }, [filteredItems]);
+  }, [filteredItems, searchQuery, activeCategory]);
 
   // Flattened visible items for keyboard navigation index
   const flatVisibleItems = useMemo(() => {
@@ -716,25 +729,26 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({
     }
   }, [flatVisibleItems.length, selectedIndex]);
 
-  if (!isMounted) return null;
+  if (!hasMounted) return null;
 
   let currentItemCounter = 0;
 
   return (
     <div
       onClick={handleDismiss}
-      className={`fixed inset-0 z-50 flex items-start justify-center pt-14 sm:pt-20 px-3 sm:px-4 bg-slate-950/60 transition-all duration-200 ease-out will-change-[opacity,backdrop-filter] ${
+      aria-hidden={!isOpen}
+      className={`fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 px-3 sm:px-4 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-150 ease-out will-change-[opacity] ${
         isVisible
-          ? 'opacity-100 backdrop-blur-md pointer-events-auto'
-          : 'opacity-0 backdrop-blur-none pointer-events-none'
+          ? 'opacity-100 pointer-events-auto visible'
+          : 'opacity-0 pointer-events-none invisible'
       }`}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`w-full max-w-3xl bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-[#2C2C2E] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[82vh] transform-gpu transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[transform,opacity] ${
+        className={`w-full max-w-3xl bg-white dark:bg-[#1E1E1E] border border-slate-200 dark:border-[#2C2C2E] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[82vh] transform-gpu transition-[transform,opacity] duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[transform,opacity] ${
           isVisible
             ? 'opacity-100 scale-100 translate-y-0'
-            : 'opacity-0 scale-[0.96] -translate-y-3'
+            : 'opacity-0 scale-[0.98] -translate-y-2'
         }`}
       >
         {/* ─── SPOTLIGHT SEARCH INPUT HEADER ──────────────────────── */}

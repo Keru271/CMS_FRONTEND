@@ -1,5 +1,4 @@
 'use client';
-import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect } from 'react';
@@ -30,6 +29,7 @@ import {
 } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import DragDropUpload from '@/src/components/ui/DragDropUpload';
+import { TaxonomyStudioSkeleton } from '@/src/components/ui/Skeleton';
 
 interface CategoryManagerProps {
   initialTab?: 'CATEGORIES' | 'BRANDS' | 'COLLECTIONS';
@@ -389,14 +389,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
   );
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[350px] gap-3">
-        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-bold text-slate-500 animate-pulse">
-          Loading Taxonomy Studio...
-        </span>
-      </div>
-    );
+    return <TaxonomyStudioSkeleton />;
   }
 
   return (
@@ -433,7 +426,6 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <PageAiSpecularButton size="md" />
             {activeTab === 'CATEGORIES' && (
               <button
                 type="button"

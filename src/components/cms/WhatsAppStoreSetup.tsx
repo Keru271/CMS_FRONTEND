@@ -639,7 +639,7 @@ export const WhatsAppStoreSetup: React.FC<WhatsAppStoreSetupProps> = ({
           themeBackgroundColor: '#FFFFFF',
           themeTextColor: '#0F172A',
           themeAccentColor: selectedTheme.accentColor,
-          themeHeadingFont: 'Inter',
+          themeHeadingFont: 'Plus Jakarta Sans',
           themeBodyFont: 'Inter',
           themeFontSize: 'md',
           themeBorderRadius: 'md',

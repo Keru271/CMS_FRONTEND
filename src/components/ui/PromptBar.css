@@ -33,6 +33,17 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+.dark .prompt-bar,
+[data-theme='dark'] .prompt-bar {
+  --pb-bg: #18181b;
+  --pb-ink: #f4f4f5;
+  --pb-menu: #27272a;
+  --pb-spark: #00e5ff;
+  --pb-muted: rgba(255, 255, 255, 0.45);
+  --pb-hover: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
 .prompt-bar__menu {
   position: absolute;
   right: 0;

@@ -1,5 +1,4 @@
 'use client';
-import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
@@ -531,7 +530,6 @@ export const AppStudio: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <PageAiSpecularButton size="md" />
           <button
             onClick={() => loadData()}
             disabled={isRefreshing}

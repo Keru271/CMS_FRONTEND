@@ -1,6 +1,5 @@
 'use client';
 import { getStorefrontUrl, formatStorefrontDisplay } from '@/src/utils/storefront';
-import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
 import React, { useState, useEffect } from 'react';
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
@@ -542,7 +541,6 @@ export const SEOStudio: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <PageAiSpecularButton size="md" />
           {/* Assist Button according to DESIGN.md (#00E5FF Cyan Neon Primary Action, #121212 high contrast, 16px radius) */}
           <button
             type="button"

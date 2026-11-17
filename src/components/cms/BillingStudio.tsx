@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import useEmblaCarousel from 'embla-carousel-react';
+import React, { useState, useEffect } from 'react';
 import { TablePagination } from '@/src/components/ui/TablePagination';
 import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import { PriceTierData, StoreSubscriptionData, StoreBillingInvoiceData, AiCreditStatsData } from '@/src/types';
@@ -12,37 +11,22 @@ import {
   CheckCircle2,
   AlertCircle,
   RefreshCw,
-  ShieldCheck,
   ArrowRight,
   Sparkles,
   Calendar,
   Layers,
   FileText,
-  DollarSign,
   Check,
-  Sliders,
   Wallet,
-  Building,
-  HelpCircle,
-  ExternalLink,
-  Lock,
-  Code2,
-  QrCode,
-  Smartphone,
-  Globe,
   Printer,
-  X,
-  ChevronRight,
   Receipt,
-  Info,
   Crown,
-  Package,
   Flame,
-  ChevronDown,
-  ChevronLeft,
   Bot,
   History,
   TrendingUp,
+  ShieldCheck,
+  Sliders,
 } from 'lucide-react';
 
 const loadRazorpayScript = (): Promise<boolean> => {
@@ -59,7 +43,6 @@ const loadRazorpayScript = (): Promise<boolean> => {
     document.body.appendChild(script);
   });
 };
-
 
 const loadPaypalScript = (clientId: string = 'sb', currency: string = 'USD'): Promise<boolean> => {
   return new Promise((resolve) => {
@@ -91,40 +74,12 @@ export const BillingStudio: React.FC = () => {
     type: 'success' | 'error';
   } | null>(null);
 
+  // Active Main Tab
+  const [activeTab, setActiveTab] = useState<'plans' | 'invoices' | 'usage'>('plans');
+
   // Invoices Pagination
   const [invoicePage, setInvoicePage] = useState(1);
   const [invoicePageSize, setInvoicePageSize] = useState(10);
-
-  // Pricing Carousel State
-  const [activePricingSlide, setActivePricingSlide] = useState(0);
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: false,
-    align: 'start',
-    skipSnaps: false,
-    containScroll: 'trimSnaps',
-  });
-
-  const onSelectSlide = useCallback(() => {
-    if (!emblaApi) return;
-    setActivePricingSlide(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    emblaApi.on('select', onSelectSlide);
-    emblaApi.on('reInit', onSelectSlide);
-    return () => {
-      emblaApi.off('select', onSelectSlide);
-      emblaApi.off('reInit', onSelectSlide);
-    };
-  }, [emblaApi, onSelectSlide]);
-
-  const handleSlideChange = (idx: number) => {
-    setActivePricingSlide(idx);
-    if (emblaApi) {
-      emblaApi.scrollTo(idx);
-    }
-  };
 
   // Selected Plan for Upgrade / Payment
   const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<PriceTierData | null>(null);
@@ -137,9 +92,7 @@ export const BillingStudio: React.FC = () => {
   const [razorpayCardNumber, setRazorpayCardNumber] = useState('4532 •••• •••• 8821');
   const [razorpayBank, setRazorpayBank] = useState('HDFC');
   const [razorpayOrderId, setRazorpayOrderId] = useState<string | null>(null);
-  const [razorpayStep, setRazorpayStep] = useState<'DETAILS' | 'AUTHORIZING' | 'SUCCESS'>(
-    'DETAILS',
-  );
+  const [razorpayStep, setRazorpayStep] = useState<'DETAILS' | 'AUTHORIZING' | 'SUCCESS'>('DETAILS');
 
   // PayPal Checkout State (For International Customers)
   const [isPaypalModalOpen, setIsPaypalModalOpen] = useState(false);
@@ -148,8 +101,7 @@ export const BillingStudio: React.FC = () => {
   const [paypalStep, setPaypalStep] = useState<'DETAILS' | 'AUTHORIZING' | 'SUCCESS'>('DETAILS');
 
   // Invoice Receipt Preview Modal
-  const [selectedInvoiceForReceipt, setSelectedInvoiceForReceipt] =
-    useState<StoreBillingInvoiceData | null>(null);
+  const [selectedInvoiceForReceipt, setSelectedInvoiceForReceipt] = useState<StoreBillingInvoiceData | null>(null);
 
   // Upgrade Prorated Details
   const [upgradeDetails, setUpgradeDetails] = useState<{
@@ -216,7 +168,7 @@ export const BillingStudio: React.FC = () => {
     ) {
       setIsProcessingPayment(true);
       try {
-        const res = await cmsService.changeStorePlan({
+        await cmsService.changeStorePlan({
           plan: 'STARTER',
           billingCycle,
           paymentMethod: 'FREE_TIER' as any,
@@ -236,7 +188,6 @@ export const BillingStudio: React.FC = () => {
     }
 
     if (customerRegion === 'INDIA') {
-      // Razorpay Flow for Paid Tiers (Live Orders API & Razorpay Checkout SDK)
       setIsProcessingPayment(true);
       try {
         const orderData = await cmsService.createBillingRazorpayOrder({
@@ -258,7 +209,7 @@ export const BillingStudio: React.FC = () => {
             key: orderData.keyId,
             amount: orderData.amountPaise,
             currency: orderData.currency || 'INR',
-            name: 'Statamic CMS SaaS',
+            name: 'OmniStore Cloud',
             description: `${tier.name} Plan Subscription (${billingCycle.toLowerCase()})`,
             image: 'https://cdn-icons-png.flaticon.com/512/888/888879.png',
             order_id: orderData.orderId,
@@ -311,7 +262,6 @@ export const BillingStudio: React.FC = () => {
           });
           rzp.open();
         } else {
-          // Fallback to built-in simulation modal
           setRazorpayStep('DETAILS');
           setIsRazorpayModalOpen(true);
         }
@@ -321,7 +271,6 @@ export const BillingStudio: React.FC = () => {
         setIsProcessingPayment(false);
       }
     } else {
-      // International Flow: PayPal (1-Click & Pay in 4)
       setIsProcessingPayment(true);
       try {
         const paypalData = await cmsService.createBillingPaypalOrder({
@@ -359,7 +308,6 @@ export const BillingStudio: React.FC = () => {
 
     setRazorpayStep('AUTHORIZING');
 
-    // Simulate / Trigger Razorpay verification
     setTimeout(async () => {
       try {
         const paymentId = `pay_rzp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -495,9 +443,11 @@ export const BillingStudio: React.FC = () => {
   };
 
   const currentPlanId = subscription?.plan || 'STARTER';
+  const isIndian = customerRegion === 'INDIA';
+  const currencySymbol = isIndian ? '₹' : '$';
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 font-sans">
+    <div className="space-y-6 animate-in fade-in duration-300 font-sans">
       {/* Toast Notification */}
       {toastMessage && (
         <div
@@ -514,37 +464,36 @@ export const BillingStudio: React.FC = () => {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+      {/* ─── 1. TOP HEADER & CURRENCY TOGGLE ──────────────────────────── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-border pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#5e5a5a]">
-              SaaS Billing & Subscriptions
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Billing & Subscription Studio
             </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#00E5FF] text-[#191a1b]">
-              Secure Payments Active
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60">
+              Active Store
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-sans font-bold tracking-tight text-[#191a1b] flex items-center gap-3 mt-1">
-            <Zap className="w-8 h-8 text-amber-500 fill-amber-500" />
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-foreground flex items-center gap-2.5 mt-1">
+            <Zap className="w-7 h-7 text-amber-500 fill-amber-500" />
             <span>Store Pricing Tiers & Billing</span>
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Upgrade, downgrade, or switch billing cycles anytime — with instant prorated adjustment.
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            Compare store pricing plans, switch billing frequency, and manage invoices.
           </p>
         </div>
 
-        {/* Currency Region Switcher & Refresh */}
-        <div className="flex items-center gap-3">
-          {/* Currency Toggle: ₹ INR vs $ USD */}
-          <div className="bg-[#ffffff] border border-[#cbd5e0] p-1 rounded-2xl flex items-center shadow-xs">
+        {/* Currency Switcher & Refresh */}
+        <div className="flex items-center gap-2.5">
+          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border p-1 rounded-2xl flex items-center shadow-xs">
             <button
               type="button"
               onClick={() => setCustomerRegion('INDIA')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 customerRegion === 'INDIA'
-                  ? 'bg-[#0c2340] text-white shadow-sm'
-                  : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground'
               }`}
             >
               <span>🇮🇳</span>
@@ -553,10 +502,10 @@ export const BillingStudio: React.FC = () => {
             <button
               type="button"
               onClick={() => setCustomerRegion('INTERNATIONAL')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 customerRegion === 'INTERNATIONAL'
-                  ? 'bg-slate-800 text-white shadow-sm'
-                  : 'text-[#5e5a5a] hover:text-[#191a1b]'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground'
               }`}
             >
               <span>🌍</span>
@@ -567,7 +516,7 @@ export const BillingStudio: React.FC = () => {
           <button
             type="button"
             onClick={loadBillingData}
-            className="p-2.5 rounded-2xl bg-[#ffffff] border border-[#cbd5e0] hover:bg-slate-50 text-slate-700 transition cursor-pointer shadow-xs"
+            className="p-2.5 rounded-2xl bg-white dark:bg-card border border-slate-200 dark:border-border hover:bg-slate-50 dark:hover:bg-accent text-slate-700 dark:text-slate-300 transition cursor-pointer shadow-xs"
             title="Refresh subscription status"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -575,938 +524,706 @@ export const BillingStudio: React.FC = () => {
         </div>
       </div>
 
-      {/* ACTIVE SUBSCRIPTION HERO BANNER */}
+      {/* ─── 2. ACTIVE SUBSCRIPTION EXECUTIVE SUMMARY ─────────────────── */}
       {subscription && (
-        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#191a1b] via-[#241f31] to-[#191a1b] text-white shadow-xl relative overflow-hidden border border-slate-700/50">
-          <div className="absolute right-0 top-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <span className="px-3 py-1 rounded-full text-xs font-black bg-[#00E5FF] text-[#191a1b] uppercase tracking-wider">
-                  Active Tier: {subscription.planConfig?.name || subscription.plan}
-                  {(subscription.billingCycle === 'ONE_TIME' || subscription.billingCycle === 'LIFETIME' || subscription.isOneTime || subscription.isLifetime) && ' • Lifetime Deal'}
-                </span>
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>{subscription.planStatus}</span>
-                </span>
-              </div>
-
-              <h2 className="text-2xl sm:text-3xl font-sans font-bold">
-                {subscription.planConfig?.name || 'Store Subscription'}
-              </h2>
-
-              <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
-                {subscription.planConfig?.description ||
-                  'Your store is active and equipped with high-performance storefront features.'}
-              </p>
-
-              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 pt-2">
-                <div className="flex items-center gap-1.5">
-                  {(subscription.billingCycle === 'ONE_TIME' || subscription.billingCycle === 'LIFETIME' || subscription.isOneTime || subscription.isLifetime || !subscription.planRenewsAt) ? (
-                    <>
-                      <Crown className="w-4 h-4 text-amber-300" />
-                      <span className="text-amber-200 font-bold">
-                        Lifetime Access • No Renewal Required (Never Expires)
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Calendar className="w-4 h-4 text-indigo-400" />
-                      <span>
-                        Renews on:{' '}
-                        {new Date(subscription.planRenewsAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <span>•</span>
-                <div className="flex items-center gap-1.5">
-                  <Wallet className="w-4 h-4 text-indigo-400" />
-                  <span>
-                    Platform Fee: {subscription.planTransactionFeePercent}% per transaction
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Method Card — gateway identity intentionally abstracted */}
-            <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/10 space-y-3 w-full lg:w-80 shrink-0">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-300 uppercase">Payment Method</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUpdatePaymentMethodType(
-                      (subscription.planPaymentMethod as any) || 'RAZORPAY_UPI',
-                    );
-                    setUpdatePaymentMethodDetails(subscription.planPaymentMethodDetails || '');
-                    setIsPaymentMethodModalOpen(true);
-                  }}
-                  className="text-xs font-bold text-[#00E5FF] hover:underline cursor-pointer"
-                >
-                  Edit
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">
-                  {subscription.planPaymentMethod?.includes('PAYPAL') ? '🅿️' : '📲'}
-                </div>
-                <div>
-                  <span className="text-xs font-bold block flex items-center gap-1.5">
-                    <span>
-                      {subscription.planPaymentMethod?.includes('PAYPAL')
-                        ? 'PayPal Verified'
-                        : 'UPI / Debit Card'}
-                    </span>
-                    <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/20 text-emerald-300">
-                      {subscription.planPaymentMethod?.includes('PAYPAL') ? 'USD' : 'INR'}
-                    </span>
-                  </span>
-                  <span className="text-[11px] text-slate-300 font-mono block truncate max-w-[180px]">
-                    {subscription.planPaymentMethodDetails}
-                  </span>
-                </div>
-              </div>
-
-              {/* Usage Stats Meter */}
-              <div className="pt-2 border-t border-white/10 space-y-1.5 text-[11px]">
-                <div className="flex justify-between text-slate-300 font-bold">
-                  <span>Product Listing Capacity</span>
-                  <span>
-                    {subscription.usage?.products?.current || 0} /{' '}
-                    {subscription.planConfig?.maxProducts}
-                  </span>
-                </div>
-                <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#00E5FF] rounded-full"
-                    style={{ width: `${subscription.usage?.products?.percent || 5}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* AI CREDITS & INTELLIGENCE QUOTA DASHBOARD */}
-      {aiCreditStats && (
-        <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-950/40 via-slate-900 to-indigo-950/20 border border-indigo-500/30 shadow-lg space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-500/20 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-black shadow-inner">
-                <Sparkles className="w-6 h-6 text-indigo-400 animate-pulse" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-black text-slate-100">
-                    AI Credits & Store Intelligence
-                  </h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider">
-                    Plan: {aiCreditStats.plan || 'ACTIVE'}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Your store uses these allocated credits for Storefront AI Chatbots, AI Search, and CMS Studio Generators.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 bg-slate-950/80 px-4 py-2.5 rounded-2xl border border-indigo-500/30">
-              <div className="text-right">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Available AI Balance
-                </span>
-                <span className="text-lg font-black text-indigo-300">
-                  {aiCreditStats.aiCredits.toLocaleString()}{' '}
-                  <span className="text-xs font-normal text-slate-500">
-                    / {aiCreditStats.aiCreditsTotal.toLocaleString()} credits
-                  </span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* AI Usage Breakdown Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Storefront AI Card */}
-            <div className="p-4 rounded-2xl bg-slate-950/60 border border-emerald-500/20 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                  <Bot className="w-4 h-4" />
-                  <span>Storefront AI Features</span>
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  Customer Facing
-                </span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-emerald-300">
-                  {aiCreditStats.aiCreditsStorefrontUsed.toLocaleString()}
-                </span>
-                <span className="text-xs text-slate-400">credits consumed</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Live customer chatbot consultations, conversational queries & AI catalog search.
-              </p>
-            </div>
-
-            {/* CMS Studio AI Card */}
-            <div className="p-4 rounded-2xl bg-slate-950/60 border border-purple-500/20 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-purple-400 flex items-center gap-1.5">
-                  <Layers className="w-4 h-4" />
-                  <span>CMS Studio AI Features</span>
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20">
-                  Admin Tools
-                </span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-purple-300">
-                  {aiCreditStats.aiCreditsCmsUsed.toLocaleString()}
-                </span>
-                <span className="text-xs text-slate-400">credits consumed</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                AI Store Builder, theme generators, product copywriter, radar, & 3D AR models.
-              </p>
-            </div>
-
-            {/* Total Used & Consumption Meter */}
-            <div className="p-4 rounded-2xl bg-slate-950/60 border border-indigo-500/20 space-y-2 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
-                    <TrendingUp className="w-4 h-4" />
-                    <span>Monthly Quota Progress</span>
-                  </span>
-                  <span className="text-xs font-bold text-slate-300">
-                    {aiCreditStats.aiCreditsTotal > 0
-                      ? Math.round((aiCreditStats.aiCreditsUsed / aiCreditStats.aiCreditsTotal) * 100)
-                      : 0}
-                    % Used
-                  </span>
-                </div>
-                <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
-                  <div
-                    className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 transition-all rounded-full"
-                    style={{
-                      width: `${
-                        aiCreditStats.aiCreditsTotal > 0
-                          ? Math.min(
-                              100,
-                              Math.round((aiCreditStats.aiCreditsUsed / aiCreditStats.aiCreditsTotal) * 100),
-                            )
-                          : 0
-                      }%`,
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-                <span>{aiCreditStats.aiCreditsUsed} Total Used</span>
-                <span>{aiCreditStats.aiCredits} Remaining</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent AI Telemetry & Transaction Activity Log */}
-          {aiCreditStats.recentTransactions && aiCreditStats.recentTransactions.length > 0 && (
-            <div className="pt-2 border-t border-indigo-500/20 space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <History className="w-3.5 h-3.5" />
-                <span>Recent AI Feature Invocations</span>
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {aiCreditStats.recentTransactions.slice(0, 3).map((tx) => (
-                  <div
-                    key={tx.id}
-                    className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-200 truncate max-w-[140px]">
-                        {tx.feature || tx.action}
-                      </div>
-                      <div className="text-[10px] text-slate-500">
-                        {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} •{' '}
-                        <span className={tx.source === 'STOREFRONT' ? 'text-emerald-400' : 'text-purple-400'}>
-                          {tx.source}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="font-bold text-rose-400 shrink-0">
-                      -{tx.credits} cr
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* PLATFORM FEE RULES & SETTLEMENT LEDGER */}
-      <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-border pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center font-black">
-              ⚡
+        <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60 flex items-center justify-center font-black text-xl shrink-0">
+              <Zap className="w-5 h-5 text-indigo-600 dark:text-indigo-400 fill-indigo-600/20" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-slate-900 dark:text-foreground">
-                Platform Fee & Payout Engine
-              </h3>
-              <p className="text-xs text-slate-400">
-                Transparent transaction processing fees per order based on your active tier.
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-base font-black text-slate-900 dark:text-foreground">
+                  {subscription.planConfig?.name || subscription.plan}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>{subscription.planStatus || 'ACTIVE'}</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300">
+                  {subscription.billingCycle === 'ONE_TIME' || subscription.billingCycle === 'LIFETIME' || subscription.isOneTime
+                    ? 'Lifetime Deal'
+                    : subscription.billingCycle === 'ANNUAL'
+                      ? 'Annual Plan'
+                      : 'Monthly Plan'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2 flex-wrap">
+                <span>
+                  {subscription.billingCycle === 'ONE_TIME' || !subscription.planRenewsAt
+                    ? 'Lifetime Access • No renewals required'
+                    : `Renews: ${new Date(subscription.planRenewsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                </span>
+                <span>•</span>
+                <span>Platform Fee: {subscription.planTransactionFeePercent ?? 0.0}%</span>
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
-              Active Tier Fee:
-            </span>
-            <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-600 text-white shadow-xs">
-              {subscription?.planTransactionFeePercent ?? 0.0}% / order
-            </span>
+
+          {/* Quick Metrics & Actions */}
+          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-border">
+            <div className="text-right hidden sm:block">
+              <div className="text-[10px] uppercase font-bold text-slate-400">Products</div>
+              <div className="text-xs font-black text-slate-700 dark:text-slate-300">
+                {subscription.usage?.products?.current || 0} / {subscription.planConfig?.maxProducts || 50}
+              </div>
+            </div>
+
+            {aiCreditStats && (
+              <div className="text-right hidden sm:block pl-3 border-l border-slate-200 dark:border-border">
+                <div className="text-[10px] uppercase font-bold text-slate-400">AI Credits</div>
+                <div className="text-xs font-black text-indigo-600 dark:text-indigo-400">
+                  {aiCreditStats.aiCredits.toLocaleString()} left
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setUpdatePaymentMethodType((subscription.planPaymentMethod as any) || 'RAZORPAY_UPI');
+                setUpdatePaymentMethodDetails(subscription.planPaymentMethodDetails || '');
+                setIsPaymentMethodModalOpen(true);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-accent/40 dark:hover:bg-accent border border-slate-200 dark:border-border text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <CreditCard className="w-3.5 h-3.5 text-slate-500" />
+              <span>Payment Method</span>
+            </button>
           </div>
         </div>
+      )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Free Starter Tier */}
-          <div
-            className={`p-4 rounded-2xl border transition-all ${
-              (subscription?.plan || 'STARTER').toUpperCase() === 'STARTER'
-                ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 ring-2 ring-indigo-600/20'
-                : 'border-slate-200 dark:border-border bg-slate-50/50 dark:bg-accent/20'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-slate-900 dark:text-foreground">
-                Free Starter Pack
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200">
-                0% Fee
-              </span>
-            </div>
-            <div className="mt-3">
-              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">0.0%</span>
-              <span className="text-xs text-slate-400 ml-1">zero platform fee</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-2">
-              No monthly subscription cost and zero platform transaction fee on orders.
-            </p>
-          </div>
+      {/* ─── 3. TAB NAVIGATION ────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-border pb-3 overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveTab('plans')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'plans'
+              ? 'bg-indigo-600 text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground hover:bg-slate-100 dark:hover:bg-accent/60'
+          }`}
+        >
+          <Zap className="w-3.5 h-3.5" />
+          <span>Pricing Plans & Tiers</span>
+        </button>
 
-          {/* Growth Pro Tier */}
-          <div
-            className={`p-4 rounded-2xl border transition-all ${
-              (subscription?.plan || '').toUpperCase() === 'GROWTH'
-                ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 ring-2 ring-indigo-600/20'
-                : 'border-slate-200 dark:border-border bg-slate-50/50 dark:bg-accent/20'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-slate-900 dark:text-foreground">
-                Growth Pro
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 border border-rose-200">
-                Popular
-              </span>
-            </div>
-            <div className="mt-3">
-              <span className="text-2xl font-black text-slate-900 dark:text-foreground">0.5%</span>
-              <span className="text-xs text-slate-400 ml-1">reduced fee / order</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-2">
-              Ultra-low 0.5% transaction fee. Includes custom domains and marketing automation.
-            </p>
-          </div>
+        <button
+          type="button"
+          onClick={() => setActiveTab('invoices')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'invoices'
+              ? 'bg-indigo-600 text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground hover:bg-slate-100 dark:hover:bg-accent/60'
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          <span>Invoices & Receipts ({subscription?.invoices?.length || 0})</span>
+        </button>
 
-          {/* Enterprise Tier */}
-          <div
-            className={`p-4 rounded-2xl border transition-all ${
-              (subscription?.plan || '').toUpperCase() === 'ENTERPRISE'
-                ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 ring-2 ring-indigo-600/20'
-                : 'border-slate-200 dark:border-border bg-slate-50/50 dark:bg-accent/20'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-slate-900 dark:text-foreground">
-                Scale Enterprise
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200">
-                0% Fee
-              </span>
-            </div>
-            <div className="mt-3">
-              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">0.0%</span>
-              <span className="text-xs text-slate-400 ml-1">zero platform fees</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-2">
-              Keep 100% of your store revenue with dedicated cloud infrastructure and API access.
-            </p>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => setActiveTab('usage')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'usage'
+              ? 'bg-indigo-600 text-white shadow-xs'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-foreground hover:bg-slate-100 dark:hover:bg-accent/60'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Usage & AI Quotas</span>
+        </button>
       </div>
 
-      {/* BILLING CYCLE TOGGLE & PAYMENT STATUS INFO */}
-      <div className="flex flex-col items-center justify-center space-y-4 pt-6 text-center">
-        <div className="flex items-center gap-2">
-          {customerRegion === 'INDIA' ? (
-            <span className="text-xs font-bold px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-900 border border-blue-200 shadow-xs flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-              <span>
-                ₹ INR Pricing • UPI AutoPay, Debit Cards, NetBanking & Instant GST Invoicing
-              </span>
-            </span>
-          ) : (
-            <span className="text-xs font-bold px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-800 border border-slate-300 shadow-xs flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-              <span>$ USD Pricing • International Cards, Apple Pay, Google Pay & 135+ Currencies</span>
-            </span>
-          )}
-        </div>
+      {/* ─── TAB 1: PRICING PLANS & TIERS ─────────────────────────────── */}
+      {activeTab === 'plans' && (
+        <div className="space-y-6 pt-2">
+          {/* Billing Cycle Switcher */}
+          <div className="flex flex-col items-center justify-center space-y-3 text-center">
+            <div className="inline-flex items-center p-1 rounded-full bg-slate-100 dark:bg-card border border-slate-200 dark:border-border shadow-xs flex-wrap justify-center gap-1">
+              <button
+                type="button"
+                onClick={() => setBillingCycle('MONTHLY')}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  billingCycle === 'MONTHLY'
+                    ? 'bg-white dark:bg-accent text-slate-900 dark:text-foreground shadow-xs font-extrabold'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-foreground'
+                }`}
+              >
+                Monthly Billing
+              </button>
 
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-sans font-black tracking-tight text-[#191a1b]">
-            Transparent Pricing for Every Stage of Growth
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto mt-1">
-            Choose the plan that fits your business needs. Upgrade, downgrade, or cancel anytime
-            with instant prorated calculation.
-          </p>
-        </div>
+              <button
+                type="button"
+                onClick={() => setBillingCycle('ANNUAL')}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  billingCycle === 'ANNUAL'
+                    ? 'bg-white dark:bg-accent text-slate-900 dark:text-foreground shadow-xs font-extrabold'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-foreground'
+                }`}
+              >
+                <span>Annual Billing</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 border border-rose-200">
+                  Save 20%
+                </span>
+              </button>
 
-        {/* Monthly vs Annual vs One-Time Lifetime Toggle (Refero Segmented Pill) */}
-        <div className="inline-flex items-center p-1 rounded-full bg-[#edf0f5] border border-[#e2e8f0] shadow-xs mt-2 flex-wrap justify-center gap-1">
-          <button
-            type="button"
-            onClick={() => setBillingCycle('MONTHLY')}
-            className={`px-5 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
-              billingCycle === 'MONTHLY'
-                ? 'bg-white text-slate-900 shadow-sm font-extrabold'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            Monthly Billing
-          </button>
-          <button
-            type="button"
-            onClick={() => setBillingCycle('ANNUAL')}
-            className={`px-5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              billingCycle === 'ANNUAL'
-                ? 'bg-white text-slate-900 shadow-sm font-extrabold'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <span>Annual Billing</span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-600 border border-rose-200">
-              Save 20%
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setBillingCycle('ONE_TIME')}
-            className={`px-5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              billingCycle === 'ONE_TIME'
-                ? 'bg-slate-900 text-[#00E5FF] shadow-sm font-extrabold'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <Crown className="w-3.5 h-3.5 text-amber-400" />
-            <span>One-Time Lifetime</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-              billingCycle === 'ONE_TIME'
-                ? 'bg-white/20 text-[#00E5FF]'
-                : 'bg-amber-100 text-amber-700 border border-amber-200'
-            }`}>
-              Pay Once ✨
-            </span>
-          </button>
-        </div>
-      </div>
+              <button
+                type="button"
+                onClick={() => setBillingCycle('ONE_TIME')}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  billingCycle === 'ONE_TIME'
+                    ? 'bg-slate-900 text-white shadow-xs font-extrabold'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-foreground'
+                }`}
+              >
+                <Crown className="w-3 h-3 text-amber-400" />
+                <span>Lifetime Deal</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-800">
+                  Pay Once ✨
+                </span>
+              </button>
+            </div>
+          </div>
 
-      {/* PRICING CAROUSEL */}
-      {tiers.length > 0 && (
-        <div className="space-y-4 pt-4">
-          {/* Embla Carousel Viewport */}
-          <div ref={emblaRef} className="overflow-hidden py-2 cursor-grab active:cursor-grabbing">
-            <div className="flex gap-5 -ml-1">
-              {tiers.map((tier) => {
-                const id = tier.id.toUpperCase();
-                const currentPlanId = subscription?.plan || 'STARTER';
-                const activeCycle = subscription?.billingCycle || 'MONTHLY';
-                const isCurrentPlanAndCycle = currentPlanId.toUpperCase() === id && activeCycle === billingCycle;
-                const isSwitchingCycleOnSamePlan = currentPlanId.toUpperCase() === id && activeCycle !== billingCycle;
-                const isCurrent = isCurrentPlanAndCycle;
-                const isOneTime = billingCycle === 'ONE_TIME';
-                const isAnnual = billingCycle === 'ANNUAL';
-                const isIndian = customerRegion === 'INDIA';
+          {/* Pricing Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch max-w-6xl mx-auto pt-2">
+            {tiers.map((tier) => {
+              const id = tier.id.toUpperCase();
+              const currentPlan = (currentPlanId || 'STARTER').toUpperCase();
+              const activeCycle = subscription?.billingCycle || 'MONTHLY';
+              const isCurrent = currentPlan === id && activeCycle === billingCycle;
+              const isSwitchingCycleOnSamePlan = currentPlan === id && activeCycle !== billingCycle;
+              const isOneTime = billingCycle === 'ONE_TIME';
+              const isAnnual = billingCycle === 'ANNUAL';
 
-                const price = isIndian
-                  ? isOneTime
-                    ? (tier.priceOneTimeInr ?? (tier.priceAnnualInr ? Math.round(tier.priceAnnualInr * 2.2) : 0))
-                    : isAnnual
-                      ? tier.priceAnnualInr
-                      : tier.priceMonthlyInr
-                  : isOneTime
-                    ? (tier.priceOneTimeUsd ?? (tier.priceAnnualUsd ? Math.round(tier.priceAnnualUsd * 2.2) : 0))
-                    : isAnnual
-                      ? tier.priceAnnualUsd
-                      : tier.priceMonthlyUsd;
+              const price = isIndian
+                ? isOneTime
+                  ? (tier.priceOneTimeInr ?? (tier.priceAnnualInr ? Math.round(tier.priceAnnualInr * 2.2) : 0))
+                  : isAnnual
+                    ? tier.priceAnnualInr
+                    : tier.priceMonthlyInr
+                : isOneTime
+                  ? (tier.priceOneTimeUsd ?? (tier.priceAnnualUsd ? Math.round(tier.priceAnnualUsd * 2.2) : 0))
+                  : isAnnual
+                    ? tier.priceAnnualUsd
+                    : tier.priceMonthlyUsd;
 
-                const currentTier =
-                  tiers.find(
-                    (t) => (currentPlanId || 'STARTER').toUpperCase() === t.id.toUpperCase(),
-                  ) || tiers[0];
-                const currentIsOneTime = activeCycle === 'ONE_TIME' || activeCycle === 'LIFETIME';
-                const currentIsAnnual = activeCycle === 'ANNUAL';
+              const currentTier =
+                tiers.find((t) => currentPlan === t.id.toUpperCase()) || tiers[0];
+              const currentPrice = isIndian
+                ? activeCycle === 'ONE_TIME'
+                  ? (currentTier.priceOneTimeInr ?? (currentTier.priceAnnualInr ? Math.round(currentTier.priceAnnualInr * 2.2) : 0))
+                  : activeCycle === 'ANNUAL'
+                    ? currentTier.priceAnnualInr
+                    : currentTier.priceMonthlyInr
+                : activeCycle === 'ONE_TIME'
+                  ? (currentTier.priceOneTimeUsd ?? (currentTier.priceAnnualUsd ? Math.round(currentTier.priceAnnualUsd * 2.2) : 0))
+                  : activeCycle === 'ANNUAL'
+                    ? currentTier.priceAnnualUsd
+                    : currentTier.priceMonthlyUsd;
 
-                const currentPrice = isIndian
-                  ? currentIsOneTime
-                    ? (currentTier.priceOneTimeInr ?? (currentTier.priceAnnualInr ? Math.round(currentTier.priceAnnualInr * 2.2) : 0))
-                    : currentIsAnnual
-                      ? currentTier.priceAnnualInr
-                      : currentTier.priceMonthlyInr
-                  : currentIsOneTime
-                    ? (currentTier.priceOneTimeUsd ?? (currentTier.priceAnnualUsd ? Math.round(currentTier.priceAnnualUsd * 2.2) : 0))
-                    : currentIsAnnual
-                      ? currentTier.priceAnnualUsd
-                      : currentTier.priceMonthlyUsd;
+              const isUpgradeTier = !isCurrent && price > currentPrice && currentPrice > 0;
+              const upgradeDiffPrice = isUpgradeTier ? Math.max(0, price - currentPrice) : price;
+              const monthlyEquivalent = isAnnual ? Math.round(price / 12) : price;
 
-                const isUpgradeTier = !isCurrent && price > currentPrice && currentPrice > 0;
-                const upgradeDiffPrice = isUpgradeTier ? Math.max(0, price - currentPrice) : price;
-                const currencySymbol = isIndian ? '₹' : '$';
-                const monthlyEquivalent = isAnnual ? Math.round(price / 12) : price;
+              const isGrowth = id === 'GROWTH' || id === 'PRO' || tier.popular;
+              const isStarter = id === 'STARTER' || (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0);
 
-                const isGrowth = id === 'GROWTH' || id === 'PRO' || tier.popular;
-                const isEnterprise = id === 'ENTERPRISE';
-                const isAgency = id === 'AGENCY';
-                const isStarter =
-                  id === 'STARTER' || (tier.priceMonthlyInr === 0 && tier.priceMonthlyUsd === 0);
+              return (
+                <div
+                  key={tier.id}
+                  className={`rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 relative ${
+                    isGrowth
+                      ? 'border-2 border-indigo-600 bg-white dark:bg-card shadow-xl shadow-indigo-600/10'
+                      : isCurrent
+                        ? 'border-2 border-emerald-500 bg-white dark:bg-card shadow-lg shadow-emerald-500/10'
+                        : 'border border-slate-200 dark:border-border bg-white dark:bg-card shadow-sm hover:shadow-md'
+                  }`}
+                >
+                  {/* Top Floating Badge */}
+                  {isCurrent ? (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1 z-10 whitespace-nowrap">
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>Current Plan</span>
+                    </div>
+                  ) : isGrowth ? (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1 z-10 whitespace-nowrap">
+                      <Flame className="w-3 h-3 text-amber-300" />
+                      <span>Most Popular</span>
+                    </div>
+                  ) : null}
 
-                return (
-                  <div
-                    key={tier.id}
-                    className="flex-[0_0_100%] sm:flex-[0_0_80%] md:flex-[0_0_48%] lg:flex-[0_0_31%] min-w-0 pl-1"
-                  >
-                    <div
-                      className={`rounded-[26px] p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 relative group h-full min-h-[520px] ${
-                        isGrowth
-                          ? 'border-2 border-[#ff4893] bg-gradient-to-b from-[#fff9f6] via-[#fff1f6] to-[#fdf2f8] shadow-xl shadow-rose-500/10 hover:-translate-y-1'
-                          : isCurrent
-                            ? 'bg-white border-2 border-emerald-500 shadow-xl shadow-emerald-500/10 ring-2 ring-emerald-500/20'
-                            : 'bg-white border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md hover:-translate-y-1'
-                      }`}
-                    >
-                      {/* Top Floating Badge */}
-                      {isCurrent ? (
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10 whitespace-nowrap">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>Active Plan ({activeCycle === 'ONE_TIME' ? 'Lifetime' : activeCycle.toLowerCase()})</span>
+                  {/* Header & Price */}
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-black text-slate-900 dark:text-foreground">
+                          {tier.name}
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-accent text-slate-600 dark:text-slate-300">
+                          {tier.badge || 'Tier'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed min-h-[32px]">
+                        {tier.description}
+                      </p>
+                    </div>
+
+                    {/* Price Block */}
+                    <div className="pt-2 pb-1 border-y border-slate-100 dark:border-border/60">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-black text-slate-900 dark:text-foreground tracking-tight">
+                          {currencySymbol}
+                          {isStarter
+                            ? '0'
+                            : isOneTime
+                              ? price.toLocaleString()
+                              : isAnnual
+                                ? monthlyEquivalent.toLocaleString()
+                                : price.toLocaleString()}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-500">
+                          {isStarter ? '/forever' : isOneTime ? '/lifetime' : '/month'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {isStarter
+                          ? 'Zero subscription costs forever'
+                          : isOneTime
+                            ? 'Pay once • Never renews'
+                            : isAnnual
+                              ? `Billed annually (${currencySymbol}${price.toLocaleString()}/yr)`
+                              : 'Billed monthly, cancel anytime'}
+                      </p>
+                    </div>
+
+                    {/* Key Specs Row */}
+                    <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200/60 dark:border-border/60">
+                        <div className="font-bold text-slate-400">Products</div>
+                        <div className="font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">
+                          {tier.maxProducts > 10000 ? 'Unlimited' : tier.maxProducts.toLocaleString()}
                         </div>
-                      ) : isSwitchingCycleOnSamePlan ? (
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10 whitespace-nowrap">
-                          <Sparkles className="w-3 h-3 text-amber-200" />
-                          <span>Switch to {isOneTime ? 'Lifetime (Pay Once)' : billingCycle.toLowerCase()}</span>
+                      </div>
+                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200/60 dark:border-border/60">
+                        <div className="font-bold text-slate-400">Fee</div>
+                        <div className="font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">
+                          {tier.transactionFeePercent}%
                         </div>
-                      ) : isUpgradeTier ? (
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 z-10 whitespace-nowrap">
-                          <Flame className="w-3 h-3 text-amber-200 fill-amber-200" />
-                          <span>
-                            Upgrade & Save {currencySymbol}
-                            {currentPrice.toLocaleString()}
-                          </span>
-                        </div>
-                      ) : null}
-
-                      {/* Card Header & Content */}
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <span
-                              className={`text-sm font-black italic tracking-wider uppercase ${
-                                isGrowth
-                                  ? 'bg-gradient-to-r from-[#ff5722] via-[#ff4081] to-[#d946ef] bg-clip-text text-transparent'
-                                  : isEnterprise
-                                    ? 'text-purple-700'
-                                    : isAgency
-                                      ? 'text-slate-900'
-                                      : 'text-slate-500'
-                              }`}
-                            >
-                              {tier.badge || tier.name}
-                            </span>
-                            {isGrowth && !isCurrent && (
-                              <span className="text-[11px] font-extrabold text-rose-600 flex items-center gap-1">
-                                <Sparkles className="w-3 h-3 text-rose-500" />
-                                <span>Best Value</span>
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-600 leading-relaxed min-h-[36px] line-clamp-2">
-                            {tier.description}
-                          </p>
-                        </div>
-
-                        {/* Savings Callout Pill */}
-                        {isOneTime && !isStarter ? (
-                          <div className="text-xs font-bold text-amber-600 flex items-center gap-1">
-                            <Crown className="w-3.5 h-3.5 text-amber-500" />
-                            <span>Lifetime Deal: Pay once, never renew</span>
-                            <span>✨</span>
-                          </div>
-                        ) : isAnnual && !isStarter ? (
-                          <div className="text-xs font-bold text-rose-600 flex items-center gap-1">
-                            <span>Save 20% on Annual Plan</span>
-                            <span>✨</span>
-                          </div>
-                        ) : null}
-
-                        {/* Price Display */}
-                        <div className="py-2">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight font-sans">
-                              {currencySymbol}
-                              {isStarter
-                                ? '0'
-                                : isOneTime
-                                  ? (isUpgradeTier ? upgradeDiffPrice.toLocaleString() : price.toLocaleString())
-                                  : isAnnual
-                                    ? monthlyEquivalent.toLocaleString()
-                                    : upgradeDiffPrice.toLocaleString()}
-                            </span>
-                            <span className="text-xl sm:text-2xl font-sans italic text-slate-500 font-normal">
-                              {isOneTime ? '/one-time' : '/month'}
-                            </span>
-                          </div>
-                          <div className="text-[11px] font-medium text-slate-500 mt-1">
-                            {isStarter
-                              ? 'Free to use forever'
-                              : isOneTime
-                                ? 'One-time payment • Lifetime access • Zero monthly renewals'
-                                : isAnnual
-                                  ? `${currencySymbol}${price.toLocaleString()} billed annually (${currencySymbol}${monthlyEquivalent.toLocaleString()}/mo)`
-                                  : 'Billed monthly'}
-                          </div>
-                        </div>
-
-                        {/* AI Credits Highlight Card */}
-                        <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 flex items-center justify-between">
-                          <span className="text-xs font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                            <span>AI Intelligence Credits</span>
-                          </span>
-                          <span className="text-xs font-black text-indigo-700 dark:text-indigo-300">
-                            {tier.aiCreditsMonthly !== undefined
-                              ? tier.aiCreditsMonthly.toLocaleString()
-                              : isStarter
+                      </div>
+                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-accent/40 border border-slate-200/60 dark:border-border/60">
+                        <div className="font-bold text-slate-400">AI Credits</div>
+                        <div className="font-extrabold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                          {tier.aiCreditsMonthly !== undefined
+                            ? tier.aiCreditsMonthly.toLocaleString()
+                            : isStarter
                               ? '100'
                               : isGrowth
-                              ? '500'
-                              : isEnterprise
-                              ? '2,500'
-                              : '10,000'}{' '}
-                            /mo
-                          </span>
+                                ? '500'
+                                : '2,500'}/mo
                         </div>
-
-                        {/* Divider */}
-                        <div className="h-px bg-slate-200/80 w-full" />
-
-                        {/* Features List */}
-                        <div className="space-y-2.5 pt-1">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
-                            What&apos;s Included:
-                          </span>
-                          <ul className="space-y-2.5 text-xs text-slate-700">
-                            {tier.features.map((feat, idx) => (
-                              <li key={idx} className="flex items-start gap-2.5 leading-snug">
-                                <div
-                                  className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                                    isGrowth
-                                      ? 'bg-rose-100 text-rose-600'
-                                      : isEnterprise
-                                        ? 'bg-purple-100 text-purple-700'
-                                        : isAgency
-                                          ? 'bg-emerald-100 text-emerald-700'
-                                          : 'bg-slate-100 text-slate-600'
-                                  }`}
-                                >
-                                  <Check className="w-2.5 h-2.5 stroke-[3]" />
-                                </div>
-                                <span className="text-slate-700 font-medium">{feat}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-
-                      {/* Action Button */}
-                      <div className="pt-6 mt-auto">
-                        {isCurrentPlanAndCycle ? (
-                          <button
-                            type="button"
-                            disabled
-                            className="w-full py-3.5 rounded-full bg-slate-100 text-slate-600 font-bold text-xs cursor-default flex items-center justify-center gap-2"
-                          >
-                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            <span>Current Plan</span>
-                          </button>
-                        ) : isSwitchingCycleOnSamePlan ? (
-                          <button
-                            type="button"
-                            disabled={isProcessingPayment}
-                            onClick={() => handleInitiatePlanUpgrade(tier)}
-                            className="w-full py-3.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-                          >
-                            {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
-                              <RefreshCw className="w-4 h-4 animate-spin" />
-                            ) : isOneTime ? (
-                              <>
-                                <span>Switch to Lifetime (Pay Once)</span>
-                                <Crown className="w-4 h-4 text-amber-200" />
-                              </>
-                            ) : isAnnual ? (
-                              <>
-                                <span>Switch to Annual (Save 20%)</span>
-                                <Sparkles className="w-4 h-4" />
-                              </>
-                            ) : (
-                              <>
-                                <span>Switch to Monthly</span>
-                                <ArrowRight className="w-4 h-4" />
-                              </>
-                            )}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={isProcessingPayment}
-                            onClick={() => handleInitiatePlanUpgrade(tier)}
-                            className={`w-full py-3.5 rounded-full font-bold text-xs transition-all shadow-sm active:scale-98 flex items-center justify-center gap-2 cursor-pointer ${
-                              isGrowth
-                                ? 'bg-black text-white hover:bg-slate-800 shadow-md shadow-black/20'
-                                : isStarter
-                                  ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                  : 'bg-slate-900 text-white hover:bg-black'
-                            }`}
-                          >
-                            {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
-                              <RefreshCw className="w-4 h-4 animate-spin" />
-                            ) : isStarter ? (
-                              <>
-                                <span>Activate Free Tier</span>
-                                <Check className="w-4 h-4" />
-                              </>
-                            ) : isUpgradeTier ? (
-                              <>
-                                <span>
-                                  Upgrade for {currencySymbol}
-                                  {upgradeDiffPrice.toLocaleString()}
-                                </span>
-                                <ArrowRight className="w-4 h-4" />
-                              </>
-                            ) : isOneTime ? (
-                              <>
-                                <span>Get Lifetime Access</span>
-                                <Crown className="w-4 h-4 text-amber-400" />
-                              </>
-                            ) : (
-                              <>
-                                <span>Upgrade Now</span>
-                                <ArrowRight className="w-4 h-4" />
-                              </>
-                            )}
-                          </button>
-                        )}
                       </div>
                     </div>
+
+                    {/* Feature Highlights */}
+                    <div className="space-y-2 pt-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        Included Features:
+                      </span>
+                      <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                        {tier.features.slice(0, 6).map((feat, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                            <span className="leading-snug">{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* Action CTA Button */}
+                  <div className="pt-6 mt-auto">
+                    {isCurrent ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full py-3 rounded-xl bg-slate-100 dark:bg-accent text-slate-500 font-bold text-xs cursor-default flex items-center justify-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>Active Plan</span>
+                      </button>
+                    ) : isSwitchingCycleOnSamePlan ? (
+                      <button
+                        type="button"
+                        disabled={isProcessingPayment}
+                        onClick={() => handleInitiatePlanUpgrade(tier)}
+                        className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <span>Switch to {isOneTime ? 'Lifetime' : isAnnual ? 'Annual (Save 20%)' : 'Monthly'}</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={isProcessingPayment}
+                        onClick={() => handleInitiatePlanUpgrade(tier)}
+                        className={`w-full py-3 rounded-xl font-bold text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                          isGrowth
+                            ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                            : isStarter
+                              ? 'bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-800 dark:text-slate-200'
+                              : 'bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-900'
+                        }`}
+                      >
+                        {isProcessingPayment && selectedPlanForPayment?.id === tier.id ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : isStarter ? (
+                          <>
+                            <span>Activate Free Tier</span>
+                            <Check className="w-4 h-4" />
+                          </>
+                        ) : isUpgradeTier ? (
+                          <>
+                            <span>Upgrade for {currencySymbol}{upgradeDiffPrice.toLocaleString()}</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        ) : (
+                          <>
+                            <span>Select {tier.name}</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Carousel Pagination & Indicator Dots */}
-          <div className="flex items-center justify-between pt-3 px-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-400 font-mono">
-                Slide {activePricingSlide + 1} of {tiers.length}
+          {/* Security & Guarantee Footer */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-card border border-slate-200/80 dark:border-border text-center text-xs text-slate-500 max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>Instant Prorated Adjustments</span>
+            </div>
+            <span>•</span>
+            <div>Zero lock-in — upgrade, downgrade, or switch billing cycles anytime.</div>
+            <span>•</span>
+            <div>Encrypted & PCI-DSS Compliant via Razorpay & PayPal</div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 2: INVOICES & RECEIPTS ──────────────────────────────── */}
+      {activeTab === 'invoices' && (
+        <div className="space-y-6 pt-2">
+          {/* Active Payment Method Quick Card */}
+          <div className="p-5 rounded-2xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-accent flex items-center justify-center text-lg">
+                {subscription?.planPaymentMethod?.includes('PAYPAL') ? '🅿️' : '💳'}
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900 dark:text-foreground block">
+                  Active Payment Method:{' '}
+                  {subscription?.planPaymentMethod?.includes('PAYPAL') ? 'PayPal Verified' : 'UPI / Card'}
+                </span>
+                <span className="text-[11px] text-slate-400 font-mono">
+                  {subscription?.planPaymentMethodDetails || 'No details on record'}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setUpdatePaymentMethodType((subscription?.planPaymentMethod as any) || 'RAZORPAY_UPI');
+                setUpdatePaymentMethodDetails(subscription?.planPaymentMethodDetails || '');
+                setIsPaymentMethodModalOpen(true);
+              }}
+              className="px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-400 text-xs font-bold transition cursor-pointer"
+            >
+              Update Payment Method
+            </button>
+          </div>
+
+          {/* Invoices Table */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-border pb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-foreground flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-indigo-600" />
+                  <span>Subscription Invoices & Tax Receipts</span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Official invoices with payment references and GST breakdowns.
+                </p>
+              </div>
+              <TableRefreshButton onRefresh={loadBillingData} isLoading={isLoading} size="sm" />
+            </div>
+
+            {subscription?.invoices && subscription.invoices.length > 0 ? (
+              <div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-100 dark:border-border text-slate-400 font-bold uppercase text-[10px]">
+                        <th className="py-3 px-4">Invoice #</th>
+                        <th className="py-3 px-4">Date</th>
+                        <th className="py-3 px-4">Plan / Tier</th>
+                        <th className="py-3 px-4">Billing Interval</th>
+                        <th className="py-3 px-4">Amount Paid</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-border/40 font-sans">
+                      {subscription.invoices
+                        .slice((invoicePage - 1) * invoicePageSize, invoicePage * invoicePageSize)
+                        .map((inv) => (
+                          <tr key={inv.id} className="hover:bg-slate-50/60 dark:hover:bg-accent/20 transition">
+                            <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-foreground">
+                              {inv.invoiceNumber}
+                            </td>
+                            <td className="py-3 px-4 text-slate-500">
+                              {new Date(inv.paidAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </td>
+                            <td className="py-3 px-4 font-bold text-slate-900 dark:text-foreground">
+                              {inv.tierName}
+                            </td>
+                            <td className="py-3 px-4 font-semibold text-slate-500">
+                              {inv.billingCycle === 'ONE_TIME' || inv.billingCycle === 'LIFETIME'
+                                ? 'Lifetime (Pay Once)'
+                                : inv.billingCycle}
+                            </td>
+                            <td className="py-3 px-4 font-bold text-slate-900 dark:text-foreground">
+                              {inv.currency === 'INR' ? '₹' : '$'}
+                              {inv.amount.toLocaleString()}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
+                                {inv.paymentStatus}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedInvoiceForReceipt(inv)}
+                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <Receipt className="w-3.5 h-3.5" />
+                                <span>View Receipt</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <TablePagination
+                  currentPage={invoicePage}
+                  totalItems={subscription.invoices.length}
+                  pageSize={invoicePageSize}
+                  onPageChange={(p) => setInvoicePage(p)}
+                  onPageSizeChange={(s) => {
+                    setInvoicePageSize(s);
+                    setInvoicePage(1);
+                  }}
+                  itemName="invoices"
+                />
+              </div>
+            ) : (
+              <div className="py-8 text-center text-xs text-slate-400">
+                No invoices recorded yet. Tax receipts will appear here after renewals or plan upgrades.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 3: USAGE & AI QUOTAS ─────────────────────────────────── */}
+      {activeTab === 'usage' && (
+        <div className="space-y-6 pt-2">
+          {/* AI Credits Meter & Consumption */}
+          {aiCreditStats && (
+            <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-border pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center font-bold">
+                    <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-foreground">
+                      AI Credits & Quota Balance
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Credits power storefront AI chatbots, AI search, and CMS Studio generators.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-xs font-bold text-slate-400 block">Available Balance</span>
+                  <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">
+                    {aiCreditStats.aiCredits.toLocaleString()}{' '}
+                    <span className="text-xs font-normal text-slate-400">
+                      / {aiCreditStats.aiCreditsTotal.toLocaleString()} credits
+                    </span>
+                  </span>
+                </div>
+              </div>
+
+              {/* 3 Metrics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/30 border border-slate-200/60 dark:border-border/60 space-y-1.5">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <Bot className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Storefront Customer AI</span>
+                  </span>
+                  <div className="text-2xl font-black text-slate-900 dark:text-foreground">
+                    {aiCreditStats.aiCreditsStorefrontUsed.toLocaleString()}
+                  </div>
+                  <p className="text-[11px] text-slate-400">Live customer chatbot consultations & AI search.</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/30 border border-slate-200/60 dark:border-border/60 space-y-1.5">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-purple-600" />
+                    <span>CMS Studio Admin AI</span>
+                  </span>
+                  <div className="text-2xl font-black text-slate-900 dark:text-foreground">
+                    {aiCreditStats.aiCreditsCmsUsed.toLocaleString()}
+                  </div>
+                  <p className="text-[11px] text-slate-400">Product copywriters, stock radar, and store builders.</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/30 border border-slate-200/60 dark:border-border/60 space-y-1.5">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Monthly Quota Used</span>
+                  </span>
+                  <div className="text-2xl font-black text-slate-900 dark:text-foreground">
+                    {aiCreditStats.aiCreditsTotal > 0
+                      ? Math.round((aiCreditStats.aiCreditsUsed / aiCreditStats.aiCreditsTotal) * 100)
+                      : 0}%
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-accent h-1.5 rounded-full overflow-hidden mt-1">
+                    <div
+                      className="h-full bg-indigo-600 rounded-full"
+                      style={{
+                        width: `${aiCreditStats.aiCreditsTotal > 0 ? Math.min(100, Math.round((aiCreditStats.aiCreditsUsed / aiCreditStats.aiCreditsTotal) * 100)) : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent AI Activity */}
+              {aiCreditStats.recentTransactions && aiCreditStats.recentTransactions.length > 0 && (
+                <div className="pt-2 border-t border-slate-100 dark:border-border space-y-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <History className="w-3.5 h-3.5" />
+                    <span>Recent Invocations</span>
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {aiCreditStats.recentTransactions.slice(0, 3).map((tx) => (
+                      <div
+                        key={tx.id}
+                        className="p-3 rounded-xl bg-slate-50 dark:bg-accent/20 border border-slate-200/60 dark:border-border/60 flex items-center justify-between text-xs"
+                      >
+                        <div>
+                          <div className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[140px]">
+                            {tx.feature || tx.action}
+                          </div>
+                          <div className="text-[10px] text-slate-400">
+                            {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} •{' '}
+                            <span className={tx.source === 'STOREFRONT' ? 'text-emerald-600' : 'text-purple-600'}>
+                              {tx.source}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="font-bold text-rose-600 dark:text-rose-400 shrink-0">
+                          -{tx.credits} cr
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Platform Fee & Settlement Rules */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-border pb-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-foreground">
+                  Platform Fee & Payout Engine
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Transparent order processing fee based on your subscription tier.
+                </p>
+              </div>
+              <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-600 text-white shadow-xs">
+                Active Tier Fee: {subscription?.planTransactionFeePercent ?? 0.0}% / order
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                {tiers.map((t, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleSlideChange(idx)}
-                    className={`transition-all duration-300 rounded-full cursor-pointer ${
-                      activePricingSlide === idx
-                        ? 'w-6 h-2 bg-slate-900 dark:bg-white'
-                        : 'w-2 h-2 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
-                    }`}
-                    title={`Go to ${t.badge || t.name}`}
-                  />
-                ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-accent/20 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-900 dark:text-foreground">Free Starter</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">0% Fee</span>
+                </div>
+                <div className="text-xl font-black text-emerald-600">0.0%</div>
+                <p className="text-[11px] text-slate-500">Zero subscription fee and zero platform transaction fees on orders.</p>
               </div>
 
-              <div className="flex items-center gap-1 ml-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (emblaApi && emblaApi.canScrollPrev()) {
-                      emblaApi.scrollPrev();
-                    } else {
-                      handleSlideChange((activePricingSlide - 1 + tiers.length) % tiers.length);
-                    }
-                  }}
-                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs cursor-pointer"
-                  title="Previous Plan"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (emblaApi && emblaApi.canScrollNext()) {
-                      emblaApi.scrollNext();
-                    } else {
-                      handleSlideChange((activePricingSlide + 1) % tiers.length);
-                    }
-                  }}
-                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs cursor-pointer"
-                  title="Next Plan"
-                >
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+              <div className="p-4 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-accent/20 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-900 dark:text-foreground">Growth Pro</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">0.5% Fee</span>
+                </div>
+                <div className="text-xl font-black text-slate-900 dark:text-foreground">0.5%</div>
+                <p className="text-[11px] text-slate-500">Reduced 0.5% fee. Includes custom domains and marketing automation.</p>
+              </div>
+
+              <div className="p-4 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-accent/20 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-900 dark:text-foreground">Scale Enterprise</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">0% Fee</span>
+                </div>
+                <div className="text-xl font-black text-emerald-600">0.0%</div>
+                <p className="text-[11px] text-slate-500">Keep 100% of revenue with dedicated cloud infrastructure and API access.</p>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* BILLING & INVOICES HISTORY */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#cbd5e0] shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
-          <div>
-            <h3 className="text-base font-sans font-bold text-[#191a1b] flex items-center gap-2">
-              <FileText className="w-5 h-5 text-indigo-600" />
-              <span>Subscription Invoices & Tax Receipts</span>
-            </h3>
-            <p className="text-xs text-slate-500">
-              Official tax invoices and payment receipts with GST breakdowns.
-            </p>
-          </div>
-          <TableRefreshButton onRefresh={loadBillingData} isLoading={isLoading} size="sm" />
-        </div>
-
-        {subscription?.invoices && subscription.invoices.length > 0 ? (
-          <div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-[10px]">
-                    <th className="py-3 px-4">Invoice #</th>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Plan / Tier</th>
-                    <th className="py-3 px-4">Billing Interval</th>
-                    <th className="py-3 px-4">Amount Paid</th>
-                    <th className="py-3 px-4">Currency</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {subscription.invoices
-                    .slice((invoicePage - 1) * invoicePageSize, invoicePage * invoicePageSize)
-                    .map((inv) => (
-                    <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3.5 px-4 font-mono font-bold text-[#191a1b]">
-                        {inv.invoiceNumber}
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-500">
-                        {new Date(inv.paidAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-[#191a1b]">{inv.tierName}</td>
-                      <td className="py-3.5 px-4 font-semibold text-slate-500">
-                        {inv.billingCycle === 'ONE_TIME' || inv.billingCycle === 'LIFETIME'
-                          ? 'One-Time (Lifetime)'
-                          : inv.billingCycle}
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-[#191a1b]">
-                        {inv.currency === 'INR' ? '₹' : '$'}
-                        {inv.amount.toLocaleString()}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900">
-                          {inv.currency || 'INR'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                          {inv.paymentStatus}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedInvoiceForReceipt(inv)}
-                          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer flex items-center justify-end gap-1 ml-auto"
-                        >
-                          <Receipt className="w-3.5 h-3.5" />
-                          <span>View Receipt</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <TablePagination
-              currentPage={invoicePage}
-              totalItems={subscription.invoices.length}
-              pageSize={invoicePageSize}
-              onPageChange={(p) => setInvoicePage(p)}
-              onPageSizeChange={(s) => {
-                setInvoicePageSize(s);
-                setInvoicePage(1);
-              }}
-              itemName="invoices"
-            />
-          </div>
-        ) : (
-          <div className="py-8 text-center text-xs text-slate-400">
-            No past invoices recorded yet. Once your plan upgrades or renews, tax invoices will
-            appear here.
-          </div>
-        )}
-      </div>
-
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* UNIFIED SECURE CHECKOUT MODAL (Gateway abstracted on backend)  */}
+      {/* 4. MODALS (Checkout, Receipt Preview, Payment Method Update)  */}
       {/* ───────────────────────────────────────────────────────────── */}
+
+      {/* UNIFIED RAZORPAY CHECKOUT MODAL */}
       {isRazorpayModalOpen && selectedPlanForPayment && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 space-y-0">
-            {/* Secure Checkout Header — gateway name intentionally not shown */}
-            <div className="bg-[#191a1b] text-white p-6 flex items-center justify-between">
+            <div className="bg-slate-900 text-white p-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-lg">
                   🔒
@@ -1514,12 +1231,12 @@ export const BillingStudio: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-base text-white">Secure Checkout</span>
-                    <span className="px-1.5 py-0.5 rounded bg-[#00E5FF]/20 text-[#00E5FF] text-[10px] font-mono font-bold">
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold">
                       256-bit SSL
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 font-sans">
-                    UPI • Debit / Credit Cards • NetBanking • International Cards
+                  <p className="text-xs text-slate-300">
+                    UPI • Debit / Credit Cards • NetBanking
                   </p>
                 </div>
               </div>
@@ -1532,28 +1249,24 @@ export const BillingStudio: React.FC = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 sm:p-8 space-y-6">
               {razorpayStep === 'DETAILS' && (
                 <form onSubmit={handleConfirmRazorpayPayment} className="space-y-5 text-xs">
-                  {/* Order Summary Box */}
                   <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200 space-y-2">
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-[10px] uppercase font-bold text-blue-700 block">
-                          {upgradeDetails?.isUpgradeDifference
-                            ? 'Subscription Upgrade (Prorated)'
-                            : 'Subscription Upgrade'}
+                          Subscription Upgrade
                         </span>
                         <strong className="text-sm text-slate-900 font-bold">
-                          {selectedPlanForPayment.name} ({billingCycle === 'ONE_TIME' ? 'One-Time Lifetime' : billingCycle.toLowerCase()})
+                          {selectedPlanForPayment.name} ({billingCycle === 'ONE_TIME' ? 'Lifetime' : billingCycle.toLowerCase()})
                         </strong>
                       </div>
                       <div className="text-right">
                         {upgradeDetails?.isUpgradeDifference ? (
                           <>
                             <span className="text-[11px] text-slate-400 line-through block">
-                              Full Price: ₹{(upgradeDetails.originalAmount || 0).toLocaleString()}
+                              Full: ₹{(upgradeDetails.originalAmount || 0).toLocaleString()}
                             </span>
                             <strong className="text-lg font-black text-emerald-800">
                               ₹{(upgradeDetails.upgradeDifference || 0).toLocaleString()}
@@ -1561,8 +1274,8 @@ export const BillingStudio: React.FC = () => {
                           </>
                         ) : (
                           <>
-                            <span className="text-xs text-slate-500 block">Total Payable:</span>
-                            <strong className="text-lg font-bold text-[#0c2340]">
+                            <span className="text-xs text-slate-500 block">Total:</span>
+                            <strong className="text-lg font-bold text-slate-900">
                               ₹
                               {(billingCycle === 'ONE_TIME'
                                 ? (selectedPlanForPayment.priceOneTimeInr ?? (selectedPlanForPayment.priceAnnualInr ? Math.round(selectedPlanForPayment.priceAnnualInr * 2.2) : 0))
@@ -1586,10 +1299,9 @@ export const BillingStudio: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Payment Method Selector */}
                   <div className="space-y-2">
                     <label className="block font-bold text-slate-700">
-                      Choose Payment Method:
+                      Payment Method:
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       <button
@@ -1598,112 +1310,88 @@ export const BillingStudio: React.FC = () => {
                         className={`p-3 rounded-2xl border text-center transition cursor-pointer ${
                           razorpayMethod === 'UPI'
                             ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold'
-                            : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                            : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                         }`}
                       >
-                        <span className="text-base block mb-1">📱</span>
-                        <span className="text-[11px] font-bold">UPI / QR</span>
+                        <span className="text-sm block">📲</span>
+                        <span>UPI / QR</span>
                       </button>
-
                       <button
                         type="button"
                         onClick={() => setRazorpayMethod('CARD')}
                         className={`p-3 rounded-2xl border text-center transition cursor-pointer ${
                           razorpayMethod === 'CARD'
                             ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold'
-                            : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                            : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                         }`}
                       >
-                        <span className="text-base block mb-1">💳</span>
-                        <span className="text-[11px] font-bold">Cards</span>
+                        <span className="text-sm block">💳</span>
+                        <span>Card</span>
                       </button>
-
                       <button
                         type="button"
                         onClick={() => setRazorpayMethod('NETBANKING')}
                         className={`p-3 rounded-2xl border text-center transition cursor-pointer ${
                           razorpayMethod === 'NETBANKING'
                             ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold'
-                            : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                            : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                         }`}
                       >
-                        <span className="text-base block mb-1">🏛️</span>
-                        <span className="text-[11px] font-bold">NetBanking</span>
+                        <span className="text-sm block">🏦</span>
+                        <span>NetBanking</span>
                       </button>
                     </div>
                   </div>
 
-                  {/* Dynamic Inputs based on Method */}
                   {razorpayMethod === 'UPI' && (
-                    <div className="space-y-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                      <label className="block font-bold text-slate-700">
-                        Enter UPI ID / VPA (Google Pay, PhonePe, Paytm, BHIM):
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        Virtual Payment Address (VPA / UPI ID)
                       </label>
                       <input
                         type="text"
-                        required
                         value={razorpayVpa}
                         onChange={(e) => setRazorpayVpa(e.target.value)}
-                        placeholder="username@oksbi / username@paytm"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-mono font-bold text-xs"
+                        placeholder="merchant@oksbi or 9876543210@paytm"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-mono font-bold"
                       />
-                      <p className="text-[10px] text-slate-500">
-                        💡 Collect request will be sent to your UPI app for instant mandate
-                        authorization.
-                      </p>
                     </div>
                   )}
 
                   {razorpayMethod === 'CARD' && (
-                    <div className="space-y-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                      <label className="block font-bold text-slate-700">
-                        Card Number (RuPay, Visa, Mastercard):
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        Card Number (Debit / Credit)
                       </label>
                       <input
                         type="text"
-                        required
                         value={razorpayCardNumber}
                         onChange={(e) => setRazorpayCardNumber(e.target.value)}
-                        placeholder="•••• •••• •••• ••••"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-mono font-bold text-xs"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-mono font-bold"
                       />
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          placeholder="MM/YY"
-                          defaultValue="08/29"
-                          className="px-3.5 py-2 rounded-xl border border-slate-300 bg-white font-mono text-xs"
-                        />
-                        <input
-                          type="password"
-                          maxLength={3}
-                          placeholder="CVV"
-                          defaultValue="772"
-                          className="px-3.5 py-2 rounded-xl border border-slate-300 bg-white font-mono text-xs"
-                        />
-                      </div>
                     </div>
                   )}
 
                   {razorpayMethod === 'NETBANKING' && (
-                    <div className="space-y-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                      <label className="block font-bold text-slate-700">Select Your Bank:</label>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        Select Primary Bank
+                      </label>
                       <select
                         value={razorpayBank}
                         onChange={(e) => setRazorpayBank(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-xs"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-bold"
                       >
                         <option value="HDFC">HDFC Bank</option>
-                        <option value="SBI">State Bank of India (SBI)</option>
                         <option value="ICICI">ICICI Bank</option>
+                        <option value="SBI">State Bank of India</option>
                         <option value="AXIS">Axis Bank</option>
                         <option value="KOTAK">Kotak Mahindra Bank</option>
-                        <option value="PNB">Punjab National Bank</option>
                       </select>
                     </div>
                   )}
 
-                  <div className="pt-2 flex gap-3">
+                  <div className="flex gap-3 pt-2">
                     <button
                       type="button"
                       onClick={() => setIsRazorpayModalOpen(false)}
@@ -1713,10 +1401,9 @@ export const BillingStudio: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 py-3 rounded-2xl bg-[#191a1b] hover:bg-black text-[#00E5FF] font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 py-3 rounded-2xl bg-slate-900 hover:bg-black text-white font-bold shadow-md cursor-pointer"
                     >
-                      <Lock className="w-4 h-4" />
-                      <span>Pay Now</span>
+                      Authorize Payment
                     </button>
                   </div>
                 </form>
@@ -1724,32 +1411,31 @@ export const BillingStudio: React.FC = () => {
 
               {razorpayStep === 'AUTHORIZING' && (
                 <div className="py-12 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full border-4 border-slate-800 border-t-transparent animate-spin mx-auto" />
-                  <h4 className="text-base font-bold text-slate-900">
-                    Processing Payment...
+                  <RefreshCw className="w-10 h-10 text-indigo-600 animate-spin mx-auto" />
+                  <h4 className="font-bold text-base text-slate-900">
+                    Contacting Payment Gateway...
                   </h4>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Please complete the authorization in your payment app. Do not
-                    refresh this window.
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                    Please do not close this window. Authorizing transaction and provisioning subscription.
                   </p>
                 </div>
               )}
 
               {razorpayStep === 'SUCCESS' && (
-                <div className="py-8 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-2xl font-bold">
+                <div className="py-10 text-center space-y-4">
+                  <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-2xl font-bold">
                     ✓
                   </div>
-                  <h4 className="text-lg font-bold text-slate-900">
-                    Payment Verified Successfully!
+                  <h4 className="font-bold text-lg text-slate-900">
+                    Subscription Upgraded Successfully!
                   </h4>
-                  <p className="text-xs text-slate-500">
-                    Your store has been upgraded to <strong>{selectedPlanForPayment.name}</strong>.
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                    Your store has been unlocked with your new plan features and limits.
                   </p>
                   <button
                     type="button"
                     onClick={() => setIsRazorpayModalOpen(false)}
-                    className="px-6 py-2.5 rounded-xl bg-[#191a1b] text-[#00E5FF] text-xs font-bold shadow-md cursor-pointer"
+                    className="px-6 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md cursor-pointer"
                   >
                     Done
                   </button>
@@ -1760,27 +1446,19 @@ export const BillingStudio: React.FC = () => {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* SECURE PAYPAL INTERNATIONAL CHECKOUT MODAL ($ USD)             */}
-      {/* ───────────────────────────────────────────────────────────── */}
+      {/* UNIFIED PAYPAL CHECKOUT MODAL */}
       {isPaypalModalOpen && selectedPlanForPayment && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 space-y-0">
-            {/* Header */}
-            <div className="bg-[#003087] text-white p-6 flex items-center justify-between">
+          <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200 space-y-0">
+            <div className="bg-slate-900 text-white p-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-lg">
                   🅿️
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-base text-white">PayPal International Checkout</span>
-                    <span className="px-1.5 py-0.5 rounded bg-[#FFC439] text-[#003087] text-[10px] font-mono font-bold">
-                      Live
-                    </span>
-                  </div>
-                  <p className="text-xs text-blue-100 font-sans">
-                    PayPal 1-Click • Pay Later (Pay in 4) • Debit / Credit Card
+                  <span className="font-bold text-base text-white">PayPal International Checkout</span>
+                  <p className="text-xs text-slate-300">
+                    PayPal Wallet & Global Credit / Debit Cards
                   </p>
                 </div>
               </div>
@@ -1793,157 +1471,63 @@ export const BillingStudio: React.FC = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 sm:p-8 space-y-6">
+            <div className="p-6 space-y-5 text-xs">
               {paypalStep === 'DETAILS' && (
-                <div className="space-y-5 text-xs">
-                  {/* Order Summary Box */}
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-600 block">
-                          {upgradeDetails?.isUpgradeDifference
-                            ? 'Subscription Plan Upgrade (Prorated)'
-                            : 'Subscription Plan'}
-                        </span>
-                        <strong className="text-sm text-slate-900 font-bold">
-                          {selectedPlanForPayment.name} ({billingCycle === 'ONE_TIME' ? 'One-Time Lifetime' : billingCycle.toLowerCase()})
-                        </strong>
-                      </div>
-                      <div className="text-right">
-                        {upgradeDetails?.isUpgradeDifference ? (
-                          <>
-                            <span className="text-[11px] text-slate-400 line-through block">
-                              Full Price: ${(upgradeDetails.originalAmount || 0).toLocaleString()}{' '}
-                              USD
-                            </span>
-                            <strong className="text-lg font-black text-emerald-800">
-                              ${(upgradeDetails.upgradeDifference || 0).toLocaleString()} USD
-                            </strong>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-xs text-slate-500 block">Total Payable:</span>
-                            <strong className="text-lg font-bold text-slate-900">
-                              $
-                              {(billingCycle === 'ONE_TIME'
-                                ? (selectedPlanForPayment.priceOneTimeUsd ?? (selectedPlanForPayment.priceAnnualUsd ? Math.round(selectedPlanForPayment.priceAnnualUsd * 2.2) : 0))
-                                : billingCycle === 'ANNUAL'
-                                ? selectedPlanForPayment.priceAnnualUsd
-                                : selectedPlanForPayment.priceMonthlyUsd
-                              ).toLocaleString()}{' '}
-                              USD
-                            </strong>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {upgradeDetails?.isUpgradeDifference && (
-                      <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-700 font-bold">
-                        <span>Active {upgradeDetails.currentPlanName || 'Plan'} Credit:</span>
-                        <span className="text-emerald-700">
-                          - ${(upgradeDetails.creditedAmount || 0).toLocaleString()} USD
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* PayPal Payment Action Buttons */}
-                  <div className="space-y-4">
-                    {/* Official PayPal SDK Buttons Container */}
-                    <div id="paypal-sdk-button-container" className="min-h-[44px]" />
-
-                    {/* Quick 1-Click Fallback Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleConfirmPaypalPayment()}
-                      className="w-full py-3.5 px-4 bg-[#FFC439] hover:bg-[#F2BA36] text-[#003087] rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition cursor-pointer"
-                    >
-                      <span className="font-extrabold italic text-base">Pay</span>
-                      <span className="font-extrabold italic text-base text-[#0079C1]">Pal</span>
-                      <span className="text-xs font-bold text-slate-800 ml-1">
-                        — 1-Click Checkout ($
-                        {(upgradeDetails?.upgradeDifference ||
-                          (billingCycle === 'ONE_TIME'
-                            ? (selectedPlanForPayment.priceOneTimeUsd ?? (selectedPlanForPayment.priceAnnualUsd ? Math.round(selectedPlanForPayment.priceAnnualUsd * 2.2) : 0))
-                            : billingCycle === 'ANNUAL'
-                            ? selectedPlanForPayment.priceAnnualUsd
-                            : selectedPlanForPayment.priceMonthlyUsd)
-                        ).toLocaleString()}{' '}
-                        USD)
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-sky-50 border border-sky-200 flex justify-between items-center">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-sky-700 block">
+                        Subscription Plan
                       </span>
-                    </button>
-
-                    {/* PayPal Pay Later / Pay in 4 Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleConfirmPaypalPayment()}
-                      className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-[#003087] rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border border-slate-300 transition cursor-pointer"
-                    >
-                      <span>🅿️ Pay Later with Pay in 4 (Interest-Free)</span>
-                    </button>
-
-                    {/* PayPal Trust and Guarantee Badges */}
-                    <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1.5 text-slate-600">
-                      <div className="flex items-center gap-2 font-bold text-blue-900 text-[11px]">
-                        <ShieldCheck className="w-4 h-4 text-blue-600" />
-                        <span>PayPal Buyer Protection Guaranteed</span>
-                      </div>
-                      <p className="text-[10px] text-slate-500">
-                        Your international subscription is backed by 24/7 PayPal fraud prevention, zero liability protection, and encrypted transactions.
-                      </p>
+                      <strong className="text-sm text-slate-900">
+                        {selectedPlanForPayment.name} ({billingCycle.toLowerCase()})
+                      </strong>
                     </div>
-
-                    <div className="pt-2 flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setIsPaypalModalOpen(false)}
-                        className="flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleConfirmPaypalPayment()}
-                        className="flex-1 py-3 rounded-2xl bg-[#003087] hover:bg-[#002569] text-white font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <Lock className="w-4 h-4" />
-                        <span>Authorize PayPal</span>
-                      </button>
+                    <div className="text-right">
+                      <span className="text-xs text-slate-500 block">Payable:</span>
+                      <strong className="text-lg font-bold text-slate-900">
+                        $
+                        {(billingCycle === 'ONE_TIME'
+                          ? (selectedPlanForPayment.priceOneTimeUsd ?? (selectedPlanForPayment.priceAnnualUsd ? Math.round(selectedPlanForPayment.priceAnnualUsd * 2.2) : 0))
+                          : billingCycle === 'ANNUAL'
+                          ? selectedPlanForPayment.priceAnnualUsd
+                          : selectedPlanForPayment.priceMonthlyUsd
+                        ).toLocaleString()}
+                      </strong>
                     </div>
                   </div>
+
+                  <div id="paypal-sdk-button-container" className="pt-2 min-h-[120px]" />
+
+                  <button
+                    type="button"
+                    onClick={() => handleConfirmPaypalPayment()}
+                    className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+                  >
+                    Simulate PayPal Capture (Sandbox)
+                  </button>
                 </div>
               )}
 
               {paypalStep === 'AUTHORIZING' && (
-                <div className="py-12 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full border-4 border-[#003087] border-t-transparent animate-spin mx-auto" />
-                  <h4 className="text-base font-bold text-slate-900">
-                    Processing PayPal Payment...
-                  </h4>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Secure authorization in progress with PayPal. Please wait a moment.
-                  </p>
+                <div className="py-10 text-center space-y-3">
+                  <RefreshCw className="w-8 h-8 text-sky-600 animate-spin mx-auto" />
+                  <h4 className="font-bold text-base text-slate-900">Capturing PayPal Order...</h4>
                 </div>
               )}
 
               {paypalStep === 'SUCCESS' && (
-                <div className="py-8 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-2xl font-bold">
+                <div className="py-8 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-xl font-bold">
                     ✓
                   </div>
-                  <h4 className="text-lg font-bold text-slate-900">Payment Successful!</h4>
-                  <p className="text-xs text-slate-500">
-                    Your store subscription is now active on{' '}
-                    <strong>{selectedPlanForPayment.name}</strong> via PayPal.
-                  </p>
+                  <h4 className="font-bold text-base text-slate-900">PayPal Payment Approved!</h4>
                   <button
                     type="button"
                     onClick={() => setIsPaypalModalOpen(false)}
-                    className="px-6 py-2.5 rounded-xl bg-[#191a1b] text-[#00E5FF] text-xs font-bold shadow-md cursor-pointer"
+                    className="px-5 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs"
                   >
-                    Done
+                    Close
                   </button>
                 </div>
               )}
@@ -1952,9 +1536,7 @@ export const BillingStudio: React.FC = () => {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* INVOICE RECEIPT MODAL                                         */}
-      {/* ───────────────────────────────────────────────────────────── */}
+      {/* INVOICE RECEIPT PREVIEW MODAL */}
       {selectedInvoiceForReceipt && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6">
@@ -2002,7 +1584,6 @@ export const BillingStudio: React.FC = () => {
                 </div>
               </div>
 
-              {/* Line items table */}
               <div className="border border-slate-200 rounded-2xl overflow-hidden">
                 <div className="bg-slate-100 px-4 py-2 font-bold text-slate-700 flex justify-between text-[11px]">
                   <span>Item Description</span>
@@ -2013,7 +1594,7 @@ export const BillingStudio: React.FC = () => {
                     <span>
                       {selectedInvoiceForReceipt.tierName} Plan (
                       {selectedInvoiceForReceipt.billingCycle === 'ONE_TIME' || selectedInvoiceForReceipt.billingCycle === 'LIFETIME'
-                        ? 'One-Time Lifetime'
+                        ? 'Lifetime Deal'
                         : selectedInvoiceForReceipt.billingCycle.toLowerCase()})
                     </span>
                     <span>
@@ -2045,10 +1626,8 @@ export const BillingStudio: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    window.print();
-                  }}
-                  className="flex-1 py-3 rounded-2xl bg-[#191a1b] hover:bg-black text-[#00E5FF] font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={() => window.print()}
+                  className="flex-1 py-3 rounded-2xl bg-slate-900 hover:bg-black text-white font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Printer className="w-4 h-4" />
                   <span>Print Receipt</span>
@@ -2059,9 +1638,7 @@ export const BillingStudio: React.FC = () => {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* UPDATE PAYMENT METHOD MODAL                                   */}
-      {/* ───────────────────────────────────────────────────────────── */}
+      {/* UPDATE PAYMENT METHOD MODAL */}
       {isPaymentMethodModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5">
@@ -2086,7 +1663,7 @@ export const BillingStudio: React.FC = () => {
                 >
                   <optgroup label="🇮🇳 INR — Indian Payments">
                     <option value="RAZORPAY_UPI">UPI Autopay (Google Pay, PhonePe, Paytm)</option>
-                    <option value="RAZORPAY_CARD">Debit / Credit Card (RuPay, Visa)</option>
+                    <option value="RAZORPAY_CARD">Debit / Credit Card (RuPay, Visa, Mastercard)</option>
                     <option value="NETBANKING">NetBanking Direct Mandate</option>
                   </optgroup>
                   <optgroup label="🌍 USD — International Payments">
@@ -2120,7 +1697,7 @@ export const BillingStudio: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isUpdatingPayment}
-                  className="flex-1 py-3 rounded-2xl bg-[#191a1b] hover:bg-black text-[#00E5FF] font-bold shadow-lg disabled:opacity-50 cursor-pointer"
+                  className="flex-1 py-3 rounded-2xl bg-slate-900 hover:bg-black text-white font-bold shadow-md disabled:opacity-50 cursor-pointer"
                 >
                   {isUpdatingPayment ? 'Saving...' : 'Save Payment Details'}
                 </button>

@@ -1,6 +1,5 @@
 'use client';
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
-import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
 import React, { useState, useEffect } from 'react';
 import { TablePagination } from '@/src/components/ui/TablePagination';
@@ -296,7 +295,6 @@ export const CustomerStudio: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <PageAiSpecularButton size="md" />
 
             <button
               type="button"

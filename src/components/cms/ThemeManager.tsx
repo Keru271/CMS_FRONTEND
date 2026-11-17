@@ -2,7 +2,6 @@
 import { useCMSContext } from '@/src/context/CMSContext';
 import { getStorefrontUrl, formatStorefrontDisplay } from '@/src/utils/storefront';
 
-import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
 
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect, useRef } from 'react';
@@ -1144,7 +1143,7 @@ export const ThemeManager: React.FC = () => {
                 <span
                   className="font-black text-lg tracking-tight block leading-tight text-slate-900"
                   style={{
-                    fontFamily: config.themeHeadingFont || 'Inter, sans-serif',
+                    fontFamily: config.themeHeadingFont || 'Plus Jakarta Sans, sans-serif',
                   }}
                 >
                   {(config as any).storeName || (config as any).name || tmpl.name}
@@ -1241,7 +1240,7 @@ export const ThemeManager: React.FC = () => {
                             <h1
                               className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight"
                               style={{
-                                fontFamily: config.themeHeadingFont || 'Inter, sans-serif',
+                                fontFamily: config.themeHeadingFont || 'Plus Jakarta Sans, sans-serif',
                               }}
                             >
                               Shop the<br />
@@ -1942,7 +1941,6 @@ export const ThemeManager: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-2.5 flex-wrap shrink-0">
-            <PageAiSpecularButton size="md" />
             <button
               type="button"
               onClick={() => setIsAiBuilderOpen(true)}

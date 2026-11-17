@@ -25,7 +25,7 @@ import { MerchantOnboardingData } from '@/src/types';
 import { useCMS } from '@/src/context/CMSContext';
 import { useTranslation } from '@/src/context/LanguageContext';
 import { useTheme } from '@/src/context/ThemeContext';
-import { PageAiSpecularButton } from '@/src/components/cms/PageAiSpecularButton';
+import { LiveNotificationCenter } from '@/src/components/cms/LiveNotificationCenter';
 
 interface AdminHeaderProps {
   onSearch?: (query: string) => void;
@@ -130,17 +130,15 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-800 dark:text-white hover:border-sky-500 dark:hover:border-[#00E5FF]/60 transition-all text-xs font-semibold max-w-[120px] sm:max-w-[160px] md:max-w-[190px] lg:max-w-[220px] truncate cursor-pointer shadow-2xs"
           >
             <div
-              className={`w-2 h-2 rounded-full shrink-0 animate-pulse ${
-                isStoreLive
+              className={`w-2 h-2 rounded-full shrink-0 animate-pulse ${isStoreLive
                   ? 'bg-emerald-500 dark:bg-[#32D74B]'
                   : 'bg-amber-500'
-              }`}
+                }`}
             />
             <span className="truncate">{currentStoreName}</span>
             <ChevronDown
-              className={`w-3.5 h-3.5 text-slate-400 dark:text-[#98989D] shrink-0 transition-transform ${
-                isStoreMenuOpen ? 'rotate-180 text-sky-600 dark:text-[#00E5FF]' : ''
-              }`}
+              className={`w-3.5 h-3.5 text-slate-400 dark:text-[#98989D] shrink-0 transition-transform ${isStoreMenuOpen ? 'rotate-180 text-sky-600 dark:text-[#00E5FF]' : ''
+                }`}
             />
           </button>
 
@@ -187,11 +185,10 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                       key={st.id}
                       onClick={() => handleSelectStore(st.id)}
                       disabled={isSwitching}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
-                        isSelected
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${isSelected
                           ? 'bg-sky-50 dark:bg-[#00E5FF]/10 text-sky-700 dark:text-[#00E5FF] border border-sky-200 dark:border-[#00E5FF]/30 font-semibold'
                           : 'text-slate-700 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#252525] hover:text-slate-900 dark:hover:text-white'
-                      }`}
+                        }`}
                     >
                       <div className="truncate mr-2">
                         <div className="font-medium text-slate-900 dark:text-white truncate">{st.name}</div>
@@ -199,11 +196,10 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span
-                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
-                            isPending
+                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${isPending
                               ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
                               : 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-                          }`}
+                            }`}
                         >
                           {isPending ? 'Pending' : 'Live'}
                         </span>
@@ -278,7 +274,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         <button
           onClick={onOpenSpotlight}
           type="button"
-          className="hidden lg:flex items-center justify-between gap-2 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] hover:border-indigo-400 dark:hover:border-indigo-500 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs text-slate-500 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer shadow-2xs group w-32 xl:w-48 2xl:w-60 shrink-0"
+          className="hidden lg:flex items-center justify-between gap-2 bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] hover:border-indigo-400 dark:hover:border-indigo-500 active:scale-[0.98] rounded-xl px-2.5 sm:px-3 py-1.5 text-xs text-slate-500 dark:text-[#98989D] hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer shadow-2xs group w-32 xl:w-48 2xl:w-60 shrink-0"
           title="Search (Ctrl+F or ⌘F)"
         >
           <div className="flex items-center gap-1.5 truncate">
@@ -305,10 +301,6 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           <Search className="w-4 h-4 shrink-0" />
         </button>
 
-        {/* AI Copilot Specular Button (Customized per active page) */}
-        <div className="shrink-0">
-          <PageAiSpecularButton size="sm" />
-        </div>
 
         {/* Add Product Button (Primary Action) */}
         {onAddProduct && (
@@ -321,6 +313,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             <span className="hidden xl:inline">Add Product</span>
           </button>
         )}
+
+        {/* Live Store Notifications & Audio Alerts */}
+        <LiveNotificationCenter />
 
         {/* Language Selector */}
         <div className="relative shrink-0" ref={langMenuRef}>
@@ -348,11 +343,10 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                       setLanguage(lang.code as any);
                       setIsLangMenuOpen(false);
                     }}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between cursor-pointer ${
-                      language === lang.code
+                    className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between cursor-pointer ${language === lang.code
                         ? 'bg-sky-50 dark:bg-[#00E5FF]/10 text-sky-600 dark:text-[#00E5FF] font-bold'
                         : 'text-slate-700 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#252525] hover:text-slate-900 dark:hover:text-white'
-                    }`}
+                      }`}
                   >
                     <span>{lang.nativeName || lang.name}</span>
                     {language === lang.code && <Check className="w-3.5 h-3.5 text-sky-600 dark:text-[#00E5FF]" />}

@@ -433,7 +433,7 @@ const parseToken = (draft: string) => {
 
     const model = models.find((m) => m.key === modelKey) ?? models[0];
     const token = dismissed ? null : parseToken(draft);
-    const open = plusOpen ? 'at' : token?.kind ?? (modelOpen ? 'model' : effortOpen ? 'effort' : null);
+    const open = plusOpen ? 'at' : token?.kind ?? null;
     const query = plusOpen ? '' : token?.query ?? '';
 
     let list: PromptRow[] = [];
@@ -441,8 +441,6 @@ const parseToken = (draft: string) => {
       list = sources.filter((s) => s.name.toLowerCase().includes(query));
     } else if (open === 'slash') {
       list = commands.filter((c) => c.name.replace(/^\//, '').toLowerCase().startsWith(query));
-    } else if (open === 'model') {
-      list = models;
     }
 
     const cursor = Math.min(active, Math.max(0, list.length - 1));
@@ -757,89 +755,29 @@ const parseToken = (draft: string) => {
         {/* Context Menus / Popovers */}
         {open ? (
           <div className="prompt-bar__menu" data-kind={open} role="listbox">
-            {open === 'effort' ? (
-              <>
-                <div className="prompt-bar__effort-head">
-                  <span className="prompt-bar__effort-title">Reasoning Effort</span>
-                  <span className="prompt-bar__effort-level">{level}</span>
-                  <span className="prompt-bar__effort-help" title="Controls response depth and analytical compute">
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </span>
-                </div>
-                <div className="prompt-bar__effort-ends">
-                  <span>Fast</span>
-                  <span>Deep Analysis</span>
-                </div>
-                <div
-                  className="prompt-bar__effort-track"
-                  role="slider"
-                  tabIndex={0}
-                  aria-label="Effort"
-                  aria-valuemin={0}
-                  aria-valuemax={efforts.length - 1}
-                  aria-valuenow={effortIndex}
-                  aria-valuetext={level}
-                  style={
-                    {
-                      '--pb-effort-x': stepAt(effortIndex),
-                      '--pb-effort-fill': fillAt(effortIndex),
-                    } as React.CSSProperties
-                  }
-                  onPointerDown={(e) => {
-                    if (e.button !== 0) return;
-                    try {
-                      e.currentTarget.setPointerCapture(e.pointerId);
-                    } catch { }
-                    e.currentTarget.focus({ preventScroll: true });
-                    effortFromPointer(e);
-                  }}
-                  onPointerMove={(e) => {
-                    if (e.buttons & 1) effortFromPointer(e);
-                  }}
-                  onKeyDown={onEffortKey}
-                >
-                  <span className="prompt-bar__effort-fill" />
-                  {efforts.map((label, i) => (
-                    <i key={label} className="prompt-bar__effort-dot" style={{ left: stepAt(i) }} />
-                  ))}
-                  <span className="prompt-bar__effort-thumb" />
-                </div>
-              </>
-            ) : (
-              <>
-                <span ref={glowRef} className="prompt-bar__glow" aria-hidden="true" />
-                {list.map((row, i) => (
-                  <button
-                    key={row.key}
-                    ref={(el) => {
-                      rowRefs.current[i] = el;
-                    }}
-                    type="button"
-                    role="option"
-                    aria-selected={i === cursor}
-                    className="prompt-bar__row"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onPointerEnter={() => setActive(i)}
-                    onClick={() => pick(row)}
-                  >
-                    {open === 'at' ? (
-                      <span className="prompt-bar__row-icon">{renderIcon(row.icon, 15)}</span>
-                    ) : null}
-                    <span className="prompt-bar__row-name">{row.name}</span>
-                    {row.description ? <span className="prompt-bar__row-desc">{row.description}</span> : null}
-                    {open === 'model' ? (
-                      <>
-                        {row.tag ? <span className="prompt-bar__row-tag">{row.tag}</span> : null}
-                        <span className="prompt-bar__row-check" data-on={row.key === model?.key ? '' : undefined}>
-                          <Check className="w-3.5 h-3.5" />
-                        </span>
-                      </>
-                    ) : null}
-                  </button>
-                ))}
-                {list.length === 0 ? <div className="prompt-bar__empty">No matches for “{query}”</div> : null}
-              </>
-            )}
+            <span ref={glowRef} className="prompt-bar__glow" aria-hidden="true" />
+            {list.map((row, i) => (
+              <button
+                key={row.key}
+                ref={(el) => {
+                  rowRefs.current[i] = el;
+                }}
+                type="button"
+                role="option"
+                aria-selected={i === cursor}
+                className="prompt-bar__row"
+                onMouseDown={(e) => e.preventDefault()}
+                onPointerEnter={() => setActive(i)}
+                onClick={() => pick(row)}
+              >
+                {open === 'at' ? (
+                  <span className="prompt-bar__row-icon">{renderIcon(row.icon, 15)}</span>
+                ) : null}
+                <span className="prompt-bar__row-name">{row.name}</span>
+                {row.description ? <span className="prompt-bar__row-desc">{row.description}</span> : null}
+              </button>
+            ))}
+            {list.length === 0 ? <div className="prompt-bar__empty">No matches for “{query}”</div> : null}
           </div>
         ) : null}
 

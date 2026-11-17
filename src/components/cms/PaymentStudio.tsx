@@ -20,6 +20,7 @@ import {
   ExternalLink,
   Plus,
   ShieldAlert,
+  Tag,
 } from 'lucide-react';
 import { cmsService } from '@/src/services/cmsService';
 import {
@@ -817,8 +818,19 @@ export const PaymentStudio: React.FC = () => {
                           </span>
                         </td>
                         <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-foreground">
-                          {t.currency === 'INR' ? '₹' : '$'}
-                          {t.amount.toFixed(2)}
+                          <div>
+                            {t.currency === 'INR' ? '₹' : '$'}
+                            {t.amount.toFixed(2)}
+                          </div>
+                          {t.couponCode && (
+                            <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/60 w-max">
+                              <Tag className="w-2.5 h-2.5 shrink-0" />
+                              <span>{t.couponCode}</span>
+                              {t.discountAmount ? (
+                                <span>(-{t.currency === 'INR' ? '₹' : '$'}{t.discountAmount.toFixed(2)})</span>
+                              ) : null}
+                            </div>
+                          )}
                         </td>
                         <td className="py-3.5 px-4 text-slate-500 font-mono">
                           {t.currency === 'INR' ? '₹' : '$'}

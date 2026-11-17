@@ -133,6 +133,7 @@ import {
   AiWebsiteProject,
   VercelDeploymentResult,
   DeployToVercelPayload,
+  CMSLiveNotification,
 } from '@/src/types';
 
 let inFlightPagesPromise: Promise<CMSPageData[]> | null = null;
@@ -1693,6 +1694,24 @@ export const cmsService = {
               } catch { }
             }
 
+            let couponCode = o.couponCode || null;
+            let discountAmount =
+              o.discountAmount !== undefined && o.discountAmount !== null
+                ? Number(o.discountAmount)
+                : 0;
+
+            if (!couponCode && notes.length > 0) {
+              const fullNotes = notes.map((n: any) => n.text || '').join(' ');
+              const match = fullNotes.match(/Coupon(?:\s+applied)?:\s*([a-zA-Z0-9_\-]+)/i);
+              if (match) {
+                couponCode = match[1];
+              }
+              const discMatch = fullNotes.match(/-\s*(?:INR|USD|EUR|₹|\$|€|£)?\s*([0-9]+(?:\.[0-9]+)?)/i);
+              if (discMatch && !discountAmount) {
+                discountAmount = parseFloat(discMatch[1]) || 0;
+              }
+            }
+
             return {
               id: o.id,
               orderNumber: o.orderNumber,
@@ -1705,6 +1724,8 @@ export const cmsService = {
                 : Number(o.totalAmount || 0),
               taxAmount: o.taxAmount ? Number(o.taxAmount) : 0,
               shippingAmount: o.shippingAmount ? Number(o.shippingAmount) : 0,
+              discountAmount,
+              couponCode,
               currency: o.currency || 'USD',
               paymentStatus: o.paymentStatus || 'PAID',
               orderStatus: o.fulfillmentStatus || 'CONFIRMED',
@@ -8964,6 +8985,54 @@ export const cmsService = {
     } catch {
       return [];
     }
+  },
+
+  // ─── LIVE REAL-TIME NOTIFICATIONS API ──────────────────────────────────────
+
+  async getLiveNotifications(options?: { limit?: number; unreadOnly?: boolean }): Promise<{ notifications: CMSLiveNotification[]; unreadCount: number }> {
+    try {
+      const params = new URLSearchParams();
+      if (options?.limit) params.append('limit', String(options.limit));
+      if (options?.unreadOnly) params.append('unreadOnly', 'true');
+      const query = params.toString() ? '?' + params.toString() : '';
+      const res = await apiClient.get<{ notifications: CMSLiveNotification[]; unreadCount: number }>(`/notifications/live${query}`);
+      return res.data || { notifications: [], unreadCount: 0 };
+    } catch (err) {
+      console.warn('Failed to fetch live notifications:', err);
+      return { notifications: [], unreadCount: 0 };
+    }
+  },
+
+  async markLiveNotificationRead(id: string): Promise<boolean> {
+    try {
+      await apiClient.put(`/notifications/live/${id}/read`);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  async markAllLiveNotificationsRead(): Promise<boolean> {
+    try {
+      await apiClient.put('/notifications/live/mark-all-read');
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  async clearReadLiveNotifications(): Promise<boolean> {
+    try {
+      await apiClient.delete('/notifications/live/clear');
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  async triggerTestLiveNotification(type: string = 'ORDER_CREATED'): Promise<{ success: boolean; notification?: CMSLiveNotification }> {
+    const res = await apiClient.post('/notifications/live/test', { type });
+    return res.data;
   },
 };
 

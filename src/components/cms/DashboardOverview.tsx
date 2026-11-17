@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useCMSContext } from '@/src/context/CMSContext';
+import { getCurrencySymbol } from '@/src/lib/currency';
 import { useRouter } from 'next/navigation';
 import {
   TrendingUp,
@@ -53,6 +55,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const router = useRouter();
   const { isStarter, isGrowth, isEnterprise, canUseAdvancedAnalytics, planName } = usePlanAccess();
   const { t } = useTranslation();
+  const { currency: storeCurrency, currencySymbol: storeCurrencySymbol, activeStore } = useCMSContext();
+
+  const effectiveStoreCurrency = (activeStore?.currency || storeCurrency || 'INR').toUpperCase();
+  const effectiveStoreSymbol = storeCurrencySymbol || getCurrencySymbol(effectiveStoreCurrency);
 
   // Metric & Filter States
   const [dateRange, setDateRange] = useState('Last 7 days');
@@ -60,25 +66,27 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const [topProductSort, setTopProductSort] = useState<'sales' | 'revenue' | 'orders' | 'views'>(
     'revenue',
   );
-  const [currencySymbol, setCurrencySymbol] = useState('₹');
+
+  // Format currency Helper: formats in the store's configured currency or per-order currency
+  const fmtCurrency = (num: number, ordCurrency?: string) => {
+    if (!num || isNaN(num)) num = 0;
+    const sym = ordCurrency ? getCurrencySymbol(ordCurrency) : effectiveStoreSymbol;
+    if (sym === '₹') {
+      if (num >= 10000000) return `₹${(num / 10000000).toFixed(2)}Cr`;
+      if (num >= 100000) return `₹${(num / 100000).toFixed(2)}L`;
+      if (num >= 1000) return `₹${(num / 1000).toFixed(1)}K`;
+      return `₹${num.toLocaleString('en-IN')}`;
+    }
+    if (num >= 1000000) return `${sym}${(num / 1000000).toFixed(2)}M`;
+    if (num >= 1000) return `${sym}${(num / 1000).toFixed(1)}K`;
+    return `${sym}${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  };
 
   // Pagination states
   const [ordersPage, setOrdersPage] = useState(1);
   const [ordersPageSize, setOrdersPageSize] = useState(5);
   const [topProductsPage, setTopProductsPage] = useState(1);
   const [topProductsPageSize, setTopProductsPageSize] = useState(5);
-
-  // Format currency Helper
-  const fmtCurrency = (num: number) => {
-    if (!num || isNaN(num)) num = 0;
-    if (currencySymbol === '₹') {
-      if (num >= 10000000) return `₹${(num / 10000000).toFixed(2)}Cr`;
-      if (num >= 100000) return `₹${(num / 100000).toFixed(2)}L`;
-      if (num >= 1000) return `₹${(num / 1000).toFixed(1)}K`;
-      return `₹${num.toLocaleString('en-IN')}`;
-    }
-    return `$${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-  };
 
   // 13. Quick Actions Bar Data
   const quickActions = [
@@ -215,7 +223,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       points: points.map((p) => ({ day: p.day, val: p.val, label: fmtCurrency(p.val) })),
       pathD: stats.totalRevenue > 0 ? 'M 0,55 Q 50,40 100,50 T 200,20 T 300,35' : 'M 0,65 L 300,65',
     };
-  }, [chartMetric, stats, currencySymbol]);
+  }, [chartMetric, stats, effectiveStoreSymbol]);
 
   // Onboarding progress from real stats
   const onboarding = stats.onboardingProgress || {
@@ -466,30 +474,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <BarChart2 className="w-5 h-5 text-sky-600 dark:text-white" /> Store KPIs & Performance Summary
           </h2>
 
-          {/* Controls: Date Range & Currency Filter */}
+          {/* Controls: Date Range */}
           <div className="flex items-center gap-2">
-            {/* Currency Selector */}
-            <div className="flex items-center rounded-xl border border-slate-200 dark:border-[#2C2C2E] bg-slate-100 dark:bg-[#1E1E1E] p-1 text-xs font-sans font-medium text-slate-700 dark:text-white">
-              <button
-                onClick={() => setCurrencySymbol('₹')}
-                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${currencySymbol === '₹'
-                  ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] shadow-xs font-bold'
-                  : 'hover:bg-slate-200/60 dark:hover:bg-[#121212]'
-                  }`}
-              >
-                ₹ INR
-              </button>
-              <button
-                onClick={() => setCurrencySymbol('$')}
-                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${currencySymbol === '$'
-                  ? 'bg-white dark:bg-white text-slate-900 dark:text-[#1E1E1E] shadow-xs font-bold'
-                  : 'hover:bg-slate-200/60 dark:hover:bg-[#121212]'
-                  }`}
-              >
-                $ USD
-              </button>
-            </div>
-
             {/* Date Range Selector Dropdown */}
             <div className="relative">
               <select
@@ -517,7 +503,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 {t('dashboard.total_revenue', 'Total Sales')}
               </span>
               <span className="font-mono font-bold text-slate-400 dark:text-[#98989D] text-sm">
-                {currencySymbol}
+                {effectiveStoreSymbol}
               </span>
             </div>
             <div className="text-2xl sm:text-3xl font-sans font-bold text-slate-900 dark:text-white">
@@ -551,7 +537,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 {t('dashboard.average_order', 'Avg Order Value')}
               </span>
               <span className="font-mono font-bold text-slate-400 dark:text-[#98989D] text-sm">
-                {currencySymbol}
+                {effectiveStoreSymbol}
               </span>
             </div>
             <div className="text-2xl sm:text-3xl font-sans font-bold text-slate-900 dark:text-white">
@@ -817,7 +803,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                         </span>
                       </td>
                       <td className="py-3.5 px-3 font-mono font-bold text-slate-900 dark:text-white">
-                        {fmtCurrency(ord.totalAmount)}
+                        {fmtCurrency(ord.totalAmount, ord.currency || effectiveStoreCurrency)}
                       </td>
                       <td className="py-3.5 px-3">
                         <span

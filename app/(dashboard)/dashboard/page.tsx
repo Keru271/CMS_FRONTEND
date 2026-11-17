@@ -6,6 +6,7 @@ import { useCMSContext } from '@/src/context/CMSContext';
 import { cmsService } from '@/src/services/cmsService';
 import { DashboardOverview } from '@/src/components/cms/DashboardOverview';
 import { DashboardStats, CMSProduct } from '@/src/types';
+import { DashboardSkeleton } from '@/src/components/ui/Skeleton';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -65,11 +66,38 @@ export default function DashboardPage() {
     });
   }, [products]);
 
-  // Synchronize stats with actively computed lowStockCount
+  // Synchronize stats with actively computed lowStockCount, refunds, and conversion rate
   const enrichedStats: DashboardStats | null = useMemo(() => {
     if (!stats) return null;
+
+    // Calculate real refunds from orders list
+    const computedRefunds = (orders || []).reduce((sum, o: any) => {
+      if (o.refundAmount !== undefined && o.refundAmount !== null && Number(o.refundAmount) > 0) {
+        return sum + Number(o.refundAmount);
+      }
+      const pStatus = (o.paymentStatus || '').toString().toUpperCase();
+      const fStatus = (o.fulfillmentStatus || '').toString().toUpperCase();
+      if (pStatus === 'REFUNDED' || fStatus === 'REFUNDED') {
+        return sum + Number(o.totalAmount || 0);
+      }
+      return sum;
+    }, 0);
+
+    const effectiveRefunds =
+      stats.refundsTotal !== undefined && stats.refundsTotal > 0
+        ? stats.refundsTotal
+        : computedRefunds;
+
+    // Calculate effective conversion rate (if orders exist, conversion rate is at least completion rate)
+    const effectiveConversionRate =
+      stats.conversionRate !== undefined && stats.conversionRate > 0
+        ? stats.conversionRate
+        : (orders && orders.length > 0 ? 100 : 0);
+
     return {
       ...stats,
+      conversionRate: effectiveConversionRate,
+      refundsTotal: effectiveRefunds,
       lowStockCount: lowStockProducts.length,
       ...(stats.inventoryHealth
         ? {
@@ -80,19 +108,10 @@ export default function DashboardPage() {
           }
         : {}),
     };
-  }, [stats, lowStockProducts.length]);
+  }, [stats, orders, lowStockProducts.length]);
 
   if (loading || !stats) {
-    return (
-      <div className="flex items-center justify-center py-32">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-[#191a1b] border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-semibold text-[#5e5a5a] tracking-wide animate-pulse">
-            Loading Merchant Dashboard...
-          </span>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
