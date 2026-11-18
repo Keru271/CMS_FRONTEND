@@ -102,7 +102,7 @@ export const OnboardingWizard: React.FC = () => {
         if (data && data.length > 0) {
           setFormData((prev) => ({
             ...prev,
-            theme: prev.theme || data[0].slug || 'nova-tech',
+            theme: prev.theme || data[0].slug || 'mincom',
           }));
         }
       })
@@ -134,7 +134,7 @@ export const OnboardingWizard: React.FC = () => {
     addressState: '',
     addressCountry: 'India',
     // Step 4: Theme & Starter Catalog
-    theme: 'nova-tech',
+    theme: 'mincom',
     seedSampleProducts: true,
     logoUrl: '',
   });
@@ -1029,9 +1029,16 @@ export const OnboardingWizard: React.FC = () => {
       {isAiModalOpen && (
         <AiStoreBuilderModal
           isOpen={isAiModalOpen}
+          targetStoreId={merchantData?.store?.id || formData.slug || undefined}
           onClose={() => setIsAiModalOpen(false)}
-          onBlueprintApplied={async () => {
+          onBlueprintApplied={async (appliedStore: any) => {
             try {
+              if (appliedStore && setMerchantData) {
+                setMerchantData((prev: any) => ({
+                  ...prev,
+                  store: appliedStore,
+                }));
+              }
               await cmsService.completeOnboarding();
             } catch (err) {
               console.warn('Onboarding complete hook failed:', err);
