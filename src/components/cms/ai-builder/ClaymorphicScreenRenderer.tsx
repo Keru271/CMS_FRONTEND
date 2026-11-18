@@ -122,6 +122,8 @@ interface ClaymorphicScreenRendererProps {
   onSelectSection?: (sectionId: string, sectionType: string) => void;
   realProducts?: any[];
   useRealProducts?: boolean;
+  customWidth?: string | number;
+  customHeight?: string | number;
 }
 
 export function ClaymorphicScreenRenderer({
@@ -136,6 +138,8 @@ export function ClaymorphicScreenRenderer({
   onSelectSection,
   realProducts = [],
   useRealProducts = false,
+  customWidth,
+  customHeight,
 }: ClaymorphicScreenRendererProps) {
   // Resolved Active Template Configuration
   const tmpl: StorefrontTemplateConfig = template || getTemplateConfig('nova-tech');
@@ -200,15 +204,17 @@ export function ClaymorphicScreenRenderer({
   const routePath = screen.path || (screen.type === 'welcome' ? '/' : `/${screen.slug}`);
 
   // Determine Dimensions based on Viewport
-  let frameWidth = '320px';
-  let frameHeight = '670px';
+  let frameWidth: string | number = customWidth || '320px';
+  let frameHeight: string | number = customHeight || '670px';
 
-  if (effectiveViewport === 'desktop') {
-    frameWidth = '920px';
-    frameHeight = '670px';
-  } else if (effectiveViewport === 'tablet') {
-    frameWidth = '640px';
-    frameHeight = '670px';
+  if (!customWidth) {
+    if (effectiveViewport === 'desktop') {
+      frameWidth = '920px';
+      frameHeight = customHeight || '670px';
+    } else if (effectiveViewport === 'tablet') {
+      frameWidth = '640px';
+      frameHeight = customHeight || '670px';
+    }
   }
 
   // =========================================================================
@@ -1609,8 +1615,8 @@ export function ClaymorphicScreenRenderer({
         isActive ? 'ring-3 ring-sky-500 ring-offset-4 ring-offset-slate-100 rounded-[40px]' : ''
       }`}
       style={{
-        width: '320px',
-        height: '670px',
+        width: customWidth || '320px',
+        height: customHeight || '670px',
         transformOrigin: 'top center',
       }}
     >

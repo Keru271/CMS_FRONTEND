@@ -57,8 +57,12 @@ export const OrderStudio: React.FC = () => {
 
   // Action Modals
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
-  const [trackingCarrier, setTrackingCarrier] = useState('FedEx Express');
+  const [trackingCarrier, setTrackingCarrier] = useState('');
   const [trackingNumberInput, setTrackingNumberInput] = useState('');
+  const [installedShippingCarriers, setInstalledShippingCarriers] = useState<
+    Array<{ id: string; name: string; slug: string; isPrimary?: boolean; status?: string }>
+  >([]);
+  const [isLoadingCarriers, setIsLoadingCarriers] = useState(false);
 
   const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
   const [refundAmountInput, setRefundAmountInput] = useState('');
@@ -72,6 +76,17 @@ export const OrderStudio: React.FC = () => {
   const [noteInput, setNoteInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [storeCurrency, setStoreCurrency] = useState<string>('INR');
+
+  // Prevent background body scroll when any modal is active
+  useEffect(() => {
+    if (isDetailsOpen || isTrackingModalOpen || isRefundModalOpen || isCancelModalOpen || isInvoiceModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isDetailsOpen, isTrackingModalOpen, isRefundModalOpen, isCancelModalOpen, isInvoiceModalOpen]);
 
   // Pagination
   const [orderPage, setOrderPage] = useState(1);
@@ -108,8 +123,59 @@ export const OrderStudio: React.FC = () => {
     return `${sym}${Number(amount || 0).toFixed(2)}`;
   };
 
+  const loadInstalledCarriers = async () => {
+    setIsLoadingCarriers(true);
+    try {
+      const [apps, credentials] = await Promise.all([
+        cmsService.getInstalledApps().catch(() => []),
+        cmsService.getCarrierCredentials().catch(() => []),
+      ]);
+
+      const shippingApps = (apps || [])
+        .filter((a: any) => a.category === 'SHIPPING' && a.status !== 'DISABLED')
+        .map((a: any) => ({
+          id: a.id || a.slug,
+          name: a.name,
+          slug: a.slug,
+          isPrimary: !!a.isPrimary,
+          status: a.status,
+        }));
+
+      const credCarriers = (credentials || [])
+        .filter((c: any) => c.isActive !== false)
+        .map((c: any) => ({
+          id: c.id || c.carrierCode,
+          name: c.carrierName,
+          slug: (c.appSlug || c.carrierCode || '').toLowerCase(),
+          isPrimary: !!c.isPrimary,
+          status: c.status || 'ACTIVE',
+        }));
+
+      const carrierMap = new Map<
+        string,
+        { id: string; name: string; slug: string; isPrimary?: boolean; status?: string }
+      >();
+      [...shippingApps, ...credCarriers].forEach((c) => {
+        const key = (c.slug || c.name).toLowerCase();
+        if (!carrierMap.has(key)) {
+          carrierMap.set(key, c);
+        }
+      });
+
+      const uniqueCarriers = Array.from(carrierMap.values());
+      setInstalledShippingCarriers(uniqueCarriers);
+      return uniqueCarriers;
+    } catch (err) {
+      console.warn('Could not load installed shipping apps:', err);
+      return [];
+    } finally {
+      setIsLoadingCarriers(false);
+    }
+  };
+
   useEffect(() => {
     loadOrders();
+    loadInstalledCarriers();
   }, []);
 
   const loadOrders = async () => {
@@ -154,12 +220,20 @@ export const OrderStudio: React.FC = () => {
   const handleSaveTracking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrder) return;
+    if (!trackingCarrier.trim()) {
+      showToast('Please select an installed shipping carrier', 'error');
+      return;
+    }
+    if (!trackingNumberInput.trim()) {
+      showToast('Please enter a tracking number code', 'error');
+      return;
+    }
     try {
       setIsSaving(true);
       const updated = await cmsService.updateOrderTracking(
         selectedOrder.id,
-        trackingCarrier,
-        trackingNumberInput,
+        trackingCarrier.trim(),
+        trackingNumberInput.trim(),
       );
       showToast(`Tracking number assigned to #${selectedOrder.orderNumber}!`, 'success');
       setIsTrackingModalOpen(false);
@@ -600,12 +674,21 @@ export const OrderStudio: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setTrackingCarrier(selectedOrder.carrier || 'FedEx Express');
+                    onClick={async () => {
+                      let carriers = installedShippingCarriers;
+                      if (carriers.length === 0) {
+                        carriers = await loadInstalledCarriers();
+                      }
+                      const initialCarrier =
+                        selectedOrder.carrier ||
+                        carriers.find((c) => c.isPrimary)?.name ||
+                        carriers[0]?.name ||
+                        '';
+                      setTrackingCarrier(initialCarrier);
                       setTrackingNumberInput(selectedOrder.trackingNumber || '');
                       setIsTrackingModalOpen(true);
                     }}
-                    className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm"
+                    className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm transition-all"
                   >
                     <Truck className="w-3.5 h-3.5" />
                     <span>Assign Tracking</span>
@@ -890,62 +973,122 @@ export const OrderStudio: React.FC = () => {
 
       {/* TRACKING NUMBER ASSIGNMENT MODAL */}
       {isTrackingModalOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-              <h3 className="font-black text-lg">Assign Carrier & Tracking Number</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden animate-in fade-in">
+          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/40 border-b border-slate-200/80 dark:border-border flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/60 flex items-center justify-center shrink-0">
+                  <Truck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-slate-900 dark:text-foreground">
+                    Assign Carrier & Tracking
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-muted-foreground">
+                    Order #{selectedOrder.orderNumber}
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsTrackingModalOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-foreground hover:bg-slate-100 dark:hover:bg-accent transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveTracking} className="p-6 space-y-4">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Shipping Carrier</label>
-                <select
-                  value={trackingCarrier}
-                  onChange={(e) => setTrackingCarrier(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold"
-                >
-                  <option value="FedEx Express">FedEx Express</option>
-                  <option value="DHL Express">DHL Express</option>
-                  <option value="UPS Ground">UPS Ground</option>
-                  <option value="USPS Priority Mail">USPS Priority Mail</option>
-                </select>
-              </div>
+            <form onSubmit={handleSaveTracking} className="p-5 sm:p-6 space-y-4">
+              {isLoadingCarriers ? (
+                <div className="py-6 flex flex-col items-center justify-center text-slate-400 text-xs">
+                  <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2" />
+                  <span>Loading installed shipping plugins...</span>
+                </div>
+              ) : installedShippingCarriers.length === 0 && !selectedOrder.carrier ? (
+                <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-300 text-xs space-y-2.5">
+                  <div className="flex items-center gap-2 font-bold text-amber-900 dark:text-amber-200">
+                    <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span>No Shipping Carrier Installed</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
+                    You have not installed any shipping carrier plugins yet. Install a shipping provider (e.g. Shiprocket, Delhivery, BlueDart, FedEx, DHL) from the Apps Marketplace to assign carrier tracking.
+                  </p>
+                  <a
+                    href="/apps?category=SHIPPING"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs transition-colors shadow-xs"
+                  >
+                    <span>Browse Shipping Apps</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                      Installed Shipping Carrier <span className="text-rose-500">*</span>
+                    </label>
+                    <a
+                      href="/apps?category=SHIPPING"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline font-bold inline-flex items-center gap-1"
+                    >
+                      <span>Manage Apps</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  </div>
+                  <select
+                    value={trackingCarrier}
+                    onChange={(e) => setTrackingCarrier(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-bold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="" disabled>-- Select Installed Carrier Plugin --</option>
+                    {installedShippingCarriers.map((carrier) => (
+                      <option key={carrier.id} value={carrier.name}>
+                        {carrier.name} {carrier.isPrimary ? '★ Primary Active' : '✓ Installed'}
+                      </option>
+                    ))}
+                    {selectedOrder.carrier &&
+                      !installedShippingCarriers.some(
+                        (c) => c.name.toLowerCase() === selectedOrder.carrier?.toLowerCase()
+                      ) && (
+                        <option value={selectedOrder.carrier}>
+                          {selectedOrder.carrier} (Previously Assigned)
+                        </option>
+                      )}
+                  </select>
+                </div>
+              )}
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  Tracking Number Code
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                  Tracking Number / Waybill ID <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={trackingNumberInput}
                   onChange={(e) => setTrackingNumberInput(e.target.value)}
-                  placeholder="e.g. TRK-88912344-FEDEX"
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-mono font-bold text-purple-600"
+                  placeholder="e.g. TRK-88912344-SR or AWB-1029384"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200/80 dark:border-border">
                 <button
                   type="button"
                   onClick={() => setIsTrackingModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-700 dark:text-foreground text-xs font-bold transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSaving}
-                  className="px-6 py-2.5 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-extrabold shadow-md"
+                  disabled={isSaving || (installedShippingCarriers.length === 0 && !selectedOrder.carrier)}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
-                  Save & Update Order
+                  {isSaving ? 'Updating...' : 'Save & Update Order'}
                 </button>
               </div>
             </form>
@@ -955,23 +1098,35 @@ export const OrderStudio: React.FC = () => {
 
       {/* REFUND MODAL */}
       {isRefundModalOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-              <h3 className="font-black text-lg">Process Refund</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden animate-in fade-in">
+          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/40 border-b border-slate-200/80 dark:border-border flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-100 dark:border-amber-800/60 flex items-center justify-center shrink-0">
+                  <RotateCcw className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-slate-900 dark:text-foreground">
+                    Process Refund
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-muted-foreground">
+                    Order #{selectedOrder.orderNumber}
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsRefundModalOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-foreground hover:bg-slate-100 dark:hover:bg-accent transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleProcessRefund} className="p-6 space-y-4">
+            <form onSubmit={handleProcessRefund} className="p-5 sm:p-6 space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  Refund Amount ({getCurrencySymbol(selectedOrder?.currency || storeCurrency)})
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                  Refund Amount ({getCurrencySymbol(selectedOrder?.currency || storeCurrency)}) <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -979,36 +1134,38 @@ export const OrderStudio: React.FC = () => {
                   required
                   value={refundAmountInput}
                   onChange={(e) => setRefundAmountInput(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-black text-rose-600"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-black text-rose-600 dark:text-rose-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Refund Reason</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                  Refund Reason <span className="text-rose-500">*</span>
+                </label>
                 <textarea
                   rows={2}
                   required
                   value={refundReasonInput}
                   onChange={(e) => setRefundReasonInput(e.target.value)}
                   placeholder="Customer returned item, damaged in transit..."
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-medium"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-medium text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200/80 dark:border-border">
                 <button
                   type="button"
                   onClick={() => setIsRefundModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-700 dark:text-foreground text-xs font-bold transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-2xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-extrabold shadow-md"
+                  className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold shadow-sm transition-all"
                 >
-                  Confirm Refund
+                  {isSaving ? 'Processing...' : 'Confirm Refund'}
                 </button>
               </div>
             </form>
@@ -1018,23 +1175,35 @@ export const OrderStudio: React.FC = () => {
 
       {/* CANCEL MODAL */}
       {isCancelModalOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-              <h3 className="font-black text-lg">Cancel Order #{selectedOrder.orderNumber}</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden animate-in fade-in">
+          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/40 border-b border-slate-200/80 dark:border-border flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-100 dark:border-rose-800/60 flex items-center justify-center shrink-0">
+                  <Ban className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-slate-900 dark:text-foreground">
+                    Cancel Order #{selectedOrder.orderNumber}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-muted-foreground">
+                    Restore inventory items to stock
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsCancelModalOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-foreground hover:bg-slate-100 dark:hover:bg-accent transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCancelOrder} className="p-6 space-y-4">
+            <form onSubmit={handleCancelOrder} className="p-5 sm:p-6 space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  Cancellation Reason
+                <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                  Cancellation Reason <span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   rows={3}
@@ -1042,24 +1211,24 @@ export const OrderStudio: React.FC = () => {
                   value={cancelReasonInput}
                   onChange={(e) => setCancelReasonInput(e.target.value)}
                   placeholder="Customer requested cancellation, item out of stock..."
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs font-medium"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent text-xs font-medium text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-rose-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200/80 dark:border-border">
                 <button
                   type="button"
                   onClick={() => setIsCancelModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-700 dark:text-foreground text-xs font-bold transition-colors"
                 >
                   Back
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold shadow-md"
+                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold shadow-sm transition-all"
                 >
-                  Cancel Order & Restock
+                  {isSaving ? 'Cancelling...' : 'Cancel Order & Restock'}
                 </button>
               </div>
             </form>
@@ -1069,7 +1238,7 @@ export const OrderStudio: React.FC = () => {
 
       {/* PRINTABLE INVOICE MODAL */}
       {isInvoiceModalOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
           <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden my-8 p-8 space-y-6 text-slate-900">
             {/* Invoice Top Action Bar */}
             <div className="flex items-center justify-between border-b pb-4">

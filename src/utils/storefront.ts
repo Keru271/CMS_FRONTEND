@@ -18,6 +18,37 @@ export interface StorefrontTarget {
   name?: string | null;
 }
 
+/**
+ * Retrieves user-configured storefront URL stored in localStorage (if any)
+ */
+export function getStoredStorefrontUrl(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    return localStorage.getItem('omnistore_custom_storefront_url') || '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Persists a user-configured storefront URL in localStorage and dispatches a change event
+ */
+export function setStoredStorefrontUrl(url: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!url || !url.trim()) {
+      localStorage.removeItem('omnistore_custom_storefront_url');
+    } else {
+      let clean = url.trim();
+      if (!/^https?:\/\//i.test(clean)) {
+        clean = `http://${clean}`;
+      }
+      localStorage.setItem('omnistore_custom_storefront_url', clean);
+    }
+    window.dispatchEvent(new Event('storefront-url-changed'));
+  } catch {}
+}
+
 export function getStorefrontUrl(
   store?: StorefrontTarget | null,
   path: string = '',
@@ -51,21 +82,43 @@ export function getStorefrontUrl(
   }
 
   // 2. Base storefront URL resolution
-  let baseUrl = (process.env.NEXT_PUBLIC_STOREFRONT_URL || '').trim();
+  let baseUrl = '';
 
-  // Guard against any hardcoded obsolete static demo deployments
-  if (baseUrl.includes('serene-croissant-868f08.netlify.app')) {
-    baseUrl = '';
+  // 2.1 Check user-configured storefront URL stored in localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('omnistore_custom_storefront_url');
+      if (stored && stored.trim()) {
+        baseUrl = stored.trim();
+      }
+    } catch {}
   }
 
-  // If in browser on a production/custom domain and no storefront URL was explicitly provided
+  // 2.2 Next.js environment storefront base URL (excluding obsolete static demo URLs)
+  if (!baseUrl) {
+    baseUrl = (process.env.NEXT_PUBLIC_STOREFRONT_URL || '').trim();
+    if (baseUrl.includes('serene-croissant-868f08.netlify.app')) {
+      baseUrl = '';
+    }
+  }
+
+  // 2.3 Browser public host resolution (GUARD against setting baseUrl to CMS origin!)
   if (!baseUrl && typeof window !== 'undefined' && window.location.hostname) {
     const host = window.location.hostname;
-    if (host !== 'localhost' && host !== '127.0.0.1') {
+    const isCmsHost =
+      host.startsWith('cms-') ||
+      host.startsWith('cms.') ||
+      host.includes('-cms.') ||
+      host.includes('.cms.') ||
+      host.includes('admin');
+
+    // Only adopt window.location.origin if it is NOT the CMS dashboard domain itself
+    if (!isCmsHost && host !== 'localhost' && host !== '127.0.0.1') {
       baseUrl = window.location.origin;
     }
   }
 
+  // 2.4 Default development fallback (port 3001 for storefront-frontend)
   if (!baseUrl) {
     baseUrl = 'http://localhost:3001';
   }

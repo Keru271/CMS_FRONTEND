@@ -1154,7 +1154,10 @@ export const SLUG_ALIASES: Record<string, string> = {
 
 export const STOREFRONT_TEMPLATES_LIST = Object.values(STOREFRONT_TEMPLATES);
 
-export function getScreensForTemplate(template: StorefrontTemplateConfig): Array<{
+export function getScreensForTemplate(
+  template: StorefrontTemplateConfig,
+  defaultViewport: 'desktop' | 'tablet' | 'mobile' = 'desktop'
+): Array<{
   id: string;
   number: number;
   slug: string;
@@ -1162,7 +1165,7 @@ export function getScreensForTemplate(template: StorefrontTemplateConfig): Array
   subtitle: string;
   path: string;
   type: 'welcome' | 'catalog' | 'questionnaire' | 'checkout' | 'privacy' | 'aura' | 'tryon' | 'scanner';
-  viewport: 'mobile';
+  viewport: 'desktop' | 'tablet' | 'mobile';
 }> {
   return [
     {
@@ -1173,7 +1176,7 @@ export function getScreensForTemplate(template: StorefrontTemplateConfig): Array
       path: '/',
       subtitle: `${template.brandName} • ${template.tagline}`,
       type: 'welcome',
-      viewport: 'mobile',
+      viewport: defaultViewport,
     },
     {
       id: `sc-2-${template.slug}`,
@@ -1183,7 +1186,7 @@ export function getScreensForTemplate(template: StorefrontTemplateConfig): Array
       path: '/products',
       subtitle: `Curated ${template.category} collection with instant filter & checkout.`,
       type: 'catalog',
-      viewport: 'mobile',
+      viewport: defaultViewport,
     },
     {
       id: `sc-3-${template.slug}`,
@@ -1193,7 +1196,7 @@ export function getScreensForTemplate(template: StorefrontTemplateConfig): Array
       path: '/products/featured',
       subtitle: `${template.pdp.featuredProduct} • Multi-angle showcase & variant select.`,
       type: 'questionnaire',
-      viewport: 'mobile',
+      viewport: defaultViewport,
     },
     {
       id: `sc-4-${template.slug}`,
@@ -1203,7 +1206,7 @@ export function getScreensForTemplate(template: StorefrontTemplateConfig): Array
       path: '/checkout',
       subtitle: `One-click Apple Pay, Google Pay, and biometric checkout for ${template.name}.`,
       type: 'checkout',
-      viewport: 'mobile',
+      viewport: defaultViewport,
     },
     {
       id: `sc-5-${template.slug}`,
@@ -1213,7 +1216,7 @@ export function getScreensForTemplate(template: StorefrontTemplateConfig): Array
       path: '/story',
       subtitle: `${template.story.badge} • ${template.story.title}`,
       type: 'privacy',
-      viewport: 'mobile',
+      viewport: defaultViewport,
     },
     {
       id: `sc-6-${template.slug}`,
@@ -1223,7 +1226,7 @@ export function getScreensForTemplate(template: StorefrontTemplateConfig): Array
       path: '/reviews',
       subtitle: `${template.reviews.trustScore} • ${template.reviews.summary}`,
       type: 'aura',
-      viewport: 'mobile',
+      viewport: defaultViewport,
     },
     {
       id: `sc-7-${template.slug}`,
@@ -1233,7 +1236,7 @@ export function getScreensForTemplate(template: StorefrontTemplateConfig): Array
       path: '/experience',
       subtitle: 'Tactile Before/After interactive slider & material fidelity.',
       type: 'tryon',
-      viewport: 'mobile',
+      viewport: defaultViewport,
     },
     {
       id: `sc-8-${template.slug}`,
@@ -1243,7 +1246,7 @@ export function getScreensForTemplate(template: StorefrontTemplateConfig): Array
       path: '/order/confirmed',
       subtitle: 'Real-time courier dispatch status and digital receipt.',
       type: 'scanner',
-      viewport: 'mobile',
+      viewport: defaultViewport,
     },
   ];
 }

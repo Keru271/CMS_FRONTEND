@@ -2,6 +2,7 @@
 
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
 import React, { useState, useEffect, useRef } from 'react';
+import { extractApiErrorMessage } from '@/src/lib/axios';
 import { TablePagination } from '@/src/components/ui/TablePagination';
 import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import { CollectionManager } from '@/src/components/cms/CollectionManager';
@@ -255,9 +256,13 @@ export const ProductStudio: React.FC = () => {
     }
   };
 
-  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+  const showToast = (textOrErr: any, type: 'success' | 'error' = 'success', fallback = 'Operation failed') => {
+    const text =
+      type === 'error' && typeof textOrErr !== 'string'
+        ? extractApiErrorMessage(textOrErr, fallback)
+        : String(textOrErr || fallback);
     setToastMessage({ text, type });
-    setTimeout(() => setToastMessage(null), 4000);
+    setTimeout(() => setToastMessage(null), 4500);
   };
 
   // Master AI Product Generator Function
@@ -508,7 +513,7 @@ export const ProductStudio: React.FC = () => {
       setIsCategoryMenuOpen(false);
       showToast(`Category "${trimmed}" created and added!`, 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to create category.', 'error');
+      showToast(extractApiErrorMessage(err, 'Failed to create category.'), 'error');
     }
   };
 
@@ -571,7 +576,7 @@ export const ProductStudio: React.FC = () => {
       setIsCollectionMenuOpen(false);
       showToast(`Collection "${trimmed}" created and added!`, 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to create collection.', 'error');
+      showToast(extractApiErrorMessage(err, 'Failed to create collection.'), 'error');
     }
   };
 
@@ -592,7 +597,7 @@ export const ProductStudio: React.FC = () => {
       setIsBrandMenuOpen(false);
       showToast(`Brand "${trimmed}" created and selected!`, 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to create brand.', 'error');
+      showToast(extractApiErrorMessage(err, 'Failed to create brand.'), 'error');
     }
   };
 
@@ -633,7 +638,7 @@ export const ProductStudio: React.FC = () => {
       setQuickCategoryData({ name: '', slug: '', icon: '📦', image: '', description: '' });
       showToast(`Category "${payload.name}" created and added to product!`, 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to create category.', 'error');
+      showToast(extractApiErrorMessage(err, 'Failed to create category.'), 'error');
     } finally {
       setIsSavingQuickCategory(false);
     }
@@ -671,7 +676,7 @@ export const ProductStudio: React.FC = () => {
       setQuickBrandData({ name: '', slug: '', logo: '', website: '', description: '' });
       showToast(`Brand "${payload.name}" created and selected!`, 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to create brand.', 'error');
+      showToast(extractApiErrorMessage(err, 'Failed to create brand.'), 'error');
     } finally {
       setIsSavingQuickBrand(false);
     }
@@ -714,7 +719,7 @@ export const ProductStudio: React.FC = () => {
       setQuickCollectionData({ name: '', slug: '', type: 'MANUAL', image: '', description: '' });
       showToast(`Collection "${payload.name}" created and added to product!`, 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to create collection.', 'error');
+      showToast(extractApiErrorMessage(err, 'Failed to create collection.'), 'error');
     } finally {
       setIsSavingQuickCollection(false);
     }
@@ -734,7 +739,7 @@ export const ProductStudio: React.FC = () => {
       await loadData();
       setActiveSubTab('all-products');
     } catch (err: any) {
-      showToast(err.message || 'Failed to save product.', 'error');
+      showToast(extractApiErrorMessage(err, 'Failed to save product.'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -747,7 +752,7 @@ export const ProductStudio: React.FC = () => {
         showToast(`Product "${name}" deleted.`, 'success');
         await loadData();
       } catch (err) {
-        showToast('Failed to delete product.', 'error');
+        showToast(extractApiErrorMessage(err, 'Failed to delete product.'), 'error');
       }
     }
   };
@@ -919,7 +924,7 @@ export const ProductStudio: React.FC = () => {
       const updatedRevs = await cmsService.getProductReviews();
       setReviews(updatedRevs);
     } catch (err) {
-      showToast('Failed to update review status.', 'error');
+      showToast(extractApiErrorMessage(err, 'Failed to update review status.'), 'error');
     }
   };
 

@@ -1453,7 +1453,10 @@ export const cmsService = {
       try {
         const response = await apiClient.get<any[]>('/brands');
         if (response.data && Array.isArray(response.data)) {
-          return response.data;
+          return response.data.map((b: any) => ({
+            ...b,
+            productCount: Number(b.productCount ?? 0),
+          }));
         }
       } catch (err) {
         console.warn('Backend brands API notice:', err);
@@ -1550,7 +1553,10 @@ export const cmsService = {
       try {
         const response = await apiClient.get<any[]>('/collections');
         if (response.data && Array.isArray(response.data)) {
-          return response.data;
+          return response.data.map((c: any) => ({
+            ...c,
+            productCount: Number(c.productCount ?? 0),
+          }));
         }
       } catch (err) {
         console.warn('Backend collections API notice:', err);
@@ -2616,6 +2622,17 @@ export const cmsService = {
       } catch { }
       try {
         sessionStorage.clear();
+      } catch { }
+      try {
+        const cookiesToClear = ['auth_token', 'active_store_id', 'merchant_token', 'token'];
+        cookiesToClear.forEach((name) => {
+          document.cookie = `${name}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+          if (window.location.hostname) {
+            document.cookie = `${name}=; path=/; domain=${window.location.hostname}; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+            document.cookie = `${name}=; path=/; domain=.${window.location.hostname}; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+          }
+        });
+        window.dispatchEvent(new CustomEvent('merchant:logout'));
       } catch { }
     }
   },

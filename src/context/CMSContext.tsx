@@ -289,11 +289,14 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err: any) {
       console.warn('Failed to sync store status:', err);
       if (err?.response?.status === 401 || err?.response?.status === 404) {
+        cmsService.clearMerchantSession();
+        setMerchantData(null);
+        setActiveStore(null);
+        setStores([]);
         const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-        const onboardingPaths = ['/onboarding', '/store-setup', '/verify-email', '/register', '/setup'];
-        const isOnboarding = onboardingPaths.some((p) => currentPath.startsWith(p));
-        if (!isOnboarding) {
-          cmsService.clearMerchantSession();
+        const authPaths = ['/login', '/register', '/verify-email', '/forgot-password', '/reset-password'];
+        const isAuth = authPaths.some((p) => currentPath.startsWith(p));
+        if (!isAuth) {
           router.push('/login');
         }
       }
@@ -427,6 +430,23 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     initCMS();
   }, [syncUserAndStoreStatus, fetchDashboardDetails]);
+
+  // Synchronize state across all components when a 401 or manual logout occurs
+  useEffect(() => {
+    const handleMerchantLogout = () => {
+      setMerchantData(null);
+      setActiveStore(null);
+      setStores([]);
+      setStoreStatus('ACTIVE');
+      setIsSuspended(false);
+      setIsLoading(false);
+    };
+
+    window.addEventListener('merchant:logout', handleMerchantLogout);
+    return () => {
+      window.removeEventListener('merchant:logout', handleMerchantLogout);
+    };
+  }, []);
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {

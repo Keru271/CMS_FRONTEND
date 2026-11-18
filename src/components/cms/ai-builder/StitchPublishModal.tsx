@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Rocket,
@@ -34,10 +34,28 @@ export function StitchPublishModal({
   screensCount,
   templateSlug,
 }: StitchPublishModalProps) {
-  const [storeDomain, setStoreDomain] = useState<string>('aurafit.miordr.store');
+  const [storeDomain, setStoreDomain] = useState<string>('storefront-wendr.netlify.app');
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const [isPublished, setIsPublished] = useState<boolean>(false);
   const [isCopied, setIsCopied] = useState<boolean>(false);
+
+  useEffect(() => {
+    async function loadStoreDomain() {
+      try {
+        const setup = await cmsService.getStoreSetup();
+        if (setup?.customDomain) {
+          setStoreDomain(setup.customDomain);
+        } else if (setup?.slug) {
+          setStoreDomain(`${setup.slug}.storefront.com`);
+        } else {
+          setStoreDomain('storefront-wendr.netlify.app');
+        }
+      } catch {
+        setStoreDomain('storefront-wendr.netlify.app');
+      }
+    }
+    loadStoreDomain();
+  }, []);
 
   if (!isOpen) return null;
 

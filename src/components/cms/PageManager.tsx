@@ -38,7 +38,47 @@ import {
 
 export const PageManager: React.FC = () => {
   const { activeStore } = useCMSContext();
-  const getPageStoreUrl = (slug: string) => getStorefrontUrl(activeStore, slug);
+  const getPageStoreUrl = (slug: string, pageType?: string) => {
+    let cleanSlug = (slug || '').trim();
+    if (!cleanSlug || cleanSlug === '/' || cleanSlug === 'home') {
+      return getStorefrontUrl(activeStore, '');
+    }
+
+    if (
+      cleanSlug.startsWith('/contact') ||
+      cleanSlug.startsWith('/products') ||
+      cleanSlug.startsWith('/cart') ||
+      cleanSlug.startsWith('/checkout') ||
+      cleanSlug.startsWith('/account')
+    ) {
+      return getStorefrontUrl(activeStore, cleanSlug);
+    }
+
+    if (cleanSlug.startsWith('/pages/') || cleanSlug.startsWith('/policies/')) {
+      return getStorefrontUrl(activeStore, cleanSlug);
+    }
+
+    const stripped = cleanSlug.replace(/^\/+/, '');
+    if (stripped === 'home') return getStorefrontUrl(activeStore, '');
+    if (stripped === 'contact') return getStorefrontUrl(activeStore, '/contact');
+    if (stripped === 'products' || stripped === 'catalog') return getStorefrontUrl(activeStore, '/products');
+    if (stripped === 'cart') return getStorefrontUrl(activeStore, '/cart');
+    if (stripped === 'checkout') return getStorefrontUrl(activeStore, '/checkout');
+
+    if (
+      pageType === 'POLICY' ||
+      stripped.includes('policy') ||
+      stripped.includes('terms') ||
+      stripped.includes('shipping') ||
+      stripped.includes('refund')
+    ) {
+      return getStorefrontUrl(activeStore, `/policies/${stripped}`);
+    }
+    if (pageType === 'SYSTEM') {
+      return getStorefrontUrl(activeStore, `/${stripped}`);
+    }
+    return getStorefrontUrl(activeStore, `/pages/${stripped}`);
+  };
   const [pages, setPages] = useState<CMSPageData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,7 +105,7 @@ export const PageManager: React.FC = () => {
     meta?: { title: string; slug: string; metaTitle: string; metaDescription: string }
   ) => {
     const newPage: CMSPageData = {
-      id: `ai_${Date.now()}`,
+      id: '',
       title: meta?.title || 'AI Generated Page',
       slug: meta?.slug || `/pages/ai-${Date.now()}`,
       content: JSON.stringify(blocks),
@@ -468,7 +508,7 @@ export const PageManager: React.FC = () => {
                       <div className="flex items-center gap-1">
                         <span>{page.slug}</span>
                         <a
-                          href={getPageStoreUrl(page.slug)}
+                          href={getPageStoreUrl(page.slug, page.pageType)}
                           target="_blank"
                           rel="noreferrer"
                           className="text-slate-400 hover:text-indigo-600 transition"
@@ -780,7 +820,7 @@ export const PageManager: React.FC = () => {
                       {formData.metaTitle || formData.title || 'Page Title'}
                     </span>
                     <span className="text-[11px] font-mono text-emerald-700 block">
-                      {getPageStoreUrl(formData.slug)}
+                      {getPageStoreUrl(formData.slug, formData.pageType)}
                     </span>
                     <p className="text-[11px] text-slate-600 line-clamp-2">
                       {formData.metaDescription || 'No meta description configured yet.'}
@@ -826,7 +866,7 @@ export const PageManager: React.FC = () => {
         (() => {
           const rawSlug = previewPage.slug || '';
           const pageRoute = rawSlug.startsWith('/') ? rawSlug : `/${rawSlug}`;
-          const liveUrl = getPageStoreUrl(pageRoute);
+          const liveUrl = getPageStoreUrl(rawSlug, previewPage.pageType);
 
           const renderMockContent = (content: string) => {
             if (!content)

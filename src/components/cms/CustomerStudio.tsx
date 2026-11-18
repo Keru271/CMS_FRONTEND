@@ -94,6 +94,17 @@ export const CustomerStudio: React.FC = () => {
     loadData();
   }, []);
 
+  // Prevent background body scroll when any modal is active
+  useEffect(() => {
+    if (isProfileOpen || isAddModalOpen || isEditModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isProfileOpen, isAddModalOpen, isEditModalOpen]);
+
   const loadData = async () => {
     setIsLoading(true);
     try {
@@ -184,6 +195,43 @@ export const CustomerStudio: React.FC = () => {
 
   const handleCreateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!addFormData.name.trim()) {
+      showToast('Please enter full name', 'error');
+      return;
+    }
+    if (!addFormData.email.trim()) {
+      showToast('Please enter email address', 'error');
+      return;
+    }
+    if (!addFormData.phone.trim()) {
+      showToast('Please enter phone number', 'error');
+      return;
+    }
+    if (!addFormData.group) {
+      showToast('Please select a customer group', 'error');
+      return;
+    }
+    if (!addFormData.street.trim()) {
+      showToast('Please enter street address', 'error');
+      return;
+    }
+    if (!addFormData.city.trim()) {
+      showToast('Please enter city', 'error');
+      return;
+    }
+    if (!addFormData.state.trim()) {
+      showToast('Please enter state / province', 'error');
+      return;
+    }
+    if (!addFormData.zip.trim()) {
+      showToast('Please enter zip / postal code', 'error');
+      return;
+    }
+    if (!addFormData.tags.trim()) {
+      showToast('Please enter tags', 'error');
+      return;
+    }
+
     try {
       setIsSaving(true);
       const tagsArray = (addFormData.tags || '')
@@ -194,16 +242,16 @@ export const CustomerStudio: React.FC = () => {
       const created = await cmsService.createCustomer({
         name: addFormData.name.trim(),
         email: addFormData.email.trim(),
-        phone: addFormData.phone?.trim() || undefined,
+        phone: addFormData.phone.trim(),
         group: addFormData.group,
         tags: tagsArray.length > 0 ? tagsArray : ['New-Customer'],
         acceptsMarketing: addFormData.acceptsMarketing,
         address: {
           name: addFormData.name.trim(),
-          street: addFormData.street?.trim() || '123 Main Street',
-          city: addFormData.city?.trim() || 'New York',
-          state: addFormData.state?.trim() || 'NY',
-          zip: addFormData.zip?.trim() || '10001',
+          street: addFormData.street.trim(),
+          city: addFormData.city.trim(),
+          state: addFormData.state.trim(),
+          zip: addFormData.zip.trim(),
           country: addFormData.country?.trim() || 'United States',
         },
       });
@@ -271,7 +319,7 @@ export const CustomerStudio: React.FC = () => {
         />
       )}
 
-      {/* Header Banner - Updated to light mode design specs */} 
+      {/* Header Banner - Updated to light mode design specs */}
       <div className="p-6 sm:p-8 rounded-3xl bg-[#FFFFFF] border border-[#2C2C2E]/20 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
@@ -371,8 +419,8 @@ export const CustomerStudio: React.FC = () => {
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 shrink-0 ${isActive
-                    ? `${tab.color} shadow-md scale-102`
-                    : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                  ? `${tab.color} shadow-md scale-102`
+                  : 'bg-slate-100 dark:bg-accent text-slate-700 dark:text-slate-300 hover:bg-slate-200'
                   }`}
               >
                 <IconComp className="w-3.5 h-3.5" />
@@ -462,12 +510,12 @@ export const CustomerStudio: React.FC = () => {
                         <td className="py-4 px-6">
                           <span
                             className={`px-3 py-1 rounded-full font-black text-[10px] uppercase flex items-center gap-1 w-max ${grpUpper === 'VIP'
-                                ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                                : grpUpper === 'WHOLESALE'
-                                  ? 'bg-purple-100 text-purple-800 border border-purple-300'
-                                  : grpUpper === 'RETURNING'
-                                    ? 'bg-indigo-100 text-indigo-800'
-                                    : 'bg-blue-100 text-blue-800'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                              : grpUpper === 'WHOLESALE'
+                                ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                                : grpUpper === 'RETURNING'
+                                  ? 'bg-indigo-100 text-indigo-800'
+                                  : 'bg-blue-100 text-blue-800'
                               }`}
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-current" />
@@ -557,8 +605,13 @@ export const CustomerStudio: React.FC = () => {
 
       {/* CUSTOMER PROFILE DRAWER / MODAL */}
       {isProfileOpen && selectedCustomer && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden my-4 sm:my-8 max-h-[92vh] flex flex-col">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsProfileOpen(false);
+          }}
+        >
+          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden max-h-[88vh] sm:max-h-[90vh] flex flex-col">
             {/* Top Header */}
             <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/30 border-b border-slate-200/80 dark:border-border flex items-center justify-between gap-4 shrink-0">
               <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
@@ -576,15 +629,14 @@ export const CustomerStudio: React.FC = () => {
                       {selectedCustomer.name}
                     </h3>
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide border shrink-0 ${
-                        selectedCustomer.group === 'VIP'
-                          ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60'
-                          : selectedCustomer.group === 'NEW'
-                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/60'
-                            : selectedCustomer.group === 'WHOLESALE'
-                              ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/60'
-                              : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/60'
-                      }`}
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide border shrink-0 ${selectedCustomer.group === 'VIP'
+                        ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60'
+                        : selectedCustomer.group === 'NEW'
+                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/60'
+                          : selectedCustomer.group === 'WHOLESALE'
+                            ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/60'
+                            : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/60'
+                        }`}
                     >
                       {selectedCustomer.group}
                     </span>
@@ -625,7 +677,7 @@ export const CustomerStudio: React.FC = () => {
             </div>
 
             {/* Profile Drawer Content */}
-            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1">
               {/* KPI STAT CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-xs flex items-center justify-between">
@@ -739,11 +791,10 @@ export const CustomerStudio: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleToggleConsent('EMAIL')}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer border ${
-                          selectedCustomer.acceptsMarketing
-                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-300'
-                            : 'bg-slate-100 dark:bg-card border-slate-200 dark:border-border text-slate-600 dark:text-slate-400 hover:bg-slate-200/70'
-                        }`}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer border ${selectedCustomer.acceptsMarketing
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-300'
+                          : 'bg-slate-100 dark:bg-card border-slate-200 dark:border-border text-slate-600 dark:text-slate-400 hover:bg-slate-200/70'
+                          }`}
                       >
                         {selectedCustomer.acceptsMarketing ? '✓ Opted-In' : 'Unsubscribed'}
                       </button>
@@ -761,11 +812,10 @@ export const CustomerStudio: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleToggleConsent('SMS')}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer border ${
-                          selectedCustomer.acceptsSMSMarketing
-                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-300'
-                            : 'bg-slate-100 dark:bg-card border-slate-200 dark:border-border text-slate-600 dark:text-slate-400 hover:bg-slate-200/70'
-                        }`}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer border ${selectedCustomer.acceptsSMSMarketing
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-300'
+                          : 'bg-slate-100 dark:bg-card border-slate-200 dark:border-border text-slate-600 dark:text-slate-400 hover:bg-slate-200/70'
+                          }`}
                       >
                         {selectedCustomer.acceptsSMSMarketing ? '✓ Opted-In' : 'Unsubscribed'}
                       </button>
@@ -899,9 +949,14 @@ export const CustomerStudio: React.FC = () => {
 
       {/* EDIT GROUP & TAGS MODAL */}
       {isEditModalOpen && selectedCustomer && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/40 border-b border-slate-200/80 dark:border-border flex items-center justify-between">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden animate-in fade-in"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsEditModalOpen(false);
+          }}
+        >
+          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/40 border-b border-slate-200/80 dark:border-border flex items-center justify-between shrink-0">
               <div>
                 <h3 className="font-black text-lg text-slate-900 dark:text-foreground">Edit Customer Group & Tags</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Update segment categorization for {selectedCustomer.name}</p>
@@ -915,7 +970,7 @@ export const CustomerStudio: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSaveGroupAndTags} className="p-6 space-y-4">
+            <form onSubmit={handleSaveGroupAndTags} className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                   Customer Group Segment
@@ -968,9 +1023,14 @@ export const CustomerStudio: React.FC = () => {
 
       {/* ADD CUSTOMER MODAL */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden my-8">
-            <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/40 border-b border-slate-200/80 dark:border-border flex items-center justify-between">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden animate-in fade-in"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsAddModalOpen(false);
+          }}
+        >
+          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/40 border-b border-slate-200/80 dark:border-border flex items-center justify-between shrink-0">
               <div>
                 <h3 className="font-black text-lg text-slate-900 dark:text-foreground">Add New Customer</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Register customer profile and contact details</p>
@@ -978,13 +1038,13 @@ export const CustomerStudio: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-accent transition-colors"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-accent transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateCustomer} className="p-6 space-y-4">
+            <form onSubmit={handleCreateCustomer} className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Full Name *</label>
@@ -1011,9 +1071,10 @@ export const CustomerStudio: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Phone Number</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Phone Number *</label>
                   <input
                     type="text"
+                    required
                     value={addFormData.phone}
                     onChange={(e) => setAddFormData({ ...addFormData, phone: e.target.value })}
                     placeholder="+1 (555) 000-0000"
@@ -1022,8 +1083,9 @@ export const CustomerStudio: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Customer Group</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Customer Group *</label>
                   <select
+                    required
                     value={addFormData.group}
                     onChange={(e) =>
                       setAddFormData({ ...addFormData, group: e.target.value as CustomerGroup })
@@ -1039,9 +1101,10 @@ export const CustomerStudio: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Street Address</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Street Address *</label>
                 <input
                   type="text"
+                  required
                   value={addFormData.street}
                   onChange={(e) => setAddFormData({ ...addFormData, street: e.target.value })}
                   placeholder="742 Evergreen Terrace"
@@ -1051,9 +1114,10 @@ export const CustomerStudio: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">City</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">City *</label>
                   <input
                     type="text"
+                    required
                     value={addFormData.city}
                     onChange={(e) => setAddFormData({ ...addFormData, city: e.target.value })}
                     placeholder="New York"
@@ -1061,9 +1125,10 @@ export const CustomerStudio: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">State / Province</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">State / Province *</label>
                   <input
                     type="text"
+                    required
                     value={addFormData.state}
                     onChange={(e) => setAddFormData({ ...addFormData, state: e.target.value })}
                     placeholder="NY"
@@ -1074,9 +1139,10 @@ export const CustomerStudio: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Zip / Postal Code</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Zip / Postal Code *</label>
                   <input
                     type="text"
+                    required
                     value={addFormData.zip}
                     onChange={(e) => setAddFormData({ ...addFormData, zip: e.target.value })}
                     placeholder="10001"
@@ -1084,9 +1150,10 @@ export const CustomerStudio: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Tags (comma-separated)</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">Tags (comma-separated) *</label>
                   <input
                     type="text"
+                    required
                     value={addFormData.tags}
                     onChange={(e) => setAddFormData({ ...addFormData, tags: e.target.value })}
                     placeholder="VIP, Retail, Direct"

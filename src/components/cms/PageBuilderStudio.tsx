@@ -4068,6 +4068,33 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
     setDropIndex(null);
   };
 
+  const resolveStorefrontRoute = (slug: string, type: string) => {
+    let clean = (slug || '').trim();
+    if (!clean || clean === '/' || clean === 'home') return '';
+    if (
+      clean.startsWith('/contact') ||
+      clean.startsWith('/products') ||
+      clean.startsWith('/cart') ||
+      clean.startsWith('/checkout') ||
+      clean.startsWith('/account') ||
+      clean.startsWith('/pages/') ||
+      clean.startsWith('/policies/')
+    ) {
+      return clean;
+    }
+    const stripped = clean.replace(/^\/+/, '');
+    if (stripped === 'home') return '';
+    if (stripped === 'contact') return '/contact';
+    if (stripped === 'products' || stripped === 'catalog') return '/products';
+    if (stripped === 'cart') return '/cart';
+    if (stripped === 'checkout') return '/checkout';
+    if (type === 'POLICY' || stripped.includes('policy') || stripped.includes('terms') || stripped.includes('shipping') || stripped.includes('refund')) {
+      return `/policies/${stripped}`;
+    }
+    if (type === 'SYSTEM') return `/${stripped}`;
+    return `/pages/${stripped}`;
+  };
+
   // Save Page
   const handleSavePage = async () => {
     if (!pageTitle.trim()) {
@@ -4091,8 +4118,14 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
         metaDescription: metaDescription || undefined,
       };
 
-      if (initialPage?.id) {
-        await cmsService.updatePage(initialPage.id, payload);
+      const isRealExistingId =
+        Boolean(initialPage?.id) &&
+        !initialPage!.id.startsWith('ai_') &&
+        !initialPage!.id.startsWith('temp_') &&
+        !initialPage!.id.startsWith('pg-');
+
+      if (isRealExistingId) {
+        await cmsService.updatePage(initialPage!.id, payload);
         showToast('Page published successfully!');
       } else {
         await cmsService.createPage(payload);
@@ -4235,7 +4268,7 @@ export const PageBuilderStudio: React.FC<PageBuilderStudioProps> = ({
             <span className="hidden sm:inline">AI Page</span>
           </button>
           <a
-            href={getStorefrontUrl(activeStore, pageRoute)}
+            href={getStorefrontUrl(activeStore, resolveStorefrontRoute(pageSlug, pageType))}
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-emerald-700 hover:text-emerald-800 text-xs font-bold border border-slate-200 transition"

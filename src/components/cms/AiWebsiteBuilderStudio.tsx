@@ -34,8 +34,13 @@ import {
   ArrowLeft,
   MoreHorizontal,
   Palette,
+  ChevronLeft,
+  ChevronRight,
+  Wand2,
+  Compass,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { useToast } from '@/src/context/ToastContext';
 
 import {
   ClaymorphicScreenRenderer,
@@ -72,7 +77,8 @@ import {
 
 // 8 Core eCommerce Website Pages matching the chosen template & website builder flow
 export const INITIAL_AURAFIT_SCREENS: StitchScreenData[] = getScreensForTemplate(
-  getTemplateConfig('nova-tech')
+  getTemplateConfig('nova-tech'),
+  'desktop'
 ) as StitchScreenData[];
 
 // Initial modular website sections
@@ -173,12 +179,18 @@ export function AiWebsiteBuilderStudio({
   isFullscreenStandalone?: boolean;
 }) {
   const router = useRouter();
+  const { showToast } = useToast();
 
   // Active Chosen Store Template & Readdy Custom Generated Template
   const [activeTemplateSlug, setActiveTemplateSlug] = useState<string>('nova-tech');
   const [customTemplateConfig, setCustomTemplateConfig] = useState<StorefrontTemplateConfig | null>(null);
   const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState<boolean>(false);
   const activeTemplate: StorefrontTemplateConfig = customTemplateConfig || getTemplateConfig(activeTemplateSlug);
+
+  // Studio View Mode: 'focused' (Single page focused view) vs 'canvas' (Multi-page canvas flow)
+  const [studioViewMode, setStudioViewMode] = useState<'focused' | 'canvas'>('focused');
+  // Inline quick AI prompt text
+  const [inlinePromptText, setInlinePromptText] = useState<string>('');
 
   // Readdy AI Prompt Modal State
   const [isPromptModalOpen, setIsPromptModalOpen] = useState<boolean>(false);
@@ -219,7 +231,7 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
   // Global Viewport Mode ('desktop' | 'tablet' | 'mobile' | 'mixed')
   const [globalViewportMode, setGlobalViewportMode] = useState<
     'desktop' | 'tablet' | 'mobile' | 'mixed'
-  >('mixed');
+  >('desktop');
 
   // Website Sections State per Page
   const [pageSections, setPageSections] = useState<Record<number, WebsiteSectionItem[]>>(
@@ -271,7 +283,7 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
           : `${baseName} Storefront`;
         setProjectTitle(formattedTitle);
 
-        const templateScreens = getScreensForTemplate(tmpl) as StitchScreenData[];
+        const templateScreens = getScreensForTemplate(tmpl, 'desktop') as StitchScreenData[];
         setScreens(templateScreens);
 
         const newTheme: ClaymorphicThemeConfig = {
@@ -304,7 +316,7 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
     setActiveTemplateSlug(tmpl.slug);
     setIsTemplateDropdownOpen(false);
 
-    const newScreens = getScreensForTemplate(tmpl) as StitchScreenData[];
+    const newScreens = getScreensForTemplate(tmpl, 'desktop') as StitchScreenData[];
     setScreens(newScreens);
     setProjectTitle(`${tmpl.name} Storefront`);
 
@@ -572,10 +584,16 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
     };
   }, []);
 
-  // Fit All Screens to Viewport (100% scale default)
+  // Fit All Screens to Viewport
   const handleFitToScreen = () => {
-    setZoomScale(1.0);
-    setPanPosition({ x: 80, y: 50 });
+    const canvasWidth = canvasRef.current?.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1440);
+    const totalArtboardsWidth = screens.reduce((sum, s) => {
+      const w = s.viewport === 'desktop' ? 920 : s.viewport === 'tablet' ? 640 : 320;
+      return sum + w + 48;
+    }, 0);
+    const calculatedScale = Math.max(0.12, Math.min(1.0, (canvasWidth - 120) / (totalArtboardsWidth || 3500)));
+    setZoomScale(calculatedScale);
+    setPanPosition({ x: 40, y: 40 });
   };
 
   // Focus on specific screen
@@ -658,7 +676,7 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
         };
         setClayTheme(newTheme);
 
-        const newScreens = getScreensForTemplate(res.templateConfig) as StitchScreenData[];
+        const newScreens = getScreensForTemplate(res.templateConfig, 'desktop') as StitchScreenData[];
         setScreens(newScreens);
 
         // Update page sections
@@ -861,7 +879,10 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
         }
 
         // Refresh screens
-        const refreshedScreens = getScreensForTemplate(updatedTmpl) as StitchScreenData[];
+        const refreshedScreens = getScreensForTemplate(
+          updatedTmpl,
+          globalViewportMode === 'mixed' ? 'desktop' : globalViewportMode
+        ) as StitchScreenData[];
         setScreens(refreshedScreens);
 
         // Assistant reply message
@@ -994,6 +1015,7 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
       const storeSetup = await cmsService.getStoreSetup().catch(() => null);
       const storeId = storeSetup?.id;
 
+      // 1. Persist AI website project manifest & sections
       await cmsService.saveAiWebsite(
         {
           brandName: activeTemplate.brandName,
@@ -1016,20 +1038,49 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
         storeId
       );
 
+      // 2. Persist active template preference and theme tokens to store theme API
+      await cmsService.updateStoreTheme({
+        activeTemplateSlug: activeTemplate.slug,
+        themePrimaryColor: clayTheme.primaryColor,
+        themeSecondaryColor: clayTheme.accentColor,
+        themeAccentColor: clayTheme.accentColor,
+        themeBackgroundColor: clayTheme.canvasBg,
+        themeCardBackgroundColor: clayTheme.cardBg,
+        themeTextColor: clayTheme.textColor,
+        themeTextMutedColor: clayTheme.textMuted,
+        themeHeadingFont: clayTheme.fontFamily.split(',')[0].replace(/'/g, '').trim(),
+        themeBodyFont: clayTheme.fontFamily.split(',')[0].replace(/'/g, '').trim(),
+        themeBorderRadius: `${clayTheme.borderRadius}px`,
+      } as any).catch((err) => console.warn('Store theme sync notice:', err));
+
+      // 3. Sync active template slug to Store setup
+      await cmsService.updateStoreSetup({
+        activeTemplateSlug: activeTemplate.slug,
+      } as any).catch((err) => console.warn('Store setup sync notice:', err));
+
+      // 4. Publish template to storefront
       await cmsService.publishTemplate(activeTemplate.slug).catch(() => null);
 
       try {
         confetti({
-          particleCount: 60,
-          spread: 70,
+          particleCount: 75,
+          spread: 80,
           origin: { y: 0.3 },
         });
       } catch {}
 
-      alert(`✅ Successfully saved and activated "${activeTemplate.brandName}" on your live store!`);
+      showToast({
+        type: 'success',
+        title: 'Storefront Saved & Live!',
+        message: `"${activeTemplate.brandName}" (${activeTemplate.name}) has been saved and activated for your store.`,
+      });
     } catch (err: any) {
       console.error('Failed to save to store:', err);
-      alert('Failed to save to store. Please verify your connection.');
+      showToast({
+        type: 'error',
+        title: 'Save Failed',
+        message: err?.message || 'Failed to save store configuration. Please verify your connection.',
+      });
     } finally {
       setIsSavingToStore(false);
     }
@@ -1160,6 +1211,19 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
 
   const isVisibleToggle = (curr: boolean) => ({ isVisible: !curr });
 
+  // Handle inline quick AI prompt submission
+  const handleInlinePromptSubmit = () => {
+    if (!inlinePromptText.trim() || isGenerating) return;
+    const prompt = inlinePromptText.trim();
+    setInlinePromptText('');
+    handleExecuteAiPrompt(prompt);
+  };
+
+  const handleQuickPromptClick = (prompt: string) => {
+    if (isGenerating) return;
+    handleExecuteAiPrompt(prompt);
+  };
+
   // Active Screen Metadata
   const activeScreen = screens.find((s) => s.number === activeScreenIndex) || screens[0];
   const activeSections = pageSections[activeScreenIndex] || [];
@@ -1276,56 +1340,80 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
           </div>
         </div>
 
-        {/* Center: Sleek Icon-Only Viewport Toggle */}
-        <div className="hidden md:flex items-center bg-white/80 dark:bg-[#20232F]/80 border border-[#DDD8C9] dark:border-[#2F3442] p-0.5 rounded-lg shadow-2xs">
-          <button
-            type="button"
-            onClick={() => handleSetGlobalViewport('desktop')}
-            className={`p-1.5 rounded-md transition cursor-pointer ${
-              globalViewportMode === 'desktop'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-            }`}
-            title="Desktop View (1440px)"
-          >
-            <Monitor className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSetGlobalViewport('tablet')}
-            className={`p-1.5 rounded-md transition cursor-pointer ${
-              globalViewportMode === 'tablet'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-            }`}
-            title="Tablet View (768px)"
-          >
-            <Tablet className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSetGlobalViewport('mobile')}
-            className={`p-1.5 rounded-md transition cursor-pointer ${
-              globalViewportMode === 'mobile'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-            }`}
-            title="Mobile View (375px)"
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSetGlobalViewport('mixed')}
-            className={`p-1.5 rounded-md transition cursor-pointer ${
-              globalViewportMode === 'mixed'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-            }`}
-            title="All Devices / Multi-Flow Canvas"
-          >
-            <Layout className="w-3.5 h-3.5" />
-          </button>
+        {/* Center: Device Viewport & Studio Mode Toggles */}
+        <div className="hidden md:flex items-center gap-2">
+          {/* Studio View Mode: Focused vs Canvas Flow */}
+          <div className="flex items-center bg-white/80 dark:bg-[#20232F]/80 border border-[#DDD8C9] dark:border-[#2F3442] p-0.5 rounded-lg shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setStudioViewMode('focused')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${
+                studioViewMode === 'focused'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              title="Single-Page Focused Workspace"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Focused View</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStudioViewMode('canvas');
+                setTimeout(() => handleFitToScreen(), 50);
+              }}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${
+                studioViewMode === 'canvas'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              title="All-Pages Multi-Artboard Canvas"
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Canvas Flow</span>
+            </button>
+          </div>
+
+          {/* Device Viewport Toggle */}
+          <div className="flex items-center bg-white/80 dark:bg-[#20232F]/80 border border-[#DDD8C9] dark:border-[#2F3442] p-0.5 rounded-lg shadow-2xs">
+            <button
+              type="button"
+              onClick={() => handleSetGlobalViewport('desktop')}
+              className={`p-1.5 rounded-md transition cursor-pointer ${
+                globalViewportMode === 'desktop'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              title="Desktop View (1440px)"
+            >
+              <Monitor className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSetGlobalViewport('tablet')}
+              className={`p-1.5 rounded-md transition cursor-pointer ${
+                globalViewportMode === 'tablet'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              title="Tablet View (768px)"
+            >
+              <Tablet className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSetGlobalViewport('mobile')}
+              className={`p-1.5 rounded-md transition cursor-pointer ${
+                globalViewportMode === 'mobile'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              title="Mobile View (375px)"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Right: New Design + Save + Publish + More Menu + Avatar */}
@@ -1461,79 +1549,284 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
       </header>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 2. INFINITE DOT GRID CANVAS WITH RESPONSIVE ARTBOARDS         */}
+      {/* 2. READDY AI STUDIO BAR (Prompt Bar, Presets & Page Navigation)*/}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div
-        ref={canvasRef}
-        id="canvas-grid-bg"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        className={`flex-1 relative overflow-hidden select-none ${
-          isPanning
-            ? 'cursor-grabbing'
-            : activeTool === 'pan' || isSpacePressed
-            ? 'cursor-grab'
-            : 'cursor-default'
-        }`}
-        style={{
-          backgroundImage:
-            clayTheme.mode === 'dark'
-              ? 'radial-gradient(#252936 1.5px, transparent 1.5px)'
-              : 'radial-gradient(#D5D0C0 1.5px, transparent 1.5px)',
-          backgroundSize: '24px 24px',
-          backgroundPosition: `${panPosition.x}px ${panPosition.y}px`,
-        }}
-      >
-        {/* Transformable Canvas Surface */}
-        <div
-          id="canvas-surface-area"
-          className="absolute transition-transform duration-75 ease-out flex items-start gap-12 p-8"
-          style={{
-            transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoomScale})`,
-            transformOrigin: '0 0',
-          }}
-        >
-          {screens.map((screen) => {
-            const screenViewport = screen.viewport || 'mobile';
-
-            return (
-              <div key={screen.id} className="flex flex-col items-start gap-2.5 shrink-0">
-                {/* Rendered Device / Desktop Artboard */}
-                <ClaymorphicScreenRenderer
-                  screen={screen}
-                  template={activeTemplate}
-                  theme={clayTheme}
-                  isActive={activeScreenIndex === screen.number}
-                  viewport={screenViewport}
-                  onSelect={() => setActiveScreenIndex(screen.number)}
-                  onNavigateToScreen={(targetNum) => handleFocusScreen(targetNum)}
-                  onSelectSection={(secId) => {
-                    setActiveScreenIndex(screen.number);
-                    setSelectedSectionId(secId);
-                    setIsSectionInspectorOpen(true);
-                  }}
-                  realProducts={realStoreProducts}
-                  useRealProducts={useRealStoreProducts}
-                  scale={1}
-                />
-              </div>
-            );
-          })}
-
-          {/* Add Screen Artboard Pill Card */}
-          <div
-            onClick={handleAddNewScreen}
-            className="w-[320px] h-[670px] rounded-[38px] border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500/60 dark:hover:border-emerald-400/60 transition flex flex-col items-center justify-center gap-3 text-slate-500 dark:text-slate-400 hover:text-emerald-600 cursor-pointer shrink-0 bg-white/20 dark:bg-black/10"
-          >
-            <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center">
-              <Plus className="w-6 h-6" />
+      <div className="border-b border-[#E8E3D5] dark:border-[#262A36] bg-[#FAF8F2]/95 dark:bg-[#181A22]/95 px-4 py-2.5 z-20 shrink-0 flex flex-col gap-2 shadow-2xs">
+        {/* AI Prompt Input & Action Bar */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex-1 min-w-[280px] relative flex items-center">
+            <div className="absolute left-3 text-emerald-600 dark:text-emerald-400 pointer-events-none">
+              <Sparkles className="w-4 h-4 animate-pulse" />
             </div>
-            <span className="font-bold text-sm">Add New Page Artboard</span>
-            <span className="text-xs opacity-60">Synthesize customized eCommerce route</span>
+            <input
+              type="text"
+              value={inlinePromptText}
+              onChange={(e) => setInlinePromptText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleInlinePromptSubmit();
+              }}
+              disabled={isGenerating}
+              placeholder='Ask AI: e.g. "Change primary color to emerald green", "Add a 20% sale banner", "Make buttons rounded-full"...'
+              className="w-full pl-9 pr-28 py-1.5 text-xs rounded-xl bg-white dark:bg-[#20232F] border border-[#DDD8C9] dark:border-[#2F3442] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-2xs transition"
+            />
+            <button
+              type="button"
+              onClick={handleInlinePromptSubmit}
+              disabled={isGenerating || !inlinePromptText.trim()}
+              className="absolute right-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-semibold transition cursor-pointer disabled:opacity-40 flex items-center gap-1 shadow-xs"
+            >
+              <span>{isGenerating ? 'Synthesizing...' : 'Apply with AI'}</span>
+            </button>
+          </div>
+
+          {/* Quick Preset Action Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            <button
+              type="button"
+              onClick={() => handleQuickPromptClick('Change primary color to emerald green')}
+              disabled={isGenerating}
+              className="px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition cursor-pointer shrink-0"
+            >
+              🎨 Emerald
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickPromptClick('Change primary color to terracotta orange')}
+              disabled={isGenerating}
+              className="px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition cursor-pointer shrink-0"
+            >
+              🟠 Terracotta
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickPromptClick('Change primary color to cobalt blue')}
+              disabled={isGenerating}
+              className="px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition cursor-pointer shrink-0"
+            >
+              🔵 Cobalt
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickPromptClick('Switch to Dark Obsidian luxury theme')}
+              disabled={isGenerating}
+              className="px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-slate-900 text-white dark:bg-slate-800 border border-slate-700 hover:bg-black transition cursor-pointer shrink-0"
+            >
+              🖤 Dark Mode
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickPromptClick('Add a 20% discount sale hero banner with countdown')}
+              disabled={isGenerating}
+              className="px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 transition cursor-pointer shrink-0"
+            >
+              🏷️ 20% Sale Hero
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickPromptClick('Add verified customer reviews section')}
+              disabled={isGenerating}
+              className="px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition cursor-pointer shrink-0"
+            >
+              ⭐ 5★ Reviews
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickPromptClick('Make all buttons rounded-full pill geometry')}
+              disabled={isGenerating}
+              className="px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 transition cursor-pointer shrink-0"
+            >
+              🔘 Pill Buttons
+            </button>
+          </div>
+        </div>
+
+        {/* Active Generation Step Progress Indicator */}
+        {isGenerating && (
+          <div className="flex items-center gap-2 py-1 px-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs animate-pulse">
+            <Sparkles className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+            <span className="font-medium">{generationStepMessage || 'Readdy AI: Synthesizing storefront updates...'}</span>
+          </div>
+        )}
+
+        {/* Page Selector Tabs */}
+        <div className="flex items-center justify-between gap-2 pt-1 border-t border-black/5 dark:border-white/5 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1.5">
+            {screens.map((screen) => {
+              const isCurrent = activeScreenIndex === screen.number;
+              return (
+                <button
+                  key={screen.id}
+                  type="button"
+                  onClick={() => handleFocusScreen(screen.number)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 ${
+                    isCurrent
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isCurrent ? 'bg-emerald-400' : 'bg-slate-300 dark:bg-slate-600'
+                    }`}
+                  />
+                  <span>{screen.number}. {screen.title.split(' ')[0]}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Previous / Next Page Controls */}
+          <div className="hidden sm:flex items-center gap-1 shrink-0 text-slate-500 dark:text-slate-400">
+            <button
+              type="button"
+              disabled={activeScreenIndex <= 1}
+              onClick={() => handleFocusScreen(Math.max(1, activeScreenIndex - 1))}
+              className="p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-30 cursor-pointer"
+              title="Previous Page"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <span className="text-[11px] font-mono px-1">
+              {activeScreenIndex} / {screens.length}
+            </span>
+            <button
+              type="button"
+              disabled={activeScreenIndex >= screens.length}
+              onClick={() => handleFocusScreen(Math.min(screens.length, activeScreenIndex + 1))}
+              className="p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-30 cursor-pointer"
+              title="Next Page"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 3. MAIN WORKSPACE (Focused Single Page OR Multi-Artboard Canvas)*/}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {studioViewMode === 'focused' ? (
+        /* Focused Page Preview Workspace (Centered & Responsive) */
+        <div className="flex-1 relative overflow-y-auto p-4 sm:p-6 flex flex-col items-center justify-start bg-[#FAF8F2] dark:bg-[#14151B]">
+          <div className="w-full flex justify-center py-2 animate-in fade-in duration-150">
+            <ClaymorphicScreenRenderer
+              screen={activeScreen}
+              template={activeTemplate}
+              theme={clayTheme}
+              isActive={true}
+              viewport={globalViewportMode === 'mixed' ? activeScreen.viewport || 'desktop' : globalViewportMode}
+              customWidth={
+                globalViewportMode === 'desktop'
+                  ? '1040px'
+                  : globalViewportMode === 'tablet'
+                  ? '720px'
+                  : '360px'
+              }
+              customHeight={'calc(100vh - 220px)'}
+              onSelect={() => {}}
+              onNavigateToScreen={(targetNum) => handleFocusScreen(targetNum)}
+              onSelectSection={(secId) => {
+                setSelectedSectionId(secId);
+                setIsSectionInspectorOpen(true);
+              }}
+              realProducts={realStoreProducts}
+              useRealProducts={useRealStoreProducts}
+              scale={1}
+            />
+          </div>
+        </div>
+      ) : (
+        /* Infinite Multi-Artboard Canvas Workspace */
+        <div
+          ref={canvasRef}
+          id="canvas-grid-bg"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          className={`flex-1 relative overflow-hidden select-none ${
+            isPanning
+              ? 'cursor-grabbing'
+              : activeTool === 'pan' || isSpacePressed
+              ? 'cursor-grab'
+              : 'cursor-default'
+          }`}
+          style={{
+            backgroundImage:
+              clayTheme.mode === 'dark'
+                ? 'radial-gradient(#252936 1.5px, transparent 1.5px)'
+                : 'radial-gradient(#D5D0C0 1.5px, transparent 1.5px)',
+            backgroundSize: '24px 24px',
+            backgroundPosition: `${panPosition.x}px ${panPosition.y}px`,
+          }}
+        >
+          {/* Transformable Canvas Surface */}
+          <div
+            id="canvas-surface-area"
+            className="absolute transition-transform duration-75 ease-out flex items-start gap-12 p-8"
+            style={{
+              transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoomScale})`,
+              transformOrigin: '0 0',
+            }}
+          >
+            {screens.map((screen) => {
+              const screenViewport =
+                screen.viewport || (globalViewportMode === 'mixed' ? 'desktop' : globalViewportMode);
+
+              return (
+                <div key={screen.id} className="flex flex-col items-start gap-2.5 shrink-0 group">
+                  {/* Quick Focus Button Above Artboard */}
+                  <div className="flex items-center justify-between w-full px-2">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-mono">
+                      {screen.number}. {screen.title}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveScreenIndex(screen.number);
+                        setStudioViewMode('focused');
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition px-2 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-bold cursor-pointer"
+                    >
+                      Focus Page
+                    </button>
+                  </div>
+
+                  {/* Rendered Device / Desktop Artboard */}
+                  <ClaymorphicScreenRenderer
+                    screen={screen}
+                    template={activeTemplate}
+                    theme={clayTheme}
+                    isActive={activeScreenIndex === screen.number}
+                    viewport={screenViewport}
+                    onSelect={() => setActiveScreenIndex(screen.number)}
+                    onNavigateToScreen={(targetNum) => handleFocusScreen(targetNum)}
+                    onSelectSection={(secId) => {
+                      setActiveScreenIndex(screen.number);
+                      setSelectedSectionId(secId);
+                      setIsSectionInspectorOpen(true);
+                    }}
+                    realProducts={realStoreProducts}
+                    useRealProducts={useRealStoreProducts}
+                    scale={1}
+                  />
+                </div>
+              );
+            })}
+
+            {/* Add Screen Artboard Pill Card */}
+            <div
+              onClick={handleAddNewScreen}
+              className="w-[320px] h-[670px] rounded-[38px] border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500/60 dark:hover:border-emerald-400/60 transition flex flex-col items-center justify-center gap-3 text-slate-500 dark:text-slate-400 hover:text-emerald-600 cursor-pointer shrink-0 bg-white/20 dark:bg-black/10"
+            >
+              <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center">
+                <Plus className="w-6 h-6" />
+              </div>
+              <span className="font-bold text-sm">Add New Page Artboard</span>
+              <span className="text-xs opacity-60">Synthesize customized eCommerce route</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 3. FLOATING VERTICAL RIGHT TOOLBAR                            */}
@@ -1648,9 +1941,13 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
         <button
           type="button"
           onClick={() =>
-            alert(
-              'OmniStore AI Website Builder Studio (Google Stitch Engine)\n\n• Switch Viewports: Toggle between 1440px Desktop, 768px Tablet, and 375px Mobile per screen or globally.\n• Modular Sections: Click "Sections" on any artboard to customize headlines, reorder blocks, or add new sections.\n• Sync Store Catalog: Toggle "My Store Catalog" to pull live products from your CMS.\n• Live Storefront: Click "Publish Store" to deploy to your production domain with global CDN.'
-            )
+            showToast({
+              type: 'info',
+              title: 'AI Website Builder Studio',
+              message:
+                'Focused View lets you preview & edit each page at 1440px desktop, tablet or mobile. Canvas Flow displays all 8 pages together. Use the AI bar at the top or Copilot to restyle.',
+              duration: 6000,
+            })
           }
           className="w-8 h-8 rounded-full bg-[#FAF8F2]/95 dark:bg-[#1B1D24]/95 backdrop-blur-xl border border-[#E5E0D3] dark:border-[#2E323D] shadow-xl flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-black dark:hover:text-white transition cursor-pointer"
           title="Studio Help"
