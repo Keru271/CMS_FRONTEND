@@ -8,6 +8,7 @@ import { StoreSetupData, StoreTemplate } from '@/src/types';
 import { cmsService, TEMPLATE_PREVIEW_FALLBACKS } from '@/src/services/cmsService';
 import { useCMSContext } from '@/src/context/CMSContext';
 import { VendorSmtpSettings } from './VendorSmtpSettings';
+import { PhoneInputWithCountry } from '@/src/components/ui/PhoneInputWithCountry';
 import {
   Store,
   Image as ImageIcon,
@@ -724,16 +725,12 @@ export const StoreSetup: React.FC<StoreSetupProps> = ({ onSaved }) => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-indigo-500" />
-                    <span>Support Phone Number</span>
-                  </label>
-                  <input
-                    type="tel"
+                  <PhoneInputWithCountry
+                    label="Support Phone Number"
                     value={formData.contactPhone || ''}
-                    onChange={(e) => handleChange('contactPhone', e.target.value)}
-                    placeholder="+1 (555) 019-2834"
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-card text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onChange={(val) => handleChange('contactPhone', val)}
+                    placeholder="98765 43210"
+                    defaultCountryCode="+91"
                   />
                 </div>
               </div>

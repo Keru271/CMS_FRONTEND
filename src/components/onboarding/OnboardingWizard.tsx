@@ -7,6 +7,7 @@ import { cmsService } from '@/src/services/cmsService';
 import { StoreSetupData, CMSProduct, StoreTemplate } from '@/src/types';
 import { getCurrencySymbol } from '@/src/lib/currency';
 import { AiStoreBuilderModal } from '@/src/components/ai/AiStoreBuilderModal';
+import { PhoneInputWithCountry } from '@/src/components/ui/PhoneInputWithCountry';
 import {
   Store,
   Sparkles,
@@ -712,35 +713,23 @@ export const OnboardingWizard: React.FC = () => {
                 {/* Phone Numbers */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
-                      Support Phone Number
-                    </label>
-                    <div className="relative">
-                      <Phone className="w-4 h-4 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="tel"
-                        value={formData.contactPhone}
-                        onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                        placeholder="+91 98765 43210"
-                        className="w-full pl-11 pr-4 py-3 rounded-lg border border-zinc-300 bg-white text-xs font-mono font-semibold text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
-                      />
-                    </div>
+                    <PhoneInputWithCountry
+                      label="Support Phone Number"
+                      value={formData.contactPhone}
+                      onChange={(val) => setFormData({ ...formData, contactPhone: val })}
+                      placeholder="98765 43210"
+                      defaultCountryCode="+91"
+                    />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-mono font-bold text-zinc-800 uppercase tracking-wide">
-                      WhatsApp Business Support (Optional)
-                    </label>
-                    <div className="relative">
-                      <MessageCircle className="w-4 h-4 text-emerald-600 absolute left-4 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="tel"
-                        value={formData.whatsappNumber}
-                        onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                        placeholder="+91 98765 43210"
-                        className="w-full pl-11 pr-4 py-3 rounded-lg border border-zinc-300 bg-white text-xs font-mono font-semibold text-zinc-950 placeholder:text-zinc-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
-                      />
-                    </div>
+                    <PhoneInputWithCountry
+                      label="WhatsApp Business Support (Optional)"
+                      value={formData.whatsappNumber}
+                      onChange={(val) => setFormData({ ...formData, whatsappNumber: val })}
+                      placeholder="98765 43210"
+                      defaultCountryCode="+91"
+                    />
                   </div>
                 </div>
 

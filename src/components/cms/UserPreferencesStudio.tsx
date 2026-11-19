@@ -7,6 +7,7 @@ import { useTranslation } from '@/src/context/LanguageContext';
 import { cmsService } from '@/src/services/cmsService';
 import { SupportedLanguage } from '@/src/lib/i18n';
 import { UserPreferences } from '@/src/types';
+import { PhoneInputWithCountry } from '@/src/components/ui/PhoneInputWithCountry';
 import {
   User,
   Globe,
@@ -464,15 +465,12 @@ export const UserPreferencesStudio: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5 font-sans">
-                    Contact Phone Number
-                  </label>
-                  <input
-                    type="tel"
+                  <PhoneInputWithCountry
+                    label="Contact Phone Number"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-sans text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100 transition-all shadow-xs"
-                    placeholder="+91 98765 43210"
+                    onChange={(val) => setPhone(val)}
+                    placeholder="98765 43210"
+                    defaultCountryCode="+91"
                   />
                 </div>
 

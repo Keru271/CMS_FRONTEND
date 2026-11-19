@@ -21,6 +21,7 @@ import {
 import { MerchantUser } from '@/src/types';
 import { cmsService } from '@/src/services/cmsService';
 import { TokenResponse, useGoogleLogin } from '@react-oauth/google';
+import { PhoneInputWithCountry } from '@/src/components/ui/PhoneInputWithCountry';
 
 interface MerchantAuthModalProps {
   onSuccess: (merchant: MerchantUser, mode: 'register' | 'login' | 'verify') => void;
@@ -622,18 +623,18 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                     }`}
                   >
                     <Phone className="w-4 h-4 text-slate-500 dark:text-[#00E5FF] shrink-0" />
-                    <div className="flex-1">
-                      <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block leading-tight">
+                    <div className="flex-1 min-w-0">
+                      <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400 block leading-tight mb-1">
                         Mobile Number
                       </label>
-                      <input
+                      <PhoneInputWithCountry
                         name="mobileNumber"
-                        type="tel"
-                        placeholder="+1 555-0199"
+                        variant="auth"
                         value={registerFormik.values.mobileNumber}
-                        onChange={registerFormik.handleChange}
+                        onChange={(val) => registerFormik.setFieldValue('mobileNumber', val)}
                         onBlur={registerFormik.handleBlur}
-                        className="w-full bg-transparent text-xs font-semibold text-slate-900 dark:text-white outline-none"
+                        placeholder="98765 43210"
+                        defaultCountryCode="+91"
                       />
                     </div>
                   </div>
