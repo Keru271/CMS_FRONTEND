@@ -21,7 +21,7 @@ interface CMSContextType {
   // Multi-Store Portfolio Management
   stores: CMSStore[];
   activeStore: CMSStore | null;
-  switchActiveStore: (storeId: string) => Promise<void>;
+  switchActiveStore: (storeId: string, directStore?: CMSStore) => Promise<void>;
   createNewStore: (storeData: CreateStorePayload) => Promise<CMSStore>;
   refreshStores: () => Promise<CMSStore[]>;
   isCreateStoreModalOpen: boolean;
@@ -304,8 +304,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [router]);
 
   // 1-Click Store Switcher
-  const switchActiveStore = async (storeId: string) => {
-    const targetStore = stores.find((s) => s.id === storeId);
+  const switchActiveStore = async (storeId: string, directStore?: CMSStore) => {
+    const targetStore = directStore || stores.find((s) => s.id === storeId);
     if (!targetStore) return;
 
     cmsService.setActiveStoreId(targetStore.id);
@@ -341,7 +341,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const newStore = await cmsService.createStore(storePayload);
       const updatedStores = [newStore, ...stores.filter((s) => s.id !== newStore.id)];
       setStores(updatedStores);
-      await switchActiveStore(newStore.id);
+      await switchActiveStore(newStore.id, newStore);
       setIsCreateStoreModalOpen(false);
       return newStore;
     } catch (err) {

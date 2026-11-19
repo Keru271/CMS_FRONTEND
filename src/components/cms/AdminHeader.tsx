@@ -154,10 +154,10 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                     setIsStoreMenuOpen(false);
                     setIsCreateStoreModalOpen(true);
                   }}
-                  className="text-[11px] font-semibold text-sky-600 dark:text-[#00E5FF] hover:underline flex items-center gap-1 cursor-pointer"
+                  className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
                 >
-                  <Plus className="w-3 h-3" />
-                  <span>New</span>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Add Store</span>
                 </button>
               </div>
 
@@ -186,7 +186,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                       onClick={() => handleSelectStore(st.id)}
                       disabled={isSwitching}
                       className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${isSelected
-                          ? 'bg-sky-50 dark:bg-[#00E5FF]/10 text-sky-700 dark:text-[#00E5FF] border border-sky-200 dark:border-[#00E5FF]/30 font-semibold'
+                          ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-semibold'
                           : 'text-slate-700 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#252525] hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
@@ -203,7 +203,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                         >
                           {isPending ? 'Pending' : 'Live'}
                         </span>
-                        {isSelected && <Check className="w-4 h-4 text-sky-600 dark:text-[#00E5FF] shrink-0" />}
+                        {isSelected && <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />}
                       </div>
                     </button>
                   );

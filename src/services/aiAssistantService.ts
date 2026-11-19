@@ -768,7 +768,14 @@ class AIAssistantService {
     userMessage: string,
     context: StoreContextData,
     history: ChatMessage[] = [],
-  ): Promise<{ content: string; actions?: ChatAction[]; form?: ChatInteractiveForm; model?: string }> {
+  ): Promise<{
+    content: string;
+    actions?: ChatAction[];
+    form?: ChatInteractiveForm;
+    model?: string;
+    creditsDeducted?: number;
+    creditsRemaining?: number;
+  }> {
     const storeId = context.merchantData?.store?.id;
     const currency = (context.currency || (context.merchantData?.store as any)?.currency || 'INR').toUpperCase();
     const currencySymbol =
@@ -812,10 +819,20 @@ class AIAssistantService {
           content,
           actions: agentRes.actions,
           form,
-          model: agentRes.model || 'Default Text',
+          model: agentRes.model || 'Gemini 2.5 Flash',
+          creditsDeducted: agentRes.creditsDeducted,
+          creditsRemaining: agentRes.creditsRemaining,
         };
       }
-    } catch (agentErr) {
+    } catch (agentErr: any) {
+      if (agentErr?.response?.status === 403 || agentErr?.response?.data?.code === 'INSUFFICIENT_AI_CREDITS') {
+        const errorMsg = agentErr?.response?.data?.message || 'Insufficient AI credits. Please recharge your balance or upgrade your plan in Billing.';
+        return {
+          content: `⚠️ ${errorMsg}`,
+          model: 'Gemini Copilot',
+          creditsRemaining: agentErr?.response?.data?.availableCredits ?? 0,
+        };
+      }
       console.warn('Backend runAiAgent failed, attempting copilotChat fallback:', agentErr);
       try {
         const historyPayload = history.slice(-25).map((h) => ({
@@ -840,10 +857,20 @@ class AIAssistantService {
             content,
             actions: backendRes.actions,
             form,
-            model: backendRes.model || 'Default Text',
+            model: backendRes.model || 'Gemini 2.5 Flash',
+            creditsDeducted: backendRes.creditsDeducted,
+            creditsRemaining: backendRes.creditsRemaining,
           };
         }
-      } catch (backendErr) {
+      } catch (backendErr: any) {
+        if (backendErr?.response?.status === 403 || backendErr?.response?.data?.code === 'INSUFFICIENT_AI_CREDITS') {
+          const errorMsg = backendErr?.response?.data?.message || 'Insufficient AI credits. Please recharge your balance or upgrade your plan in Billing.';
+          return {
+            content: `⚠️ ${errorMsg}`,
+            model: 'Gemini Copilot',
+            creditsRemaining: backendErr?.response?.data?.availableCredits ?? 0,
+          };
+        }
         console.warn('Backend copilotChat endpoint failed, using client heuristic engine:', backendErr);
       }
     }

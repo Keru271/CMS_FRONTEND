@@ -9,11 +9,9 @@ import {
   Globe,
   Coins,
   Palette,
-  Layers,
-  ArrowRight,
   RefreshCw,
-  Tag,
   ShieldCheck,
+  AlertCircle,
 } from 'lucide-react';
 import { useCMS } from '@/src/context/CMSContext';
 import { cmsService } from '@/src/services/cmsService';
@@ -60,11 +58,12 @@ export const CreateStoreModal: React.FC = () => {
     if (!isCreateStoreModalOpen) return;
     let isMounted = true;
     setIsLoadingTemplates(true);
+    setErrorMessage(null);
     cmsService
       .getStoreTemplates()
       .then((data) => {
         if (!isMounted) return;
-        setTemplates(data);
+        setTemplates(data || []);
         if (data && data.length > 0 && data[0].slug) {
           setTemplateSlug(data[0].slug);
         }
@@ -87,10 +86,18 @@ export const CreateStoreModal: React.FC = () => {
     if (!isCustomSlug) {
       const generated = val
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
       setSlug(generated);
     }
+  };
+
+  const handleSlugChange = (raw: string) => {
+    setIsCustomSlug(true);
+    const clean = raw.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    setSlug(clean);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,11 +109,12 @@ export const CreateStoreModal: React.FC = () => {
 
     const finalSlug = (slug || name)
       .toLowerCase()
+      .trim()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)+/g, '');
+      .replace(/^-+|-+$/g, '');
 
     if (!finalSlug) {
-      setErrorMessage('Store URL handle is required.');
+      setErrorMessage('A valid store URL handle is required.');
       return;
     }
 
@@ -128,6 +136,7 @@ export const CreateStoreModal: React.FC = () => {
       setSlug('');
       setIsCustomSlug(false);
       setDescription('');
+      setIsCreateStoreModalOpen(false);
     } catch (err: any) {
       setErrorMessage(
         err?.response?.data?.message ||
@@ -139,19 +148,29 @@ export const CreateStoreModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl border border-[#cbd5e0] shadow-2xl max-w-xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+    <div
+      role="dialog"
+      aria-modal="true"
+      data-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 dark:bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isSubmitting) {
+          setIsCreateStoreModalOpen(false);
+        }
+      }}
+    >
+      <div className="bg-white dark:bg-card rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-border shadow-2xl max-w-xl w-full overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 bg-[#191a1b] text-white flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-[#00E5FF]/20 border border-[#00E5FF]/40 flex items-center justify-center text-[#00E5FF]">
-              <Store className="w-6 h-6" />
+        <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/40 border-b border-slate-200/80 dark:border-border flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-center shadow-xs shrink-0">
+              <Store className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-sans font-bold text-lg text-white">
+              <h3 className="font-black text-lg text-slate-900 dark:text-foreground">
                 Add New Store to Portfolio
               </h3>
-              <p className="text-xs text-gray-300 font-sans">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 Each store has its own independent dashboard, analytics & payment gateway.
               </p>
             </div>
@@ -159,25 +178,38 @@ export const CreateStoreModal: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => setIsCreateStoreModalOpen(false)}
-            className="p-1.5 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition cursor-pointer"
+            onClick={() => !isSubmitting && setIsCreateStoreModalOpen(false)}
+            disabled={isSubmitting}
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-accent transition cursor-pointer disabled:opacity-50"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-5 overflow-y-auto flex-1">
           {errorMessage && (
-            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
-              {errorMessage}
+            <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center justify-between animate-in fade-in">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorMessage(null)}
+                className="text-rose-400 hover:text-rose-600 font-bold cursor-pointer"
+              >
+                ×
+              </button>
             </div>
           )}
 
           {/* Store Name & Slug */}
           <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-[#191a1b] mb-1">Store Name *</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                Store Name <span className="text-rose-500">*</span>
+              </label>
               <input
                 type="text"
                 autoFocus
@@ -185,41 +217,55 @@ export const CreateStoreModal: React.FC = () => {
                 value={name}
                 onChange={(e) => handleNameChange(e.target.value)}
                 placeholder="e.g. Aura Artisan Atelier"
-                className="w-full px-4 py-2.5 text-xs font-sans rounded-xl bg-[#121212] border border-[#cbd5e0] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#191a1b]"
+                className="w-full px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-slate-900 dark:text-foreground placeholder:text-slate-400 placeholder:font-normal focus:bg-white dark:focus:bg-card focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-bold text-[#191a1b]">Store URL Handle (Slug)</label>
-                <span className="text-[11px] text-[#5e5a5a]">Unique Web Storefront Address</span>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                  Store URL Handle (Slug) <span className="text-rose-500">*</span>
+                </label>
+                <span className="text-[10px] text-slate-400 font-medium">Unique Web Storefront Address</span>
               </div>
-              <div className="flex items-center rounded-xl bg-[#121212] border border-[#cbd5e0] px-3 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#191a1b]">
-                <Globe className="w-4 h-4 text-gray-400 shrink-0" />
-                <span className="text-xs text-[#5e5a5a] pl-2 font-mono">onlinestore.io/</span>
+              <div className="flex items-center rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 overflow-hidden focus-within:bg-white dark:focus-within:bg-card focus-within:ring-2 focus-within:ring-indigo-500">
+                <span className="px-3.5 py-2.5 bg-slate-100 dark:bg-accent text-xs font-mono font-bold text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-border select-none shrink-0 flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-slate-400" />
+                  <span>onlinestore.io/</span>
+                </span>
                 <input
                   type="text"
                   required
                   value={slug}
-                  onChange={(e) => {
-                    setIsCustomSlug(true);
-                    setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''));
-                  }}
+                  onChange={(e) => handleSlugChange(e.target.value)}
                   placeholder="aura-artisan"
-                  className="w-full px-1.5 py-2.5 text-xs font-mono bg-transparent focus:outline-none text-[#191a1b]"
+                  className="w-full px-3.5 py-2 bg-transparent text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none placeholder:font-sans placeholder:text-slate-400 placeholder:font-normal"
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                Tagline / Description <span className="text-slate-400 font-normal text-[11px]">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. Curated luxury essentials & artisan goods"
+                className="w-full px-4 py-2.5 text-xs font-medium rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-slate-900 dark:text-foreground placeholder:text-slate-400 focus:bg-white dark:focus:bg-card focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
             </div>
           </div>
 
           {/* Currency Selection */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#191a1b] flex items-center gap-1.5">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                 <Coins className="w-4 h-4 text-emerald-600" />
                 <span>Primary Currency & Payment Engine</span>
               </label>
-              <span className="text-[10px] text-[#5e5a5a]">Independent Gateway Keys</span>
+              <span className="text-[10px] text-slate-400 font-medium">Independent Gateway Keys</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {CURRENCIES.map((curr) => {
@@ -229,30 +275,34 @@ export const CreateStoreModal: React.FC = () => {
                     type="button"
                     key={curr.code}
                     onClick={() => setCurrency(curr.code)}
-                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'border-[#191a1b] bg-[#191a1b] text-white shadow-xs'
-                        : 'border-[#cbd5e0] bg-[#121212] hover:border-gray-400 text-[#191a1b]'
+                        ? 'border-2 border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/40 shadow-xs'
+                        : 'border-slate-200 dark:border-border bg-slate-50/60 dark:bg-accent/20 hover:bg-white dark:hover:bg-accent/40 hover:border-slate-300'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-base">{curr.flag}</span>
                       <span
                         className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                          isSelected ? 'bg-white/20 text-[#00E5FF]' : 'bg-gray-200 text-[#191a1b]'
+                          isSelected
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-slate-200/80 dark:bg-accent text-slate-700 dark:text-slate-300'
                         }`}
                       >
                         {curr.symbol}
                       </span>
                     </div>
                     <p
-                      className={`text-xs font-bold mt-1 ${isSelected ? 'text-white' : 'text-[#191a1b]'}`}
+                      className={`text-xs font-black mt-1.5 ${
+                        isSelected ? 'text-indigo-950 dark:text-indigo-200' : 'text-slate-900 dark:text-foreground'
+                      }`}
                     >
                       {curr.code}
                     </p>
                     <p
                       className={`text-[10px] truncate ${
-                        isSelected ? 'text-gray-300' : 'text-[#5e5a5a]'
+                        isSelected ? 'text-indigo-700 dark:text-indigo-300 font-medium' : 'text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       {curr.gateway}
@@ -265,7 +315,7 @@ export const CreateStoreModal: React.FC = () => {
 
           {/* Category Chips */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-[#191a1b]">Industry Category</label>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">Industry Category</label>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((cat) => {
                 const isSelected = categoryName === cat.label;
@@ -274,10 +324,10 @@ export const CreateStoreModal: React.FC = () => {
                     type="button"
                     key={cat.id}
                     onClick={() => setCategoryName(cat.label)}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
+                    className={`px-3.5 py-2 rounded-xl border text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
                       isSelected
-                        ? 'bg-[#191a1b] text-[#00E5FF] border-[#191a1b]'
-                        : 'bg-[#121212] text-[#191a1b] border-[#cbd5e0] hover:bg-white'
+                        ? 'border-2 border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:border-indigo-500 dark:text-indigo-300 shadow-xs'
+                        : 'border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/30 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-accent hover:border-slate-300'
                     }`}
                   >
                     <span>{cat.icon}</span>
@@ -291,7 +341,7 @@ export const CreateStoreModal: React.FC = () => {
           {/* Theme Picker */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-[#191a1b] flex items-center gap-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                 <Palette className="w-4 h-4 text-purple-600" />
                 <span>Initial Storefront Template</span>
               </label>
@@ -302,7 +352,7 @@ export const CreateStoreModal: React.FC = () => {
 
             {isLoadingTemplates ? (
               <div className="py-6 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-600" />
                 <span>Loading templates from API...</span>
               </div>
             ) : templates.length === 0 ? (
@@ -322,26 +372,26 @@ export const CreateStoreModal: React.FC = () => {
                       type="button"
                       key={thSlug}
                       onClick={() => thSlug && setTemplateSlug(thSlug)}
-                      className={`p-3 rounded-2xl border text-left transition cursor-pointer flex items-start gap-3 ${
+                      className={`p-3.5 rounded-2xl border text-left transition cursor-pointer flex items-start gap-3 ${
                         isSelected
-                          ? 'border-[#191a1b] bg-[#191a1b]/5 ring-2 ring-[#191a1b]'
-                          : 'border-[#cbd5e0] bg-[#121212] hover:bg-white'
+                          ? 'border-2 border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 shadow-xs'
+                          : 'border-slate-200 dark:border-border bg-slate-50/60 dark:bg-accent/20 hover:bg-white dark:hover:bg-accent/40 hover:border-slate-300'
                       }`}
                     >
                       <div
                         className="w-8 h-8 rounded-xl shrink-0 flex items-center justify-center text-white text-xs font-bold shadow-xs"
-                        style={{ backgroundColor: th.accentColor || '#3B82F6' }}
+                        style={{ backgroundColor: th.accentColor || '#4f46e5' }}
                       >
                         {th.name.charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-[#191a1b] truncate">{th.name}</span>
+                          <span className="text-xs font-bold text-slate-900 dark:text-foreground truncate">{th.name}</span>
                           {isSelected && (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 ml-auto" />
+                            <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 ml-auto" />
                           )}
                         </div>
-                        <p className="text-[11px] text-[#5e5a5a] line-clamp-1">{th.tagline || th.description}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">{th.tagline || th.description}</p>
                       </div>
                     </button>
                   );
@@ -351,8 +401,8 @@ export const CreateStoreModal: React.FC = () => {
           </div>
 
           {/* Security & Multi-Tenant Notice */}
-          <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-2.5 text-xs text-emerald-900">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 flex items-start gap-2.5 text-xs text-indigo-900 dark:text-indigo-300">
+            <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
             <p className="leading-relaxed text-[11px]">
               This new store will have completely segregated inventory, order books, domain
               settings, and encrypted payment credentials (AES-256-GCM).
@@ -360,26 +410,31 @@ export const CreateStoreModal: React.FC = () => {
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-2 flex items-center justify-end gap-3 border-t border-[#cbd5e0]/60">
+          <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/20 border-t border-slate-200/80 dark:border-border flex items-center justify-end gap-3 shrink-0 -mx-5 sm:-mx-6 -mb-5 sm:-mb-6 mt-6">
             <button
               type="button"
               onClick={() => setIsCreateStoreModalOpen(false)}
               disabled={isSubmitting}
-              className="px-4 py-2.5 text-xs font-semibold text-[#5e5a5a] hover:text-[#191a1b] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !name.trim()}
-              className="px-6 py-2.5 bg-[#191a1b] hover:bg-black text-[#00E5FF] text-xs font-bold rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
-                <RefreshCw className="w-4 h-4 animate-spin text-[#00E5FF]" />
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                  <span>Creating Store...</span>
+                </>
               ) : (
-                <Sparkles className="w-4 h-4 text-[#00E5FF]" />
+                <>
+                  <Sparkles className="w-4 h-4 text-white" />
+                  <span>Launch & Switch to Store</span>
+                </>
               )}
-              <span>{isSubmitting ? 'Creating Store...' : 'Launch & Switch to Store'}</span>
             </button>
           </div>
         </form>

@@ -174,6 +174,24 @@ export const CMSChatbot: React.FC = () => {
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleCreditsUpdated = (e: any) => {
+      if (typeof e.detail?.remaining === 'number') {
+        setCreditsInfo((prev) => ({
+          remaining: e.detail.remaining,
+          total: prev?.total || 100,
+        }));
+      } else {
+        cmsService
+          .getAiCredits()
+          .then((data) => setCreditsInfo({ remaining: data.aiCredits, total: data.aiCreditsTotal }))
+          .catch(() => {});
+      }
+    };
+    window.addEventListener('ai-credits-updated', handleCreditsUpdated);
+    return () => window.removeEventListener('ai-credits-updated', handleCreditsUpdated);
+  }, []);
+
   // Initialize messages from persistent storage, in-memory history, or default greeting
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     if (typeof window !== 'undefined') {
@@ -442,6 +460,33 @@ export const CMSChatbot: React.FC = () => {
     const textToSend = (customText || inputValue).trim();
     if (!textToSend || isTyping) return;
 
+    if (creditsInfo && creditsInfo.remaining <= 0) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          sender: 'assistant',
+          content:
+            '⚠️ Your store has **0 AI credits remaining**. You cannot generate further AI responses until you recharge or upgrade your plan in **Settings > Billing**.',
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          model: 'Gemini Copilot',
+          actions: [
+            {
+              id: 'go-to-billing',
+              label: 'Recharge AI Credits in Billing',
+              type: 'NAVIGATE',
+              payload: '/billing',
+              icon: '💳',
+            },
+          ],
+        },
+      ]);
+      return;
+    }
+
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       sender: 'user',
@@ -469,6 +514,35 @@ export const CMSChatbot: React.FC = () => {
         messages,
       );
       playChime();
+
+      if (typeof (response as any).creditsRemaining === 'number') {
+        const remaining = (response as any).creditsRemaining;
+        setCreditsInfo((prev) => ({
+          remaining,
+          total: prev?.total || 100,
+        }));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('ai-credits-updated', {
+              detail: { remaining },
+            })
+          );
+        }
+      } else {
+        cmsService
+          .getAiCredits()
+          .then((data) => {
+            setCreditsInfo({ remaining: data.aiCredits, total: data.aiCreditsTotal });
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(
+                new CustomEvent('ai-credits-updated', {
+                  detail: { remaining: data.aiCredits },
+                })
+              );
+            }
+          })
+          .catch(() => {});
+      }
 
       let finalContent = response.content;
       if (activeCurrency !== 'USD') {

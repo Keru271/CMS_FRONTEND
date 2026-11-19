@@ -63,9 +63,13 @@ export function ProductNotificationsStudio() {
     productId: string;
     productName: string;
     pendingCount: number;
+    totalCount?: number;
   } | null>(null);
   const [batchMessage, setBatchMessage] = useState('');
+  const [forceReNotify, setForceReNotify] = useState(false);
   const [batchSending, setBatchSending] = useState(false);
+  const [batchSendingProductId, setBatchSendingProductId] = useState<string | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
   // Notes Modal
   const [editingNoteItem, setEditingNoteItem] = useState<ProductNotification | null>(null);
@@ -163,6 +167,7 @@ export function ProductNotificationsStudio() {
   // Status Change Handler
   const handleStatusChange = async (id: string, newStatus: ProductNotificationStatus) => {
     try {
+      setUpdatingStatusId(id);
       const res = await cmsService.updateProductNotification(id, {
         status: newStatus,
       });
@@ -171,9 +176,15 @@ export function ProductNotificationsStudio() {
       // Refresh stats
       const newStats = await cmsService.getProductNotificationStats();
       setStats(newStats);
-      showToast(`Status updated to ${newStatus}`);
+      showToast(
+        newStatus === 'NOTIFIED'
+          ? 'Status updated to NOTIFIED & email dispatched to customer'
+          : `Status updated to ${newStatus}`,
+      );
     } catch {
       showToast('Failed to update status', 'error');
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -243,21 +254,30 @@ export function ProductNotificationsStudio() {
     if (!batchNotifyProduct) return;
     try {
       setBatchSending(true);
+      setBatchSendingProductId(batchNotifyProduct.productId);
       const res = await cmsService.batchNotifyProductSubscribers({
         productId: batchNotifyProduct.productId,
         customMessage: batchMessage.trim() || undefined,
+        forceAll: forceReNotify,
       });
 
-      showToast(
-        `Success! ${res.notifiedCount} customer(s) notified for ${batchNotifyProduct.productName}`,
-      );
+      if (res.notifiedCount > 0) {
+        showToast(
+          `Success! ${res.notifiedCount} customer(s) notified for ${batchNotifyProduct.productName}`,
+          'success',
+        );
+      } else {
+        showToast(res.message || 'No subscribers were notified.', 'info');
+      }
       setBatchNotifyProduct(null);
       setBatchMessage('');
+      setForceReNotify(false);
       await fetchData();
-    } catch {
-      showToast('Failed to trigger batch notification', 'error');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to trigger batch notification', 'error');
     } finally {
       setBatchSending(false);
+      setBatchSendingProductId(null);
     }
   };
 
@@ -539,22 +559,62 @@ export function ProductNotificationsStudio() {
                       {isSelected ? 'Filtering by item' : 'Filter requests'}
                     </button>
 
-                    {prod.pendingCount > 0 && (
+                    {prod.pendingCount > 0 ? (
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
                           setBatchNotifyProduct({
                             productId: prod.productId,
                             productName: prod.productName,
                             pendingCount: prod.pendingCount,
-                          })
-                        }
-                        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1 transition-colors shadow-sm"
+                            totalCount: prod.requestCount,
+                          });
+                          setForceReNotify(false);
+                        }}
+                        disabled={batchSendingProductId === prod.productId}
+                        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Send className="w-3 h-3" />
-                        Notify All
+                        {batchSendingProductId === prod.productId ? (
+                          <>
+                            <RefreshCw className="w-3 h-3 animate-spin" />
+                            <span>Sending...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-3 h-3" />
+                            <span>Notify All ({prod.pendingCount})</span>
+                          </>
+                        )}
                       </button>
-                    )}
+                    ) : prod.requestCount > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBatchNotifyProduct({
+                            productId: prod.productId,
+                            productName: prod.productName,
+                            pendingCount: 0,
+                            totalCount: prod.requestCount,
+                          });
+                          setForceReNotify(true);
+                        }}
+                        disabled={batchSendingProductId === prod.productId}
+                        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Broadcast again to all subscribers"
+                      >
+                        {batchSendingProductId === prod.productId ? (
+                          <>
+                            <RefreshCw className="w-3 h-3 animate-spin" />
+                            <span>Sending...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-3 h-3 text-slate-400" />
+                            <span>Re-notify ({prod.requestCount})</span>
+                          </>
+                        )}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               );
@@ -891,10 +951,15 @@ export function ProductNotificationsStudio() {
                           {isPending && (
                             <button
                               onClick={() => handleStatusChange(item.id, 'NOTIFIED')}
-                              className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors"
-                              title="Mark as Notified"
+                              disabled={updatingStatusId === item.id}
+                              className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Mark as Notified & Send Email"
                             >
-                              <Check className="w-4 h-4" />
+                              {updatingStatusId === item.id ? (
+                                <RefreshCw className="w-4 h-4 animate-spin text-emerald-600" />
+                              ) : (
+                                <Check className="w-4 h-4" />
+                              )}
                             </button>
                           )}
                           <button
@@ -972,14 +1037,48 @@ export function ProductNotificationsStudio() {
                 <span className="text-xs font-bold text-slate-900 dark:text-white">
                   {batchNotifyProduct.productName}
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                  {batchNotifyProduct.pendingCount} Waiting
+                <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                  batchNotifyProduct.pendingCount > 0
+                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                }`}>
+                  {batchNotifyProduct.pendingCount > 0
+                    ? `${batchNotifyProduct.pendingCount} Waiting`
+                    : `${batchNotifyProduct.totalCount || 0} Registered`}
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                All {batchNotifyProduct.pendingCount} pending customer requests for this product
-                will be marked as <strong className="text-emerald-500">NOTIFIED</strong>.
+                {batchNotifyProduct.pendingCount > 0 ? (
+                  <>
+                    All {batchNotifyProduct.pendingCount} pending customer request(s) will receive an instant back-in-stock email and be marked as <strong className="text-emerald-500">NOTIFIED</strong>.
+                  </>
+                ) : (
+                  <>
+                    All customer waitlist requests for this product were previously notified. Broadcasting will send a fresh restock announcement email to all {batchNotifyProduct.totalCount || 'active'} registered shopper(s).
+                  </>
+                )}
               </p>
+            </div>
+
+            {/* Force re-notify toggle if some or all were previously notified */}
+            <div className="p-3 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-750">
+              <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-700 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={forceReNotify || batchNotifyProduct.pendingCount === 0}
+                  onChange={(e) => setForceReNotify(e.target.checked)}
+                  disabled={batchNotifyProduct.pendingCount === 0}
+                  className="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                <div>
+                  <span className="font-semibold block text-slate-800 dark:text-slate-200">
+                    Include previously alerted shoppers
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                    Send restock emails to all {batchNotifyProduct.totalCount || batchNotifyProduct.pendingCount} registered customers, including those already marked notified.
+                  </span>
+                </div>
+              </label>
             </div>
 
             <div>
@@ -1013,12 +1112,16 @@ export function ProductNotificationsStudio() {
                 {batchSending ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Broadcasting...</span>
+                    <span>Broadcasting Notifications...</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-3.5 h-3.5" />
-                    <span>Send Notifications</span>
+                    <span>
+                      Notify All ({forceReNotify || batchNotifyProduct.pendingCount === 0
+                        ? batchNotifyProduct.totalCount || batchNotifyProduct.pendingCount
+                        : batchNotifyProduct.pendingCount})
+                    </span>
                   </>
                 )}
               </button>

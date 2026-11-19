@@ -123,6 +123,14 @@ export const BillingStudio: React.FC = () => {
 
   useEffect(() => {
     loadBillingData();
+    const handleCreditsUpdate = () => {
+      cmsService
+        .getAiCredits()
+        .then((data) => setAiCreditStats(data))
+        .catch(() => {});
+    };
+    window.addEventListener('ai-credits-updated', handleCreditsUpdate);
+    return () => window.removeEventListener('ai-credits-updated', handleCreditsUpdate);
   }, []);
 
   const loadBillingData = async () => {

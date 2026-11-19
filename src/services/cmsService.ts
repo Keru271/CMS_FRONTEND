@@ -7013,8 +7013,10 @@ export const cmsService = {
     productId: string;
     variantId?: string | null;
     customMessage?: string;
-  }): Promise<{ message: string; notifiedCount: number }> {
+    forceAll?: boolean;
+  }): Promise<{ success?: boolean; message: string; notifiedCount: number }> {
     const response = await apiClient.post<{
+      success?: boolean;
       message: string;
       notifiedCount: number;
     }>('/product-notifications/batch-notify', data);
@@ -7269,6 +7271,8 @@ export const cmsService = {
     actions?: any[];
     promotionData?: any;
     productRecommendations?: any[];
+    creditsDeducted?: number;
+    creditsRemaining?: number;
   }> {
     const response = await apiClient.post<{
       content: string;
@@ -7276,6 +7280,8 @@ export const cmsService = {
       actions?: any[];
       promotionData?: any;
       productRecommendations?: any[];
+      creditsDeducted?: number;
+      creditsRemaining?: number;
     }>('/ai/copilot-chat', payload, { timeout: 45000 });
     return response.data;
   },
@@ -7292,6 +7298,9 @@ export const cmsService = {
     toolCalls: Array<{ tool: string; args: any; result: any; executionTimeMs: number }>;
     actions?: any[];
     structuredData?: any;
+    outputTokens?: number;
+    creditsDeducted?: number;
+    creditsRemaining?: number;
   }> {
     const response = await apiClient.post<{
       reply: string;
@@ -7299,6 +7308,9 @@ export const cmsService = {
       toolCalls: Array<{ tool: string; args: any; result: any; executionTimeMs: number }>;
       actions?: any[];
       structuredData?: any;
+      outputTokens?: number;
+      creditsDeducted?: number;
+      creditsRemaining?: number;
     }>('/ai/agent', payload, { timeout: 45000 });
     return response.data;
   },
