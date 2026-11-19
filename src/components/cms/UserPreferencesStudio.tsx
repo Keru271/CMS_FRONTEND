@@ -396,11 +396,10 @@ export const UserPreferencesStudio: React.FC = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4.5 py-3 text-xs font-sans transition-all whitespace-nowrap cursor-pointer rounded-t-xl ${
-                  isActive
-                    ? 'bg-white text-slate-900 border-t border-x border-slate-200 font-bold shadow-xs -mb-px'
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 font-medium'
-                }`}
+                className={`flex items-center gap-2 px-4.5 py-3 text-xs font-sans transition-all whitespace-nowrap cursor-pointer rounded-t-xl ${isActive
+                  ? 'bg-white text-slate-900 border-t border-x border-slate-200 font-bold shadow-xs -mb-px'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 font-medium'
+                  }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? 'text-slate-900' : 'text-slate-400'}`} />
                 <span>{tab.label}</span>
@@ -518,19 +517,17 @@ export const UserPreferencesStudio: React.FC = () => {
                           setPrefLanguage(langItem.code);
                           setLanguage(langItem.code);
                         }}
-                        className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                          isSelected
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-cyan-400'
-                            : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-900 shadow-xs'
-                        }`}
+                        className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${isSelected
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-cyan-400'
+                          : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-900 shadow-xs'
+                          }`}
                       >
                         <div className="flex items-center justify-between w-full mb-2">
                           <span
-                            className={`w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-mono font-bold ${
-                              isSelected
-                                ? 'bg-[#00E5FF] text-slate-900'
-                                : 'bg-slate-100 text-slate-800 border border-slate-200'
-                            }`}
+                            className={`w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-mono font-bold ${isSelected
+                              ? 'bg-[#00E5FF] text-slate-900'
+                              : 'bg-slate-100 text-slate-800 border border-slate-200'
+                              }`}
                           >
                             {langItem.badge}
                           </span>
@@ -635,11 +632,10 @@ export const UserPreferencesStudio: React.FC = () => {
                         key={d.id}
                         type="button"
                         onClick={() => setInterfaceDensity(d.id as any)}
-                        className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
-                          interfaceDensity === d.id
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-cyan-400'
-                            : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-900 shadow-xs'
-                        }`}
+                        className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${interfaceDensity === d.id
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-cyan-400'
+                          : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-900 shadow-xs'
+                          }`}
                       >
                         <div className="text-xs font-bold font-sans">{d.label}</div>
                         <div
@@ -686,14 +682,12 @@ export const UserPreferencesStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setSoundAlerts(!soundAlerts)}
-                    className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-                      soundAlerts ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
+                    className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${soundAlerts ? 'bg-emerald-500' : 'bg-slate-300'
+                      }`}
                   >
                     <div
-                      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                        soundAlerts ? 'translate-x-6' : 'translate-x-0'
-                      }`}
+                      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${soundAlerts ? 'translate-x-6' : 'translate-x-0'
+                        }`}
                     />
                   </button>
                 </div>
@@ -752,14 +746,12 @@ export const UserPreferencesStudio: React.FC = () => {
                     <button
                       type="button"
                       onClick={item.toggle}
-                      className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors shrink-0 ${
-                        item.active ? 'bg-emerald-500' : 'bg-slate-300'
-                      }`}
+                      className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors shrink-0 ${item.active ? 'bg-emerald-500' : 'bg-slate-300'
+                        }`}
                     >
                       <div
-                        className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                          item.active ? 'translate-x-6' : 'translate-x-0'
-                        }`}
+                        className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${item.active ? 'translate-x-6' : 'translate-x-0'
+                          }`}
                       />
                     </button>
                   </div>
