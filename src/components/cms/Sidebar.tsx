@@ -55,6 +55,7 @@ import { useTranslation } from '@/src/context/LanguageContext';
 
 export type CMSView =
   | 'dashboard'
+  | 'website'
   | 'apps'
   | 'commerce-engine'
   | 'ai-builder'
@@ -451,12 +452,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Palette,
       items: [
         {
-          id: 'ai-builder',
-          path: '/ai-builder',
-          label: 'AI Website Builder',
-          sublabel: 'Full site with API & Vercel deploy',
+          id: 'website',
+          path: '/website',
+          label: 'Website Builder',
+          sublabel: 'Netlify & Themes',
           icon: Globe,
-          badge: 'Pro AI',
+          badge: 'New',
         },
         {
           id: 'themes',
@@ -501,12 +502,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           label: 'Design & Structure',
           items: [
             {
-              id: 'ai-builder',
-              path: '/ai-builder',
-              label: 'AI Website Builder',
-              sublabel: 'Full site with API & Vercel deploy',
+              id: 'website',
+              path: '/website',
+              label: 'Website Builder',
+              sublabel: 'Netlify & Themes',
               icon: Globe,
-              badge: 'Pro AI',
+              badge: 'New',
             },
             {
               id: 'themes',
