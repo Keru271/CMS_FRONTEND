@@ -186,7 +186,12 @@ export const GoLiveModal: React.FC<GoLiveModalProps> = ({
     activeStore?.status === 'LIVE';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      data-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200 overflow-hidden w-full h-full min-h-screen h-[100dvh]"
+    >
       <div className="relative w-full max-w-xl bg-white dark:bg-[#1C1C1E] rounded-3xl shadow-2xl border border-slate-200 dark:border-[#2C2C2E] overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
         <div className="px-5 sm:px-6 py-4.5 border-b border-slate-100 dark:border-[#2C2C2E] flex items-center justify-between bg-slate-50/70 dark:bg-[#252528]/50">
@@ -436,7 +441,8 @@ export const GoLiveModal: React.FC<GoLiveModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#2C2C2E] text-xs font-bold text-slate-600 dark:text-[#98989D] hover:bg-slate-100 dark:hover:bg-[#2C2C2E] transition-colors cursor-pointer w-full sm:w-auto"
+                disabled={isSubmitting}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[#2C2C2E] text-xs font-bold text-slate-600 dark:text-[#98989D] hover:bg-slate-100 dark:hover:bg-[#2C2C2E] transition-colors cursor-pointer w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Close
               </button>
@@ -446,7 +452,7 @@ export const GoLiveModal: React.FC<GoLiveModalProps> = ({
                   type="button"
                   onClick={handlePauseStore}
                   disabled={isSubmitting}
-                  className="px-4 py-2.5 rounded-xl font-bold text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/50 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs w-full sm:w-auto"
+                  className="px-4 py-2.5 rounded-xl font-bold text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/50 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Suspend store and revert back to pre-launch stage"
                 >
                   {isSubmitting ? (
@@ -466,7 +472,7 @@ export const GoLiveModal: React.FC<GoLiveModalProps> = ({
                   type="button"
                   onClick={() => handleConfirmGoLive(false)}
                   disabled={isSubmitting || isLoading}
-                  className={`px-5 py-2.5 rounded-xl font-bold text-xs text-white flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md w-full sm:w-auto ${
+                  className={`px-5 py-2.5 rounded-xl font-bold text-xs text-white flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed disabled:animate-none ${
                     readiness?.isReady
                       ? 'bg-linear-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 shadow-emerald-500/25 animate-pulse'
                       : 'bg-linear-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 shadow-sky-500/25'

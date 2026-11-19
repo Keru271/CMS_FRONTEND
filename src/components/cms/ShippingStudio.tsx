@@ -1,7 +1,7 @@
 'use client';
 
 import { SwipeToast } from '@/src/components/ui/SwipeToast';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { TablePagination } from '@/src/components/ui/TablePagination';
 import { TableRefreshButton } from '@/src/components/ui/TableRefreshButton';
 import {
@@ -19,45 +19,43 @@ import {
   Truck,
   Globe,
   Plus,
-  Edit2,
   Trash2,
   CheckCircle2,
   AlertCircle,
   Package,
-  DollarSign,
-  Scale,
   Clock,
   ExternalLink,
   ShieldCheck,
   X,
   RefreshCw,
   Calculator,
-  Layers,
-  MapPin,
   Check,
   Search,
-  Settings,
-  Navigation,
-  CheckCircle,
-  Radio,
-  ArrowRight,
-  Zap,
-  Key,
-  FileText,
-  AlertTriangle,
-  RotateCcw,
-  Phone,
-  Send,
-  Printer,
   Sliders,
   AppWindow,
+  Send,
+  Printer,
+  RotateCcw,
+  Phone,
+  AlertTriangle,
+  Zap,
+  Key,
+  Navigation,
+  CheckCircle,
+  Copy,
+  Filter,
 } from 'lucide-react';
 
 export const ShippingStudio: React.FC = () => {
-  // Navigation Tabs
-  const [activeTab, setActiveTab] = useState<
-    'rateshopping' | 'carriers' | 'shipments' | 'ndr' | 'zones' | 'simulator'
-  >('rateshopping');
+  // Navigation Tabs: 4 primary merchant workflows
+  const [activeTab, setActiveTab] = useState<'shipments' | 'settings' | 'carriers' | 'zones'>(
+    'shipments',
+  );
+
+  // Shipments Sub-tab: All Shipments vs Delivery Issues (NDR)
+  const [shipmentView, setShipmentView] = useState<'all' | 'ndr'>('all');
+  const [shipmentSearchQuery, setShipmentSearchQuery] = useState('');
+  const [shipmentStatusFilter, setShipmentStatusFilter] = useState('ALL');
 
   // Core Data
   const [zones, setZones] = useState<CMSShippingZone[]>([]);
@@ -91,6 +89,7 @@ export const ShippingStudio: React.FC = () => {
   // Carrier Modal State
   const [editingCred, setEditingCred] = useState<CarrierCredential | null>(null);
   const [isCredModalOpen, setIsCredModalOpen] = useState(false);
+  const [isSavingCred, setIsSavingCred] = useState(false);
   const [credApiKeyInput, setCredApiKeyInput] = useState('');
   const [credApiSecretInput, setCredApiSecretInput] = useState('');
   const [credSandboxInput, setCredSandboxInput] = useState(true);
@@ -121,13 +120,13 @@ export const ShippingStudio: React.FC = () => {
 
   // Zone & Rate Modals
   const [isZoneModalOpen, setIsZoneModalOpen] = useState(false);
-  const [editingZone, setEditingZone] = useState<CMSShippingZone | null>(null);
   const [zoneNameInput, setZoneNameInput] = useState('');
   const [zoneCountriesInput, setZoneCountriesInput] = useState('');
+  const [isSavingZone, setIsSavingZone] = useState(false);
 
   const [isRateModalOpen, setIsRateModalOpen] = useState(false);
   const [activeZoneId, setActiveZoneId] = useState<string | null>(null);
-  const [editingRate, setEditingRate] = useState<ShippingRate | null>(null);
+  const [isSavingRate, setIsSavingRate] = useState(false);
   const [rateForm, setRateForm] = useState<{
     name: string;
     type: ShippingRateType;
@@ -155,13 +154,11 @@ export const ShippingStudio: React.FC = () => {
   const [simPincode, setSimPincode] = useState('560038');
   const [simWeightKg, setSimWeightKg] = useState(1.0);
   const [simCartSubtotal, setSimCartSubtotal] = useState(750.0);
-  const [simIsCod, setSimIsCod] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const [simResult, setSimResult] = useState<any>(null);
 
-  // Tracking Lookup State
+  // Quick Tracking Lookup State
   const [trackingNumberInput, setTrackingNumberInput] = useState('');
-  const [selectedCarrier, setSelectedCarrier] = useState('');
   const [isTrackingLoading, setIsTrackingLoading] = useState(false);
   const [trackingResult, setTrackingResult] = useState<any>(null);
 
@@ -193,7 +190,6 @@ export const ShippingStudio: React.FC = () => {
         setCredentials(credData);
         if (credData.length > 0) {
           setManifestCarrier((prev) => prev || credData[0].carrierCode);
-          setSelectedCarrier((prev) => prev || credData[0].carrierCode);
         }
       }
       if (shipmentData) setShipments(shipmentData);
@@ -205,15 +201,15 @@ export const ShippingStudio: React.FC = () => {
     }
   };
 
-  // 1. Rate Shopping Policy Save
+  // 1. Delivery Rules / Policy Save
   const handleSavePolicy = async () => {
     setIsSavingPolicy(true);
     try {
       const updated = await cmsService.updateRateShoppingPolicy(policy);
       setPolicy(updated);
-      showToast('Rate shopping priority & policy rules saved successfully!');
+      showToast('Delivery rules and shipping priority saved successfully!');
     } catch (err: any) {
-      showToast(err.message || 'Failed to save policy', 'error');
+      showToast(err.message || 'Failed to save delivery policy', 'error');
     } finally {
       setIsSavingPolicy(false);
     }
@@ -229,7 +225,7 @@ export const ShippingStudio: React.FC = () => {
       } else {
         showToast(`Connection failed: ${res.message}`, 'error');
       }
-    } catch (err: any) {
+    } catch {
       showToast('Connection test error', 'error');
     } finally {
       setTestingCarrier(null);
@@ -239,6 +235,7 @@ export const ShippingStudio: React.FC = () => {
   // 3. Save Carrier Credentials
   const handleSaveCredential = async () => {
     if (!editingCred) return;
+    setIsSavingCred(true);
     try {
       await cmsService.upsertCarrierCredential({
         carrierCode: editingCred.carrierCode,
@@ -252,15 +249,20 @@ export const ShippingStudio: React.FC = () => {
       setIsCredModalOpen(false);
       const refreshed = await cmsService.getCarrierCredentials();
       setCredentials(refreshed);
-    } catch (err: any) {
+    } catch {
       showToast('Failed to save credential', 'error');
+    } finally {
+      setIsSavingCred(false);
     }
   };
 
   // 4. Manifest Shipment
   const handleManifestShipment = async () => {
     if (credentials.length === 0) {
-      showToast('No logistics app installed. Please install a shipping app from Apps marketplace first.', 'error');
+      showToast(
+        'No logistics app installed. Please install a shipping app from Apps marketplace first.',
+        'error',
+      );
       return;
     }
     if (!manifestOrderId) {
@@ -282,6 +284,7 @@ export const ShippingStudio: React.FC = () => {
       });
       showToast(`✓ Manifested AWB: ${res.shipment?.awbNumber}`);
       setIsManifestModalOpen(false);
+      setManifestOrderId('');
       const refreshed = await cmsService.getShipments();
       setShipments(refreshed);
     } catch (err: any) {
@@ -299,7 +302,7 @@ export const ShippingStudio: React.FC = () => {
       showToast(`Shipment ${awb} cancelled successfully`);
       const refreshed = await cmsService.getShipments();
       setShipments(refreshed);
-    } catch (err) {
+    } catch {
       showToast('Failed to cancel shipment', 'error');
     }
   };
@@ -319,7 +322,7 @@ export const ShippingStudio: React.FC = () => {
       setIsNdrModalOpen(false);
       const refreshed = await cmsService.getNdrRecords();
       setNdrRecords(refreshed);
-    } catch (err) {
+    } catch {
       showToast('Failed to process NDR action', 'error');
     } finally {
       setIsSubmittingNdr(false);
@@ -336,7 +339,7 @@ export const ShippingStudio: React.FC = () => {
         cartSubtotal: simCartSubtotal,
       });
       setSimResult(res);
-    } catch (err) {
+    } catch {
       showToast('Simulation failed', 'error');
     } finally {
       setIsSimulating(false);
@@ -345,20 +348,128 @@ export const ShippingStudio: React.FC = () => {
 
   // 8. Track Lookup
   const handleTrackLookup = async () => {
-    if (!trackingNumberInput) return;
+    if (!trackingNumberInput.trim()) return;
     setIsTrackingLoading(true);
     try {
-      const res = await cmsService.trackShipment(trackingNumberInput, selectedCarrier);
+      const res = await cmsService.trackShipment(trackingNumberInput.trim(), credentials[0]?.carrierCode);
       setTrackingResult(res);
-    } catch (err) {
+    } catch {
       showToast('Tracking query failed', 'error');
     } finally {
       setIsTrackingLoading(false);
     }
   };
 
+  // 9. Zone & Rate Creation Handlers
+  const handleSaveZone = async () => {
+    if (!zoneNameInput.trim()) {
+      showToast('Please enter a zone name', 'error');
+      return;
+    }
+    setIsSavingZone(true);
+    try {
+      const countries = zoneCountriesInput
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
+      await cmsService.createShippingZone({
+        name: zoneNameInput.trim(),
+        countries: countries.length > 0 ? countries : ['United States'],
+        rates: [],
+      });
+      showToast('Shipping zone created successfully');
+      setIsZoneModalOpen(false);
+      setZoneNameInput('');
+      setZoneCountriesInput('');
+      const refreshed = await cmsService.getShippingZones();
+      setZones(refreshed);
+    } catch {
+      showToast('Failed to create zone', 'error');
+    } finally {
+      setIsSavingZone(false);
+    }
+  };
+
+  const handleSaveRate = async () => {
+    if (!activeZoneId) return;
+    setIsSavingRate(true);
+    try {
+      const targetZone = zones.find((z) => z.id === activeZoneId);
+      if (targetZone) {
+        const newRate: ShippingRate = {
+          id: `sr-${Date.now()}`,
+          name: rateForm.name,
+          type: rateForm.type,
+          price: rateForm.price,
+          minDeliveryDays: rateForm.minDeliveryDays,
+          maxDeliveryDays: rateForm.maxDeliveryDays,
+          minWeightKg: rateForm.minWeightKg,
+          maxWeightKg: rateForm.maxWeightKg,
+          minOrderPrice: rateForm.minOrderPrice,
+          maxOrderPrice: rateForm.maxOrderPrice,
+        };
+        await cmsService.updateShippingZone(activeZoneId, {
+          rates: [...targetZone.rates, newRate],
+        });
+        showToast('Rate tier added successfully');
+        setIsRateModalOpen(false);
+        const refreshed = await cmsService.getShippingZones();
+        setZones(refreshed);
+      }
+    } catch {
+      showToast('Failed to add rate tier', 'error');
+    } finally {
+      setIsSavingRate(false);
+    }
+  };
+
+  // Computed Metrics
+  const pendingNdrRecords = useMemo(
+    () => ndrRecords.filter((r) => r.ndrStatus === 'PENDING'),
+    [ndrRecords],
+  );
+  const pendingNdrCount = pendingNdrRecords.length;
+
+  const inTransitCount = useMemo(
+    () =>
+      shipments.filter(
+        (s) => s.trackingStatus !== 'DELIVERED' && s.trackingStatus !== 'CANCELLED',
+      ).length,
+    [shipments],
+  );
+
+  const deliveredCount = useMemo(
+    () => shipments.filter((s) => s.trackingStatus === 'DELIVERED').length,
+    [shipments],
+  );
+
+  // Filtered Shipments
+  const filteredShipments = useMemo(() => {
+    return shipments.filter((s) => {
+      const matchesSearch =
+        !shipmentSearchQuery.trim() ||
+        s.awbNumber.toLowerCase().includes(shipmentSearchQuery.toLowerCase()) ||
+        s.orderNumber.toLowerCase().includes(shipmentSearchQuery.toLowerCase()) ||
+        (s.destinationCity || '').toLowerCase().includes(shipmentSearchQuery.toLowerCase());
+
+      const matchesStatus =
+        shipmentStatusFilter === 'ALL' ||
+        (shipmentStatusFilter === 'IN_TRANSIT' &&
+          s.trackingStatus !== 'DELIVERED' &&
+          s.trackingStatus !== 'CANCELLED') ||
+        s.trackingStatus === shipmentStatusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [shipments, shipmentSearchQuery, shipmentStatusFilter]);
+
+  const pagedShipments = useMemo(() => {
+    const start = (shipmentPage - 1) * shipmentPageSize;
+    return filteredShipments.slice(start, start + shipmentPageSize);
+  }, [filteredShipments, shipmentPage, shipmentPageSize]);
+
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 p-6 md:p-8 space-y-6">
+    <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 p-4 sm:p-6 md:p-8 space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
         <SwipeToast
@@ -371,39 +482,45 @@ export const ShippingStudio: React.FC = () => {
         />
       )}
 
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-md shadow-indigo-500/20">
-              <Truck className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                Nexus Shipping Integration
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold">
-                  Enterprise Logistics
-                </span>
+      {/* ─── STREAMLINED HEADER ─────────────────────────────────────────── */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/20 shrink-0">
+            <Truck className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                Shipping & Delivery
               </h1>
-              <p className="text-xs text-slate-500">
-                Carrier-agnostic abstraction layer with live rate shopping, aggregator routing, and
-                NDR management.
-              </p>
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-extrabold border border-indigo-200/60 dark:border-indigo-800/60">
+                Fulfillment Hub
+              </span>
             </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Manage delivery rules, live package tracking, carrier dispatches, and delivery exceptions.
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 shrink-0">
+          <a
+            href="/apps"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 transition cursor-pointer"
+          >
+            <AppWindow className="w-4 h-4 text-indigo-500" />
+            <span className="hidden sm:inline">Shipping Apps</span>
+          </a>
           <button
             onClick={() => setIsManifestModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
           >
-            <Plus className="w-4 h-4" /> Manifest New Shipment
+            <Plus className="w-4 h-4" /> Manifest Shipment
           </button>
           <button
             onClick={loadAllData}
             disabled={isLoading}
-            className="p-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition border border-slate-200 dark:border-slate-800"
+            className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition border border-slate-200 dark:border-slate-800 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             title="Refresh All Logistics Data"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -411,41 +528,42 @@ export const ShippingStudio: React.FC = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex flex-wrap gap-2 p-1.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
+      {/* ─── 4 CLEAN NAVIGATION TABS ────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
         {[
           {
-            id: 'rateshopping',
-            label: 'Rate-Shopping Policy',
+            id: 'shipments',
+            label: 'Shipments & Tracking',
+            icon: Package,
+            badge: shipments.length > 0 ? `${shipments.length}` : undefined,
+            alertBadge: pendingNdrCount > 0 ? `${pendingNdrCount} Issues` : undefined,
+          },
+          {
+            id: 'settings',
+            label: 'Delivery Rules & COD',
             icon: Sliders,
-            badge: policy.priority,
+            badge:
+              policy.priority === 'CHEAPEST'
+                ? 'Lowest Cost'
+                : policy.priority === 'FASTEST'
+                  ? 'Fastest'
+                  : 'Preferred',
           },
           {
             id: 'carriers',
-            label: 'Carrier Integrations',
+            label: 'Logistics Partners',
             icon: Key,
-            badge: `${credentials.filter((c) => c.isActive).length} Active`,
-          },
-          {
-            id: 'shipments',
-            label: 'Live Shipments',
-            icon: Package,
-            badge: shipments.length.toString(),
-          },
-          {
-            id: 'ndr',
-            label: 'NDR Dashboard',
-            icon: AlertTriangle,
-            badge: `${ndrRecords.filter((r) => r.ndrStatus === 'PENDING').length} Action Required`,
-            alert: ndrRecords.some((r) => r.ndrStatus === 'PENDING'),
+            badge:
+              credentials.length > 0
+                ? `${credentials.filter((c) => c.isActive).length} Active`
+                : '0 Connected',
           },
           {
             id: 'zones',
-            label: 'Shipping Zones & Rates',
+            label: 'Custom Zones & Testing',
             icon: Globe,
             badge: `${zones.length} Zones`,
           },
-          { id: 'simulator', label: 'Live Rate & Tracking Simulator', icon: Calculator },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -453,158 +571,537 @@ export const ShippingStudio: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition ${
-                isActive
-                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${isActive
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
             >
               <Icon className="w-4 h-4" />
               <span>{tab.label}</span>
-              {tab.badge && (
+              {tab.alertBadge ? (
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-black bg-rose-500 text-white animate-pulse">
+                  {tab.alertBadge}
+                </span>
+              ) : tab.badge ? (
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
-                    isActive
-                      ? 'bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900'
-                      : tab.alert
-                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 animate-pulse'
-                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-                  }`}
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${isActive
+                    ? 'bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900'
+                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                    }`}
                 >
                   {tab.badge}
                 </span>
-              )}
+              ) : null}
             </button>
           );
         })}
       </div>
 
-      {/* ─── TAB 1: RATE-SHOPPING POLICY ──────────────────────────────────── */}
-      {activeTab === 'rateshopping' && (
+      {/* ─── TAB 1: SHIPMENTS & TRACKING HUB ─────────────────────────────── */}
+      {activeTab === 'shipments' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Priority Strategy */}
-            <div
-              onClick={() => setPolicy({ ...policy, priority: 'CHEAPEST' })}
-              className={`p-6 rounded-3xl border-2 cursor-pointer transition flex flex-col justify-between ${
-                policy.priority === 'CHEAPEST'
-                  ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                    Maximum Margin
-                  </span>
-                  {policy.priority === 'CHEAPEST' && (
-                    <CheckCircle className="w-5 h-5 text-indigo-600" />
-                  )}
-                </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Cheapest Carrier First
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Orchestrator queries all serviceable couriers in parallel and automatically ranks
-                  the lowest cost quote first.
-                </p>
+          {/* Key Metrics Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+              <span className="text-xs font-bold text-slate-500">Total Shipments</span>
+              <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+                {shipments.length}
+              </p>
+              <span className="text-[11px] text-slate-400 mt-1 block">All-time dispatched</span>
+            </div>
+
+            <div className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500">In Transit</span>
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
               </div>
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                Recommended for standard eCommerce & bulk merchandise
-              </div>
+              <p className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
+                {inTransitCount}
+              </p>
+              <span className="text-[11px] text-slate-400 mt-1 block">Currently on route</span>
+            </div>
+
+            <div className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+              <span className="text-xs font-bold text-slate-500">Delivered</span>
+              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                {deliveredCount}
+              </p>
+              <span className="text-[11px] text-slate-400 mt-1 block">Successfully handed over</span>
             </div>
 
             <div
-              onClick={() => setPolicy({ ...policy, priority: 'FASTEST' })}
-              className={`p-6 rounded-3xl border-2 cursor-pointer transition flex flex-col justify-between ${
-                policy.priority === 'FASTEST'
-                  ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
-              }`}
+              onClick={() => setShipmentView('ndr')}
+              className={`p-5 rounded-3xl border transition cursor-pointer ${pendingNdrCount > 0
+                ? 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900 shadow-sm'
+                : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 shadow-sm'
+                }`}
             >
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-bold ${pendingNdrCount > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500'}`}
+                >
+                  Delivery Issues (NDR)
+                </span>
+                {pendingNdrCount > 0 && <AlertTriangle className="w-4 h-4 text-rose-600 animate-bounce" />}
+              </div>
+              <p
+                className={`text-2xl font-black mt-1 ${pendingNdrCount > 0 ? 'text-rose-600' : 'text-slate-900 dark:text-white'}`}
+              >
+                {pendingNdrCount}
+              </p>
+              <span className="text-[11px] text-slate-400 mt-1 block">
+                {pendingNdrCount > 0 ? 'Action required immediately' : 'Zero exceptions'}
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Tracking Search Bar */}
+          <div className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-black px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
-                    Highest Speed
-                  </span>
-                  {policy.priority === 'FASTEST' && (
-                    <CheckCircle className="w-5 h-5 text-indigo-600" />
-                  )}
-                </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Fastest Delivery First
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Navigation className="w-4 h-4 text-indigo-600" />
+                  Quick Package Tracker
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Prioritizes Air Express / Same-Day Hyperlocal couriers with the shortest transit
-                  time (1-2 business days).
+                <p className="text-[11px] text-slate-500">
+                  Instant real-time milestone query across all integrated courier networks
                 </p>
               </div>
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                Recommended for premium electronics, perishables & VIP clients
+
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 sm:w-72">
+                  <input
+                    type="text"
+                    value={trackingNumberInput}
+                    onChange={(e) => setTrackingNumberInput(e.target.value)}
+                    placeholder="Enter AWB or Tracking #"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <button
+                  onClick={handleTrackLookup}
+                  disabled={isTrackingLoading || !trackingNumberInput.trim()}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer"
+                >
+                  {isTrackingLoading ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Search className="w-3.5 h-3.5" />
+                  )}
+                  <span>Track</span>
+                </button>
               </div>
             </div>
 
-            <div
-              onClick={() => setPolicy({ ...policy, priority: 'PREFERRED' })}
-              className={`p-6 rounded-3xl border-2 cursor-pointer transition flex flex-col justify-between ${
-                policy.priority === 'PREFERRED'
-                  ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-black px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
-                    Contract Loyalty
-                  </span>
-                  {policy.priority === 'PREFERRED' && (
-                    <CheckCircle className="w-5 h-5 text-indigo-600" />
-                  )}
+            {/* Tracking Result Card */}
+            {trackingResult && (
+              <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="font-mono text-sm font-black text-slate-900 dark:text-white">
+                      {trackingResult.trackingNumber}
+                    </span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold uppercase">
+                      {trackingResult.carrier || 'Courier'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200">
+                      {trackingResult.status || 'IN_TRANSIT'}
+                    </span>
+                    <button
+                      onClick={() => setTrackingResult(null)}
+                      className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-400"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Merchant-Preferred Carrier
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Routes orders preferentially to your installed logistics carrier (e.g.
-                  Shiprocket) when serviceable.
-                </p>
+
+                <div className="relative pl-6 space-y-4 pt-2 before:absolute before:left-2 before:top-4 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
+                  {(trackingResult.events || []).map((ev: any, i: number) => (
+                    <div key={i} className="relative">
+                      <div
+                        className={`absolute -left-6 top-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-900 ${ev.completed ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                          }`}
+                      />
+                      <h5 className="text-xs font-bold text-slate-900 dark:text-white">
+                        {ev.title}
+                      </h5>
+                      <span className="text-[11px] text-slate-500 block">{ev.location}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                Recommended if you have negotiated volume commitments
+            )}
+          </div>
+
+          {/* Segmented View Switcher: All Shipments vs Delivery Issues (NDR) */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                <button
+                  onClick={() => setShipmentView('all')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${shipmentView === 'all'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                    }`}
+                >
+                  All Shipments ({shipments.length})
+                </button>
+                <button
+                  onClick={() => setShipmentView('ndr')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${shipmentView === 'ndr'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                    }`}
+                >
+                  <span>Delivery Exceptions</span>
+                  {pendingNdrCount > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-black">
+                      {pendingNdrCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {shipmentView === 'all' && (
+                <div className="flex items-center gap-2.5">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={shipmentSearchQuery}
+                      onChange={(e) => {
+                        setShipmentSearchQuery(e.target.value);
+                        setShipmentPage(1);
+                      }}
+                      placeholder="Search AWB, order, city..."
+                      className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-semibold w-48 sm:w-60 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <select
+                    value={shipmentStatusFilter}
+                    onChange={(e) => {
+                      setShipmentStatusFilter(e.target.value);
+                      setShipmentPage(1);
+                    }}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-bold"
+                  >
+                    <option value="ALL">All Status</option>
+                    <option value="IN_TRANSIT">In Transit</option>
+                    <option value="DELIVERED">Delivered</option>
+                    <option value="CANCELLED">Cancelled</option>
+                  </select>
+
+                  <TableRefreshButton onRefresh={loadAllData} isLoading={isLoading} size="sm" />
+                </div>
+              )}
+            </div>
+
+            {/* VIEW A: All Shipments Table */}
+            {shipmentView === 'all' && (
+              <div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 border-b border-slate-100 dark:border-slate-800 font-bold uppercase tracking-wider text-[10px]">
+                      <tr>
+                        <th className="py-3 px-6">AWB Tracking #</th>
+                        <th className="py-3 px-6">Order</th>
+                        <th className="py-3 px-6">Carrier Partner</th>
+                        <th className="py-3 px-6">Destination</th>
+                        <th className="py-3 px-6">Cost / COD</th>
+                        <th className="py-3 px-6">Status</th>
+                        <th className="py-3 px-6 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {pagedShipments.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-12 text-center text-slate-400 font-bold">
+                            No shipments found matching filters.
+                          </td>
+                        </tr>
+                      ) : (
+                        pagedShipments.map((s) => {
+                          const isCancelled = s.trackingStatus === 'CANCELLED';
+                          const isDelivered = s.trackingStatus === 'DELIVERED';
+                          return (
+                            <tr
+                              key={s.id}
+                              className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition"
+                            >
+                              <td className="py-4 px-6 font-mono font-bold text-slate-900 dark:text-white">
+                                {s.awbNumber}
+                              </td>
+                              <td className="py-4 px-6 font-semibold text-indigo-600">
+                                {s.orderNumber}
+                              </td>
+                              <td className="py-4 px-6">
+                                <span className="font-bold text-slate-800 dark:text-slate-200 block">
+                                  {s.carrierName}
+                                </span>
+                                <span className="text-[10px] text-slate-500 uppercase">
+                                  {s.serviceName || s.serviceType}
+                                </span>
+                              </td>
+                              <td className="py-4 px-6">
+                                <span className="text-slate-800 dark:text-slate-200 block font-semibold">
+                                  {s.destinationCity || 'Metro Hub'}
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-mono">
+                                  PIN: {s.destinationPincode || '—'}
+                                </span>
+                              </td>
+                              <td className="py-4 px-6">
+                                <span className="font-bold text-slate-900 dark:text-white block">
+                                  ₹{s.shippingCost.toFixed(2)}
+                                </span>
+                                {s.isCod && (
+                                  <span className="text-[10px] text-amber-600 font-bold">
+                                    COD: ₹{s.codAmount.toFixed(2)}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-4 px-6">
+                                <span
+                                  className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full ${isDelivered
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
+                                    : isCancelled
+                                      ? 'bg-slate-100 text-slate-500'
+                                      : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 animate-pulse'
+                                    }`}
+                                >
+                                  {s.trackingStatus}
+                                </span>
+                              </td>
+                              <td className="py-4 px-6 text-right space-x-2">
+                                <button
+                                  onClick={() => setPreviewLabelAwb(s.awbNumber)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition cursor-pointer"
+                                >
+                                  <Printer className="w-3.5 h-3.5" /> Label
+                                </button>
+                                {!isCancelled && !isDelivered && (
+                                  <button
+                                    onClick={() => handleCancelShipment(s.id, s.awbNumber)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-bold transition cursor-pointer"
+                                  >
+                                    <X className="w-3.5 h-3.5" /> Cancel
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <TablePagination
+                  currentPage={shipmentPage}
+                  totalItems={filteredShipments.length}
+                  pageSize={shipmentPageSize}
+                  onPageChange={(p) => setShipmentPage(p)}
+                  onPageSizeChange={(s) => {
+                    setShipmentPageSize(s);
+                    setShipmentPage(1);
+                  }}
+                  itemName="shipments"
+                />
+              </div>
+            )}
+
+            {/* VIEW B: Delivery Exceptions (NDR) */}
+            {shipmentView === 'ndr' && (
+              <div>
+                {ndrRecords.length === 0 ? (
+                  <div className="p-12 text-center text-slate-400 font-bold text-xs">
+                    🎉 Excellent! No delivery exceptions or failed parcel deliveries.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {ndrRecords.map((record) => (
+                      <div
+                        key={record.id}
+                        className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono font-bold text-sm text-slate-900 dark:text-white">
+                              {record.awbNumber}
+                            </span>
+                            <span className="text-xs font-semibold text-indigo-600">
+                              {record.orderNumber}
+                            </span>
+                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+                              Attempt #{record.attemptCount} Failed
+                            </span>
+                          </div>
+
+                          <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                            Reason: {record.failureReason}
+                          </p>
+
+                          <div className="flex items-center gap-4 text-xs text-slate-500">
+                            <span className="flex items-center gap-1">
+                              <Phone className="w-3.5 h-3.5" />{' '}
+                              {record.customerPhone || 'No phone provided'}
+                            </span>
+                            <span>Courier: {record.carrierName}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2.5">
+                          <button
+                            onClick={() => {
+                              setSelectedNdr(record);
+                              setNdrActionType('REATTEMPT');
+                              setNdrRemarks('Customer requested reattempt tomorrow afternoon');
+                              setIsNdrModalOpen(true);
+                            }}
+                            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" /> Reattempt Delivery
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setSelectedNdr(record);
+                              setNdrActionType('UPDATE_ADDRESS');
+                              setNdrNewPhone(record.customerPhone || '');
+                              setIsNdrModalOpen(true);
+                            }}
+                            className="px-3.5 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition cursor-pointer"
+                          >
+                            Update Contact
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setSelectedNdr(record);
+                              setNdrActionType('RTO');
+                              setNdrRemarks('Customer permanently refused package');
+                              setIsNdrModalOpen(true);
+                            }}
+                            className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950 text-slate-600 hover:text-rose-600 rounded-xl text-xs font-bold transition cursor-pointer"
+                          >
+                            Initiate RTO
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 2: DELIVERY RULES & COD PRICING ──────────────────────────── */}
+      {activeTab === 'settings' && (
+        <div className="space-y-6">
+          {/* Strategy Selector */}
+          <div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
+              Courier Selection Strategy
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              How the platform automatically chooses which courier partner handles each order
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div
+                onClick={() => setPolicy({ ...policy, priority: 'CHEAPEST' })}
+                className={`p-5 rounded-3xl border-2 cursor-pointer transition flex flex-col justify-between ${policy.priority === 'CHEAPEST'
+                  ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/20'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
+                  }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 uppercase">
+                      Lowest Cost
+                    </span>
+                    {policy.priority === 'CHEAPEST' && (
+                      <CheckCircle className="w-5 h-5 text-indigo-600" />
+                    )}
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Cheapest Courier First
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Compares quotes across all serviceable couriers and auto-selects the lowest price to maximize your margins.
+                  </p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setPolicy({ ...policy, priority: 'FASTEST' })}
+                className={`p-5 rounded-3xl border-2 cursor-pointer transition flex flex-col justify-between ${policy.priority === 'FASTEST'
+                  ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/20'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
+                  }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 uppercase">
+                      Express Speed
+                    </span>
+                    {policy.priority === 'FASTEST' && (
+                      <CheckCircle className="w-5 h-5 text-indigo-600" />
+                    )}
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Fastest Delivery First
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Prioritizes Air Express and Same-Day delivery services (1-2 business days) for time-critical orders.
+                  </p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setPolicy({ ...policy, priority: 'PREFERRED' })}
+                className={`p-5 rounded-3xl border-2 cursor-pointer transition flex flex-col justify-between ${policy.priority === 'PREFERRED'
+                  ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/20'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
+                  }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 uppercase">
+                      Contract Primary
+                    </span>
+                    {policy.priority === 'PREFERRED' && (
+                      <CheckCircle className="w-5 h-5 text-indigo-600" />
+                    )}
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Preferred Partner First
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Routes orders preferentially to your selected primary courier (e.g. Shiprocket) when serviceable.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Policy Settings Form */}
+          {/* Delivery Configuration Fields */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6">
-            {credentials.length === 0 && (
-              <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
-                <div className="flex items-center gap-2.5">
-                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                  <div>
-                    <span className="font-bold block">No Logistics App Installed</span>
-                    <span>Only logistics apps installed from the App Marketplace can fulfill and route orders.</span>
-                  </div>
-                </div>
-                <a
-                  href="/apps"
-                  className="px-3.5 py-1.5 bg-amber-600 text-white rounded-xl font-bold text-xs hover:bg-amber-700 transition flex items-center gap-1.5 whitespace-nowrap"
-                >
-                  <AppWindow className="w-3.5 h-3.5" />
-                  Install Logistics App
-                </a>
-              </div>
-            )}
-
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Sliders className="w-5 h-5 text-indigo-500" />
-              Routing Rules & Guardrails
+              Store Delivery Rules
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               <div>
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Preferred Courier Partner (Installed Apps)
+                  Preferred Courier Partner
                 </label>
                 <select
                   value={policy.preferredCarrierCode || ''}
@@ -622,11 +1119,14 @@ export const ShippingStudio: React.FC = () => {
                     ))
                   )}
                 </select>
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  Active primary partner when using Preferred strategy
+                </span>
               </div>
 
               <div>
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Free Shipping Minimum Threshold (₹ / $)
+                  Free Shipping Minimum (₹)
                 </label>
                 <input
                   type="number"
@@ -637,13 +1137,13 @@ export const ShippingStudio: React.FC = () => {
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-semibold"
                 />
                 <span className="text-[11px] text-slate-500 mt-1 block">
-                  Orders above this amount get free standard shipping.
+                  Orders equal or above this cart value get free standard shipping.
                 </span>
               </div>
 
               <div>
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  COD (Cash on Delivery) Handling Fee (₹)
+                  Cash on Delivery (COD) Fee (₹)
                 </label>
                 <input
                   type="number"
@@ -654,11 +1154,11 @@ export const ShippingStudio: React.FC = () => {
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-semibold"
                 />
                 <span className="text-[11px] text-slate-500 mt-1 block">
-                  Added to shipping cost when customer selects COD payment.
+                  Additional handling charge added when buyer chooses COD.
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 pt-4">
+              <div className="flex items-center gap-3 pt-2">
                 <input
                   type="checkbox"
                   id="cb-fallback"
@@ -670,15 +1170,14 @@ export const ShippingStudio: React.FC = () => {
                   htmlFor="cb-fallback"
                   className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
                 >
-                  Zero-Downtime Zone Fallback
+                  Zero-Downtime Fallback Protection
                   <span className="block text-[11px] font-normal text-slate-500">
-                    If live courier APIs time out, seamlessly fall back to merchant default zone
-                    rates so checkout never crashes.
+                    If live courier APIs time out, checkout automatically falls back to default zone rates.
                   </span>
                 </label>
               </div>
 
-              <div className="flex items-center gap-3 pt-4">
+              <div className="flex items-center gap-3 pt-2">
                 <input
                   type="checkbox"
                   id="cb-cod"
@@ -690,10 +1189,9 @@ export const ShippingStudio: React.FC = () => {
                   htmlFor="cb-cod"
                   className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
                 >
-                  Enable COD Verification at Checkout
+                  Pincode COD Verification
                   <span className="block text-[11px] font-normal text-slate-500">
-                    Pincode COD serviceability is verified upfront before showing the COD payment
-                    option.
+                    Verifies whether customer postal code accepts COD prior to payment selection.
                   </span>
                 </label>
               </div>
@@ -703,38 +1201,37 @@ export const ShippingStudio: React.FC = () => {
               <button
                 onClick={handleSavePolicy}
                 disabled={isSavingPolicy}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 transition disabled:opacity-60"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isSavingPolicy ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
                 ) : (
                   <Check className="w-4 h-4" />
                 )}
-                Save Policy Configuration
+                Save Delivery Rules
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── TAB 2: CARRIER INTEGRATIONS ──────────────────────────────────── */}
+      {/* ─── TAB 3: LOGISTICS PARTNERS (CARRIERS) ─────────────────────────── */}
       {activeTab === 'carriers' && (
         <div className="space-y-6">
           {credentials.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-12 text-center shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-10 text-center shadow-sm">
               <div className="w-16 h-16 mx-auto rounded-3xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 shadow-inner">
                 <AppWindow className="w-8 h-8" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                No Logistics Apps Installed
+                No Logistics Apps Connected
               </h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto mt-2 leading-relaxed">
-                Logistics carriers are strictly managed through installed apps from the App Marketplace.
-                Apart from installed apps, no logistics providers are enabled or displayed.
+                Connect your logistics partner (like Shiprocket or Delhivery) through the Apps Marketplace to enable automatic label creation, rate negotiation, and live tracking.
               </p>
               <div className="mt-6 flex justify-center">
                 <a
-                  href="/apps"
+                  href="/apps?category=SHIPPING"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold transition shadow-md shadow-indigo-500/20"
                 >
                   <AppWindow className="w-4 h-4" />
@@ -757,15 +1254,11 @@ export const ShippingStudio: React.FC = () => {
                           {cred.carrierCode}
                         </span>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                            Marketplace App
-                          </span>
                           <span
-                            className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                              cred.isActive
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                                : 'bg-slate-100 text-slate-500'
-                            }`}
+                            className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${cred.isActive
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                              : 'bg-slate-100 text-slate-500'
+                              }`}
                           >
                             {cred.isActive ? 'Active' : 'Disabled'}
                           </span>
@@ -781,15 +1274,9 @@ export const ShippingStudio: React.FC = () => {
 
                       <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl space-y-1.5 text-xs">
                         <div className="flex justify-between text-slate-500">
-                          <span>API Token:</span>
-                          <span className="font-mono text-slate-800 dark:text-slate-200">
-                            {cred.apiKey ? `${cred.apiKey.slice(0, 6)}••••••••` : 'Configured via App'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-slate-500">
-                          <span>Account #:</span>
-                          <span className="font-mono text-slate-800 dark:text-slate-200">
-                            {cred.accountNumber || '—'}
+                          <span>API Status:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
+                            {cred.apiKey ? 'Configured' : 'Credentials Linked'}
                           </span>
                         </div>
                         <div className="flex justify-between text-slate-500">
@@ -805,7 +1292,7 @@ export const ShippingStudio: React.FC = () => {
                       <button
                         onClick={() => handleTestConnection(cred.carrierCode)}
                         disabled={isTesting}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 transition"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       >
                         <Zap
                           className={`w-3.5 h-3.5 text-amber-500 ${isTesting ? 'animate-spin' : ''}`}
@@ -828,668 +1315,169 @@ export const ShippingStudio: React.FC = () => {
         </div>
       )}
 
-      {/* ─── TAB 3: LIVE SHIPMENTS & MANIFESTATION ─────────────────────────── */}
-      {activeTab === 'shipments' && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      {/* ─── TAB 4: CUSTOM ZONES & TESTING ────────────────────────────────── */}
+      {activeTab === 'zones' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Section 1: Regional Zones */}
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Active Carrier Shipments
+                <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-indigo-500" />
+                  Regional Shipping Zones
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Normalized shipment records across all integrated couriers with tracking status
-                  and labels.
+                <p className="text-xs text-slate-500">
+                  Fallback flat rates and SLA tiers for manual or offline fulfillment
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <TableRefreshButton onRefresh={loadAllData} isLoading={isLoading} size="sm" />
-                <button
-                  onClick={() => setIsManifestModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition"
-                >
-                  <Plus className="w-4 h-4" /> Manifest Shipment
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  setZoneNameInput('');
+                  setZoneCountriesInput('');
+                  setIsZoneModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Zone
+              </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 border-b border-slate-100 dark:border-slate-800 font-bold uppercase tracking-wider text-[10px]">
-                  <tr>
-                    <th className="py-3 px-6">AWB / Tracking #</th>
-                    <th className="py-3 px-6">Order</th>
-                    <th className="py-3 px-6">Carrier / Partner</th>
-                    <th className="py-3 px-6">Destination</th>
-                    <th className="py-3 px-6">Cost / COD</th>
-                    <th className="py-3 px-6">Status</th>
-                    <th className="py-3 px-6 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {shipments.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-12 text-center text-slate-400 font-bold">
-                        No active carrier shipments found.
-                      </td>
-                    </tr>
-                  ) : (
-                    shipments
-                      .slice((shipmentPage - 1) * shipmentPageSize, shipmentPage * shipmentPageSize)
-                      .map((s) => {
-                      const isCancelled = s.trackingStatus === 'CANCELLED';
-                      const isDelivered = s.trackingStatus === 'DELIVERED';
-                      return (
-                        <tr
-                          key={s.id}
-                          className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition"
-                        >
-                          <td className="py-4 px-6 font-mono font-bold text-slate-900 dark:text-white">
-                            {s.awbNumber}
-                          </td>
-                          <td className="py-4 px-6 font-semibold text-indigo-600">{s.orderNumber}</td>
-                          <td className="py-4 px-6">
-                            <span className="font-bold text-slate-800 dark:text-slate-200 block">
-                              {s.carrierName}
-                            </span>
-                            <span className="text-[10px] text-slate-500 uppercase">
-                              {s.serviceName || s.serviceType}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6">
-                            <span className="text-slate-800 dark:text-slate-200 block font-semibold">
-                              {s.destinationCity || 'Metro Hub'}
-                            </span>
-                            <span className="text-[10px] text-slate-500 font-mono">
-                              PIN: {s.destinationPincode || '—'}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6">
-                            <span className="font-bold text-slate-900 dark:text-white block">
-                              ₹{s.shippingCost.toFixed(2)}
-                            </span>
-                            {s.isCod && (
-                              <span className="text-[10px] text-amber-600 font-bold">
-                                COD: ₹{s.codAmount.toFixed(2)}
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-4 px-6">
-                            <span
-                              className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full ${
-                                isDelivered
-                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
-                                  : isCancelled
-                                    ? 'bg-slate-100 text-slate-500'
-                                    : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 animate-pulse'
-                              }`}
-                            >
-                              {s.trackingStatus}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6 text-right space-x-2">
-                            <button
-                              onClick={() => setPreviewLabelAwb(s.awbNumber)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition"
-                            >
-                              <Printer className="w-3.5 h-3.5" /> Label
-                            </button>
-                            {!isCancelled && !isDelivered && (
-                              <button
-                                onClick={() => handleCancelShipment(s.id, s.awbNumber)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-bold transition"
-                              >
-                                <X className="w-3.5 h-3.5" /> Cancel
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <TablePagination
-              currentPage={shipmentPage}
-              totalItems={shipments.length}
-              pageSize={shipmentPageSize}
-              onPageChange={(p) => setShipmentPage(p)}
-              onPageSizeChange={(s) => {
-                setShipmentPageSize(s);
-                setShipmentPage(1);
-              }}
-              itemName="shipments"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* ─── TAB 4: NDR (NON-DELIVERY REPORTS) DASHBOARD ──────────────────── */}
-      {activeTab === 'ndr' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-              <span className="text-xs font-bold text-slate-500">Pending Actions</span>
-              <p className="text-2xl font-black text-rose-600 mt-1">
-                {ndrRecords.filter((r) => r.ndrStatus === 'PENDING').length}
-              </p>
-            </div>
-            <div className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-              <span className="text-xs font-bold text-slate-500">Reattempts Scheduled</span>
-              <p className="text-2xl font-black text-blue-600 mt-1">
-                {ndrRecords.filter((r) => r.ndrStatus === 'REATTEMPT_REQUESTED').length}
-              </p>
-            </div>
-            <div className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-              <span className="text-xs font-bold text-slate-500">Resolved / Delivered</span>
-              <p className="text-2xl font-black text-emerald-600 mt-1">
-                {ndrRecords.filter((r) => r.ndrStatus === 'RESOLVED').length}
-              </p>
-            </div>
-            <div className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-              <span className="text-xs font-bold text-slate-500">RTO Initiated</span>
-              <p className="text-2xl font-black text-slate-700 dark:text-slate-300 mt-1">
-                {ndrRecords.filter((r) => r.ndrStatus === 'RTO_REQUESTED').length}
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-rose-500" />
-                First-Attempt Failure Management (NDR Action Center)
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Indian courier networks experience 15-30% first-attempt delivery failures. Resolve
-                them here before RTO occurs.
-              </p>
-            </div>
-
-            {ndrRecords.length === 0 ? (
-              <div className="p-12 text-center text-slate-400 font-bold text-xs">
-                No active non-delivery reports (NDR) found.
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {ndrRecords.map((record) => (
+            <div className="space-y-3">
+              {zones.map((zone) => (
                 <div
-                  key={record.id}
-                  className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  key={zone.id}
+                  className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 space-y-2.5"
                 >
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono font-bold text-sm text-slate-900 dark:text-white">
-                        {record.awbNumber}
-                      </span>
-                      <span className="text-xs font-semibold text-indigo-600">
-                        {record.orderNumber}
-                      </span>
-                      <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">
-                        Attempt #{record.attemptCount} Failed
-                      </span>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                        {zone.name}
+                      </h4>
+                      <p className="text-[11px] text-slate-500">{zone.countries.join(', ')}</p>
                     </div>
-
-                    <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">
-                      Reason: {record.failureReason}
-                    </p>
-
-                    <div className="flex items-center gap-4 text-xs text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <Phone className="w-3.5 h-3.5" />{' '}
-                        {record.customerPhone || 'No phone provided'}
-                      </span>
-                      <span>Courier: {record.carrierName}</span>
-                      <span>
-                        Last Attempt:{' '}
-                        {new Date(record.lastAttemptAt).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                    </div>
+                    <button
+                      onClick={() => {
+                        setActiveZoneId(zone.id);
+                        setIsRateModalOpen(true);
+                      }}
+                      className="px-2.5 py-1 text-[11px] font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-indigo-600 hover:bg-indigo-50 transition cursor-pointer"
+                    >
+                      + Add Rate Tier
+                    </button>
                   </div>
 
-                  <div className="flex items-center gap-2.5">
-                    <button
-                      onClick={() => {
-                        setSelectedNdr(record);
-                        setNdrActionType('REATTEMPT');
-                        setNdrRemarks('Customer requested reattempt tomorrow afternoon');
-                        setIsNdrModalOpen(true);
-                      }}
-                      className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" /> Reattempt Delivery
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setSelectedNdr(record);
-                        setNdrActionType('UPDATE_ADDRESS');
-                        setNdrNewPhone(record.customerPhone || '');
-                        setIsNdrModalOpen(true);
-                      }}
-                      className="px-3.5 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition"
-                    >
-                      Update Contact
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setSelectedNdr(record);
-                        setNdrActionType('RTO');
-                        setNdrRemarks('Customer permanently refused package');
-                        setIsNdrModalOpen(true);
-                      }}
-                      className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950 text-slate-600 hover:text-rose-600 rounded-xl text-xs font-bold transition"
-                    >
-                      Initiate RTO
-                    </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {zone.rates.map((rate) => (
+                      <div
+                        key={rate.id}
+                        className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 flex justify-between items-center text-xs"
+                      >
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">
+                          {rate.name}
+                        </span>
+                        <span className="font-black text-emerald-600">
+                          {rate.type === 'FREE' ? 'FREE' : `₹${rate.price.toFixed(2)}`}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      </div>
-    )}
-
-      {/* ─── TAB 5: ZONES & RATES ─────────────────────────────────────────── */}
-      {activeTab === 'zones' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Regional Shipping Zones
-              </h3>
-              <p className="text-xs text-slate-500">
-                Define fallback price slabs and delivery SLAs per country cluster.
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                setEditingZone(null);
-                setZoneNameInput('');
-                setZoneCountriesInput('');
-                setIsZoneModalOpen(true);
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-xl text-xs font-bold shadow-sm"
-            >
-              <Plus className="w-4 h-4" /> Add Shipping Zone
-            </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-6">
-            {zones.map((zone) => (
-              <div
-                key={zone.id}
-                className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm space-y-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 rounded-xl">
-                      <Globe className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                        {zone.name}
-                      </h4>
-                      <p className="text-xs text-slate-500">{zone.countries.join(', ')}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setActiveZoneId(zone.id);
-                        setEditingRate(null);
-                        setIsRateModalOpen(true);
-                      }}
-                      className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 rounded-xl text-xs font-bold hover:bg-indigo-100 transition flex items-center gap-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Add Rate Tier
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {zone.rates.map((rate) => (
-                    <div
-                      key={rate.id}
-                      className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 flex flex-col justify-between"
-                    >
-                      <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="text-xs font-bold text-slate-900 dark:text-white">
-                            {rate.name}
-                          </span>
-                          <span className="text-xs font-black text-emerald-600">
-                            {rate.type === 'FREE' ? 'FREE' : `$${rate.price.toFixed(2)}`}
-                          </span>
-                        </div>
-                        <span className="text-[11px] text-slate-500 block">
-                          Delivery: {rate.minDeliveryDays} - {rate.maxDeliveryDays} days
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ─── TAB 6: SIMULATOR & TRACKING ──────────────────────────────────── */}
-      {activeTab === 'simulator' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Rate & Serviceability Simulator */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5">
+          {/* Section 2: Rate Simulator */}
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Calculator className="w-5 h-5 text-indigo-500" />
-                Live Rate & Serviceability Simulator
+                Live Rate Calculator
               </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Simulate checkout queries against live rate-shopping orchestrator and postal code
-                databases.
+              <p className="text-xs text-slate-500">
+                Simulate how the platform computes shipping rates for any customer cart and destination
               </p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3.5 text-xs">
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                   Destination Country
                 </label>
                 <select
                   value={simCountry}
                   onChange={(e) => setSimCountry(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-semibold"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
                 >
-                  <option value="India">India (Domestic Pan-India)</option>
+                  <option value="India">India (Pan-India)</option>
                   <option value="United States">United States</option>
                   <option value="United Kingdom">United Kingdom</option>
-                  <option value="United Arab Emirates">United Arab Emirates (GCC)</option>
-                  <option value="Germany">Germany (EU)</option>
+                  <option value="United Arab Emirates">United Arab Emirates</option>
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                     PIN / Postal Code
                   </label>
                   <input
                     type="text"
                     value={simPincode}
                     onChange={(e) => setSimPincode(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-semibold"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                    Weight (kg)
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Package Weight (kg)
                   </label>
                   <input
                     type="number"
                     step="0.1"
                     value={simWeightKg}
                     onChange={(e) => setSimWeightKg(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-semibold"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                    Order Subtotal
-                  </label>
-                  <input
-                    type="number"
-                    value={simCartSubtotal}
-                    onChange={(e) => setSimCartSubtotal(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-semibold"
-                  />
-                </div>
-                <div className="flex items-center gap-2 pt-5">
-                  <input
-                    type="checkbox"
-                    id="sim-cod"
-                    checked={simIsCod}
-                    onChange={(e) => setSimIsCod(e.target.checked)}
-                    className="w-4 h-4 rounded text-indigo-600"
-                  />
-                  <label
-                    htmlFor="sim-cod"
-                    className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
-                  >
-                    COD Requested
-                  </label>
-                </div>
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Order Subtotal (₹)
+                </label>
+                <input
+                  type="number"
+                  value={simCartSubtotal}
+                  onChange={(e) => setSimCartSubtotal(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
+                />
               </div>
 
               <button
                 onClick={handleRunSimulator}
                 disabled={isSimulating}
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm"
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
               >
                 {isSimulating ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
                 ) : (
                   <Calculator className="w-4 h-4" />
                 )}
-                Run Rate Shopping Query
+                Calculate Shipping Rate
               </button>
-            </div>
 
-            {simResult && (
-              <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-slate-900 dark:text-white">
-                    Matched Zone: {simResult.matchedZoneName}
-                  </span>
-                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-extrabold text-[10px]">
-                    Cheapest: ${simResult.cheapestRate || 5.99}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {(simResult.eligibleRates || []).map((r: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex justify-between items-center text-xs"
-                    >
-                      <div>
-                        <span className="font-bold block text-slate-800 dark:text-slate-200">
-                          {r.name}
-                        </span>
-                        <span className="text-[10px] text-slate-500">{r.estimatedDays}</span>
-                      </div>
-                      <span className="font-mono font-bold text-slate-900 dark:text-white">
-                        {r.price === 0 ? 'FREE' : `$${r.price}`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Tracking Milestone Simulator */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Navigation className="w-5 h-5 text-indigo-500" />
-                Live Tracking Milestone Simulator
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Lookup any live AWB or consignment across your installed logistics carrier apps.
-              </p>
-            </div>
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={trackingNumberInput}
-                onChange={(e) => setTrackingNumberInput(e.target.value)}
-                placeholder="Enter AWB or Tracking #"
-                className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-mono font-bold"
-              />
-              <button
-                onClick={handleTrackLookup}
-                disabled={isTrackingLoading}
-                className="px-4 py-2.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
-              >
-                {isTrackingLoading ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Search className="w-4 h-4" />
-                )}
-                Track
-              </button>
-            </div>
-
-            {trackingResult && (
-              <div className="p-5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600">
-                      {trackingResult.carrier || selectedCarrier}
-                    </h4>
-                    <p className="font-mono text-sm font-black text-slate-900 dark:text-white">
-                      {trackingResult.trackingNumber}
-                    </p>
+              {simResult && (
+                <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                      Matched: {simResult.matchedZoneName}
+                    </span>
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full font-bold text-[10px]">
+                      Lowest: ₹{simResult.cheapestRate || 50}
+                    </span>
                   </div>
-                  <span className="text-xs font-black px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200">
-                    {trackingResult.status || 'IN_TRANSIT'}
-                  </span>
                 </div>
-
-                {/* Milestone Stepper */}
-                <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
-                  {(trackingResult.events || []).map((ev: any, i: number) => (
-                    <div key={i} className="relative">
-                      <div
-                        className={`absolute -left-6 top-0.5 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 ${
-                          ev.completed ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
-                        }`}
-                      />
-                      <h5 className="text-xs font-bold text-slate-900 dark:text-white">
-                        {ev.title}
-                      </h5>
-                      <span className="text-[11px] text-slate-500 block">{ev.location}</span>
-                      {ev.timestamp && (
-                        <span className="text-[10px] text-slate-400 block mt-0.5">
-                          {new Date(ev.timestamp).toLocaleDateString([], {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL: EDIT CARRIER CREDENTIALS ──────────────────────────────── */}
-      {isCredModalOpen && editingCred && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
-            <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Key className="w-5 h-5 text-indigo-500" />
-                Configure {editingCred.carrierName}
-              </h3>
-              <button
-                onClick={() => setIsCredModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3.5 text-xs">
-              <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                  API Key / Token
-                </label>
-                <input
-                  type="password"
-                  value={credApiKeyInput}
-                  onChange={(e) => setCredApiKeyInput(e.target.value)}
-                  placeholder="Enter carrier API token"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                  API Secret / Client Secret
-                </label>
-                <input
-                  type="password"
-                  value={credApiSecretInput}
-                  onChange={(e) => setCredApiSecretInput(e.target.value)}
-                  placeholder="Enter carrier API secret"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono"
-                />
-              </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <input
-                  type="checkbox"
-                  id="cred-sandbox"
-                  checked={credSandboxInput}
-                  onChange={(e) => setCredSandboxInput(e.target.checked)}
-                  className="w-4 h-4 rounded text-indigo-600"
-                />
-                <label
-                  htmlFor="cred-sandbox"
-                  className="font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
-                >
-                  Sandbox Simulation Mode
-                </label>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="cred-active"
-                  checked={credActiveInput}
-                  onChange={(e) => setCredActiveInput(e.target.checked)}
-                  className="w-4 h-4 rounded text-indigo-600"
-                />
-                <label
-                  htmlFor="cred-active"
-                  className="font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
-                >
-                  Enable in Rate-Shopping Pool
-                </label>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
-              <button
-                onClick={() => setIsCredModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveCredential}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm"
-              >
-                Save Credentials
-              </button>
+              )}
             </div>
           </div>
         </div>
@@ -1502,11 +1490,12 @@ export const ShippingStudio: React.FC = () => {
             <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Truck className="w-5 h-5 text-indigo-500" />
-                Manifest Order to Carrier
+                Manifest New Order Shipment
               </h3>
               <button
                 onClick={() => setIsManifestModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                disabled={isManifesting}
+                className="text-slate-400 hover:text-slate-600 disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1515,42 +1504,32 @@ export const ShippingStudio: React.FC = () => {
             <div className="space-y-3.5 text-xs">
               <div>
                 <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                  Select Order
+                  Order Number or UUID
                 </label>
                 <input
                   type="text"
+                  placeholder="e.g. ORD-1004"
                   value={manifestOrderId}
                   onChange={(e) => setManifestOrderId(e.target.value)}
-                  placeholder="Paste Order ID or Order Number"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-mono"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
                 />
               </div>
 
               <div>
                 <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                  Carrier Provider (Installed Logistics Apps)
+                  Logistics Carrier Partner
                 </label>
-                {credentials.length === 0 ? (
-                  <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-800 dark:text-amber-300 text-xs">
-                    No logistics app installed. Please install a shipping app from the{' '}
-                    <a href="/apps" className="underline font-bold">
-                      App Marketplace
-                    </a>{' '}
-                    first.
-                  </div>
-                ) : (
-                  <select
-                    value={manifestCarrier}
-                    onChange={(e) => setManifestCarrier(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
-                  >
-                    {credentials.map((c) => (
-                      <option key={c.carrierCode} value={c.carrierCode}>
-                        {c.carrierName} ({c.carrierCode})
-                      </option>
-                    ))}
-                  </select>
-                )}
+                <select
+                  value={manifestCarrier}
+                  onChange={(e) => setManifestCarrier(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
+                >
+                  {credentials.map((c) => (
+                    <option key={c.carrierCode} value={c.carrierCode}>
+                      {c.carrierName} ({c.carrierCode})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1586,14 +1565,15 @@ export const ShippingStudio: React.FC = () => {
             <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
               <button
                 onClick={() => setIsManifestModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+                disabled={isManifesting}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleManifestShipment}
                 disabled={isManifesting || credentials.length === 0}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isManifesting ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -1614,65 +1594,43 @@ export const ShippingStudio: React.FC = () => {
             <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-rose-500" />
-                Resolve Delivery Failure (AWB {selectedNdr.awbNumber})
+                Resolve Delivery Exception
               </h3>
               <button
                 onClick={() => setIsNdrModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                disabled={isSubmittingNdr}
+                className="text-slate-400 hover:text-slate-600 disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3.5 text-xs">
-              <div className="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-2xl border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300">
-                <span className="font-bold block">Carrier Failure Remark:</span>
-                <span>{selectedNdr.failureReason}</span>
+              <div className="p-3 bg-rose-50 dark:bg-rose-950/30 rounded-xl text-rose-800 dark:text-rose-200 space-y-1">
+                <span className="font-bold block">AWB: {selectedNdr.awbNumber}</span>
+                <span>Failure Reason: {selectedNdr.failureReason}</span>
               </div>
 
               <div>
                 <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                  Action to Take
+                  Resolution Action
                 </label>
-                <select
-                  value={ndrActionType}
-                  onChange={(e) => setNdrActionType(e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
-                >
-                  <option value="REATTEMPT">Schedule Courier Reattempt (Tomorrow)</option>
-                  <option value="UPDATE_ADDRESS">Update Customer Phone & Address</option>
-                  <option value="RTO">Initiate Return to Origin (RTO)</option>
-                </select>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['REATTEMPT', 'UPDATE_ADDRESS', 'RTO'] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setNdrActionType(type)}
+                      className={`py-2 px-1 text-center rounded-xl font-bold text-[11px] border transition cursor-pointer ${ndrActionType === type
+                        ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300'
+                        : 'border-slate-200 dark:border-slate-800 text-slate-600'
+                        }`}
+                    >
+                      {type === 'REATTEMPT' ? 'Reattempt' : type === 'UPDATE_ADDRESS' ? 'New Contact' : 'Return (RTO)'}
+                    </button>
+                  ))}
+                </div>
               </div>
-
-              {ndrActionType === 'UPDATE_ADDRESS' && (
-                <>
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Customer Phone
-                    </label>
-                    <input
-                      type="text"
-                      value={ndrNewPhone}
-                      onChange={(e) => setNdrNewPhone(e.target.value)}
-                      placeholder="+91 98765 43210"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Corrected Address
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={ndrNewAddress}
-                      onChange={(e) => setNdrNewAddress(e.target.value)}
-                      placeholder="Updated Landmark, Gate #, or Street"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-                    />
-                  </div>
-                </>
-              )}
 
               <div>
                 <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
@@ -1682,7 +1640,7 @@ export const ShippingStudio: React.FC = () => {
                   type="text"
                   value={ndrRemarks}
                   onChange={(e) => setNdrRemarks(e.target.value)}
-                  placeholder="e.g. Call before delivery, customer is available post 4 PM"
+                  placeholder="e.g. Customer is available post 4 PM"
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
                 />
               </div>
@@ -1691,16 +1649,24 @@ export const ShippingStudio: React.FC = () => {
             <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
               <button
                 onClick={() => setIsNdrModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+                disabled={isSubmittingNdr}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmitNdr}
                 disabled={isSubmittingNdr}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                {isSubmittingNdr ? 'Transmitting...' : 'Dispatch Action to Carrier'}
+                {isSubmittingNdr ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Transmitting...</span>
+                  </>
+                ) : (
+                  'Dispatch Action to Carrier'
+                )}
               </button>
             </div>
           </div>
@@ -1717,17 +1683,17 @@ export const ShippingStudio: React.FC = () => {
               </span>
               <button
                 onClick={() => setPreviewLabelAwb(null)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-4 border-2 border-black rounded-xl space-y-3 font-mono text-center">
-              <div className="text-lg font-black tracking-widest border-b pb-1">NEXUS COMMERCE</div>
+              <div className="text-lg font-black tracking-widest border-b pb-1">OMNISTORE SHIPPING</div>
               <div className="text-left text-xs space-y-1">
                 <div>
-                  <strong>SHIP TO:</strong> Valued Customer
+                  <strong>SHIP TO:</strong> Customer Delivery
                 </div>
                 <div>Indiranagar, 100ft Road</div>
                 <div>Bengaluru, Karnataka - 560038</div>
@@ -1736,7 +1702,7 @@ export const ShippingStudio: React.FC = () => {
 
               <div className="py-3 border-y-2 border-dashed space-y-1">
                 <div className="text-sm font-black tracking-widest">{previewLabelAwb}</div>
-                {/* Barcode Simulator */}
+                {/* Simulated Barcode */}
                 <div className="h-10 bg-slate-900 flex items-center justify-around px-2">
                   {Array.from({ length: 32 }).map((_, i) => (
                     <div
@@ -1748,7 +1714,7 @@ export const ShippingStudio: React.FC = () => {
               </div>
 
               <div className="flex justify-between text-[10px]">
-                <span>ROUTING: BLR / GATEWAY-01</span>
+                <span>ROUTING: HUB-MAIN</span>
                 <span>STANDARD SURFACE</span>
               </div>
             </div>
@@ -1756,9 +1722,200 @@ export const ShippingStudio: React.FC = () => {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => window.print()}
-                className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-4 h-4" /> Print Label
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL: ADD SHIPPING ZONE ─────────────────────────────────────── */}
+      {isZoneModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Globe className="w-5 h-5 text-indigo-500" />
+                Add Shipping Zone
+              </h3>
+              <button
+                onClick={() => setIsZoneModalOpen(false)}
+                disabled={isSavingZone}
+                className="text-slate-400 hover:text-slate-600 disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Zone Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Domestic Metro, European Union"
+                  value={zoneNameInput}
+                  onChange={(e) => setZoneNameInput(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Countries (Comma Separated)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. India, United States, Canada"
+                  value={zoneCountriesInput}
+                  onChange={(e) => setZoneCountriesInput(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button
+                onClick={() => setIsZoneModalOpen(false)}
+                disabled={isSavingZone}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveZone}
+                disabled={isSavingZone}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isSavingZone ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  'Create Zone'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL: ADD RATE TIER ─────────────────────────────────────────── */}
+      {isRateModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Truck className="w-5 h-5 text-indigo-500" />
+                Add Shipping Rate Slab
+              </h3>
+              <button
+                onClick={() => setIsRateModalOpen(false)}
+                disabled={isSavingRate}
+                className="text-slate-400 hover:text-slate-600 disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Rate Option Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Standard Surface Delivery"
+                  value={rateForm.name}
+                  onChange={(e) => setRateForm({ ...rateForm, name: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Rate Type
+                  </label>
+                  <select
+                    value={rateForm.type}
+                    onChange={(e) => setRateForm({ ...rateForm, type: e.target.value as any })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
+                  >
+                    <option value="FLAT">Flat Price</option>
+                    <option value="FREE">Free Shipping</option>
+                    <option value="WEIGHT_BASED">Weight-based</option>
+                    <option value="PRICE_BASED">Price-tiered</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Shipping Price (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={rateForm.price}
+                    onChange={(e) => setRateForm({ ...rateForm, price: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Min Delivery Days
+                  </label>
+                  <input
+                    type="number"
+                    value={rateForm.minDeliveryDays}
+                    onChange={(e) =>
+                      setRateForm({ ...rateForm, minDeliveryDays: Number(e.target.value) })
+                    }
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Max Delivery Days
+                  </label>
+                  <input
+                    type="number"
+                    value={rateForm.maxDeliveryDays}
+                    onChange={(e) =>
+                      setRateForm({ ...rateForm, maxDeliveryDays: Number(e.target.value) })
+                    }
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-semibold"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button
+                onClick={() => setIsRateModalOpen(false)}
+                disabled={isSavingRate}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveRate}
+                disabled={isSavingRate}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isSavingRate ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Adding...</span>
+                  </>
+                ) : (
+                  'Add Rate Tier'
+                )}
               </button>
             </div>
           </div>

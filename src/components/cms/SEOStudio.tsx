@@ -570,9 +570,13 @@ export const SEOStudio: React.FC = () => {
             type="button"
             onClick={activeTab === 'PRODUCTS' ? handleSaveProductSeo : handleSaveGlobalSeo}
             disabled={isSaving}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition-all cursor-pointer disabled:opacity-50"
+            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save className="w-4 h-4" />
+            {isSaving ? (
+              <RefreshCw className="w-4 h-4 animate-spin text-white" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
             <span>
               {isSaving
                 ? 'Saving...'

@@ -1970,7 +1970,7 @@ export const ThemeManager: React.FC = () => {
               type="button"
               onClick={handleSaveTheme}
               disabled={isSaving}
-              className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer transform active:scale-95"
+              className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 cursor-pointer transform active:scale-95"
             >
               {isSaving ? (
                 <>
@@ -2230,7 +2230,7 @@ export const ThemeManager: React.FC = () => {
                           type="button"
                           onClick={() => handlePublishTemplate(tmpl.slug || tmpl.id)}
                           disabled={isPublishing}
-                          className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
+                          className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isPublishing ? (
                             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -2795,19 +2795,25 @@ export const ThemeManager: React.FC = () => {
               {/* Publish button */}
               <button
                 type="button"
-                onClick={() => {
-                  handlePublishTemplate(livePreviewTemplate.slug || livePreviewTemplate.id);
+                disabled={publishingSlug !== null}
+                onClick={async () => {
+                  await handlePublishTemplate(livePreviewTemplate.slug || livePreviewTemplate.id);
                   setLivePreviewTemplate(null);
                 }}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md transition-all active:scale-95"
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
               >
-                <Check className="w-4 h-4" />
-                <span>Publish Template</span>
+                {publishingSlug === (livePreviewTemplate.slug || livePreviewTemplate.id) ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4" />
+                )}
+                <span>{publishingSlug === (livePreviewTemplate.slug || livePreviewTemplate.id) ? 'Publishing...' : 'Publish Template'}</span>
               </button>
               <button
                 type="button"
+                disabled={publishingSlug !== null}
                 onClick={() => setLivePreviewTemplate(null)}
-                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2909,19 +2915,25 @@ export const ThemeManager: React.FC = () => {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => {
-                  handlePublishTemplate(previewTemplate.slug || previewTemplate.id);
+                disabled={publishingSlug !== null}
+                onClick={async () => {
+                  await handlePublishTemplate(previewTemplate.slug || previewTemplate.id);
                   setPreviewTemplate(null);
                 }}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md transition-all active:scale-95"
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
               >
-                <Check className="w-4 h-4" />
-                <span>Publish This Template</span>
+                {publishingSlug === (previewTemplate.slug || previewTemplate.id) ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4" />
+                )}
+                <span>{publishingSlug === (previewTemplate.slug || previewTemplate.id) ? 'Publishing...' : 'Publish This Template'}</span>
               </button>
               <button
                 type="button"
+                disabled={publishingSlug !== null}
                 onClick={() => setPreviewTemplate(null)}
-                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition"
+                className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <X className="w-5 h-5" />
               </button>

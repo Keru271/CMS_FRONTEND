@@ -5,6 +5,7 @@ import { Providers } from '@/src/components/providers/HeroUIProvider';
 import { ProtectedRoute } from '@/src/components/auth/ProtectedRoute';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { CookieConsent } from '@/src/components/ui/CookieConsent';
+import { GlobalModalScrollLock } from '@/src/components/ui/GlobalModalScrollLock';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans transition-colors duration-200 selection:bg-[#00E5FF] selection:text-[#121212]">
+        <GlobalModalScrollLock />
         <Providers>
           <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_CLIENT_ID || ''}>
             <ProtectedRoute>{children}</ProtectedRoute>

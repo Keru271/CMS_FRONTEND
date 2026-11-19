@@ -503,7 +503,7 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
               type="button"
               onClick={previewData ? handleReset : onClose}
               disabled={isImporting}
-              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-border text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-accent transition-all"
+              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-border text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {previewData ? 'Choose Another File' : 'Cancel'}
             </button>
@@ -513,7 +513,7 @@ export const ProductImportModal: React.FC<ProductImportModalProps> = ({
                 type="button"
                 onClick={handleExecuteImport}
                 disabled={isImporting || previewData.validCount === 0}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all"
               >
                 {isImporting ? (
                   <>

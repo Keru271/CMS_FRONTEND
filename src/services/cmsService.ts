@@ -8852,8 +8852,8 @@ export const cmsService = {
     return res.data;
   },
 
-  async installApp(slug: string): Promise<{ success: boolean; message: string; installation?: any }> {
-    const res = await apiClient.post(`/apps/${slug}/install`);
+  async installApp(slug: string, payload?: { credentials?: Record<string, any>; isPrimary?: boolean }): Promise<{ success: boolean; message: string; installation?: any }> {
+    const res = await apiClient.post(`/apps/${slug}/install`, payload || {});
     return res.data;
   },
 

@@ -775,11 +775,10 @@ export const MarketingStudio: React.FC = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
-                  isActive
-                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200 dark:shadow-none'
-                    : 'bg-slate-50 dark:bg-accent/60 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-accent'
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${isActive
+                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200 dark:shadow-none'
+                  : 'bg-slate-50 dark:bg-accent/60 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-accent'
+                  }`}
               >
                 <IconC className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
@@ -1029,48 +1028,48 @@ export const MarketingStudio: React.FC = () => {
                     abandonedCarts
                       .slice((cartPage - 1) * cartPageSize, cartPage * cartPageSize)
                       .map((ac) => (
-                      <tr
-                        key={ac.id}
-                        className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors"
-                      >
-                        <td className="py-4 px-6">
-                          <div className="font-extrabold text-slate-900 dark:text-foreground">
-                            {ac.customerName}
-                          </div>
-                          <div className="text-[11px] font-mono text-indigo-600">
-                            {ac.customerEmail}
-                          </div>
-                        </td>
-                        <td className="py-4 px-6 font-bold">{ac.itemsCount} Items</td>
-                        <td className="py-4 px-6 font-black text-sm text-slate-900 dark:text-foreground">
-                          {currencySymbol}
-                          {ac.cartSubtotal.toFixed(2)}
-                        </td>
-                        <td className="py-4 px-6 text-slate-500 font-semibold">{ac.abandonedAt}</td>
-                        <td className="py-4 px-6">
-                          <span className="px-2.5 py-1 rounded-xl bg-amber-100 font-mono font-black text-[10px] text-amber-800">
-                            {ac.recoveryDiscountCode || 'RECOVER10'}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6 text-right">
-                          {ac.status === 'EMAIL_SENT' ? (
-                            <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-[11px] font-extrabold inline-flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Recovery Email Sent</span>
+                        <tr
+                          key={ac.id}
+                          className="hover:bg-slate-50/80 dark:hover:bg-accent/50 transition-colors"
+                        >
+                          <td className="py-4 px-6">
+                            <div className="font-extrabold text-slate-900 dark:text-foreground">
+                              {ac.customerName}
+                            </div>
+                            <div className="text-[11px] font-mono text-indigo-600">
+                              {ac.customerEmail}
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 font-bold">{ac.itemsCount} Items</td>
+                          <td className="py-4 px-6 font-black text-sm text-slate-900 dark:text-foreground">
+                            {currencySymbol}
+                            {ac.cartSubtotal.toFixed(2)}
+                          </td>
+                          <td className="py-4 px-6 text-slate-500 font-semibold">{ac.abandonedAt}</td>
+                          <td className="py-4 px-6">
+                            <span className="px-2.5 py-1 rounded-xl bg-amber-100 font-mono font-black text-[10px] text-amber-800">
+                              {ac.recoveryDiscountCode || 'RECOVER10'}
                             </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleSendRecovery(ac.id)}
-                              className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[11px] inline-flex items-center gap-1 shadow-sm"
-                            >
-                              <Send className="w-3.5 h-3.5" />
-                              <span>Send Recovery Email</span>
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                            {ac.status === 'EMAIL_SENT' ? (
+                              <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-[11px] font-extrabold inline-flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Recovery Email Sent</span>
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleSendRecovery(ac.id)}
+                                className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-[11px] inline-flex items-center gap-1 shadow-sm"
+                              >
+                                <Send className="w-3.5 h-3.5" />
+                                <span>Send Recovery Email</span>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
                   )}
                 </tbody>
               </table>
@@ -1141,11 +1140,10 @@ export const MarketingStudio: React.FC = () => {
                   onClick={() =>
                     setPixelConfig({ ...pixelConfig, isGa4Active: !pixelConfig.isGa4Active })
                   }
-                  className={`px-3 py-1 rounded-full text-xs font-black transition ${
-                    pixelConfig.isGa4Active
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-slate-200 text-slate-600'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-black transition ${pixelConfig.isGa4Active
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-slate-200 text-slate-600'
+                    }`}
                 >
                   {pixelConfig.isGa4Active ? 'Enabled' : 'Disabled'}
                 </button>
@@ -1182,11 +1180,10 @@ export const MarketingStudio: React.FC = () => {
                   onClick={() =>
                     setPixelConfig({ ...pixelConfig, isMetaActive: !pixelConfig.isMetaActive })
                   }
-                  className={`px-3 py-1 rounded-full text-xs font-black transition ${
-                    pixelConfig.isMetaActive
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-slate-200 text-slate-600'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-black transition ${pixelConfig.isMetaActive
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-slate-200 text-slate-600'
+                    }`}
                 >
                   {pixelConfig.isMetaActive ? 'Enabled' : 'Disabled'}
                 </button>
@@ -1221,11 +1218,10 @@ export const MarketingStudio: React.FC = () => {
                   onClick={() =>
                     setPixelConfig({ ...pixelConfig, isTikTokActive: !pixelConfig.isTikTokActive })
                   }
-                  className={`px-3 py-1 rounded-full text-xs font-black transition ${
-                    pixelConfig.isTikTokActive
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-slate-200 text-slate-600'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-black transition ${pixelConfig.isTikTokActive
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-slate-200 text-slate-600'
+                    }`}
                 >
                   {pixelConfig.isTikTokActive ? 'Enabled' : 'Disabled'}
                 </button>
@@ -1263,11 +1259,10 @@ export const MarketingStudio: React.FC = () => {
                       isPinterestActive: !pixelConfig.isPinterestActive,
                     })
                   }
-                  className={`px-3 py-1 rounded-full text-xs font-black transition ${
-                    pixelConfig.isPinterestActive
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-slate-200 text-slate-600'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-black transition ${pixelConfig.isPinterestActive
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-slate-200 text-slate-600'
+                    }`}
                 >
                   {pixelConfig.isPinterestActive ? 'Enabled' : 'Disabled'}
                 </button>
@@ -1310,11 +1305,10 @@ export const MarketingStudio: React.FC = () => {
                       isAdobeActive: !pixelConfig.isAdobeActive,
                     })
                   }
-                  className={`px-3 py-1 rounded-full text-xs font-black transition ${
-                    pixelConfig.isAdobeActive
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-slate-200 text-slate-600'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-black transition ${pixelConfig.isAdobeActive
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-slate-200 text-slate-600'
+                    }`}
                 >
                   {pixelConfig.isAdobeActive ? 'Enabled' : 'Disabled'}
                 </button>
@@ -1357,11 +1351,10 @@ export const MarketingStudio: React.FC = () => {
                       isCleverTapActive: !pixelConfig.isCleverTapActive,
                     })
                   }
-                  className={`px-3 py-1 rounded-full text-xs font-black transition ${
-                    pixelConfig.isCleverTapActive
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-slate-200 text-slate-600'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-black transition ${pixelConfig.isCleverTapActive
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-slate-200 text-slate-600'
+                    }`}
                 >
                   {pixelConfig.isCleverTapActive ? 'Enabled' : 'Disabled'}
                 </button>
@@ -1585,7 +1578,7 @@ export const MarketingStudio: React.FC = () => {
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 text-xs font-semibold text-slate-900 dark:text-foreground transition shadow-xs"
                   >
                     <option value="">Standard Plain Layout (Write custom subject & body below)</option>
-                    
+
                     {emailTemplates.filter((t) => !t.isDefault).length > 0 && (
                       <optgroup label="🌟 Your Custom Saved Templates">
                         {emailTemplates
@@ -1875,9 +1868,17 @@ export const MarketingStudio: React.FC = () => {
         const smsSegments = Math.max(1, Math.ceil(charCount / 160));
 
         return (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl max-w-2xl w-full p-6 sm:p-7 space-y-6 shadow-2xl relative my-8 max-h-[92vh] overflow-y-auto">
-              
+          <div
+            role="dialog"
+            aria-modal="true"
+            data-modal="true"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in duration-200 w-full h-full min-h-screen h-[100dvh]"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setPreviewCampaign(null);
+            }}
+          >
+            <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl max-w-2xl w-full p-6 sm:p-7 space-y-6 shadow-2xl relative my-auto max-h-[88vh] sm:max-h-[90vh] overflow-y-auto">
+
               {/* Header */}
               <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-border">
                 <div className="space-y-1.5">
@@ -1918,11 +1919,10 @@ export const MarketingStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setTemplatePreviewTab('visual')}
-                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                      templatePreviewTab === 'visual'
-                        ? 'bg-white dark:bg-card text-slate-900 dark:text-foreground shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${templatePreviewTab === 'visual'
+                      ? 'bg-white dark:bg-card text-slate-900 dark:text-foreground shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                      }`}
                   >
                     <Eye className="w-3.5 h-3.5" />
                     <span>Live Device Preview</span>
@@ -1930,11 +1930,10 @@ export const MarketingStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setTemplatePreviewTab('text')}
-                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                      templatePreviewTab === 'text'
-                        ? 'bg-white dark:bg-card text-slate-900 dark:text-foreground shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${templatePreviewTab === 'text'
+                      ? 'bg-white dark:bg-card text-slate-900 dark:text-foreground shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                      }`}
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>Raw Template Copy</span>
@@ -2326,9 +2325,17 @@ export const MarketingStudio: React.FC = () => {
         const guide = activePixelGuide;
         const allGuides = Object.values(PIXEL_HELP_GUIDES);
         return (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95 my-8 max-h-[90vh] overflow-y-auto">
-              
+          <div
+            role="dialog"
+            aria-modal="true"
+            data-modal="true"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setActivePixelGuide(null);
+            }}
+          >
+            <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95 my-auto max-h-[88vh] sm:max-h-[90vh] overflow-y-auto">
+
               {/* Modal Header */}
               <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-border">
                 <div className="space-y-1">
@@ -2367,11 +2374,10 @@ export const MarketingStudio: React.FC = () => {
                       key={g.id}
                       type="button"
                       onClick={() => setActivePixelGuide(g)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                        isActive
-                          ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200 dark:shadow-none'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                      }`}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${isActive
+                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200 dark:shadow-none'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
                     >
                       <span>{g.name.split(' ')[0]}</span>
                     </button>

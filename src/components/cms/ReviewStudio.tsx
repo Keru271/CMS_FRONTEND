@@ -52,6 +52,8 @@ export const ReviewStudio: React.FC = () => {
   const [replyingReview, setReplyingReview] = useState<ProductReviewData | null>(null);
   const [adminReplyInput, setAdminReplyInput] = useState('');
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
 
   // Edit Review Form State
   const [editForm, setEditForm] = useState({
@@ -101,6 +103,7 @@ export const ReviewStudio: React.FC = () => {
     id: string,
     newStatus: 'APPROVED' | 'PENDING' | 'REJECTED' | 'SPAM',
   ) => {
+    setUpdatingStatusId(id);
     try {
       await cmsService.updateReviewStatus(id, newStatus);
       setReviews((prev) => prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r)));
@@ -109,6 +112,8 @@ export const ReviewStudio: React.FC = () => {
       loadReviews();
     } catch (err) {
       showToast('Failed to update review status', 'error');
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -177,7 +182,7 @@ export const ReviewStudio: React.FC = () => {
   // Delete Review
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to permanently delete this customer review?')) return;
-
+    setDeletingReviewId(id);
     try {
       await cmsService.deleteReview(id);
       setReviews((prev) => prev.filter((r) => r.id !== id));
@@ -185,6 +190,8 @@ export const ReviewStudio: React.FC = () => {
       loadReviews();
     } catch (err) {
       showToast('Failed to delete review', 'error');
+    } finally {
+      setDeletingReviewId(null);
     }
   };
 
@@ -530,9 +537,14 @@ export const ReviewStudio: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(rev.id, 'APPROVED')}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center gap-1 transition"
+                        disabled={updatingStatusId === rev.id || deletingReviewId === rev.id}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center gap-1 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Check className="w-3.5 h-3.5" />
+                        {updatingStatusId === rev.id ? (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Check className="w-3.5 h-3.5" />
+                        )}
                         <span>Approve</span>
                       </button>
                     )}
@@ -541,9 +553,14 @@ export const ReviewStudio: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(rev.id, 'REJECTED')}
-                        className="px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-accent hover:bg-rose-100 hover:text-rose-600 text-slate-700 dark:text-slate-300 text-xs font-extrabold flex items-center gap-1 transition"
+                        disabled={updatingStatusId === rev.id || deletingReviewId === rev.id}
+                        className="px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-accent hover:bg-rose-100 hover:text-rose-600 text-slate-700 dark:text-slate-300 text-xs font-extrabold flex items-center gap-1 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <XCircle className="w-3.5 h-3.5" />
+                        {updatingStatusId === rev.id ? (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <XCircle className="w-3.5 h-3.5" />
+                        )}
                         <span>Reject</span>
                       </button>
                     )}
@@ -572,10 +589,15 @@ export const ReviewStudio: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleDelete(rev.id)}
-                      className="p-2 rounded-xl bg-slate-100 dark:bg-accent hover:bg-rose-50 text-rose-500 transition"
+                      disabled={deletingReviewId === rev.id || updatingStatusId === rev.id}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-accent hover:bg-rose-50 text-rose-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Delete review"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      {deletingReviewId === rev.id ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-rose-500" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -685,16 +707,18 @@ export const ReviewStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setEditingReview(null)}
-                  className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-accent font-bold text-slate-700 dark:text-slate-300"
+                  disabled={isActionLoading}
+                  className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-accent font-bold text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isActionLoading}
-                  className="flex-1 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold shadow-lg disabled:opacity-50"
+                  className="flex-1 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
                 >
-                  {isActionLoading ? 'Saving...' : 'Save Changes'}
+                  {isActionLoading && <RefreshCw className="w-4 h-4 animate-spin text-white" />}
+                  <span>{isActionLoading ? 'Saving...' : 'Save Changes'}</span>
                 </button>
               </div>
             </form>
@@ -751,16 +775,21 @@ export const ReviewStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setReplyingReview(null)}
-                  className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-accent font-bold text-slate-700 dark:text-slate-300"
+                  disabled={isActionLoading}
+                  className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-accent font-bold text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isActionLoading}
-                  className="flex-1 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <Send className="w-3.5 h-3.5" />
+                  {isActionLoading ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                  ) : (
+                    <Send className="w-3.5 h-3.5" />
+                  )}
                   <span>{isActionLoading ? 'Publishing...' : 'Publish Store Reply'}</span>
                 </button>
               </div>

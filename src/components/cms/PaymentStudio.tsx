@@ -42,6 +42,7 @@ export const PaymentStudio: React.FC = () => {
   const [summary, setSummary] = useState<PaymentTransactionsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [refundingTxId, setRefundingTxId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -167,6 +168,7 @@ export const PaymentStudio: React.FC = () => {
 
   const handleRefund = async (txId: string, amount: number) => {
     if (!confirm(`Are you sure you want to refund this transaction of ₹/${amount}?`)) return;
+    setRefundingTxId(txId);
     try {
       await cmsService.refundPaymentTransaction({
         transactionId: txId,
@@ -177,6 +179,8 @@ export const PaymentStudio: React.FC = () => {
       loadData();
     } catch {
       showToast('Failed to process refund', 'error');
+    } finally {
+      setRefundingTxId(null);
     }
   };
 
@@ -281,7 +285,7 @@ export const PaymentStudio: React.FC = () => {
             <button
               onClick={() => handleSaveSettings()}
               disabled={isSaving}
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-2xl shadow-sm hover:shadow flex items-center gap-2 transition-all cursor-pointer transform active:scale-95 disabled:opacity-50"
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-2xl shadow-sm hover:shadow flex items-center gap-2 transition-all cursor-pointer transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? (
                 <RefreshCw className="w-4 h-4 animate-spin text-white" />
@@ -857,9 +861,17 @@ export const PaymentStudio: React.FC = () => {
                           {t.status === 'SETTLED' && (
                             <button
                               onClick={() => handleRefund(t.id, t.amount)}
-                              className="px-3 py-1 text-[11px] font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg border border-rose-200 dark:border-rose-800 transition cursor-pointer"
+                              disabled={refundingTxId === t.id}
+                              className="px-3 py-1 text-[11px] font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg border border-rose-200 dark:border-rose-800 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
                             >
-                              Refund
+                              {refundingTxId === t.id ? (
+                                <>
+                                  <RefreshCw className="w-3 h-3 animate-spin text-rose-600" />
+                                  <span>Refunding...</span>
+                                </>
+                              ) : (
+                                <span>Refund</span>
+                              )}
                             </button>
                           )}
                         </td>

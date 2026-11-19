@@ -30,6 +30,7 @@ import {
   ExternalLink,
   Download,
   Tag,
+  RefreshCw,
 } from 'lucide-react';
 
 export const OrderStudio: React.FC = () => {
@@ -621,8 +622,16 @@ export const OrderStudio: React.FC = () => {
 
       {/* ORDER DETAILS DRAWER / MODAL */}
       {isDetailsOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden my-4 sm:my-8 max-h-[92vh] flex flex-col">
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsDetailsOpen(false);
+          }}
+        >
+          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="p-4 sm:p-6 bg-slate-900 text-white flex items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-3 min-w-0">
@@ -1079,16 +1088,24 @@ export const OrderStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsTrackingModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-700 dark:text-foreground text-xs font-bold transition-colors"
+                  disabled={isSaving}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-700 dark:text-foreground text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving || (installedShippingCarriers.length === 0 && !selectedOrder.carrier)}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
                 >
-                  {isSaving ? 'Updating...' : 'Save & Update Order'}
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Updating...</span>
+                    </>
+                  ) : (
+                    <span>Save & Update Order</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -1156,16 +1173,24 @@ export const OrderStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsRefundModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-700 dark:text-foreground text-xs font-bold transition-colors"
+                  disabled={isSaving}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-700 dark:text-foreground text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold shadow-sm transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
                 >
-                  {isSaving ? 'Processing...' : 'Confirm Refund'}
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <span>Confirm Refund</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -1219,16 +1244,24 @@ export const OrderStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsCancelModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-700 dark:text-foreground text-xs font-bold transition-colors"
+                  disabled={isSaving}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent dark:hover:bg-accent/80 text-slate-700 dark:text-foreground text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Back
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold shadow-sm transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
                 >
-                  {isSaving ? 'Cancelling...' : 'Cancel Order & Restock'}
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Cancelling...</span>
+                    </>
+                  ) : (
+                    <span>Cancel Order & Restock</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -1238,8 +1271,16 @@ export const OrderStudio: React.FC = () => {
 
       {/* PRINTABLE INVOICE MODAL */}
       {isInvoiceModalOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden my-8 p-8 space-y-6 text-slate-900">
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsInvoiceModalOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden my-auto max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 text-slate-900">
             {/* Invoice Top Action Bar */}
             <div className="flex items-center justify-between border-b pb-4">
               <span className="text-xs font-black uppercase text-indigo-600 tracking-wider">

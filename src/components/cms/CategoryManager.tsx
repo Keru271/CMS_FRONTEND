@@ -39,6 +39,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
   const [activeTab, setActiveTab] = useState<'CATEGORIES' | 'BRANDS' | 'COLLECTIONS'>(initialTab);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<{
     text: string;
@@ -256,6 +257,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
   const handleDeleteCategory = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete category "${name}"?`)) return;
     try {
+      setDeletingId(id);
       setIsSaving(true);
       await cmsService.deleteCategory(id);
       showToast(`Category "${name}" deleted!`, 'success');
@@ -264,6 +266,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
       const msg = err.response?.data?.message || err.message || 'Failed to delete category.';
       showToast(msg, 'error');
     } finally {
+      setDeletingId(null);
       setIsSaving(false);
     }
   };
@@ -339,6 +342,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
   const handleDeleteBrand = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete brand "${name}"?`)) return;
     try {
+      setDeletingId(id);
       setIsSaving(true);
       await cmsService.deleteBrand(id);
       showToast(`Brand "${name}" deleted!`, 'success');
@@ -347,6 +351,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
       const msg = err.response?.data?.message || err.message || 'Failed to delete brand.';
       showToast(msg, 'error');
     } finally {
+      setDeletingId(null);
       setIsSaving(false);
     }
   };
@@ -428,6 +433,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
   const handleDeleteCollection = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete collection "${name}"?`)) return;
     try {
+      setDeletingId(id);
       setIsSaving(true);
       await cmsService.deleteCollection(id);
       showToast(`Collection "${name}" deleted!`, 'success');
@@ -436,6 +442,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
       const msg = err.response?.data?.message || err.message || 'Failed to delete collection.';
       showToast(msg, 'error');
     } finally {
+      setDeletingId(null);
       setIsSaving(false);
     }
   };
@@ -680,10 +687,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                     <button
                       type="button"
                       onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                      className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 transition-colors"
+                      disabled={deletingId === cat.id || isSaving}
+                      className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       title="Delete Category"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      {deletingId === cat.id ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-rose-600" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -770,10 +782,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                     <button
                       type="button"
                       onClick={() => handleDeleteBrand(brand.id, brand.name)}
-                      className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 transition-colors"
+                      disabled={deletingId === brand.id || isSaving}
+                      className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       title="Delete Brand"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      {deletingId === brand.id ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-rose-600" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -846,10 +863,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                       <button
                         type="button"
                         onClick={() => handleDeleteCollection(coll.id, coll.name)}
-                        className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 transition-colors"
+                        disabled={deletingId === coll.id || isSaving}
+                        className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         title="Delete Collection"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        {deletingId === coll.id ? (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-rose-600" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -863,7 +885,10 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
       {/* --- CREATE / EDIT CATEGORY MODAL --- */}
       {isCategoryModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in"
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsCategoryModalOpen(false);
           }}
@@ -1002,14 +1027,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                 <button
                   type="button"
                   onClick={() => setIsCategoryModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                  disabled={isSaving}
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
                     <RefreshCw className="w-4 h-4 animate-spin text-white" />
@@ -1027,7 +1053,10 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
       {/* --- CREATE / EDIT BRAND MODAL --- */}
       {isBrandModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in"
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsBrandModalOpen(false);
           }}
@@ -1155,14 +1184,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                 <button
                   type="button"
                   onClick={() => setIsBrandModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                  disabled={isSaving}
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
                     <RefreshCw className="w-4 h-4 animate-spin text-white" />
@@ -1180,7 +1210,10 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
       {/* --- CREATE / EDIT COLLECTION MODAL --- */}
       {isCollectionModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in"
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsCollectionModalOpen(false);
           }}
@@ -1318,14 +1351,15 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ initialTab = '
                 <button
                   type="button"
                   onClick={() => setIsCollectionModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                  disabled={isSaving}
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
                     <RefreshCw className="w-4 h-4 animate-spin text-white" />

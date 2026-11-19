@@ -236,9 +236,13 @@ export const NotificationStudio: React.FC = () => {
             type="button"
             disabled={isSaving}
             onClick={handleSaveConfig}
-            className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-lg transition active:scale-95 flex items-center gap-2 cursor-pointer"
+            className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-lg transition active:scale-95 flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
-            <Save className="w-4 h-4" />
+            {isSaving ? (
+              <RefreshCw className="w-4 h-4 animate-spin text-white" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
             <span>{isSaving ? 'Saving...' : 'Save Notification Workflows'}</span>
           </button>
         </div>
@@ -737,9 +741,13 @@ export const NotificationStudio: React.FC = () => {
                     type="button"
                     onClick={handleSaveConfig}
                     disabled={isSaving}
-                    className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-lg shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition disabled:opacity-50"
+                    className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-lg shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Save className="w-4 h-4" />
+                    {isSaving ? (
+                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
                     <span>{isSaving ? 'Saving Settings...' : 'Save Notification Settings'}</span>
                   </button>
                 </div>
@@ -899,8 +907,16 @@ export const NotificationStudio: React.FC = () => {
 
       {/* VENDOR SMTP DELIVERY CONFIGURATION MODAL */}
       {isSmtpModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-card rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-border space-y-6 my-8 max-h-[90vh] overflow-y-auto animate-in fade-in">
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsSmtpModalOpen(false);
+          }}
+        >
+          <div className="bg-white dark:bg-card rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-border space-y-6 my-auto max-h-[88vh] sm:max-h-[90vh] overflow-y-auto animate-in fade-in">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-border">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-md">
@@ -931,8 +947,16 @@ export const NotificationStudio: React.FC = () => {
 
       {/* META WHATSAPP CLOUD API CONFIGURATION MODAL */}
       {isWhatsAppModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 my-8 max-h-[90vh] overflow-y-auto animate-in fade-in">
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsWhatsAppModalOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 my-auto max-h-[88vh] sm:max-h-[90vh] overflow-y-auto animate-in fade-in">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-md">

@@ -173,7 +173,15 @@ export function AiStoreBuilderModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      data-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-3 sm:p-4 overflow-hidden animate-in fade-in duration-200 w-full h-full min-h-screen h-[100dvh]"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="relative w-full max-w-5xl bg-white border-2 border-zinc-200 text-zinc-950 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-zinc-50">
@@ -193,7 +201,8 @@ export function AiStoreBuilderModal({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-950 hover:bg-zinc-100 border border-transparent hover:border-zinc-200 transition-all cursor-pointer"
+            disabled={isGenerating || isApplying}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-950 hover:bg-zinc-100 border border-transparent hover:border-zinc-200 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <X className="w-5 h-5" />
           </button>
@@ -305,8 +314,8 @@ export function AiStoreBuilderModal({
                 <button
                   type="button"
                   onClick={() => handleGenerate()}
-                  disabled={!prompt.trim()}
-                  className="px-6 py-3 rounded-xl bg-black hover:bg-zinc-800 disabled:opacity-50 text-white text-xs font-black uppercase tracking-wider border-2 border-black shadow-md flex items-center gap-2 transition-all cursor-pointer transform active:scale-95"
+                  disabled={!prompt.trim() || isGenerating}
+                  className="px-6 py-3 rounded-xl bg-black hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-black uppercase tracking-wider border-2 border-black shadow-md flex items-center gap-2 transition-all cursor-pointer transform active:scale-95 disabled:active:scale-100"
                 >
                   <Sparkles className="w-4 h-4 text-amber-300" />
                   Generate Complete Store
@@ -403,11 +412,12 @@ export function AiStoreBuilderModal({
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
+                        disabled={isApplying}
                         onClick={() => {
                           setBlueprint(null);
                           handleGenerate();
                         }}
-                        className="px-3.5 py-2 bg-white hover:bg-zinc-100 border border-zinc-300 text-zinc-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="px-3.5 py-2 bg-white hover:bg-zinc-100 border border-zinc-300 text-zinc-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
                         Regenerate
@@ -416,7 +426,7 @@ export function AiStoreBuilderModal({
                         type="button"
                         onClick={handleApplyBlueprint}
                         disabled={isApplying}
-                        className="px-5 py-2.5 bg-black hover:bg-zinc-800 text-white rounded-xl text-xs font-black uppercase tracking-wider border-2 border-black shadow-md flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer transform active:scale-95"
+                        className="px-5 py-2.5 bg-black hover:bg-zinc-800 text-white rounded-xl text-xs font-black uppercase tracking-wider border-2 border-black shadow-md flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transform active:scale-95 disabled:active:scale-100"
                       >
                         {isApplying ? (
                           <>

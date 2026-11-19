@@ -93,7 +93,7 @@ export const PageManager: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  
+
 
   // Page Builder States
   const [isPageBuilderOpen, setIsPageBuilderOpen] = useState(false);
@@ -130,6 +130,7 @@ export const PageManager: React.FC = () => {
     'desktop',
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingPageId, setDeletingPageId] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
 
   // Form State
@@ -165,15 +166,54 @@ export const PageManager: React.FC = () => {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  /**
+   * Helper to extract the clean URL handle without type prefixes or slashes
+   */
+  const extractHandleFromSlug = (rawSlug: string): string => {
+    const s = (rawSlug || '').trim();
+    if (s === '/' || s === 'home') return '';
+    return s
+      .replace(/^\/+/, '')
+      .replace(/^(pages|policies)\/+/, '')
+      .replace(/^\/+/, '');
+  };
+
+  /**
+   * Helper to get canonical route prefix based on pageType
+   */
+  const getPrefixForPageType = (type: string): string => {
+    if (type === 'POLICY') return '/policies/';
+    if (type === 'SYSTEM') return '/';
+    return '/pages/';
+  };
+
+  /**
+   * Helper to construct full canonical slug
+   */
+  const buildFullSlug = (handle: string, type: string): string => {
+    const cleanHandle = handle
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    if (!cleanHandle) return '';
+    const prefix = getPrefixForPageType(type);
+    return `${prefix}${cleanHandle}`;
+  };
+
   const handleOpenCreateModal = () => {
     setEditingPage(null);
     setModalError(null);
+    // Inherit from active tab context if applicable
+    const initialType =
+      activeTab === 'POLICY' ? 'POLICY' : activeTab === 'BRAND' ? 'BRAND' : 'CUSTOM';
     setFormData({
       title: '',
-      slug: '/pages/',
+      slug: '',
       content:
         '<h2>New Page Title</h2>\n<p>Write your custom page content here using HTML or formatted text...</p>',
-      pageType: 'CUSTOM',
+      pageType: initialType,
       metaTitle: '',
       metaDescription: '',
       status: 'PUBLISHED',
@@ -198,30 +238,70 @@ export const PageManager: React.FC = () => {
 
   const handleTitleChange = (newTitle: string) => {
     if (!editingPage) {
-      const generatedSlug = `/pages/${newTitle
+      const cleanHandle = newTitle
         .toLowerCase()
         .trim()
         .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')}`;
+        .replace(/\s+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      const newSlug = cleanHandle ? buildFullSlug(cleanHandle, formData.pageType) : '';
       setFormData({
         ...formData,
         title: newTitle,
-        slug: generatedSlug,
-        metaTitle: `${newTitle} | OmniStore`,
+        slug: newSlug,
+        metaTitle: newTitle ? `${newTitle} | ${activeStore?.name || 'OmniStore'}` : '',
       });
     } else {
       setFormData({ ...formData, title: newTitle });
     }
   };
 
+  const handlePageTypeChange = (newType: string) => {
+    const currentHandle = extractHandleFromSlug(formData.slug);
+    const newSlug = currentHandle ? buildFullSlug(currentHandle, newType) : '';
+    setFormData({
+      ...formData,
+      pageType: newType,
+      slug: newSlug,
+    });
+  };
+
+  const handleSlugHandleChange = (rawHandle: string) => {
+    const cleanHandle = rawHandle
+      .toLowerCase()
+      .replace(/^(pages|policies)\/+/, '')
+      .replace(/^\/+/, '')
+      .replace(/[^a-z0-9-]/g, '');
+    const newSlug = cleanHandle ? buildFullSlug(cleanHandle, formData.pageType) : '';
+    setFormData({
+      ...formData,
+      slug: newSlug,
+    });
+  };
+
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setModalError(null);
+
+    const isHomePage =
+      editingPage?.pageType === 'SYSTEM' &&
+      (editingPage?.slug === '/' || editingPage?.slug === 'home');
+    const cleanHandle = extractHandleFromSlug(formData.slug);
+
+    if (!isHomePage && !cleanHandle) {
+      setModalError('Please specify a valid URL slug handle for this page.');
+      setIsSaving(false);
+      return;
+    }
+
+    const finalSlug = isHomePage ? '/' : buildFullSlug(cleanHandle, formData.pageType);
     const normalizedPayload: PageFormData = {
       ...formData,
-      slug: (formData.slug || '').toLowerCase().trim(),
+      slug: finalSlug,
+      title: formData.title.trim(),
     };
+
     try {
       if (editingPage) {
         await cmsService.updatePage(editingPage.id, normalizedPayload);
@@ -248,12 +328,15 @@ export const PageManager: React.FC = () => {
     }
 
     if (confirm(`Are you sure you want to delete the page "${page.title}"?`)) {
+      setDeletingPageId(page.id);
       try {
         await cmsService.deletePage(page.id);
         showToast(`Page "${page.title}" deleted.`, 'success');
         await loadPages();
       } catch (err) {
         showToast('Failed to delete page.', 'error');
+      } finally {
+        setDeletingPageId(null);
       }
     }
   };
@@ -408,11 +491,10 @@ export const PageManager: React.FC = () => {
                   setActiveTab(tab.id as any);
                   setPage(1);
                 }}
-                className={`px-3.5 py-2 rounded-2xl text-xs font-extrabold whitespace-nowrap transition-all ${
-                  isActive
-                    ? 'bg-slate-900 text-white shadow-md'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-accent'
-                }`}
+                className={`px-3.5 py-2 rounded-2xl text-xs font-extrabold whitespace-nowrap transition-all ${isActive
+                  ? 'bg-slate-900 text-white shadow-md'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-accent'
+                  }`}
               >
                 {tab.label}
               </button>
@@ -461,149 +543,150 @@ export const PageManager: React.FC = () => {
                 </tr>
               ) : (
                 paginatedPages.map((page) => {
-                const isSystem = page.pageType === 'SYSTEM';
+                  const isSystem = page.pageType === 'SYSTEM';
 
-                return (
-                  <tr
-                    key={page.id}
-                    className="hover:bg-slate-50/50 dark:hover:bg-accent/30 transition-colors"
-                  >
-                    {/* Title */}
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${
-                            isSystem
+                  return (
+                    <tr
+                      key={page.id}
+                      className="hover:bg-slate-50/50 dark:hover:bg-accent/30 transition-colors"
+                    >
+                      {/* Title */}
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${isSystem
                               ? 'bg-blue-50 text-blue-600'
                               : page.pageType === 'POLICY'
                                 ? 'bg-amber-50 text-amber-600'
                                 : page.pageType === 'BRAND'
                                   ? 'bg-purple-50 text-purple-600'
                                   : 'bg-emerald-50 text-emerald-600'
-                          }`}
-                        >
-                          {isSystem ? (
-                            <Layers className="w-4 h-4" />
-                          ) : page.pageType === 'POLICY' ? (
-                            <Shield className="w-4 h-4" />
-                          ) : page.pageType === 'BRAND' ? (
-                            <FileCheck className="w-4 h-4" />
-                          ) : (
-                            <Sparkles className="w-4 h-4" />
-                          )}
+                              }`}
+                          >
+                            {isSystem ? (
+                              <Layers className="w-4 h-4" />
+                            ) : page.pageType === 'POLICY' ? (
+                              <Shield className="w-4 h-4" />
+                            ) : page.pageType === 'BRAND' ? (
+                              <FileCheck className="w-4 h-4" />
+                            ) : (
+                              <Sparkles className="w-4 h-4" />
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-extrabold text-slate-900 dark:text-foreground block text-sm">
+                              {page.title}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block truncate max-w-xs">
+                              {page.metaTitle || page.title}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-extrabold text-slate-900 dark:text-foreground block text-sm">
-                            {page.title}
-                          </span>
-                          <span className="text-[10px] text-slate-400 block truncate max-w-xs">
-                            {page.metaTitle || page.title}
-                          </span>
+                      </td>
+
+                      {/* Slug */}
+                      <td className="py-4 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        <div className="flex items-center gap-1">
+                          <span>{page.slug}</span>
+                          <a
+                            href={getPageStoreUrl(page.slug, page.pageType)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-slate-400 hover:text-indigo-600 transition"
+                            title="Open on Live Storefront"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Slug */}
-                    <td className="py-4 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                      <div className="flex items-center gap-1">
-                        <span>{page.slug}</span>
-                        <a
-                          href={getPageStoreUrl(page.slug, page.pageType)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-slate-400 hover:text-indigo-600 transition"
-                          title="Open on Live Storefront"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    </td>
-
-                    {/* Category Type */}
-                    <td className="py-4 px-4">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                          isSystem
+                      {/* Category Type */}
+                      <td className="py-4 px-4">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${isSystem
                             ? 'bg-blue-50 text-blue-700 border-blue-200'
                             : page.pageType === 'POLICY'
                               ? 'bg-amber-50 text-amber-700 border-amber-200'
                               : page.pageType === 'BRAND'
                                 ? 'bg-purple-50 text-purple-700 border-purple-200'
                                 : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        }`}
-                      >
-                        {page.pageType}
-                      </span>
-                    </td>
+                            }`}
+                        >
+                          {page.pageType}
+                        </span>
+                      </td>
 
-                    {/* Status */}
-                    <td className="py-4 px-4">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 w-fit ${
-                          page.status === 'PUBLISHED'
+                      {/* Status */}
+                      <td className="py-4 px-4">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 w-fit ${page.status === 'PUBLISHED'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : 'bg-slate-100 text-slate-600 border border-slate-200'
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            page.status === 'PUBLISHED'
+                            }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${page.status === 'PUBLISHED'
                               ? 'bg-emerald-500 animate-pulse'
                               : 'bg-slate-400'
-                          }`}
-                        />
-                        <span>{page.status}</span>
-                      </span>
-                    </td>
+                              }`}
+                          />
+                          <span>{page.status}</span>
+                        </span>
+                      </td>
 
-                    {/* Actions */}
-                    <td className="py-4 px-6 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setPreviewPage(page)}
-                          title="Preview Page"
-                          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-200 transition-colors"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setBuilderEditingPage(page);
-                            setIsPageBuilderOpen(true);
-                          }}
-                          title="Open Visual Block Page Builder"
-                          className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-600 transition-colors"
-                        >
-                          <LayoutTemplate className="w-4 h-4" />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditModal(page)}
-                          title="Edit Content & SEO"
-                          className="p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-colors"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-
-                        {!isSystem && (
+                      {/* Actions */}
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
-                            onClick={() => handleDeletePage(page)}
-                            title="Delete Custom Page"
-                            className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors"
+                            onClick={() => setPreviewPage(page)}
+                            title="Preview Page"
+                            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-200 transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Eye className="w-4 h-4" />
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              }))}
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setBuilderEditingPage(page);
+                              setIsPageBuilderOpen(true);
+                            }}
+                            title="Open Visual Block Page Builder"
+                            className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-600 transition-colors"
+                          >
+                            <LayoutTemplate className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditModal(page)}
+                            title="Edit Content & SEO"
+                            className="p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+
+                          {!isSystem && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePage(page)}
+                              disabled={deletingPageId === page.id}
+                              title="Delete Custom Page"
+                              className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                            >
+                              {deletingPageId === page.id ? (
+                                <RefreshCw className="w-4 h-4 animate-spin text-rose-600" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }))}
             </tbody>
           </table>
         </div>
@@ -622,26 +705,35 @@ export const PageManager: React.FC = () => {
 
       {/* CREATE / EDIT PAGE MODAL */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden my-8">
-            <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white">
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsEditModalOpen(false);
+          }}
+        >
+          <div className="bg-white dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden my-auto max-h-[88vh] sm:max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/40 border-b border-slate-200/80 dark:border-border flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-center shadow-xs shrink-0">
                   <FileCode className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-black text-lg">
+                  <h3 className="font-black text-lg text-slate-900 dark:text-foreground">
                     {editingPage ? `Edit Page: ${editingPage.title}` : 'Create New Custom Page'}
                   </h3>
-                  <p className="text-xs text-slate-400">
-                    Configure page content, URL handle, type, and search engine metadata.
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Configure page content, URL handle, type, and search engine metadata
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-accent transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -649,199 +741,218 @@ export const PageManager: React.FC = () => {
 
             <form
               onSubmit={handleSubmitForm}
-              className="p-6 space-y-6 max-h-[80vh] overflow-y-auto"
+              className="flex-1 flex flex-col overflow-hidden"
             >
-              {/* Modal Error Banner */}
-              {modalError && (
-                <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center justify-between animate-in fade-in">
-                  <div className="flex items-center gap-2.5">
-                    <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
-                    <span>{modalError}</span>
+              <div className="p-5 sm:p-6 space-y-5 overflow-y-auto flex-1">
+                {/* Modal Error Banner */}
+                {modalError && (
+                  <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center justify-between animate-in fade-in">
+                    <div className="flex items-center gap-2.5">
+                      <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
+                      <span>{modalError}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setModalError(null)}
+                      className="p-1 text-rose-400 hover:text-rose-600 font-bold cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                  {/* Title */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                      Page Title <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.title}
+                      onChange={(e) => handleTitleChange(e.target.value)}
+                      placeholder="e.g. Sustainability & Eco Pledge"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-bold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {/* URL Slug Handle with Dynamic Category Prefix */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                      URL Slug Handle <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="flex items-center rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500">
+                      <span className="px-3.5 py-2.5 bg-slate-100 dark:bg-accent text-xs font-mono font-bold text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-border select-none shrink-0">
+                        {getPrefixForPageType(formData.pageType)}
+                      </span>
+                      <input
+                        type="text"
+                        required
+                        disabled={
+                          editingPage?.pageType === 'SYSTEM' &&
+                          (editingPage?.slug === '/' || editingPage?.slug === 'home')
+                        }
+                        value={extractHandleFromSlug(formData.slug)}
+                        onChange={(e) => handleSlugHandleChange(e.target.value)}
+                        placeholder={
+                          formData.pageType === 'POLICY'
+                            ? 'e.g. shipping-returns'
+                            : 'e.g. sustainability-pledge'
+                        }
+                        className="w-full px-3.5 py-2 bg-transparent text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none placeholder:font-sans placeholder:text-slate-400 disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Page Type */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                      Page Category Type
+                    </label>
+                    <select
+                      value={formData.pageType}
+                      onChange={(e) => handlePageTypeChange(e.target.value)}
+                      disabled={editingPage?.pageType === 'SYSTEM'}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-bold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer disabled:opacity-50"
+                    >
+                      <option value="CUSTOM">Custom Merchant Page (/pages/...)</option>
+                      <option value="POLICY">Legal Policy Page (/policies/...)</option>
+                      <option value="BRAND">Brand & Support Page (/pages/...)</option>
+                      {editingPage?.pageType === 'SYSTEM' && (
+                        <option value="SYSTEM">System Core Page (Platform Route)</option>
+                      )}
+                    </select>
+                  </div>
+
+                  {/* Status Toggle */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                      Publication Status
+                    </label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-accent/40 text-xs font-bold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                    >
+                      <option value="PUBLISHED">Published (Visible on Storefront)</option>
+                      <option value="DRAFT">Draft (Hidden from Storefront)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Visual Page Builder Callout */}
+                <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-accent/30 border border-slate-200/80 dark:border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <LayoutTemplate className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      <span>Visual Page Content & Design</span>
+                    </span>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Design and edit page sections, heroes, products, banners, and layouts visually.
+                    </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setModalError(null)}
-                    className="p-1 text-rose-400 hover:text-rose-600 font-bold"
+                    onClick={() => {
+                      const targetPage =
+                        editingPage ||
+                        ({
+                          ...formData,
+                          id: '',
+                        } as any);
+                      setIsEditModalOpen(false);
+                      setBuilderEditingPage(targetPage);
+                      setIsPageBuilderOpen(true);
+                    }}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs shrink-0 cursor-pointer self-start sm:self-auto"
                   >
-                    ×
+                    <LayoutTemplate className="w-3.5 h-3.5" />
+                    <span>Open Visual Page Builder</span>
                   </button>
                 </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Title */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                    Page Title <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => handleTitleChange(e.target.value)}
-                    placeholder="e.g. Sustainability & Eco Pledge"
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
 
-                {/* Slug */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                    URL Slug Handle <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder="/pages/my-custom-page"
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-card text-xs font-mono font-bold text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
+                {/* SEO METADATA SETTINGS CARD */}
+                <div className="p-5 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 space-y-4">
+                  <h4 className="text-xs font-black text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <span>Search Engine Optimization (SEO) Metadata</span>
+                  </h4>
 
-                {/* Page Type */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                    Page Category Type
-                  </label>
-                  <select
-                    value={formData.pageType}
-                    onChange={(e) => setFormData({ ...formData, pageType: e.target.value })}
-                    disabled={editingPage?.pageType === 'SYSTEM'}
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="CUSTOM">Custom Merchant Page</option>
-                    <option value="BRAND">Brand & Support Page (About, FAQ, Contact)</option>
-                    <option value="POLICY">Legal Policy Page (Privacy, Terms, Shipping)</option>
-                    <option value="SYSTEM">System Core Page</option>
-                  </select>
-                </div>
-
-                {/* Status Toggle */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                    Publication Status
-                  </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-border bg-slate-50 dark:bg-card text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="PUBLISHED">Published (Visible on Storefront)</option>
-                    <option value="DRAFT">Draft (Hidden from Storefront)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Visual Page Builder Callout */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-accent/40 border border-slate-200/80 dark:border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                    <LayoutTemplate className="w-4 h-4 text-purple-600" />
-                    <span>Visual Page Content & Design</span>
-                  </span>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Design and edit page sections, heroes, products, banners, and layouts visually.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const targetPage =
-                      editingPage ||
-                      ({
-                        ...formData,
-                        id: '',
-                      } as any);
-                    setIsEditModalOpen(false);
-                    setBuilderEditingPage(targetPage);
-                    setIsPageBuilderOpen(true);
-                  }}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-xs shrink-0 cursor-pointer self-start sm:self-auto"
-                >
-                  <LayoutTemplate className="w-3.5 h-3.5" />
-                  <span>Open Visual Page Builder</span>
-                </button>
-              </div>
-
-              {/* SEO METADATA SETTINGS CARD */}
-              <div className="p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/60 space-y-4">
-                <h4 className="text-xs font-black text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-indigo-600" />
-                  <span>Search Engine Optimization (SEO) Metadata</span>
-                </h4>
-
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex justify-between">
-                      <label className="block text-[11px] font-bold text-slate-700">
-                        Meta Title
-                      </label>
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {(formData.metaTitle || '').length} / 60 chars
-                      </span>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                          Meta Title
+                        </label>
+                        <span className="text-[10px] font-mono text-slate-400">
+                          {(formData.metaTitle || '').length} / 60 chars
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        maxLength={60}
+                        value={formData.metaTitle || ''}
+                        onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
+                        placeholder="Page Title | Store Name"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-bold text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      maxLength={60}
-                      value={formData.metaTitle || ''}
-                      onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
-                      placeholder="Page Title | Store Name"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold"
-                    />
-                  </div>
 
-                  <div className="space-y-1">
-                    <div className="flex justify-between">
-                      <label className="block text-[11px] font-bold text-slate-700">
-                        Meta Description
-                      </label>
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {(formData.metaDescription || '').length} / 160 chars
-                      </span>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                          Meta Description
+                        </label>
+                        <span className="text-[10px] font-mono text-slate-400">
+                          {(formData.metaDescription || '').length} / 160 chars
+                        </span>
+                      </div>
+                      <textarea
+                        rows={2}
+                        maxLength={160}
+                        value={formData.metaDescription || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, metaDescription: e.target.value })
+                        }
+                        placeholder="Summarize this page content for search engines..."
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card text-xs font-medium text-slate-900 dark:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
                     </div>
-                    <textarea
-                      rows={2}
-                      maxLength={160}
-                      value={formData.metaDescription || ''}
-                      onChange={(e) =>
-                        setFormData({ ...formData, metaDescription: e.target.value })
-                      }
-                      placeholder="Summarize this page content for search engines..."
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium"
-                    />
-                  </div>
 
-                  {/* Google Search Result Preview Box */}
-                  <div className="p-3.5 rounded-xl bg-white border border-indigo-100 space-y-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Google Search Result Preview
-                    </span>
-                    <span className="text-xs font-extrabold text-blue-700 truncate block">
-                      {formData.metaTitle || formData.title || 'Page Title'}
-                    </span>
-                    <span className="text-[11px] font-mono text-emerald-700 block">
-                      {getPageStoreUrl(formData.slug, formData.pageType)}
-                    </span>
-                    <p className="text-[11px] text-slate-600 line-clamp-2">
-                      {formData.metaDescription || 'No meta description configured yet.'}
-                    </p>
+                    {/* Google Search Result Preview Box */}
+                    <div className="p-3.5 rounded-xl bg-white dark:bg-card border border-indigo-100 dark:border-border space-y-1 shadow-xs">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Google Search Result Preview
+                      </span>
+                      <span className="text-xs font-extrabold text-blue-700 dark:text-blue-400 truncate block">
+                        {formData.metaTitle || formData.title || 'Page Title'}
+                      </span>
+                      <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 block truncate">
+                        {getPageStoreUrl(formData.slug, formData.pageType)}
+                      </span>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2">
+                        {formData.metaDescription || 'No meta description configured yet.'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Actions Footer */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-border">
+              <div className="p-5 sm:p-6 bg-slate-50/80 dark:bg-accent/20 border-t border-slate-200/80 dark:border-border flex items-center justify-end gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                  disabled={isSaving}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-accent transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md flex items-center gap-2 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
                     <>
@@ -851,7 +962,7 @@ export const PageManager: React.FC = () => {
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>Save & Publish</span>
+                      <span>{editingPage ? 'Save Changes' : 'Create Page'}</span>
                     </>
                   )}
                 </button>
@@ -951,11 +1062,10 @@ export const PageManager: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setPreviewMode('live')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      previewMode === 'live'
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${previewMode === 'live'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                      }`}
                   >
                     <Globe className="w-3.5 h-3.5" />
                     <span>Live Hosted Store</span>
@@ -963,11 +1073,10 @@ export const PageManager: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setPreviewMode('mock')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      previewMode === 'mock'
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${previewMode === 'mock'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                      }`}
                   >
                     <Eye className="w-3.5 h-3.5" />
                     <span>Visual Canvas</span>
@@ -987,11 +1096,10 @@ export const PageManager: React.FC = () => {
                         key={vp.id}
                         type="button"
                         onClick={() => setPreviewViewport(vp.id as any)}
-                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                          previewViewport === vp.id
-                            ? 'bg-indigo-600 text-white shadow-sm'
-                            : 'text-slate-400 hover:text-white'
-                        }`}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${previewViewport === vp.id
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                          }`}
                       >
                         <Icon className="w-3.5 h-3.5" />
                         <span className="hidden md:inline">{vp.label}</span>
@@ -1040,13 +1148,12 @@ export const PageManager: React.FC = () => {
               {/* Preview Body with simulated browser chrome */}
               <div className="flex-1 overflow-hidden bg-slate-950 flex justify-center items-start p-4 sm:p-8">
                 <div
-                  className={`bg-white overflow-hidden shadow-2xl rounded-2xl border border-slate-800 transition-all duration-300 h-full flex flex-col ${
-                    previewViewport === 'desktop'
-                      ? 'w-full'
-                      : previewViewport === 'tablet'
-                        ? 'w-[768px]'
-                        : 'w-[390px]'
-                  }`}
+                  className={`bg-white overflow-hidden shadow-2xl rounded-2xl border border-slate-800 transition-all duration-300 h-full flex flex-col ${previewViewport === 'desktop'
+                    ? 'w-full'
+                    : previewViewport === 'tablet'
+                      ? 'w-[768px]'
+                      : 'w-[390px]'
+                    }`}
                 >
                   {/* Simulated browser address bar */}
                   <div className="h-9 bg-slate-100 border-b border-slate-200 flex items-center px-3 gap-2 shrink-0">

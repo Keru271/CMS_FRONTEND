@@ -730,16 +730,21 @@ export const DomainStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsAddDomainModalOpen(false)}
-                  className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-accent font-bold text-slate-700 dark:text-slate-300"
+                  disabled={isAddingDomain}
+                  className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-accent font-bold text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isAddingDomain}
-                  className="flex-1 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Globe className="w-4 h-4" />
+                  {isAddingDomain ? (
+                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                  ) : (
+                    <Globe className="w-4 h-4" />
+                  )}
                   <span>{isAddingDomain ? 'Connecting...' : 'Connect Domain'}</span>
                 </button>
               </div>

@@ -127,7 +127,8 @@ export function StitchPublishModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+            disabled={isPublishing}
+            className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <X className="w-4 h-4" />
           </button>
@@ -190,7 +191,7 @@ export function StitchPublishModal({
                 type="button"
                 disabled={isPublishing}
                 onClick={handlePublish}
-                className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition shadow-lg disabled:opacity-50"
+                className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isPublishing ? (
                   <>

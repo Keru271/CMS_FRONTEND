@@ -181,7 +181,7 @@ export const StoreSuspendedModal: React.FC = () => {
                 type="button"
                 onClick={refreshStoreStatus}
                 disabled={isCheckingStatus}
-                className="w-full sm:flex-1 py-3 px-5 rounded-lg bg-[#191a1b] hover:bg-[#2e3033] text-[#00E5FF] font-medium text-xs shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
+                className="w-full sm:flex-1 py-3 px-5 rounded-lg bg-[#191a1b] hover:bg-[#2e3033] text-[#00E5FF] font-medium text-xs shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <RefreshCw className={`w-4 h-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
                 <span>{isCheckingStatus ? 'Checking Status...' : 'Re-verify Store Status'}</span>
@@ -342,7 +342,7 @@ export const StoreSuspendedModal: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full sm:flex-1 py-3 px-5 rounded-lg bg-[#191a1b] hover:bg-[#2e3033] text-[#00E5FF] font-medium text-xs shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
+                className="w-full sm:flex-1 py-3 px-5 rounded-lg bg-[#191a1b] hover:bg-[#2e3033] text-[#00E5FF] font-medium text-xs shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>

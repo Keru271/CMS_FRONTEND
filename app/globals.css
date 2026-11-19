@@ -129,6 +129,56 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* ─── Global Modal Scroll Lock & 100% Height Coverage ─────────────────────────
+   When any modal/dialog is mounted:
+   - Window & root document scrolling is strictly disabled (no double scrollbars).
+   - Document height is locked to 100% viewport.
+   - The modal overlay fills 100% dynamic viewport height without overflow.
+   ─────────────────────────────────────────────────────────────────────────── */
+html.modal-open,
+body.modal-open {
+  overflow: hidden !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  max-height: 100% !important;
+  max-height: 100dvh !important;
+  overscroll-behavior: none !important;
+  position: relative;
+}
+
+/* Force modal overlays to 100% viewport height and prevent outer backdrop scrolling */
+.modal-overlay,
+[data-modal="true"],
+.modal-open .fixed.inset-0.z-50,
+.modal-open .fixed.inset-0[class*="z-50"],
+.modal-open .fixed.inset-0[class*="z-60"] {
+  width: 100% !important;
+  width: 100vw !important;
+  height: 100% !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 100% !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  max-height: 100vh !important;
+  max-height: 100dvh !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Ensure inner scrollable containers inside open modals scroll smoothly with contained boundaries */
+.modal-open [class*="overflow-y-auto"],
+.modal-open [class*="overflow-auto"],
+.modal-open textarea,
+.modal-open form {
+  touch-action: pan-y !important;
+  overscroll-behavior: contain !important;
+}
+
 /* Adaptive Card Styling */
 .watt-card {
   background-color: var(--surface-card);

@@ -364,14 +364,15 @@ export const CreateStoreModal: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsCreateStoreModalOpen(false)}
-              className="px-4 py-2.5 text-xs font-semibold text-[#5e5a5a] hover:text-[#191a1b] transition cursor-pointer"
+              disabled={isSubmitting}
+              className="px-4 py-2.5 text-xs font-semibold text-[#5e5a5a] hover:text-[#191a1b] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !name.trim()}
-              className="px-6 py-2.5 bg-[#191a1b] hover:bg-black text-[#00E5FF] text-xs font-bold rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="px-6 py-2.5 bg-[#191a1b] hover:bg-black text-[#00E5FF] text-xs font-bold rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <RefreshCw className="w-4 h-4 animate-spin text-[#00E5FF]" />

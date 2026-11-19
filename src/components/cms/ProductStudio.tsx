@@ -116,6 +116,7 @@ export const ProductStudio: React.FC = () => {
   // Form State for Add / Edit Product (All 23 options)
   const [editingProduct, setEditingProduct] = useState<CMSProduct | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{
     text: string;
     type: 'success' | 'error';
@@ -747,12 +748,15 @@ export const ProductStudio: React.FC = () => {
 
   const handleDeleteProduct = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete "${name}"?`)) {
+      setDeletingProductId(id);
       try {
         await cmsService.deleteProduct(id);
         showToast(`Product "${name}" deleted.`, 'success');
         await loadData();
       } catch (err) {
         showToast(extractApiErrorMessage(err, 'Failed to delete product.'), 'error');
+      } finally {
+        setDeletingProductId(null);
       }
     }
   };
@@ -1305,10 +1309,15 @@ export const ProductStudio: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => handleDeleteProduct(prod.id, prod.name)}
+                              disabled={deletingProductId === prod.id}
                               title="Delete Product"
-                              className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors"
+                              className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              {deletingProductId === prod.id ? (
+                                <RefreshCw className="w-4 h-4 animate-spin text-rose-600" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
                             </button>
                           </div>
                         </td>
@@ -1352,14 +1361,15 @@ export const ProductStudio: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveSubTab('all-products')}
-                className="px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                disabled={isSaving}
+                className="px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSaving}
-                className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md flex items-center gap-2 disabled:opacity-50"
+                className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isSaving ? (
                   <>
@@ -3100,7 +3110,15 @@ export const ProductStudio: React.FC = () => {
 
       {/* ─── INLINE QUICK CREATE MODAL: CATEGORY ─── */}
       {isQuickCategoryModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsQuickCategoryModalOpen(false);
+          }}
+        >
           <div className="bg-white dark:bg-card border border-slate-200/90 dark:border-border rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-border flex items-center justify-between bg-slate-50/60 dark:bg-accent/10">
@@ -3259,7 +3277,15 @@ export const ProductStudio: React.FC = () => {
 
       {/* ─── INLINE QUICK CREATE MODAL: BRAND ─── */}
       {isQuickBrandModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsQuickBrandModalOpen(false);
+          }}
+        >
           <div className="bg-white dark:bg-card border border-slate-200/90 dark:border-border rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-border flex items-center justify-between bg-slate-50/60 dark:bg-accent/10">
@@ -3418,7 +3444,15 @@ export const ProductStudio: React.FC = () => {
 
       {/* ─── INLINE QUICK CREATE MODAL: COLLECTION ─── */}
       {isQuickCollectionModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsQuickCollectionModalOpen(false);
+          }}
+        >
           <div className="bg-white dark:bg-card border border-slate-200/90 dark:border-border rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-border flex items-center justify-between bg-slate-50/60 dark:bg-accent/10">

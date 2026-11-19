@@ -456,7 +456,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <Button
                   type="submit"
                   isDisabled={isSubmitting}
-                  className="w-full min-h-[46px] py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] text-white dark:text-[#121212] font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2 cursor-pointer"
+                  className="w-full min-h-[46px] py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] text-white dark:text-[#121212] font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -525,7 +525,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                     <Button
                       type="submit"
                       isDisabled={isSubmitting}
-                      className="w-full min-h-[46px] py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] text-white dark:text-[#121212] font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+                      className="w-full min-h-[46px] py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] text-white dark:text-[#121212] font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       {isSubmitting ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -817,7 +817,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <Button
                   type="submit"
                   isDisabled={isSubmitting}
-                  className="w-full min-h-[46px] py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] text-white dark:text-[#121212] font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2 cursor-pointer"
+                  className="w-full min-h-[46px] py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] text-white dark:text-[#121212] font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -928,7 +928,7 @@ export const MerchantAuthModal: React.FC<MerchantAuthModalProps> = ({
                 <Button
                   type="submit"
                   isDisabled={isSubmitting}
-                  className="w-full min-h-[46px] py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] text-white dark:text-[#121212] font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2 cursor-pointer"
+                  className="w-full min-h-[46px] py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#38e1ff] text-white dark:text-[#121212] font-bold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

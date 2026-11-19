@@ -510,7 +510,7 @@ export const HomepageStudioModal: React.FC<Props> = ({
               type="button"
               onClick={handleSaveClick}
               disabled={isSaving}
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md shadow-indigo-600/30 transition transform active:scale-95 disabled:opacity-50 cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md shadow-indigo-600/30 transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 cursor-pointer"
             >
               {isSaving ? (
                 <RefreshCw className="w-4 h-4 animate-spin text-white" />

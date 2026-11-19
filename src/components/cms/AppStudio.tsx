@@ -309,6 +309,7 @@ export const AppStudio: React.FC = () => {
 
   // Testing connection state
   const [isTesting, setIsTesting] = useState<boolean>(false);
+  const [testingAppSlug, setTestingAppSlug] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; simulated?: boolean } | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
@@ -429,15 +430,22 @@ export const AppStudio: React.FC = () => {
 
   // Quick install from card
   const handleQuickInstall = async (app: CMSMarketplaceApp) => {
+    // If the app requires configuration credentials (e.g. Shiprocket, Mailgun, Wati),
+    // open the setup modal so credentials can be validated via live handshake before installing.
+    if (app.configFields && app.configFields.length > 0) {
+      handleOpenConfigure(app);
+      return;
+    }
+
     setIsSaving(true);
     try {
       await cmsService.installApp(app.slug);
       await loadData(true);
-      handleOpenConfigure(app);
-      setActionSuccessMsg(`Installed ${app.name}! Configure your credentials below.`);
+      setActionSuccessMsg(`Installed ${app.name}!`);
       setTimeout(() => setActionSuccessMsg(null), 4000);
     } catch (err: unknown) {
-      const errorMsg = (err as Error)?.message || 'Install failed';
+      const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = apiErr.response?.data?.message || (err as Error)?.message || 'Install failed';
       alert(`Install failed: ${errorMsg}`);
     } finally {
       setIsSaving(false);
@@ -463,14 +471,16 @@ export const AppStudio: React.FC = () => {
     }
   };
 
-  // Save Configuration: First verify credentials, then store if valid
+  // Save Configuration: First verify credentials via handshake, then store / install ONLY if valid
   const handleSaveConfig = async () => {
     if (!selectedApp) return;
     setIsSaving(true);
     setTestResult(null);
 
-    // If app is being configured or activated, test credentials first before storing
-    if (appStatus !== 'DISABLED') {
+    const isCurrentlyInstalled = installedApps.some((i) => i.slug === selectedApp.slug);
+
+    // If app is being configured, activated, or newly installed, test credentials via live handshake first
+    if (appStatus !== 'DISABLED' || !isCurrentlyInstalled) {
       setIsVerifying(true);
       let verifyRes: { success: boolean; message: string; simulated?: boolean } | null = null;
       try {
@@ -486,30 +496,39 @@ export const AppStudio: React.FC = () => {
       setTestResult(verifyRes);
       setIsVerifying(false);
 
-      // If credentials verification failed, STOP! DO NOT STORE!
+      // If credentials verification / handshake failed, STOP IMMEDIATELY! DO NOT STORE OR INSTALL!
       if (!verifyRes || !verifyRes.success) {
         setIsSaving(false);
         return;
       }
     }
 
-    // Step 2: Verification passed (or app disabled) -> Now store it
+    // Step 2: Verification passed (or app disabled) -> Now store or install it
     try {
-      const configRes = await cmsService.configureApp(selectedApp.slug, {
-        credentials: formData,
-        isPrimary,
-        status: appStatus,
-      });
+      if (!isCurrentlyInstalled) {
+        // App is not installed yet -> install with verified credentials
+        await cmsService.installApp(selectedApp.slug, {
+          credentials: formData,
+          isPrimary,
+        });
+      } else {
+        // App is already installed -> update configuration
+        await cmsService.configureApp(selectedApp.slug, {
+          credentials: formData,
+          isPrimary,
+          status: appStatus,
+        });
+      }
 
       await loadData(true);
       setIsModalOpen(false);
       setActionSuccessMsg(
-        configRes?.message || `${selectedApp.name} credentials verified and deployed successfully!`
+        `${selectedApp.name} credentials verified and integration connected successfully!`
       );
       setTimeout(() => setActionSuccessMsg(null), 4000);
     } catch (err: unknown) {
       const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
-      const errorMsg = apiErr.response?.data?.message || apiErr.message || 'Failed to save configuration';
+      const errorMsg = apiErr.response?.data?.message || apiErr.message || 'Failed to complete setup';
       setTestResult({
         success: false,
         message: errorMsg,
@@ -1002,7 +1021,7 @@ export const AppStudio: React.FC = () => {
 
                       <button
                         onClick={async () => {
-                          setIsTesting(true);
+                          setTestingAppSlug(inst.slug);
                           try {
                             const res = await cmsService.testAppConnection(inst.slug);
                             alert(res.message);
@@ -1011,14 +1030,18 @@ export const AppStudio: React.FC = () => {
                             const errorMsg = (err as Error)?.message || 'Test failed';
                             alert(`Test failed: ${errorMsg}`);
                           } finally {
-                            setIsTesting(false);
+                            setTestingAppSlug(null);
                           }
                         }}
-                        disabled={isTesting}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 flex items-center gap-1.5 transition-colors"
+                        disabled={testingAppSlug === inst.slug || isSaving}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Zap className="w-3.5 h-3.5 text-amber-500" />
-                        Ping Test
+                        {testingAppSlug === inst.slug ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
+                        ) : (
+                          <Zap className="w-3.5 h-3.5 text-amber-500" />
+                        )}
+                        {testingAppSlug === inst.slug ? 'Testing...' : 'Ping Test'}
                       </button>
                     </div>
                   </div>
@@ -1118,7 +1141,15 @@ export const AppStudio: React.FC = () => {
 
       {/* ─── APP CONFIGURATION & INSTALL MODAL ────────────────────────────── */}
       {isModalOpen && selectedApp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn overflow-hidden w-full h-full min-h-screen h-[100dvh]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-scaleUp">
             {/* Modal Header */}
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
@@ -1132,7 +1163,14 @@ export const AppStudio: React.FC = () => {
                   className="w-10 h-10 rounded-xl object-cover border border-slate-200"
                 />
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base">{selectedApp.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-slate-900 text-base">{selectedApp.name}</h3>
+                    {!installedApps.some((i) => i.slug === selectedApp.slug) && (
+                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                        Setup & Connect
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500">Developer: {selectedApp.developer}</p>
                 </div>
               </div>
@@ -1150,7 +1188,9 @@ export const AppStudio: React.FC = () => {
               <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl flex items-start gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
                 <div className="leading-relaxed text-indigo-900">
-                  Credentials are encrypted with AES-256 and only accessed when routing order triggers or test pings.
+                  {installedApps.some((i) => i.slug === selectedApp.slug)
+                    ? 'Credentials are encrypted with AES-256 and only accessed when routing order triggers or test pings.'
+                    : 'Enter provider credentials below. Omnistore requires a successful live authentication handshake before installing and activating the integration.'}
                 </div>
               </div>
 
@@ -1302,11 +1342,15 @@ export const AppStudio: React.FC = () => {
                 {installedApps.some((i) => i.slug === selectedApp.slug) && (
                   <button
                     onClick={handleUninstall}
-                    disabled={isSaving}
-                    className="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-1.5 transition-colors"
+                    disabled={isSaving || isTesting}
+                    className="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Uninstall
+                    {isSaving ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
+                    {isSaving ? 'Uninstalling...' : 'Uninstall'}
                   </button>
                 )}
               </div>
@@ -1315,29 +1359,37 @@ export const AppStudio: React.FC = () => {
                 <button
                   onClick={handleTestConnection}
                   disabled={isTesting || isSaving}
-                  className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Zap className={`w-3.5 h-3.5 text-amber-500 ${isTesting ? 'animate-bounce' : ''}`} />
+                  {isTesting ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
+                  ) : (
+                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  )}
                   {isTesting ? 'Pinging Provider...' : 'Test Connection'}
                 </button>
 
                 <button
                   onClick={handleSaveConfig}
                   disabled={isSaving || isTesting}
-                  className="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isVerifying ? (
                     <>
-                      <Zap className="w-3.5 h-3.5 animate-bounce text-amber-300" />
-                      Verifying Credentials...
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                      Verifying Handshake...
                     </>
                   ) : isSaving ? (
                     <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      Deploying...
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                      {installedApps.some((i) => i.slug === selectedApp.slug)
+                        ? 'Deploying...'
+                        : 'Connecting & Installing...'}
                     </>
-                  ) : (
+                  ) : installedApps.some((i) => i.slug === selectedApp.slug) ? (
                     'Save & Deploy'
+                  ) : (
+                    'Connect & Install'
                   )}
                 </button>
               </div>

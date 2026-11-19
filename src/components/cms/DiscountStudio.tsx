@@ -80,6 +80,7 @@ export const DiscountStudio: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState<CMSDiscount | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingDiscountId, setDeletingDiscountId] = useState<string | null>(null);
 
   // Pagination
   const [discountPage, setDiscountPage] = useState(1);
@@ -277,6 +278,7 @@ export const DiscountStudio: React.FC = () => {
   };
 
   const handleDeleteDiscount = async (id: string) => {
+    setDeletingDiscountId(id);
     try {
       setIsSaving(true);
       await cmsService.deleteDiscount(id);
@@ -285,6 +287,7 @@ export const DiscountStudio: React.FC = () => {
     } catch (err: any) {
       showToast(err.message || 'Failed to delete discount.', 'error');
     } finally {
+      setDeletingDiscountId(null);
       setIsSaving(false);
     }
   };
@@ -572,9 +575,14 @@ export const DiscountStudio: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleDeleteDiscount(disc.id)}
-                            className="p-1.5 rounded-xl bg-slate-100 dark:bg-accent text-rose-500 hover:bg-rose-50"
+                            disabled={deletingDiscountId === disc.id || isSaving}
+                            className="p-1.5 rounded-xl bg-slate-100 dark:bg-accent text-rose-500 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            {deletingDiscountId === disc.id ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin text-rose-500" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
                           </button>
                         </div>
                       </div>
@@ -677,8 +685,16 @@ export const DiscountStudio: React.FC = () => {
 
       {/* CREATE / EDIT DISCOUNT MODAL WIZARD */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
-          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden my-8">
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-modal="true"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in w-full h-full min-h-screen h-[100dvh]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
+          <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden my-auto max-h-[88vh] sm:max-h-[90vh] flex flex-col">
             <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white">
@@ -1219,14 +1235,15 @@ export const DiscountStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold"
+                  disabled={isSaving}
+                  className="px-5 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isSaving ? (
                     <>
