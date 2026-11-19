@@ -124,6 +124,7 @@ export const PageManager: React.FC = () => {
   // Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<CMSPageData | null>(null);
+  const [isSlugTouched, setIsSlugTouched] = useState(false);
   const [previewPage, setPreviewPage] = useState<CMSPageData | null>(null);
   const [previewMode, setPreviewMode] = useState<'live' | 'mock'>('live');
   const [previewViewport, setPreviewViewport] = useState<'desktop' | 'tablet' | 'mobile'>(
@@ -190,13 +191,16 @@ export const PageManager: React.FC = () => {
   /**
    * Helper to construct full canonical slug
    */
-  const buildFullSlug = (handle: string, type: string): string => {
-    const cleanHandle = handle
+  const buildFullSlug = (handle: string, type: string, isFinal: boolean = false): string => {
+    let cleanHandle = handle
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/-+/g, '-');
+    if (isFinal) {
+      cleanHandle = cleanHandle.replace(/^-+|-+$/g, '');
+    }
     if (!cleanHandle) return '';
     const prefix = getPrefixForPageType(type);
     return `${prefix}${cleanHandle}`;
@@ -205,7 +209,8 @@ export const PageManager: React.FC = () => {
   const handleOpenCreateModal = () => {
     setEditingPage(null);
     setModalError(null);
-    // Inherit from active tab context if applicable
+    setIsSlugTouched(false);
+    // Never allow SYSTEM type when creating custom pages
     const initialType =
       activeTab === 'POLICY' ? 'POLICY' : activeTab === 'BRAND' ? 'BRAND' : 'CUSTOM';
     setFormData({
@@ -224,6 +229,7 @@ export const PageManager: React.FC = () => {
   const handleOpenEditModal = (page: CMSPageData) => {
     setEditingPage(page);
     setModalError(null);
+    setIsSlugTouched(true);
     setFormData({
       title: page.title,
       slug: page.slug,
@@ -237,14 +243,14 @@ export const PageManager: React.FC = () => {
   };
 
   const handleTitleChange = (newTitle: string) => {
-    if (!editingPage) {
+    if (!editingPage && !isSlugTouched) {
       const cleanHandle = newTitle
         .toLowerCase()
         .trim()
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')
-        .replace(/^-+|-+$/g, '');
-      const newSlug = cleanHandle ? buildFullSlug(cleanHandle, formData.pageType) : '';
+        .replace(/-+/g, '-');
+      const newSlug = cleanHandle ? buildFullSlug(cleanHandle, formData.pageType, false) : '';
       setFormData({
         ...formData,
         title: newTitle,
@@ -257,8 +263,16 @@ export const PageManager: React.FC = () => {
   };
 
   const handlePageTypeChange = (newType: string) => {
-    const currentHandle = extractHandleFromSlug(formData.slug);
-    const newSlug = currentHandle ? buildFullSlug(currentHandle, newType) : '';
+    let currentHandle = extractHandleFromSlug(formData.slug);
+    if (!currentHandle && formData.title) {
+      currentHandle = formData.title
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+    }
+    const newSlug = currentHandle ? buildFullSlug(currentHandle, newType, false) : '';
     setFormData({
       ...formData,
       pageType: newType,
@@ -267,12 +281,13 @@ export const PageManager: React.FC = () => {
   };
 
   const handleSlugHandleChange = (rawHandle: string) => {
+    setIsSlugTouched(true);
     const cleanHandle = rawHandle
       .toLowerCase()
       .replace(/^(pages|policies)\/+/, '')
       .replace(/^\/+/, '')
       .replace(/[^a-z0-9-]/g, '');
-    const newSlug = cleanHandle ? buildFullSlug(cleanHandle, formData.pageType) : '';
+    const newSlug = cleanHandle ? buildFullSlug(cleanHandle, formData.pageType, false) : '';
     setFormData({
       ...formData,
       slug: newSlug,
@@ -284,18 +299,19 @@ export const PageManager: React.FC = () => {
     setIsSaving(true);
     setModalError(null);
 
-    const isHomePage =
-      editingPage?.pageType === 'SYSTEM' &&
-      (editingPage?.slug === '/' || editingPage?.slug === 'home');
+    const isSystemPage = editingPage?.pageType === 'SYSTEM';
     const cleanHandle = extractHandleFromSlug(formData.slug);
 
-    if (!isHomePage && !cleanHandle) {
+    if (!isSystemPage && !cleanHandle) {
       setModalError('Please specify a valid URL slug handle for this page.');
       setIsSaving(false);
       return;
     }
 
-    const finalSlug = isHomePage ? '/' : buildFullSlug(cleanHandle, formData.pageType);
+    const finalSlug = isSystemPage
+      ? (editingPage?.slug || '/')
+      : buildFullSlug(cleanHandle, formData.pageType, true);
+
     const normalizedPayload: PageFormData = {
       ...formData,
       slug: finalSlug,
@@ -789,20 +805,29 @@ export const PageManager: React.FC = () => {
                       <input
                         type="text"
                         required
-                        disabled={
+                        disabled={editingPage?.pageType === 'SYSTEM'}
+                        value={
                           editingPage?.pageType === 'SYSTEM' &&
                           (editingPage?.slug === '/' || editingPage?.slug === 'home')
+                            ? ''
+                            : extractHandleFromSlug(formData.slug)
                         }
-                        value={extractHandleFromSlug(formData.slug)}
                         onChange={(e) => handleSlugHandleChange(e.target.value)}
                         placeholder={
-                          formData.pageType === 'POLICY'
+                          editingPage?.pageType === 'SYSTEM'
+                            ? '(Platform Core Route)'
+                            : formData.pageType === 'POLICY'
                             ? 'e.g. shipping-returns'
                             : 'e.g. sustainability-pledge'
                         }
                         className="w-full px-3.5 py-2 bg-transparent text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none placeholder:font-sans placeholder:text-slate-400 disabled:opacity-50"
                       />
                     </div>
+                    {editingPage?.pageType === 'SYSTEM' && (
+                      <p className="text-[10px] text-slate-500 font-medium">
+                        Core system route is locked to maintain storefront navigation.
+                      </p>
+                    )}
                   </div>
 
                   {/* Page Type */}
@@ -929,7 +954,10 @@ export const PageManager: React.FC = () => {
                         {formData.metaTitle || formData.title || 'Page Title'}
                       </span>
                       <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 block truncate">
-                        {getPageStoreUrl(formData.slug, formData.pageType)}
+                        {getPageStoreUrl(
+                          formData.slug || (formData.title ? buildFullSlug(formData.title, formData.pageType, true) : ''),
+                          formData.pageType
+                        )}
                       </span>
                       <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2">
                         {formData.metaDescription || 'No meta description configured yet.'}
@@ -945,14 +973,14 @@ export const PageManager: React.FC = () => {
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
                   disabled={isSaving}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-accent transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-accent text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
                     <>
