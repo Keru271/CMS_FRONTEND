@@ -31,7 +31,7 @@ import {
   Sliders,
   Copy,
   CheckCheck,
-  HelpCircle,
+  CircleHelp,
   Wand2,
   CheckSquare,
   Square,

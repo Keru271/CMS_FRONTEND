@@ -304,6 +304,7 @@ export interface ReviewMetricsData {
 export interface ReviewsApiResponse {
   reviews: ProductReviewData[];
   total: number;
+  reviewsEnabled?: boolean;
   metrics: ReviewMetricsData;
 }
 
@@ -542,6 +543,9 @@ export interface StoreSetupData {
   timezone: string;
   shippingFlatRate?: number | null;
   shippingFreeThreshold?: number | null;
+  pickupEnabled?: boolean | null;
+  pickupInstructions?: string | null;
+  pickupAddress?: string | null;
   taxName?: string | null;
   taxRateStandard?: number | null;
   taxInclusive?: boolean | null;
@@ -1028,6 +1032,9 @@ export interface RateShoppingPolicy {
   codMarkupAmount: number;
   freeShippingThreshold: number;
   maxTransitDays: number;
+  pickupEnabled?: boolean;
+  pickupInstructions?: string;
+  pickupAddress?: string;
 }
 
 export interface CarrierCredential {

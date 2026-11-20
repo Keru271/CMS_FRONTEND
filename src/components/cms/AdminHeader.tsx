@@ -306,7 +306,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         {onAddProduct && (
           <button
             onClick={onAddProduct}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 dark:bg-[#00E5FF] dark:hover:bg-[#00b4cc] text-white dark:text-[#121212] font-bold text-xs transition-all shadow-xs cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-[#00E5FF] dark:hover:bg-[#00b4cc] text-white dark:text-[#121212] font-bold text-xs transition-all shadow-xs cursor-pointer shrink-0"
             title="Add Product"
           >
             <Plus className="w-4 h-4 shrink-0" />
@@ -381,9 +381,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         <div className="relative shrink-0" ref={userMenuRef}>
           <button
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-800 dark:text-white hover:border-sky-500 dark:hover:border-[#00E5FF]/60 transition-all cursor-pointer shadow-2xs"
+            className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-xl bg-slate-50 dark:bg-[#1E1E1E] border border-slate-300 dark:border-[#2C2C2E] text-slate-800 dark:text-white hover:border-slate-500 dark:hover:border-[#00E5FF]/60 transition-all cursor-pointer shadow-2xs"
           >
-            <div className="w-6 h-6 rounded-lg bg-sky-100 dark:bg-[#00E5FF]/20 border border-sky-300 dark:border-[#00E5FF]/40 text-sky-700 dark:text-[#00E5FF] flex items-center justify-center font-mono font-bold text-xs shrink-0">
+            <div className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-[#00E5FF]/20 border border-slate-300 dark:border-[#00E5FF]/40 text-slate-800 dark:text-[#00E5FF] flex items-center justify-center font-mono font-bold text-xs shrink-0">
               {(merchantData?.merchant?.firstName || 'M')[0].toUpperCase()}
             </div>
             <span className="hidden xl:inline text-xs font-semibold max-w-[90px] truncate">
@@ -402,7 +402,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 <div className="text-xs text-slate-500 dark:text-[#98989D] truncate">
                   {merchantData?.merchant?.email || 'owner@store.com'}
                 </div>
-                <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-[#00E5FF]/10 text-sky-700 dark:text-[#00E5FF] border border-sky-200 dark:border-[#00E5FF]/30">
+                <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-[#00E5FF]/10 text-slate-800 dark:text-[#00E5FF] border border-slate-200 dark:border-[#00E5FF]/30">
                   {merchantData?.merchant?.role || 'OWNER'}
                 </span>
               </div>

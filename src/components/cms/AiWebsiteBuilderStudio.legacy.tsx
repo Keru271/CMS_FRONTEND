@@ -34,7 +34,7 @@ import {
   MousePointer,
   Crosshair,
   Download,
-  HelpCircle,
+  CircleHelp,
   ImageIcon,
   ArrowRight,
   UploadCloud,

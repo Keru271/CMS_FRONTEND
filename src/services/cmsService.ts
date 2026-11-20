@@ -232,6 +232,7 @@ export const TEMPLATE_PREVIEW_FALLBACKS: Record<string, string> = {
   pawzy: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=800&q=80',
   techno: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
   'pulse-streetwear': 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80',
+  skeuomorphism: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=800&q=80',
   'artisan-craft': 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
   'botanica-wellness': 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=800&q=80',
   northvale: 'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=800&q=80',
@@ -356,6 +357,26 @@ export const STORE_TEMPLATES: StoreTemplate[] = [
       'Clean Label Ingredients Guide',
       'Auto-Replenish Subscribe',
       'Before & After Slider',
+    ],
+  },
+  {
+    id: 'skeuomorphism',
+    slug: 'skeuomorphism',
+    name: 'Skeuomorphism Hardware & SaaS',
+    tagline: 'Realistic 3D depth, tactile press physics & rich material textures',
+    description:
+      'Engineered with tactile switches, 12-stop brushed gradients, debossed metal plates, and analog telemetry for modern hardware & SaaS.',
+    accentColor: '#0066FF',
+    badge: 'Tactile',
+    previewImage:
+      'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=800&q=80',
+    demoUrl: 'https://demo.owntheshop.com/skeuomorphism',
+    requiredTier: 'ALL',
+    features: [
+      '12-Stop Brushed Gradients',
+      'Tactile Spring Press Physics',
+      'Realistic Multi-Layer Shadows',
+      'Zig-Zag Feature Architecture',
     ],
   },
 ];
@@ -5260,6 +5281,7 @@ export const cmsService = {
   }): Promise<{
     reviews: ProductReviewData[];
     total: number;
+    reviewsEnabled?: boolean;
     metrics: ReviewMetricsData;
   }> {
     const cacheKey = JSON.stringify(params || {});
@@ -5276,100 +5298,23 @@ export const cmsService = {
         const response = await apiClient.get('/reviews', { params });
         return response.data;
       } catch (err) {
-        console.warn('Failed to fetch reviews from backend, returning fallback reviews', err);
+        console.warn('Failed to fetch reviews from backend, returning empty list', err);
         return {
-          reviews: [
-            {
-              id: 'rev-1',
-              productId: 'p-101',
-              productTitle: 'Acoustic Noise-Canceling Wireless Headphones',
-              productImage:
-                'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=120&q=80',
-              productSlug: 'wireless-headphones',
-              userName: 'Priya Sundaram',
-              userEmail: 'priya.sundaram@example.com',
-              rating: 5,
-              title: 'Exceptional build quality and lightning-fast delivery!',
-              comment:
-                'Ordered this from Bengaluru and received it in just 2 days via Blue Dart Air Express. Packaging was pristine, and the product quality exceeded my expectations. Highly recommended!',
-              verified: true,
-              status: 'APPROVED',
-              adminReply:
-                'Thank you so much Priya for your wonderful review! We are thrilled you enjoyed the express delivery.',
-              adminReplyAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-              helpfulCount: 24,
-              createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-            },
-            {
-              id: 'rev-2',
-              productId: 'p-102',
-              productTitle: 'Minimalist Titanium Chronograph Watch',
-              productImage:
-                'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=120&q=80',
-              productSlug: 'minimalist-watch',
-              userName: 'Rahul Verma',
-              userEmail: 'rahul.v@example.com',
-              rating: 4,
-              title: 'Great value for money',
-              comment:
-                'The finish and ergonomics are top-notch. Battery life easily lasts throughout the entire day. Only minor feedback is the user manual could have been a bit more comprehensive.',
-              verified: true,
-              status: 'APPROVED',
-              adminReply: null,
-              helpfulCount: 12,
-              createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            },
-            {
-              id: 'rev-3',
-              productId: 'p-103',
-              productTitle: 'Classic Oxford Cotton Button-Down Shirt',
-              productImage:
-                'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=120&q=80',
-              productSlug: 'oxford-shirt',
-              userName: 'Amit Deshmukh',
-              userEmail: 'amit.d@example.com',
-              rating: 3,
-              title: 'Good, but sizing runs slightly large',
-              comment:
-                'Decent material quality, however the size is slightly larger than standard charts. Exchanged it easily thanks to customer support.',
-              verified: true,
-              status: 'PENDING',
-              adminReply: null,
-              helpfulCount: 5,
-              createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-            },
-            {
-              id: 'rev-4',
-              productId: 'p-101',
-              productTitle: 'Acoustic Noise-Canceling Wireless Headphones',
-              productImage:
-                'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=120&q=80',
-              productSlug: 'wireless-headphones',
-              userName: 'Anonymous Bot',
-              userEmail: 'bot@spam.test',
-              rating: 1,
-              title: 'Spam voucher link',
-              comment: 'Visit external site for cheap coupon vouchers http://example-spam-link.com',
-              verified: false,
-              status: 'REJECTED',
-              adminReply: null,
-              helpfulCount: 0,
-              createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-            },
-          ],
-          total: 4,
+          reviews: [],
+          total: 0,
+          reviewsEnabled: true,
           metrics: {
-            totalReviews: 4,
-            pendingReviews: 1,
-            approvedReviews: 2,
-            rejectedReviews: 1,
-            averageRating: 4.3,
+            totalReviews: 0,
+            pendingReviews: 0,
+            approvedReviews: 0,
+            rejectedReviews: 0,
+            averageRating: 5.0,
             ratingDistribution: {
-              fiveStar: 1,
-              fourStar: 1,
-              threeStar: 1,
+              fiveStar: 0,
+              fourStar: 0,
+              threeStar: 0,
               twoStar: 0,
-              oneStar: 1,
+              oneStar: 0,
             },
           },
         };
@@ -5418,6 +5363,18 @@ export const cmsService = {
 
   async deleteReview(id: string): Promise<{ success: boolean; message: string }> {
     const response = await apiClient.delete(`/reviews/${id}`);
+    return response.data;
+  },
+
+  async getReviewsSettings(): Promise<{ reviewsEnabled: boolean }> {
+    const response = await apiClient.get('/reviews/settings');
+    return response.data;
+  },
+
+  async updateReviewsSettings(
+    reviewsEnabled: boolean,
+  ): Promise<{ success: boolean; reviewsEnabled: boolean }> {
+    const response = await apiClient.patch('/reviews/settings', { reviewsEnabled });
     return response.data;
   },
 

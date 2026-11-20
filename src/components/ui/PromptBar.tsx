@@ -23,7 +23,6 @@ import {
   Plus,
   Check,
   X,
-  HelpCircle,
   Package,
   ShoppingBag,
   FolderTree,

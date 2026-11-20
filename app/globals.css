@@ -3,11 +3,11 @@
 @custom-variant dark (&:where(.dark, [data-theme="dark"], .dark *, [data-theme="dark"] *));
 
 :root {
-  /* Light Mode Color Tokens (Default) */
+  /* Light Mode Color Tokens (Default - Technical Dashboard per design.md) */
   --bg-primary: #F8FAFC;
   --surface-card: #FFFFFF;
   --surface-card-hover: #F1F5F9;
-  --accent-primary: #0284C7;
+  --accent-primary: #0F172A;
   --accent-alert: #DC2626;
   --accent-secondary: #16A34A;
   --border-subtle: #E2E8F0;
@@ -20,14 +20,14 @@
   --card: #FFFFFF;
   --card-foreground: #0F172A;
   --card-border: #E2E8F0;
-  --primary: #0284C7;
+  --primary: #0F172A;
   --primary-foreground: #FFFFFF;
-  --primary-hover: #0369A1;
+  --primary-hover: #1E293B;
   --secondary: #E2E8F0;
   --secondary-foreground: #0F172A;
   --muted: #F1F5F9;
   --muted-foreground: #64748B;
-  --accent: #0284C7;
+  --accent: #0F172A;
   --accent-foreground: #FFFFFF;
   --danger: #DC2626;
   --danger-foreground: #FFFFFF;
@@ -35,7 +35,7 @@
   --border: #E2E8F0;
   --input-bg: #FFFFFF;
   --input-border: #CBD5E1;
-  --input-focus: #0284C7;
+  --input-focus: #0F172A;
 }
 
 .dark,

@@ -31,7 +31,7 @@ import {
   ShoppingBag,
   ExternalLink,
   MessageCircle,
-  HelpCircle,
+  CircleHelp,
 } from 'lucide-react';
 
 // Store Industry Categories

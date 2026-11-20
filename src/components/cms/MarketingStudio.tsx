@@ -46,7 +46,7 @@ import {
   ExternalLink,
   Percent,
   Info,
-  HelpCircle,
+  CircleHelp,
   BookOpen,
   Key,
   Sparkles,

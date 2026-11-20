@@ -29,7 +29,7 @@ import {
   LayoutGrid,
   Columns,
   Edit3,
-  HelpCircle,
+  CircleHelp,
 } from 'lucide-react';
 
 export const DEFAULT_TEMPLATE_SECTIONS: Record<string, HomepageSection[]> = {
@@ -860,7 +860,7 @@ const SECTION_LIBRARY: Array<{
     type: 'faq-locations',
     name: 'Store Locations & FAQ Accordion',
     desc: '3-column split section featuring store branch addresses, center 3D pin visual, and interactive FAQ accordion',
-    icon: HelpCircle,
+    icon: CircleHelp,
     defaultConfig: {
       locationsTitle: 'Store Location',
       locations: [

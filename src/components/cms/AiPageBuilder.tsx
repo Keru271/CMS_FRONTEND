@@ -9,7 +9,7 @@ import {
   Zap,
   Star,
   DollarSign,
-  HelpCircle,
+  CircleHelp,
   Palette,
   CheckCircle2,
   RefreshCw,
@@ -79,7 +79,7 @@ const PAGE_TEMPLATES = [
     id: 'FAQ_SUPPORT',
     label: 'FAQ & Support Hub',
     desc: 'Structured accordion questions, dispatch policies, and concierge contact.',
-    icon: HelpCircle,
+    icon: CircleHelp,
     color: 'text-sky-500 bg-sky-50 dark:bg-sky-950/50 border-sky-200 dark:border-sky-900',
     defaultSections: ['hero', 'faq', 'trust_badges', 'cta_banner'],
   },
@@ -134,7 +134,7 @@ const AVAILABLE_SECTIONS = [
   { id: 'product_slider', label: 'Product Carousel', icon: ShoppingBag },
   { id: 'pricing_table', label: 'Pricing / VIP Tiers', icon: DollarSign },
   { id: 'testimonials', label: 'Customer Proof / Reviews', icon: Users },
-  { id: 'faq', label: 'FAQ Accordion', icon: HelpCircle },
+  { id: 'faq', label: 'FAQ Accordion', icon: CircleHelp },
   { id: 'cta_banner', label: 'Newsletter & CTA Banner', icon: Rocket },
 ];
 

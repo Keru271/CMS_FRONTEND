@@ -16,7 +16,7 @@ import {
   Sparkles,
   Server,
   KeyRound,
-  HelpCircle,
+  CircleHelp,
   Check,
   Lock,
   Globe,
@@ -509,7 +509,7 @@ export const VendorSmtpSettings: React.FC<VendorSmtpSettingsProps> = ({ storeId,
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                <HelpCircle className="w-5 h-5" />
+                <CircleHelp className="w-5 h-5" />
               </div>
               <div>
                 <h4 className="text-sm font-black text-slate-900 dark:text-foreground flex items-center gap-2">

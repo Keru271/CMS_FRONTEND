@@ -34,7 +34,7 @@ import {
   Mail,
   UserCheck,
   Boxes,
-  HelpCircle,
+  CircleHelp,
   FileCheck,
   Check,
   Sparkles,

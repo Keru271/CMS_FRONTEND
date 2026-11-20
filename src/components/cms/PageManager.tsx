@@ -28,7 +28,7 @@ import {
   FileCode,
   Shield,
   Layers,
-  HelpCircle,
+  CircleHelp,
   FileCheck,
   LayoutTemplate,
   Monitor,

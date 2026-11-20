@@ -15,7 +15,7 @@ import {
   Sparkles,
   Smartphone,
   KeyRound,
-  HelpCircle,
+  CircleHelp,
   Check,
   Lock,
   Globe,
@@ -422,7 +422,7 @@ export const VendorWhatsAppSettings: React.FC<VendorWhatsAppSettingsProps> = ({
             >
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
-                  <HelpCircle className="w-4 h-4" />
+                  <CircleHelp className="w-4 h-4" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
