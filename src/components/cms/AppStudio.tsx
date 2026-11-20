@@ -24,7 +24,7 @@ import {
   EyeOff,
   Check,
   X,
-  HelpCircle,
+  CircleHelp,
   Activity,
   Loader2,
 } from 'lucide-react';
@@ -864,7 +864,7 @@ export const AppStudio: React.FC = () => {
                             className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
                             title="API Documentation"
                           >
-                            <HelpCircle className="w-3.5 h-3.5" />
+                            <CircleHelp className="w-3.5 h-3.5" />
                           </a>
                         )}
                       </div>

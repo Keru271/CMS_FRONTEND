@@ -458,6 +458,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           sublabel: 'Netlify & Themes',
           icon: Globe,
           badge: 'New',
+          openInNewTab: true,
         },
         {
           id: 'themes',
@@ -508,6 +509,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               sublabel: 'Netlify & Themes',
               icon: Globe,
               badge: 'New',
+              openInNewTab: true,
             },
             {
               id: 'themes',
@@ -1030,7 +1032,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div
           className={`absolute left-[7px] top-[17px] w-[14px] h-[1.5px] pointer-events-none transition-colors duration-200 ${
             isChildActive
-              ? 'bg-sky-500 dark:bg-[#00E5FF]'
+              ? 'bg-slate-900 dark:bg-[#00E5FF]'
               : 'bg-slate-200 dark:bg-[#2C2C2E] group-hover/leaf:bg-slate-300 dark:group-hover/leaf:bg-[#4C4C4E]'
           }`}
         />
@@ -1039,8 +1041,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div
           className={`absolute left-[19px] top-[14px] w-1.5 h-1.5 rounded-full pointer-events-none transition-all duration-200 z-10 ${
             isChildActive
-              ? 'bg-sky-500 dark:bg-[#00E5FF] shadow-[0_0_8px_rgba(0,229,255,0.9)] scale-125'
-              : 'bg-slate-300 dark:bg-[#3C3C3E] group-hover/leaf:bg-sky-400 dark:group-hover/leaf:bg-[#00E5FF]/70'
+              ? 'bg-slate-900 dark:bg-[#00E5FF] shadow-xs scale-125'
+              : 'bg-slate-300 dark:bg-[#3C3C3E] group-hover/leaf:bg-slate-500 dark:group-hover/leaf:bg-[#00E5FF]/70'
           }`}
         />
 
@@ -1049,14 +1051,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => handleNavClick(childItem.id, childItem.path, childItem.openInNewTab)}
           className={`w-full ml-[26px] flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer ${
             isChildActive
-              ? 'bg-sky-50 dark:bg-[#00E5FF]/10 text-sky-900 dark:text-[#00E5FF] font-semibold border border-sky-200/80 dark:border-[#00E5FF]/30 shadow-xs'
+              ? 'bg-slate-100 dark:bg-[#00E5FF]/10 text-slate-900 dark:text-[#00E5FF] font-semibold border border-slate-300 dark:border-[#00E5FF]/30 shadow-xs'
               : 'text-slate-600 dark:text-[#98989D] hover:bg-slate-50 dark:hover:bg-[#1E1E1E]/60 hover:text-slate-900 dark:hover:text-white border border-transparent font-normal'
           }`}
         >
           <div className="flex items-center gap-2 truncate min-w-0">
             <ChildIcon
               className={`w-3.5 h-3.5 shrink-0 transition-colors ${
-                isChildActive ? 'text-sky-600 dark:text-[#00E5FF]' : 'text-slate-400 dark:text-[#98989D]'
+                isChildActive ? 'text-slate-900 dark:text-[#00E5FF]' : 'text-slate-400 dark:text-[#98989D]'
               }`}
             />
             <div className="flex flex-col text-left truncate min-w-0">
@@ -1077,8 +1079,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span
               className={`px-1.5 py-0.2 rounded font-mono font-bold text-[9px] uppercase shrink-0 ${
                 isChildActive
-                  ? 'bg-sky-600 dark:bg-[#00E5FF] text-white dark:text-[#121212]'
-                  : 'bg-slate-100 dark:bg-[#1E1E1E] text-sky-600 dark:text-[#00E5FF] border border-slate-200 dark:border-[#2C2C2E]'
+                  ? 'bg-slate-900 dark:bg-[#00E5FF] text-white dark:text-[#121212]'
+                  : 'bg-slate-100 dark:bg-[#1E1E1E] text-slate-700 dark:text-[#00E5FF] border border-slate-200 dark:border-[#2C2C2E]'
               }`}
             >
               {childItem.badge}
@@ -1162,7 +1164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               return (
                 <button
                   key={item.id}
-                  onClick={() => handleNavClick(item.id, item.path)}
+                  onClick={() => handleNavClick(item.id, item.path, item.openInNewTab)}
                   title={collapsed && !mobileOpen ? item.label : undefined}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all min-h-[40px] cursor-pointer ${
                     isActive
@@ -1291,7 +1293,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     onClick={() => {
                       if (collapsed && !mobileOpen) {
-                        handleNavClick(visibleItems[0].id, visibleItems[0].path);
+                        handleNavClick(visibleItems[0].id, visibleItems[0].path, visibleItems[0].openInNewTab);
                       } else {
                         setOpenSections((prev) => ({
                           ...prev,
@@ -1321,7 +1323,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           <span className="truncate">{group.label}</span>
                           {/* Active circuit dot */}
                           {isGroupActive && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 dark:bg-[#00E5FF] shadow-[0_0_6px_rgba(0,229,255,0.8)] shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-900 dark:bg-[#00E5FF] shadow-xs shrink-0" />
                           )}
                         </div>
                       )}
@@ -1332,8 +1334,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <span
                           className={`px-2 py-0.5 rounded-full font-mono font-bold text-[10px] flex items-center justify-center shrink-0 ${
                             isGroupActive
-                              ? 'bg-sky-600 dark:bg-[#00E5FF] text-white dark:text-[#121212]'
-                              : 'bg-slate-100 dark:bg-[#1E1E1E] text-sky-600 dark:text-[#00E5FF] border border-slate-200 dark:border-[#2C2C2E]'
+                              ? 'bg-slate-900 dark:bg-[#00E5FF] text-white dark:text-[#121212]'
+                              : 'bg-slate-100 dark:bg-[#1E1E1E] text-slate-700 dark:text-[#00E5FF] border border-slate-200 dark:border-[#2C2C2E]'
                           }`}
                         >
                           {group.badge || visibleItems.length}

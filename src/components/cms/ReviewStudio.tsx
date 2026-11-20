@@ -26,6 +26,8 @@ import {
 
 export const ReviewStudio: React.FC = () => {
   const [reviews, setReviews] = useState<ProductReviewData[]>([]);
+  const [reviewsEnabled, setReviewsEnabled] = useState<boolean>(true);
+  const [isUpdatingSettings, setIsUpdatingSettings] = useState<boolean>(false);
   const [metrics, setMetrics] = useState<ReviewMetricsData>({
     totalReviews: 0,
     pendingReviews: 0,
@@ -77,6 +79,9 @@ export const ReviewStudio: React.FC = () => {
         search: searchQuery || undefined,
       });
       setReviews(data.reviews || []);
+      if (typeof data.reviewsEnabled === 'boolean') {
+        setReviewsEnabled(data.reviewsEnabled);
+      }
       if (data.metrics) {
         setMetrics(data.metrics);
       }
@@ -85,6 +90,26 @@ export const ReviewStudio: React.FC = () => {
       showToast('Failed to load product reviews', 'error');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleToggleReviewsEnabled = async () => {
+    const nextVal = !reviewsEnabled;
+    setIsUpdatingSettings(true);
+    try {
+      await cmsService.updateReviewsSettings(nextVal);
+      setReviewsEnabled(nextVal);
+      showToast(
+        nextVal
+          ? 'Storefront review section is now enabled.'
+          : 'Storefront review section is now hidden from shoppers.',
+        'success',
+      );
+    } catch (err) {
+      console.error('Failed to update reviews visibility:', err);
+      showToast('Failed to update review section visibility', 'error');
+    } finally {
+      setIsUpdatingSettings(false);
     }
   };
 
@@ -246,6 +271,61 @@ export const ReviewStudio: React.FC = () => {
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           <span>Refresh</span>
         </button>
+      </div>
+
+      {/* Storefront Review Flow Privilege Card */}
+      <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-card border border-slate-200/80 dark:border-border shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-base font-black text-slate-900 dark:text-foreground flex items-center gap-2">
+              <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+              <span>Storefront Customer Reviews Flow</span>
+            </span>
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                reviewsEnabled
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                  : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  reviewsEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                }`}
+              />
+              {reviewsEnabled ? 'Active on Storefront' : 'Hidden from Storefront'}
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
+            {reviewsEnabled
+              ? 'Customer review section and rating feedback form are active on your storefront product pages. Any new customer feedback is automatically placed in pending moderation for your approval before going live.'
+              : 'The customer review section, star rating summaries, and review submission flow are completely hidden across your storefront.'}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 self-end sm:self-auto bg-slate-50 dark:bg-accent/40 p-2 sm:p-2.5 rounded-2xl border border-slate-200/60 dark:border-border">
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            {reviewsEnabled ? 'Enabled' : 'Hidden'}
+          </span>
+          <button
+            type="button"
+            disabled={isUpdatingSettings}
+            onClick={handleToggleReviewsEnabled}
+            className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+              reviewsEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
+            } ${isUpdatingSettings ? 'opacity-50 cursor-not-allowed' : ''}`}
+            role="switch"
+            aria-checked={reviewsEnabled}
+            title={reviewsEnabled ? 'Click to hide reviews from storefront' : 'Click to enable reviews on storefront'}
+          >
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                reviewsEnabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Top Metrics Cards */}

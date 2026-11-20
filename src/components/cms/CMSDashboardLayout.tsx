@@ -116,6 +116,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     if (userRole === 'EDITOR') {
       return (
         path.startsWith('/themes') ||
+        path.startsWith('/website') ||
         path.startsWith('/3d') ||
         path.startsWith('/pages') ||
         path.startsWith('/forms') ||
@@ -129,6 +130,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     if (userRole === 'MANAGER') {
       return (
         path.startsWith('/products') ||
+        path.startsWith('/website') ||
         path.startsWith('/3d') ||
         path.startsWith('/categories') ||
         path.startsWith('/orders') ||
@@ -155,6 +157,7 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
         return !!userPermissions.canManageCustomers || !!userPermissions.canManageProducts;
       if (
         path.startsWith('/themes') ||
+        path.startsWith('/website') ||
         path.startsWith('/pages') ||
         path.startsWith('/forms') ||
         path.startsWith('/blog') ||
@@ -183,7 +186,9 @@ export const CMSDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     pathname === '/email-templates/new' ||
     pathname.startsWith('/email-templates/new') ||
     pathname === '/ai-builder' ||
-    pathname.startsWith('/ai-builder');
+    pathname.startsWith('/ai-builder') ||
+    pathname === '/website' ||
+    pathname.startsWith('/website');
 
   const getDefaultAllowedPath = () => {
     if (userRole === 'STOCK_CHECKER') return '/products';

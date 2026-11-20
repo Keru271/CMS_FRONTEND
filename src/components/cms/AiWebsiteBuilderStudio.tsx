@@ -9,7 +9,7 @@ import {
   Download,
   RotateCcw,
   RotateCw,
-  HelpCircle,
+  CircleHelp,
   Plus,
   Trash2,
   Copy,
@@ -1952,7 +1952,7 @@ You can customize colors, copy, sections, and layout simply by chatting with me 
           className="w-8 h-8 rounded-full bg-[#FAF8F2]/95 dark:bg-[#1B1D24]/95 backdrop-blur-xl border border-[#E5E0D3] dark:border-[#2E323D] shadow-xl flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-black dark:hover:text-white transition cursor-pointer"
           title="Studio Help"
         >
-          <HelpCircle className="w-4 h-4" />
+          <CircleHelp className="w-4 h-4" />
         </button>
       </div>
 

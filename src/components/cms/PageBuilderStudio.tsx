@@ -31,7 +31,7 @@ import {
   Image as ImageIcon,
   Video,
   Star,
-  HelpCircle,
+  CircleHelp,
   Mail,
   ArrowRight,
   Zap,
@@ -643,7 +643,7 @@ const BLOCK_LIBRARY: {
     label: 'FAQ Accordion',
     desc: 'Collapsible question and answer pairs',
     category: 'content',
-    icon: <HelpCircle className="w-4 h-4" />,
+    icon: <CircleHelp className="w-4 h-4" />,
     defaultData: {
       heading: 'Frequently Asked Questions',
       subtitle: 'Got questions? We have answers.',
